@@ -19,6 +19,12 @@ add_subdirectory(libs/glad)
 find_package(Vulkan REQUIRED)
 find_package(OpenGL REQUIRED)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_compile_definitions(_DEBUG)
+else()
+  add_compile_definitions(NDEBUG)
+endif()
+
 add_library(mf ${SRCS})
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")

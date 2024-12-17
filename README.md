@@ -9,7 +9,7 @@ Now developers just need to tell MeltedForge to render without taking any graphi
     int main(int argc, const char** argv) {
         ... // Window creation stuff
         
-        mfInitialize();
+        mfInitialize(MFBCKND_TYPE_VULKAN); // The API backend that is to be used, has to be mentioned!
 
         while(isWindowOpen) { // Main loop
             ... // blah blah

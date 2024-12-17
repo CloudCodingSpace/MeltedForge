@@ -1,3 +1,4 @@
+#include "mf/backend/backend_types.h"
 #include <mf.h>
 
 #include <stdio.h>
@@ -25,7 +26,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  mfInitialize();
+  mfInitialize(MFBCKND_TYPE_VULKAN);
 
   glfwShowWindow(window);
   while(!glfwWindowShouldClose(window)) {

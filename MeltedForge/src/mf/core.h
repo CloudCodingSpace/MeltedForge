@@ -9,7 +9,7 @@ typedef struct {
   MFRenderer renderer;
 } MFState;
 
-void mfInitialize();
+void mfInitialize(MFBckndTypes type);
 void mfShutdown();
 
 MFRenderer* mfGetRendererHandle();

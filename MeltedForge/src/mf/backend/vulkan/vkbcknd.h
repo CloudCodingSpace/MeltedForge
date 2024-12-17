@@ -4,9 +4,11 @@
 
 typedef struct {
   VkInstance instance;
+
+#ifdef _DEBUG
+  VkDebugUtilsMessengerEXT dbgMssngr;
+#endif
 } MFVkBckndState;
 
-void mfVkBckndInit();
-void mfVkBckndDeinit();
-
-MFVkBckndState* mfGetVkBckndState();
+void mfVkBckndInit(MFVkBckndState* state);
+void mfVkBckndDeinit(MFVkBckndState* state);

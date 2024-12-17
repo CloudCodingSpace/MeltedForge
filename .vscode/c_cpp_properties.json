@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/MeltedForge/libs",
+                "${workspaceFolder}/MeltedForge/libs/GLFW/include",
+                "${workspaceFolder}/MeltedForge/libs/slog",
+                "${workspaceFolder}/MeltedForge/src",
+                "${VULKAN_SDK}/Include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.22621.0"
+        }
+    ],
+    "version": 4
+}
