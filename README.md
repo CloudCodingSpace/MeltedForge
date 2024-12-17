@@ -36,3 +36,4 @@ Now developers just need to tell MeltedForge to render without taking any graphi
  - slog (A logger written by me in pure C without any external dependencies)
  - GLAD
  - stb's libraries like stb_image.h
+ - glfw
