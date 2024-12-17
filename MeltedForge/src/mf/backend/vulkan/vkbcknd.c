@@ -98,6 +98,7 @@ void mfVkBckndInit(MFVkBckndState* state) {
     };
     
     // Getting the required extensions
+    glfwInit();
     uint32_t extCount = 0;
     const char** exts = glfwGetRequiredInstanceExtensions(&extCount);
 
