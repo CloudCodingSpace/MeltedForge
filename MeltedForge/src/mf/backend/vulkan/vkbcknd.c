@@ -1,5 +1,4 @@
 #include "vkbcknd.h"
-#include "slog/slog.h"
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
@@ -26,7 +25,7 @@ void check_result(VkResult result, int line, char* file) {
   }
 }
 
-bool check_dbg_exts(uint32_t count, const char** lyrs) {
+bool check_dbg_ext(const char* lyr) {
   uint32_t lyrCount = 0;
   CHECKRESULT(vkEnumerateInstanceLayerProperties(&lyrCount, NULL))
   VkLayerProperties props[lyrCount];
@@ -35,11 +34,26 @@ bool check_dbg_exts(uint32_t count, const char** lyrs) {
   bool found = false;
 
   for(int i = 0; i < lyrCount; i++) {
-    for(int j = 0; j < count; j++) {
-      if(strcmp(props[i].layerName, lyrs[j]) == 0) {
-        found = true;
-        break;
-      }
+    if(strcmp(props[i].layerName, lyr) == 0) {
+      found = true;
+      break;
+    }
+  }
+
+  return found;
+}
+
+bool check_instance_ext(const char* ext) {
+  bool found = false;
+  uint32_t propCount = 0;
+  CHECKRESULT(vkEnumerateInstanceExtensionProperties(NULL, &propCount, NULL))
+  VkExtensionProperties props[propCount];
+  CHECKRESULT(vkEnumerateInstanceExtensionProperties(NULL, &propCount, props))
+
+  for(int i = 0; i < propCount; i++) {
+    if(strcmp(props[i].extensionName, ext) == 0) {
+      found = true;
+      break;
     }
   }
 
@@ -52,7 +66,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL dbgCallbck(
                       const VkDebugUtilsMessengerCallbackDataEXT* callbckData,
                       void* usrData) {
 
-  slogLogConsole(mfGetSLoggerHandle(), SLOG_SEVERITY_FATAL, (char*)((void*)callbckData->pMessage));
+  slogLoggerSetColor(mfGetSLoggerHandle(), SLCOLOR_RED);
+  printf("[VKBCKND DBGMSSNGR] ERROR: %s\n\n", callbckData->pMessage);
+  slogLoggerSetColor(mfGetSLoggerHandle(), SLCOLOR_DEFAULT);
 
   return VK_FALSE;
 } 
@@ -61,11 +77,9 @@ void mfVkBckndInit(MFVkBckndState* state) {
   SLogger* logger = mfGetSLoggerHandle();
 
 #ifdef _DEBUG
-  const char* dbgLyrs[] = {
-    "VK_LAYER_KHRONOS_validation"
-  };
+  const char* dbgLyr = "VK_LAYER_KHRONOS_validation";
 
-  if(!check_dbg_exts(1, dbgLyrs)) {
+  if(!check_dbg_ext(dbgLyr)) {
     slogLogConsole(logger, SLOG_SEVERITY_ERROR, "Can't find the debug extensions!");
     exit(EXIT_FAILURE);
   }
@@ -94,7 +108,12 @@ void mfVkBckndInit(MFVkBckndState* state) {
       .ppEnabledExtensionNames = exts
     };
 
-#ifdef _DEBUG 
+#ifdef _DEBUG
+    if(!check_instance_ext(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+      slogLogConsole(logger, SLOG_SEVERITY_ERROR, "Can't find the required debug extensions!");
+      exit(EXIT_FAILURE);
+    }
+
     const char** dbgExtsWExts = calloc(extCount + 1, sizeof(char*));
     for(int i = 0; i < extCount; i++) {
       dbgExtsWExts[i] = exts[i];
@@ -103,24 +122,40 @@ void mfVkBckndInit(MFVkBckndState* state) {
     dbgExtsWExts[extCount] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
 
     info.enabledLayerCount = 1;
-    info.ppEnabledLayerNames = dbgLyrs;
+    info.ppEnabledLayerNames = &dbgLyr;
     info.enabledExtensionCount = extCount + 1;
     info.ppEnabledExtensionNames = dbgExtsWExts;
+
+    VkDebugUtilsMessengerCreateInfoEXT dbgInfo = {
+      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+      .messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | 
+                      VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+      .messageSeverity =  VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                          VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT, 
+      .pfnUserCallback = dbgCallbck,
+      .pUserData = NULL
+    };
+
+    info.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &dbgInfo;
 #endif
 
     CHECKRESULT(vkCreateInstance(&info, NULL, &state->instance))
-  }
+
+#ifdef _DEBUG
+    free(dbgExtsWExts);
+#endif
+}
   // Debug messenger
   {
 #ifdef _DEBUG
     VkDebugUtilsMessengerCreateInfoEXT info = {
       .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-      .messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | 
-                      VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | 
+      .messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | 
                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
       .messageSeverity =  VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
+                          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT, 
       .pfnUserCallback = dbgCallbck,
       .pUserData = NULL
     };
@@ -129,8 +164,9 @@ void mfVkBckndInit(MFVkBckndState* state) {
 
     if(vkCreateDebugUtilsMessengerEXT) {
       CHECKRESULT(vkCreateDebugUtilsMessengerEXT(state->instance, &info, NULL, &state->dbgMssngr))
+    } else {
+      slogLogConsole(logger, SLOG_SEVERITY_ERROR, "Failed to create the dbg messenger cuz the message is null!");
     }
-
 #endif
   }
 }
