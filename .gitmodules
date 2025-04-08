@@ -1,0 +1,6 @@
+[submodule "glfw"]
+	path = MeltedForge/libs/glfw
+	url = https://github.com/CloudCodingSpace/GLFW
+[submodule "slog"]
+	path = MeltedForge/libs/slog
+	url = https://github.com/CloudCodingSpace/slog

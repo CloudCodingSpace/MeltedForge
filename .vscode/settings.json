@@ -1,0 +1,20 @@
+{
+    "editor.fontFamily": "Iosevka Nerd Font",
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+    "cmake.pinnedCommands": [
+        "workbench.action.tasks.configureTaskRunner",
+        "workbench.action.tasks.runTask"
+    ],
+    "editor.fontLigatures": true,
+    "breadcrumbs.enabled": false,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "workbench.iconTheme": "vs-nomo-dark",
+    "editor.minimap.enabled": false,
+    "explorer.confirmDragAndDrop": false,
+    "editor.cursorStyle": "block",
+    "editor.lineNumbers": "relative",
+    "workbench.colorTheme": "GitHub Dark Default",
+    "editor.tabCompletion": "on",
+    "editor.useTabStops": false
+}
