@@ -1,2 +1,76 @@
 #include "mfcore.h"
 
+#include <slog/slog.h>
+#include <GLFW/glfw3.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+
+struct MFContext_s {
+    MFRenderAPI api;
+    SLogger logger;
+    bool init;
+};
+
+MFContext* ctx = mfnull;
+
+void log_fatal(const char* msg) {
+    slogLogConsole(&ctx->logger, SLOG_SEVERITY_FATAL, msg);
+    abort();
+}
+
+void mfInit(const char* appName) {
+    if(ctx == mfnull) {
+        printf("[MeltedForge]: The current context shouldn't be null!");
+        abort();
+    }
+    
+    if(ctx->init) {
+        slogLogConsole(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!");
+        return;
+    }
+    
+    slogLoggerReset(&ctx->logger);
+    slogLoggerSetName(&ctx->logger, "MeltedForge");
+    
+    ctx->init = true;
+    ctx->api = MF_RENDER_API_NONE;
+}
+
+void mfShutdown() {
+    if(ctx == mfnull) {
+        printf("[MeltedForge]: The current context shouldn't be null!");
+        abort();
+    }
+    
+    if(!ctx->init) {
+        printf("[MeltedForge]: The current context is not yet initialized!");
+        abort();
+    }
+
+    ctx->api = MF_RENDER_API_NONE;
+    ctx->init = false;
+}
+
+void mfSetCurrentContext(MFContext* ctx_) {
+    if(ctx_ == mfnull) {
+        printf("[MeltedForge]: The context provided shouldn't be null!");
+        abort();
+    }
+    
+    ctx = ctx_;
+}
+
+size_t mfGetContextSizeInBytes() {
+    return sizeof(MFContext);
+}
+
+SLogger* mfGetLogger() {
+    if(ctx == mfnull) {
+        printf("[MeltedForge]: The current context shouldn't be null!");
+        abort();
+    }
+    
+    return &ctx->logger;
+}

@@ -1,7 +1,18 @@
-#include <stdio.h>
+#include <mf.h>
 
-int main() {
-  printf("Hello World!");
+#include <stdlib.h>
+#include <string.h>
 
-  return 0;
+int main(int argc, const char** argv) {
+    MFContext* context = (MFContext*) malloc(mfGetContextSizeInBytes());
+    memset(context, 0, mfGetContextSizeInBytes());
+    
+    mfSetCurrentContext(context);
+    mfInit("MFTest");
+    
+    slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "Hello from MFTest!");
+
+    mfShutdown();
+    free(context);
+    return 0;
 }
