@@ -4,15 +4,14 @@
 #include <string.h>
 
 int main(int argc, const char** argv) {
-    MFContext* context = (MFContext*) malloc(mfGetContextSizeInBytes());
-    memset(context, 0, mfGetContextSizeInBytes());
+    MFContext* context = MF_ALLOCMEM(MFContext, mfGetContextSizeInBytes());
     
     mfSetCurrentContext(context);
-    mfInit("MFTest");
+    mfInit();
     
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "Hello from MFTest!");
 
     mfShutdown();
-    free(context);
+    MF_FREEMEM(context);
     return 0;
 }

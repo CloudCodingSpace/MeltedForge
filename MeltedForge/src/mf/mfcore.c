@@ -20,7 +20,7 @@ void log_fatal(const char* msg) {
     abort();
 }
 
-void mfInit(const char* appName) {
+void mfInit(void) {
     if(ctx == mfnull) {
         printf("[MeltedForge]: The current context shouldn't be null!");
         abort();
@@ -38,7 +38,7 @@ void mfInit(const char* appName) {
     ctx->api = MF_RENDER_API_NONE;
 }
 
-void mfShutdown() {
+void mfShutdown(void) {
     if(ctx == mfnull) {
         printf("[MeltedForge]: The current context shouldn't be null!");
         abort();
@@ -62,11 +62,11 @@ void mfSetCurrentContext(MFContext* ctx_) {
     ctx = ctx_;
 }
 
-size_t mfGetContextSizeInBytes() {
+size_t mfGetContextSizeInBytes(void) {
     return sizeof(MFContext);
 }
 
-SLogger* mfGetLogger() {
+SLogger* mfGetLogger(void) {
     if(ctx == mfnull) {
         printf("[MeltedForge]: The current context shouldn't be null!");
         abort();

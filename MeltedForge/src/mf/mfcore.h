@@ -12,10 +12,10 @@ typedef enum {
     MF_RENDER_API_VULKAN
 } MFRenderAPI;
 
-void mfInit(const char* appName);
-void mfShutdown();
+void mfInit(void);
+void mfShutdown(void);
 
 void mfSetCurrentContext(MFContext* ctx);
 
-size_t mfGetContextSizeInBytes();
-SLogger* mfGetLogger();
+size_t mfGetContextSizeInBytes(void);
+SLogger* mfGetLogger(void);
