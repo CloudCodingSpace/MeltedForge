@@ -16,5 +16,25 @@
     "editor.lineNumbers": "relative",
     "workbench.colorTheme": "GitHub Dark Default",
     "editor.tabCompletion": "on",
-    "editor.useTabStops": false
+    "editor.useTabStops": false,
+    "files.associations": {
+        "compare": "c",
+        "cstdint": "c",
+        "glfw3.h": "c",
+        "array": "c",
+        "deque": "c",
+        "format": "c",
+        "initializer_list": "c",
+        "list": "c",
+        "queue": "c",
+        "random": "c",
+        "span": "c",
+        "utility": "c",
+        "vector": "c",
+        "xhash": "c",
+        "xstring": "c",
+        "xtree": "c",
+        "xutility": "c",
+        "string_view": "c"
+    }
 }

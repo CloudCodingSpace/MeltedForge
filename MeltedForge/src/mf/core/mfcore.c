@@ -13,7 +13,7 @@ struct MFContext_s {
     bool init;
 };
 
-MFContext* ctx = mfnull;
+static MFContext* ctx = mfnull;
 
 void log_fatal(const char* msg) {
     slogLogConsole(&ctx->logger, SLOG_SEVERITY_FATAL, msg);
@@ -22,12 +22,12 @@ void log_fatal(const char* msg) {
 
 void mfInit(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+        printf("[MeltedForge]: The current context shouldn't be null!\n");
         abort();
     }
     
     if(ctx->init) {
-        slogLogConsole(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!");
+        slogLogConsole(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!\n");
         return;
     }
     
@@ -40,26 +40,35 @@ void mfInit(void) {
 
 void mfShutdown(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+        printf("[MeltedForge]: The current context shouldn't be null!\n");
         abort();
     }
     
     if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!");
+        printf("[MeltedForge]: The current context is not yet initialized!\n");
         abort();
     }
 
     ctx->api = MF_RENDER_API_NONE;
     ctx->init = false;
+    glfwTerminate();
 }
 
 void mfSetCurrentContext(MFContext* ctx_) {
     if(ctx_ == mfnull) {
-        printf("[MeltedForge]: The context provided shouldn't be null!");
+        printf("[MeltedForge]: The context provided shouldn't be null!\n");
         abort();
     }
     
     ctx = ctx_;
+}
+
+MFContext* mfCheckCurrentContext(void) {
+    if(ctx == mfnull) {
+        printf("[MeltedForge]: The current context is null as it is not set!\n");
+        abort();
+    }
+    return ctx;
 }
 
 size_t mfGetContextSizeInBytes(void) {
@@ -68,7 +77,7 @@ size_t mfGetContextSizeInBytes(void) {
 
 SLogger* mfGetLogger(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+        printf("[MeltedForge]: The current context shouldn't be null!\n");
         abort();
     }
     

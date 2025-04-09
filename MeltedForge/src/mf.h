@@ -1,4 +1,5 @@
 // @note: Only to be included by other projects
 
-#include "mf/mfcore.h"
-#include "mf/mfutils.h"
+#include "mf/core/mfcore.h"
+#include "mf/core/mfutils.h"
+#include "mf/window/mfwindow.h"
