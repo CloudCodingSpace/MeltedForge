@@ -20,6 +20,16 @@ int main(int argc, const char** argv) {
         .height = 600
     });
 
+    MFMat2 a;
+    a.data[0] = 5;
+    a.data[1] = 9;
+    a.data[2] = 6;
+    a.data[3] = 12;
+    
+    MFMat2 b = mfMat2Inverse(a);
+
+    MFMat2 c = mfMat2Mul(a, b);
+    
     mfWindowShow(window);
 
     while(mfIsWindowOpen(window)) {

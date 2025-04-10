@@ -35,6 +35,7 @@
         "xstring": "c",
         "xtree": "c",
         "xutility": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "string": "c"
     }
 }

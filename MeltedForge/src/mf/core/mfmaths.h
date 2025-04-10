@@ -274,3 +274,67 @@ MF_INLINE MFMat2 mfMat2Mul(MFMat2 a, MFMat2 b) {
 
     return result;
 }
+
+MF_INLINE MFMat2 mfMat2MulScalar(MFMat2 a, float x) {
+    MFMat2 result;
+
+    for (int i = 0; i < 4; i++) {
+        result.data[i] = a.data[i] * x;
+    } 
+
+    return result;
+}
+
+MF_INLINE MFVec2 mfMat2MulVec2(MFMat2 a, MFVec2 x) {
+    MFVec2 result;
+
+    result.x = a.data[0] * x.x + a.data[1] * x.y;
+    result.y = a.data[2] * x.x + a.data[3] * x.y;
+
+    return result;
+}
+
+MF_INLINE void mfMat2Rotate(MFMat2* mat, float theta_rad) {
+    mat->data[0] *= cosf(theta_rad);
+    mat->data[1] *= -sinf(theta_rad);
+    mat->data[2] *= sinf(theta_rad);
+    mat->data[3] *= cosf(theta_rad);
+}
+
+MF_INLINE void mfMat2Scale(MFMat2* mat, float x, float y) {
+    mat->data[0] *= x;
+    mat->data[3] *= y;
+}
+
+MF_INLINE MFMat2 mfMat2Transpose(MFMat2 mat) {
+    MFMat2 result;
+
+    result.data[0] = mat.data[0];
+    result.data[3] = mat.data[3];
+
+    result.data[1] = mat.data[2];
+    result.data[2] = mat.data[1];
+
+    return result;
+}
+
+MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
+    MFMat2 result;
+
+    result.data[0] = mat.data[3];
+    result.data[1] = -mat.data[1];
+    result.data[2] = -mat.data[2];
+    result.data[3] = mat.data[0];
+
+    float d = mat.data[0] * mat.data[3] - mat.data[1] * mat.data[2];
+
+    if(d == 0) {
+        MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
+    }
+
+    d = 1.0f / d;
+
+    result = mfMat2MulScalar(result, d);
+
+    return result;
+}
