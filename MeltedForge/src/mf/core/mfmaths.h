@@ -230,3 +230,47 @@ MF_INLINE MFVec4 mfVec4Normalize(MFVec4 a) {
         return mfVec4Create(0, 0, 0, 0);
     return mfVec4Div(a, mfVec4Create(len, len, len, len));
 }
+
+/*  Mat2  */
+
+MF_INLINE MFMat2 mfMat2Identity() {
+    MFMat2 mat;
+    MF_SETMEM(mat.data, 0, sizeof(f32) * 4);
+
+    mat.data[0] = 1.0f;
+    mat.data[3] = 1.0f;
+
+    return mat;
+}
+
+MF_INLINE MFMat2 mfMat2Add(MFMat2 a, MFMat2 b) {
+    MFMat2 result;
+
+    for(int i = 0; i < 4; i++) {
+        result.data[i] = a.data[i] + b.data[i];
+    }
+
+    return result;
+}
+
+MF_INLINE MFMat2 mfMat2Sub(MFMat2 a, MFMat2 b) {
+    MFMat2 result;
+
+    for(int i = 0; i < 4; i++) {
+        result.data[i] = a.data[i] - b.data[i];
+    }
+
+    return result;
+}
+
+MF_INLINE MFMat2 mfMat2Mul(MFMat2 a, MFMat2 b) {
+    MFMat2 result;
+
+    result.data[0] = a.data[0] * b.data[0] + a.data[2] * b.data[1];
+    result.data[1] = a.data[1] * b.data[0] + a.data[3] * b.data[1];
+
+    result.data[2] = a.data[0] * b.data[2] + a.data[2] * b.data[3];
+    result.data[3] = a.data[1] * b.data[2] + a.data[3] * b.data[3];
+
+    return result;
+}
