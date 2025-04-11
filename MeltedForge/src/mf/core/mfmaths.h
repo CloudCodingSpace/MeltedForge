@@ -467,9 +467,36 @@ MF_INLINE void mfMat3Translate(MFMat3* mat, float tx, float ty) {
     *mat = mfMat3Mul(translation, *mat);
 }
 
-// TODO: Understand and implement it
-MF_INLINE MFMat3 mfMat3Inverse(MFMat3 mat) {
-    MFMat3 result;
+MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
+    float a = m.data[0], b = m.data[1], tx = m.data[2];
+    float c = m.data[3], d = m.data[4], ty = m.data[5];
 
-    return result;
+    float det = a * d - b * c;
+    if (fabsf(det) < 1e-6f) {
+        return (MFMat3){ .data = {
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1
+        }};
+    }
+
+    float invDet = 1.0f / det;
+
+    float ia =  d * invDet;
+    float ib = -b * invDet;
+    float ic = -c * invDet;
+    float id =  a * invDet;
+
+    float itx = -(ia * tx + ib * ty);
+    float ity = -(ic * tx + id * ty);
+
+    MFMat3 inv = {
+        .data = {
+            ia, ib, itx,
+            ic, id, ity,
+            0,  0,  1
+        }
+    };
+
+    return inv;
 }
