@@ -295,15 +295,22 @@ MF_INLINE MFVec2 mfMat2MulVec2(MFMat2 a, MFVec2 x) {
 }
 
 MF_INLINE void mfMat2Rotate(MFMat2* mat, float theta_rad) {
-    mat->data[0] *= cosf(theta_rad);
-    mat->data[1] *= -sinf(theta_rad);
-    mat->data[2] *= sinf(theta_rad);
-    mat->data[3] *= cosf(theta_rad);
+    float c = cosf(theta_rad);
+    float s = sinf(theta_rad);
+    
+    MFMat2 rotation = {
+        .data = {
+            c, -s,
+            s,  c
+        }
+    };
+
+    *mat = mfMat2Mul(rotation, *mat);
 }
 
 MF_INLINE void mfMat2Scale(MFMat2* mat, float x, float y) {
-    mat->data[0] *= x;
-    mat->data[3] *= y;
+    mat->data[0] = x;
+    mat->data[3] = y;
 }
 
 MF_INLINE MFMat2 mfMat2Transpose(MFMat2 mat) {
@@ -335,6 +342,134 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
     d = 1.0f / d;
 
     result = mfMat2MulScalar(result, d);
+
+    return result;
+}
+
+/*  Mat3  */
+MF_INLINE MFMat3 mfMat3Identity() {
+    MFMat3 mat;
+    MF_SETMEM(mat.data, 0, sizeof(f32) * 9);
+
+    mat.data[0] = 1.0f;
+    mat.data[4] = 1.0f;
+    mat.data[8] = 1.0f;
+
+    return mat;
+}
+
+MF_INLINE MFMat3 mfMat3Add(MFMat3 a, MFMat3 b) {
+    MFMat3 result;
+
+    for(int i = 0; i < 9; i++) {
+        result.data[i] = a.data[i] + b.data[i];
+    }
+
+    return result;
+}
+
+MF_INLINE MFMat3 mfMat3Sub(MFMat3 a, MFMat3 b) {
+    MFMat3 result;
+
+    for(int i = 0; i < 9; i++) {
+        result.data[i] = a.data[i] - b.data[i];
+    }
+
+    return result;
+}
+
+MF_INLINE MFMat3 mfMat3Mul(MFMat3 a, MFMat3 b) {
+    MFMat3 result;
+
+    result.data[0] = a.data[0] * b.data[0] + a.data[3] * b.data[1] + a.data[6] * b.data[2];
+    result.data[3] = a.data[0] * b.data[3] + a.data[3] * b.data[4] + a.data[6] * b.data[5];
+    result.data[6] = a.data[0] * b.data[6] + a.data[3] * b.data[7] + a.data[6] * b.data[8];
+
+    result.data[1] = a.data[1] * b.data[0] + a.data[4] * b.data[1] + a.data[7] * b.data[2];
+    result.data[4] = a.data[1] * b.data[3] + a.data[4] * b.data[4] + a.data[7] * b.data[5];
+    result.data[7] = a.data[1] * b.data[6] + a.data[4] * b.data[7] + a.data[7] * b.data[8];
+    
+    result.data[2] = a.data[2] * b.data[0] + a.data[5] * b.data[1] + a.data[8] * b.data[2];
+    result.data[5] = a.data[2] * b.data[3] + a.data[5] * b.data[4] + a.data[8] * b.data[5];
+    result.data[8] = a.data[2] * b.data[6] + a.data[5] * b.data[7] + a.data[8] * b.data[8];
+
+    return result;
+}
+
+MF_INLINE MFMat3 mfMat3MulScalar(MFMat3 a, float x) {
+    MFMat3 result;
+
+    for (int i = 0; i < 9; i++) {
+        result.data[i] = a.data[i] * x;
+    } 
+
+    return result;
+}
+
+MF_INLINE MFVec3 mfMat3MulVec3(MFMat3 a, MFVec3 x) {
+    MFVec3 result;
+
+    result.x = a.data[0] * x.x + a.data[1] * x.y + a.data[2] * x.z;
+    result.y = a.data[3] * x.x + a.data[4] * x.y + a.data[5] * x.z;
+    result.z = a.data[6] * x.x + a.data[7] * x.y + a.data[8] * x.z;
+
+    return result;
+}
+
+MF_INLINE void mfMat3Rotate(MFMat3* mat, float theta_rad) {
+    float c = cosf(theta_rad);
+    float s = sinf(theta_rad);
+
+    MFMat3 rotation = {
+        .data = {
+            c, -s, 0,
+            s,  c, 0,
+            0,  0, 1
+        }
+    };
+
+    *mat = mfMat3Mul(rotation, *mat);
+}
+
+MF_INLINE void mfMat3Scale(MFMat3* mat, float x, float y, float z) {
+    mat->data[0] = x;
+    mat->data[4] = y;
+    mat->data[8] = z;
+}
+
+MF_INLINE MFMat3 mfMat3Transpose(MFMat3 mat) {
+    MFMat3 result;
+
+    result.data[0] = mat.data[0];
+    result.data[4] = mat.data[4];
+    result.data[8] = mat.data[8];
+
+    result.data[1] = mat.data[3];
+    result.data[2] = mat.data[6];
+    result.data[3] = mat.data[1];
+
+    result.data[5] = mat.data[7];
+    result.data[6] = mat.data[2];
+    result.data[7] = mat.data[5];
+
+    return result;
+}
+
+MF_INLINE void mfMat3Translate(MFMat3* mat, float tx, float ty) {
+    MFMat3 translation = {
+        .data = {
+            1, 0, tx,
+            0, 1, ty,
+            0, 0, 1
+        }
+    };
+
+    *mat = mfMat3Mul(translation, *mat);
+}
+
+// TODO: Understand and implement it
+MF_INLINE MFMat3 mfMat3Inverse(MFMat3 mat) {
+    MFMat3 result;
 
     return result;
 }
