@@ -12,13 +12,13 @@ int main(int argc, const char** argv) {
     mfInit();
     
     if(config.initApp)
-        config.initApp(config.state, &config.winConfig);
+        config.initApp(config.state, &config);
 
     if(config.runApp)
-        config.runApp(config.state);
+        config.runApp(config.state, &config);
 
     if(config.shutdownApp)
-        config.shutdownApp(config.state);
+        config.shutdownApp(config.state, &config);
 
     mfShutdown();
 

@@ -51,7 +51,7 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     glfwSetWindowPos(window->handle, config.x, config.y);
 
     if(config.centered) {
-        glfwSetWindowPos(window->handle, (mode->width - config.height)/2, (mode->height - config.height)/2);
+        glfwSetWindowPos(window->handle, (mode->width - config.width)/2, (mode->height - config.height)/2);
     }
 
     window->config = config;
