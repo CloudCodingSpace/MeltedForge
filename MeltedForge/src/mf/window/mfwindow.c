@@ -147,6 +147,32 @@ b8 mfIsWindowOpen(MFWindow* window) {
     return !glfwWindowShouldClose(window->handle);
 }
 
+const char* mfGetWindowTitle(MFWindow* window) {
+    if(window == mfnull) {
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+    }
+    if(!window->init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+    }
+
+    return glfwGetWindowTitle(window->handle);
+}
+
+void mfSetWindowTitle(MFWindow* window, const char* title) {
+    if(window == mfnull) {
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+    }
+    if(!window->init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+    }
+    if(title == mfnull) {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The title that is to be set shouldn't be null!\n");
+        return;
+    }
+
+    glfwSetWindowTitle(window->handle, title);
+}
+
 GLFWwindow* mfGetWindowHandle(MFWindow* window) {
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");

@@ -15,6 +15,8 @@ static void deinitApp(void* st, MFAppConfig* config) {
 
     for(u32 i = 0; i < config->layerCount; i++) {
         config->layers[i].onDeinit(config->layers[i].state, st);
+        if(config->layers[i].state != 0)
+            MF_FREEMEM(config->layers[i].state);
     }
     
     if(config->layers && config->layerCount > 0)
@@ -43,14 +45,14 @@ static MFWindow* getWindow(void* state) {
     return ((MFDefaultAppState*)state)->window;
 }
 
-MFAppConfig mfCreateDefaultApp() {
+MFAppConfig mfCreateDefaultApp(const char* name) {
     return (MFAppConfig) {
         .state = MF_ALLOCMEM(MFDefaultAppState, sizeof(MFDefaultAppState)),
         .winConfig = (MFWindowConfig){
             .centered = true,
             .fullscreen = false,
             .resizable = false,
-            .title = "MFTest",
+            .title = name,
             .width = 800,
             .height = 600
         },

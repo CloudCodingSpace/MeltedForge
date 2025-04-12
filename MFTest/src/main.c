@@ -17,11 +17,11 @@ static void MFTOnRender(void* state, void* appState) {
 }
 
 static void MFTOnUpdate(void* state, void* appState) {
-    
+
 }
 
 MFAppConfig mfClientCreateAppConfig() {
-    MFAppConfig config = mfCreateDefaultApp();
+    MFAppConfig config = mfCreateDefaultApp("MFTest");
     
     config.layerCount = 1;
     config.layers = MF_ALLOCMEM(MFLayer, sizeof(MFLayer) * config.layerCount);

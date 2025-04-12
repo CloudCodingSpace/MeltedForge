@@ -25,4 +25,4 @@ typedef struct MFDefaultAppState_s {
     MFWindow* window;
 } MFDefaultAppState;
 
-MFAppConfig mfCreateDefaultApp();
+MFAppConfig mfCreateDefaultApp(const char* name);

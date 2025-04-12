@@ -24,6 +24,9 @@ void mfWindowShow(MFWindow* window);
 void mfWindowHide(MFWindow* window);
 b8 mfIsWindowOpen(MFWindow* window);
 
+const char* mfGetWindowTitle(MFWindow* window);
+void mfSetWindowTitle(MFWindow* window, const char* title);
+
 GLFWwindow* mfGetWindowHandle(MFWindow* window);
 const MFWindowConfig* mfGetWindowConfig(MFWindow* window);
 
