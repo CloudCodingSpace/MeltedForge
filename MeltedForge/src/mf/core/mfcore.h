@@ -7,11 +7,6 @@
 
 typedef struct MFContext_s MFContext;
 
-typedef enum {
-    MF_RENDER_API_NONE,
-    MF_RENDER_API_VULKAN
-} MFRenderAPI;
-
 void mfInit(void);
 void mfShutdown(void);
 

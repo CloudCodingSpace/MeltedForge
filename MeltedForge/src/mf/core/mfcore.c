@@ -8,7 +8,6 @@
 #include <stdbool.h>
 
 struct MFContext_s {
-    MFRenderAPI api;
     SLogger logger;
     bool init;
 };
@@ -35,7 +34,6 @@ void mfInit(void) {
     slogLoggerSetName(&ctx->logger, "MeltedForge");
     
     ctx->init = true;
-    ctx->api = MF_RENDER_API_NONE;
 }
 
 void mfShutdown(void) {
@@ -49,7 +47,6 @@ void mfShutdown(void) {
         abort();
     }
 
-    ctx->api = MF_RENDER_API_NONE;
     ctx->init = false;
     glfwTerminate();
 }
