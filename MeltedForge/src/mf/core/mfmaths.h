@@ -234,13 +234,12 @@ MF_INLINE MFVec4 mfVec4Normalize(MFVec4 a) {
 /*  Mat2  */
 
 MF_INLINE MFMat2 mfMat2Identity() {
-    MFMat2 mat;
-    MF_SETMEM(mat.data, 0, sizeof(f32) * 4);
-
-    mat.data[0] = 1.0f;
-    mat.data[3] = 1.0f;
-
-    return mat;
+    return (MFMat2) {
+        .data = {
+            1, 0,
+            0, 1
+        }
+    };
 }
 
 MF_INLINE MFMat2 mfMat2Add(MFMat2 a, MFMat2 b) {
@@ -335,7 +334,7 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
 
     float d = mat.data[0] * mat.data[3] - mat.data[1] * mat.data[2];
 
-    if(d == 0) {
+    if(fabsf(d) < 1e-6f) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
@@ -348,14 +347,13 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
 
 /*  Mat3  */
 MF_INLINE MFMat3 mfMat3Identity() {
-    MFMat3 mat;
-    MF_SETMEM(mat.data, 0, sizeof(f32) * 9);
-
-    mat.data[0] = 1.0f;
-    mat.data[4] = 1.0f;
-    mat.data[8] = 1.0f;
-
-    return mat;
+    return (MFMat3) {
+        .data = {
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1,
+        }
+    };
 }
 
 MF_INLINE MFMat3 mfMat3Add(MFMat3 a, MFMat3 b) {
@@ -455,29 +453,13 @@ MF_INLINE MFMat3 mfMat3Transpose(MFMat3 mat) {
     return result;
 }
 
-MF_INLINE void mfMat3Translate(MFMat3* mat, float tx, float ty) {
-    MFMat3 translation = {
-        .data = {
-            1, 0, tx,
-            0, 1, ty,
-            0, 0, 1
-        }
-    };
-
-    *mat = mfMat3Mul(translation, *mat);
-}
-
 MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
     float a = m.data[0], b = m.data[1], tx = m.data[2];
     float c = m.data[3], d = m.data[4], ty = m.data[5];
 
     float det = a * d - b * c;
     if (fabsf(det) < 1e-6f) {
-        return (MFMat3){ .data = {
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1
-        }};
+        MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
     float invDet = 1.0f / det;
@@ -498,5 +480,196 @@ MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
         }
     };
 
+    return inv;
+}
+/*   Mat4   */
+
+MF_INLINE MFMat4 mfMat4Identity(void) {
+    return (MFMat4){
+        .data = {
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        }
+    };
+}
+
+MF_INLINE MFMat4 mfMat4Mul(MFMat4 a, MFMat4 b) {
+    MFMat4 result = {0};
+    for (u32 col = 0; col < 4; ++col) {
+        for (u32 row = 0; row < 4; ++row) {
+            f32 sum = 0.0f;
+            for (u32 i = 0; i < 4; ++i) {
+                sum += a.data[i * 4 + row] * b.data[col * 4 + i];
+            }
+            result.data[col * 4 + row] = sum;
+        }
+    }
+    return result;
+}
+
+MF_INLINE MFMat4 mfMat4MulScalar(MFMat4 mat, f32 scalar) {
+    for (u32 i = 0; i < 16; ++i) {
+        mat.data[i] *= scalar;
+    }
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4Translate(f32 x, f32 y, f32 z) {
+    MFMat4 mat = mfMat4Identity();
+    mat.data[12] = x;
+    mat.data[13] = y;
+    mat.data[14] = z;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4Scale(f32 x, f32 y, f32 z) {
+    MFMat4 mat = mfMat4Identity();
+    mat.data[0] = x;
+    mat.data[5] = y;
+    mat.data[10] = z;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4RotateX(f32 radians) {
+    f32 c = cosf(radians);
+    f32 s = sinf(radians);
+    MFMat4 mat = mfMat4Identity();
+    mat.data[5] = c;
+    mat.data[6] = s;
+    mat.data[9] = -s;
+    mat.data[10] = c;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4RotateY(f32 radians) {
+    f32 c = cosf(radians);
+    f32 s = sinf(radians);
+    MFMat4 mat = mfMat4Identity();
+    mat.data[0] = c;
+    mat.data[2] = -s;
+    mat.data[8] = s;
+    mat.data[10] = c;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4RotateZ(f32 radians) {
+    f32 c = cosf(radians);
+    f32 s = sinf(radians);
+    MFMat4 mat = mfMat4Identity();
+    mat.data[0] = c;
+    mat.data[1] = s;
+    mat.data[4] = -s;
+    mat.data[5] = c;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4RotateXYZ(f32 radiansX, f32 radiansY, f32 radiansZ) {
+    MFMat4 x = mfMat4RotateX(radiansX);
+    MFMat4 y = mfMat4RotateY(radiansY);
+    MFMat4 z = mfMat4RotateZ(radiansZ);
+    return mfMat4Mul(mfMat4Mul(x, y), z);
+}
+
+MF_INLINE MFMat4 mfMat4Perspective(f32 fovYRadians, f32 aspect, f32 nearZ, f32 farZ) {
+    f32 f = 1.0f / tanf(fovYRadians / 2.0f);
+    f32 nf = 1.0f / (nearZ - farZ);
+    MFMat4 mat = {0};
+    mat.data[0] = f / aspect;
+    mat.data[5] = f;
+    mat.data[10] = (farZ + nearZ) * nf;
+    mat.data[11] = -1.0f;
+    mat.data[14] = (2.0f * farZ * nearZ) * nf;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 nearZ, f32 farZ) {
+    MFMat4 mat = {0};
+    mat.data[0] = 2.0f / (right - left);
+    mat.data[5] = 2.0f / (top - bottom);
+    mat.data[10] = -2.0f / (farZ - nearZ);
+    mat.data[12] = -(right + left) / (right - left);
+    mat.data[13] = -(top + bottom) / (top - bottom);
+    mat.data[14] = -(farZ + nearZ) / (farZ - nearZ);
+    mat.data[15] = 1.0f;
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4LookAt(MFVec3 eye, MFVec3 center, MFVec3 up) {
+    MFVec3 f = mfVec3Normalize(mfVec3Sub(center, eye));
+    MFVec3 s = mfVec3Normalize(mfVec3Cross(f, up));
+    MFVec3 u = mfVec3Cross(s, f);
+
+    MFMat4 mat = mfMat4Identity();
+
+    mat.data[0] = s.x;
+    mat.data[1] = u.x;
+    mat.data[2] = -f.x;
+    mat.data[3] = 0.0f;
+
+    mat.data[4] = s.y;
+    mat.data[5] = u.y;
+    mat.data[6] = -f.y;
+    mat.data[7] = 0.0f;
+
+    mat.data[8] = s.z;
+    mat.data[9] = u.z;
+    mat.data[10] = -f.z;
+    mat.data[11] = 0.0f;
+
+    mat.data[12] = -mfVec3Dot(s, eye);
+    mat.data[13] = -mfVec3Dot(u, eye);
+    mat.data[14] = mfVec3Dot(f, eye);
+    mat.data[15] = 1.0f;
+
+    return mat;
+}
+
+MF_INLINE MFMat4 mfMat4Inverse(MFMat4 m) {
+    f32* a = m.data;
+    MFMat4 inv;
+    f32* o = inv.data;
+
+    o[0] =  a[5]*a[10]*a[15] - a[5]*a[11]*a[14] - a[9]*a[6]*a[15]  + a[9]*a[7]*a[14] + a[13]*a[6]*a[11] - a[13]*a[7]*a[10];
+
+    o[4] = -a[4]*a[10]*a[15] + a[4]*a[11]*a[14] + a[8]*a[6]*a[15]  - a[8]*a[7]*a[14] - a[12]*a[6]*a[11] + a[12]*a[7]*a[10];
+
+    o[8] =  a[4]*a[9]*a[15] - a[4]*a[11]*a[13] - a[8]*a[5]*a[15]  + a[8]*a[7]*a[13] + a[12]*a[5]*a[11] - a[12]*a[7]*a[9];
+
+    o[12] = -a[4]*a[9]*a[14] + a[4]*a[10]*a[13] + a[8]*a[5]*a[14]  - a[8]*a[6]*a[13] - a[12]*a[5]*a[10] + a[12]*a[6]*a[9];
+
+    o[1] = -a[1]*a[10]*a[15] + a[1]*a[11]*a[14] + a[9]*a[2]*a[15]  - a[9]*a[3]*a[14] - a[13]*a[2]*a[11] + a[13]*a[3]*a[10];
+
+    o[5] =  a[0]*a[10]*a[15] - a[0]*a[11]*a[14] - a[8]*a[2]*a[15]  + a[8]*a[3]*a[14] + a[12]*a[2]*a[11] - a[12]*a[3]*a[10];
+
+    o[9] = -a[0]*a[9]*a[15] + a[0]*a[11]*a[13] + a[8]*a[1]*a[15] - a[8]*a[3]*a[13] - a[12]*a[1]*a[11] + a[12]*a[3]*a[9];
+
+    o[13] =  a[0]*a[9]*a[14] - a[0]*a[10]*a[13] - a[8]*a[1]*a[14] + a[8]*a[2]*a[13] + a[12]*a[1]*a[10] - a[12]*a[2]*a[9];
+
+    o[2] =  a[1]*a[6]*a[15] - a[1]*a[7]*a[14] - a[5]*a[2]*a[15]  + a[5]*a[3]*a[14] + a[13]*a[2]*a[7] - a[13]*a[3]*a[6];
+
+    o[6] = -a[0]*a[6]*a[15] + a[0]*a[7]*a[14] + a[4]*a[2]*a[15] - a[4]*a[3]*a[14] - a[12]*a[2]*a[7] + a[12]*a[3]*a[6];
+
+    o[10] = a[0]*a[5]*a[15] - a[0]*a[7]*a[13] - a[4]*a[1]*a[15]  + a[4]*a[3]*a[13] + a[12]*a[1]*a[7] - a[12]*a[3]*a[5];
+
+    o[14] = -a[0]*a[5]*a[14] + a[0]*a[6]*a[13] + a[4]*a[1]*a[14] - a[4]*a[2]*a[13] - a[12]*a[1]*a[6] + a[12]*a[2]*a[5];
+
+    o[3] = -a[1]*a[6]*a[11] + a[1]*a[7]*a[10] + a[5]*a[2]*a[11] - a[5]*a[3]*a[10] - a[9]*a[2]*a[7] + a[9]*a[3]*a[6];
+
+    o[7] =  a[0]*a[6]*a[11] - a[0]*a[7]*a[10] - a[4]*a[2]*a[11] + a[4]*a[3]*a[10] + a[8]*a[2]*a[7] - a[8]*a[3]*a[6];
+
+    o[11] = -a[0]*a[5]*a[11] + a[0]*a[7]*a[9] + a[4]*a[1]*a[11]  - a[4]*a[3]*a[9] - a[8]*a[1]*a[7] + a[8]*a[3]*a[5];
+
+    o[15] = a[0]*a[5]*a[10] - a[0]*a[6]*a[9] - a[4]*a[1]*a[10] + a[4]*a[2]*a[9] + a[8]*a[1]*a[6] - a[8]*a[2]*a[5];
+
+    f32 det = a[0]*o[0] + a[1]*o[4] + a[2]*o[8] + a[3]*o[12];
+    if (det == 0.0f) {
+        MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
+    }
+
+    f32 inv_det = 1.0f / det;
+    for (int i = 0; i < 16; ++i) 
+        o[i] *= inv_det;
     return inv;
 }
