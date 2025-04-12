@@ -36,6 +36,9 @@
         "xtree": "c",
         "xutility": "c",
         "string_view": "c",
-        "string": "c"
+        "string": "c",
+        "mfutils.h": "c",
+        "mfwindow.h": "c",
+        "mfcore.h": "c"
     }
 }
