@@ -5,6 +5,9 @@ static void initApp(void* st, MFAppConfig* config) {
     state->window = MF_ALLOCMEM(MFWindow, mfWindowGetSizeInBytes());
     mfWindowInit(state->window, config->winConfig);
 
+    state->renderer = MF_ALLOCMEM(MFRenderer, mfGetRendererSizeInBytes());
+    mfRendererInit(state->renderer, config->name, state->window);
+
     for(u32 i = 0; i < config->layerCount; i++) {
         config->layers[i].onInit(config->layers[i].state, st);
     }
@@ -21,7 +24,10 @@ static void deinitApp(void* st, MFAppConfig* config) {
     
     if(config->layers && config->layerCount > 0)
         MF_FREEMEM(config->layers);
+
+    mfRendererShutdown(state->renderer);
     mfWindowDestroy(state->window);
+    MF_FREEMEM(state->renderer);
     MF_FREEMEM(state->window);
 }
 
@@ -30,9 +36,11 @@ static void runApp(void* st, MFAppConfig* config) {
 
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
+        mfRendererBeginframe(state->renderer);
         for(u32 i = 0; i < config->layerCount; i++) {
             config->layers[i].onRender(config->layers[i].state, st);
         }
+        mfRendererEndframe(state->renderer);
 
         for(u32 i = 0; i < config->layerCount; i++) {
             config->layers[i].onUpdate(config->layers[i].state, st);
@@ -59,6 +67,7 @@ MFAppConfig mfCreateDefaultApp(const char* name) {
         .initApp = &initApp,
         .shutdownApp = &deinitApp,
         .runApp = &runApp,
-        .getWindowHandle = &getWindow
+        .getWindowHandle = &getWindow,
+        .name = name
     };
 }

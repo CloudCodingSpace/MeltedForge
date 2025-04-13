@@ -1,6 +1,7 @@
 #pragma once
 
 #include "window/mfwindow.h"
+#include "renderer/mfrenderer.h"
 
 typedef struct MFLayer_s {
     void* state;
@@ -11,6 +12,7 @@ typedef struct MFLayer_s {
 } MFLayer;
 
 typedef struct MFAppConfig_s {
+    const char* name;
     void* state;
     MFWindowConfig winConfig;
     u32 layerCount;
@@ -23,6 +25,7 @@ typedef struct MFAppConfig_s {
 
 typedef struct MFDefaultAppState_s {
     MFWindow* window;
+    MFRenderer* renderer;
 } MFDefaultAppState;
 
 MFAppConfig mfCreateDefaultApp(const char* name);

@@ -57,7 +57,7 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     window->config = config;
     window->init = true;
 
-    MF_INFO(mfGetLogger(), "Created MFWindow\n");
+    MF_INFO(mfGetLogger(), "Creating MFWindow\n");
 }
 
 void mfWindowDestroy(MFWindow* window) {
@@ -73,7 +73,7 @@ void mfWindowDestroy(MFWindow* window) {
     glfwDestroyWindow(window->handle);
     MF_SETMEM(window, 0, sizeof(*window));
 
-    MF_INFO(mfGetLogger(), "Destroyed MFWindow\n");
+    MF_INFO(mfGetLogger(), "Destroying MFWindow\n");
 }
 
 void mfWindowSetIcon(MFWindow* window, const char* path) {
