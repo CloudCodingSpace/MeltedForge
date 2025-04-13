@@ -11,6 +11,8 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 file(GLOB_RECURSE SRCS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mfassets" DESTINATION "${CMAKE_BINARY_DIR}")
+
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/stb)
 add_subdirectory(libs/slog)

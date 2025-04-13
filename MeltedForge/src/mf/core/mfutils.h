@@ -14,6 +14,7 @@
 #define MF_MAX(x, y) (x > y ? x : y)
 
 #define MF_FATAL_ABORT(logger, msg) slogLogConsole(logger, SLOG_SEVERITY_FATAL, msg); abort()
+#define MF_ASSERT(expr, logger, msg) if(expr) { MF_FATAL_ABORT(logger, msg); }
 
 #ifdef _DEBUG
     #define MF_INFO(logger, msg) slogLogConsole(logger, SLOG_SEVERITY_INFO, msg)

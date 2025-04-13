@@ -39,6 +39,7 @@
         "string": "c",
         "mfutils.h": "c",
         "mfwindow.h": "c",
-        "mfcore.h": "c"
+        "mfcore.h": "c",
+        "mf.h": "c"
     }
 }

@@ -17,7 +17,10 @@ static void MFTOnRender(void* state, void* appState) {
 }
 
 static void MFTOnUpdate(void* state, void* appState) {
-
+    MFDefaultAppState* aState = (MFDefaultAppState*)appState;
+    if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
+        mfWindowClose(aState->window);
+    }
 }
 
 MFAppConfig mfClientCreateAppConfig() {
