@@ -5,3 +5,4 @@
 #include "mf/core/mfutils.h"
 #include "mf/core/mfmaths.h"
 #include "mf/core/mfentry.h"
+#include "mf/core/mftimer.h"
