@@ -30,9 +30,14 @@ void mfVkBckndInit(MFVkBackend* backend, const char* appName, MFWindow* window) 
 
         VK_CHECK(vkCreateInstance(&info, backend->callbacks, &backend->instance));
     }
+    // Surface
+    {
+        VK_CHECK(glfwCreateWindowSurface(backend->instance, mfGetWindowHandle(window), backend->callbacks, &backend->surface));
+    }
 }
 
 void mfVkBckndShutdown(MFVkBackend* backend) {
+    vkDestroySurfaceKHR(backend->instance, backend->surface, backend->callbacks);
     vkDestroyInstance(backend->instance, backend->callbacks);
 
     backend->callbacks = 0;

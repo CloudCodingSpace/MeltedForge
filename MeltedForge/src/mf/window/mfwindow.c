@@ -29,6 +29,7 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
 
     glfwWindowHint(GLFW_RESIZABLE, config.resizable);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     GLFWmonitor* monitor = mfnull;
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());

@@ -7,6 +7,7 @@
 typedef struct MFVkBackend_s {
     VkInstance instance;
     VkAllocationCallbacks* callbacks;
+    VkSurfaceKHR surface;
 } MFVkBackend;
 
 void mfVkBckndInit(MFVkBackend* backend, const char* appName, MFWindow* window);
