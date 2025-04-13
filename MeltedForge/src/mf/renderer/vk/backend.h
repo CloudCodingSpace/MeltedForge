@@ -2,8 +2,11 @@
 
 #include "window/mfwindow.h"
 
-typedef struct MFVkBackend_s {
+#include <vulkan/vulkan.h>
 
+typedef struct MFVkBackend_s {
+    VkInstance instance;
+    VkAllocationCallbacks* callbacks;
 } MFVkBackend;
 
 void mfVkBckndInit(MFVkBackend* backend, const char* appName, MFWindow* window);
