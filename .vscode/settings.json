@@ -41,6 +41,10 @@
         "mfwindow.h": "c",
         "mfcore.h": "c",
         "mf.h": "c",
-        "common.h": "c"
+        "common.h": "c",
+        "chrono": "c",
+        "codecvt": "c",
+        "xlocale": "c",
+        "functional": "c"
     }
 }
