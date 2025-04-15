@@ -30,14 +30,14 @@ static MFVkBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalD
     return data;
 }
 
-static bool IsQueueDataComplete(MFVkBackendQueueData data) {
+static b8 IsQueueDataComplete(MFVkBackendQueueData data) {
     return data.cQueueIdx != -1 && data.gQueueIdx != -1 && data.pQueueIdx != -1 && data.tQueueIdx != -1;
 }
 
-static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
+static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
     MFVkBackendQueueData data = GetDeviceQueueData(surface, device);
 
-    bool extSupport = false;
+    b8 extSupport = false;
     {
         const char* deviceExts[] = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -63,7 +63,7 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 }
 
 void mfVkBckndCtxInit(MFVkBackendCtx* ctx, const char* appName, MFWindow* window) {
-    ctx->callbacks = mfnull; // TODO: Create a custom allocator
+    ctx->allocator = mfnull; // TODO: Create a custom allocator
 
     // Vulkan instance
     {
@@ -86,11 +86,11 @@ void mfVkBckndCtxInit(MFVkBackendCtx* ctx, const char* appName, MFWindow* window
             .ppEnabledExtensionNames = exts
         };
 
-        VK_CHECK(vkCreateInstance(&info, ctx->callbacks, &ctx->instance));
+        VK_CHECK(vkCreateInstance(&info, ctx->allocator, &ctx->instance));
     }
     // Surface
     {
-        VK_CHECK(glfwCreateWindowSurface(ctx->instance, mfGetWindowHandle(window), ctx->callbacks, &ctx->surface));
+        VK_CHECK(glfwCreateWindowSurface(ctx->instance, mfGetWindowHandle(window), ctx->allocator, &ctx->surface));
     }
     // Physical Device 
     {
@@ -111,12 +111,84 @@ void mfVkBckndCtxInit(MFVkBackendCtx* ctx, const char* appName, MFWindow* window
 
         ctx->qData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
     }
+    // Device 
+    {
+        u32 deviceCount = 1;
+        const char* deviceExts[] = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+
+        u32 queueCount = 0;
+        u32 queues[4];
+        MF_SETMEM(queues, 0, sizeof(u32) * 4);
+        
+        {
+            u32 qs[] = {
+                ctx->qData.cQueueIdx,
+                ctx->qData.pQueueIdx,
+                ctx->qData.gQueueIdx,
+                ctx->qData.tQueueIdx
+            };
+
+            for(u32 i = 0; i < 4; i++) {
+                b8 isUnique = true;
+    
+                for(u32 j = 0; j < queueCount; j++) {
+                    if(qs[i] == queues[j]) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+    
+                if(isUnique) {
+                    queues[queueCount++] = qs[i];
+                }
+            }
+        }
+
+        float qPriority = 1.0f;
+
+        VkDeviceQueueCreateInfo qInfos[queueCount];
+        MF_SETMEM(qInfos, 0, sizeof(VkDeviceQueueCreateInfo) * queueCount);
+        for(u32 i = 0; i < queueCount; i++) {
+            qInfos[i] = (VkDeviceQueueCreateInfo) {
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .pQueuePriorities = &qPriority,
+                .queueCount = 1,
+                .queueFamilyIndex = queues[i]
+            };
+        }
+
+        VkPhysicalDeviceFeatures features = {0};
+        vkGetPhysicalDeviceFeatures(ctx->physicalDevice, &features);
+
+        VkDeviceCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+            .enabledExtensionCount = deviceCount,
+            .ppEnabledExtensionNames = deviceExts,
+            .pEnabledFeatures = &features,
+            .queueCreateInfoCount = queueCount,
+            .pQueueCreateInfos = qInfos
+        };
+
+        VK_CHECK(vkCreateDevice(ctx->physicalDevice, &info, ctx->allocator, &ctx->device));
+    }
+    // Queues 
+    {
+        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.cQueueIdx, 0, &ctx->qData.cQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.tQueueIdx, 0, &ctx->qData.tQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.pQueueIdx, 0, &ctx->qData.pQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.gQueueIdx, 0, &ctx->qData.gQueue);
+    }
 }
 
 void mfVkBckndCtxDestroy(MFVkBackendCtx* ctx) {
-    vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->callbacks);
-    vkDestroyInstance(ctx->instance, ctx->callbacks);
+    vkDeviceWaitIdle(ctx->device);
 
-    ctx->callbacks = 0;
-    ctx->instance = 0;
+    vkDestroyDevice(ctx->device, ctx->allocator);
+
+    vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
+    vkDestroyInstance(ctx->instance, ctx->allocator);
+
+    MF_SETMEM(ctx, 0, sizeof(MFVkBackendCtx));
 }

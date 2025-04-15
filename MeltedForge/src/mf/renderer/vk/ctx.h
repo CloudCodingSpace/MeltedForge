@@ -10,11 +10,12 @@ typedef struct MFVkBackendQueueData_s {
 } MFVkBackendQueueData;
 
 typedef struct MFVkBackendCtx_s {
-    VkAllocationCallbacks* callbacks;
+    VkAllocationCallbacks* allocator;
     VkInstance instance;
     VkSurfaceKHR surface;
 
     MFVkBackendQueueData qData;
+    VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
 } MFVkBackendCtx;
