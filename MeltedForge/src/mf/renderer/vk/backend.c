@@ -2,18 +2,18 @@
 
 #include <GLFW/glfw3.h>
 
-void mfVkBckndInit(MFVkBackend* backend, const char* appName, MFWindow* window) {
-    mfVkBckndCtxInit(&backend->ctx, appName, window);
+void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window) {
+    VulkanBckndCtxInit(&backend->ctx, appName, window);
 }
 
-void mfVkBckndShutdown(MFVkBackend* backend) {
-    mfVkBckndCtxDestroy(&backend->ctx);
+void VulkanBckndShutdown(VulkanBackend* backend) {
+    VulkanBckndCtxDestroy(&backend->ctx);
 }
 
-void mfVkBckndBeginframe(MFVkBackend* backend) {
+void VulkanBckndBeginframe(VulkanBackend* backend) {
 
 }
 
-void mfVkBckndEndframe(MFVkBackend* backend) {
+void VulkanBckndEndframe(VulkanBackend* backend) {
 
 }

@@ -3,7 +3,7 @@
 #include "vk/backend.h"
 
 struct MFRenderer_s {
-    MFVkBackend backend;
+    VulkanBackend backend;
 };
 
 void mfRendererInit(MFRenderer* renderer, const char* appName, MFWindow* window) {
@@ -12,26 +12,26 @@ void mfRendererInit(MFRenderer* renderer, const char* appName, MFWindow* window)
 
     MF_INFO(mfGetLogger(), "Creating the renderer\n");
 
-    mfVkBckndInit(&renderer->backend, appName, window);
+    VulkanBckndInit(&renderer->backend, appName, window);
 }
 
 void mfRendererShutdown(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_INFO(mfGetLogger(), "Shutting down the renderer\n");
     
-    mfVkBckndShutdown(&renderer->backend);
+    VulkanBckndShutdown(&renderer->backend);
 }
 
 void mfRendererBeginframe(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    mfVkBckndBeginframe(&renderer->backend);
+    VulkanBckndBeginframe(&renderer->backend);
 }
 
 void mfRendererEndframe(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    mfVkBckndEndframe(&renderer->backend);
+    VulkanBckndEndframe(&renderer->backend);
 }
 
 size_t mfGetRendererSizeInBytes() {

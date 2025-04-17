@@ -1,24 +1,24 @@
 #pragma once
 
-#include "common.h"
+#include <vulkan/vulkan.h>
 
 #include "window/mfwindow.h"
 
-typedef struct MFVkBackendQueueData_s {
+typedef struct VulkanBackendQueueData_s {
     i32 gQueueIdx, tQueueIdx, pQueueIdx, cQueueIdx;
     VkQueue gQueue, tQueue, pQueue, cQueue;
-} MFVkBackendQueueData;
+} VulkanBackendQueueData;
 
-typedef struct MFVkBackendCtx_s {
+typedef struct VulkanBackendCtx_s {
     VkAllocationCallbacks* allocator;
     VkInstance instance;
     VkSurfaceKHR surface;
 
-    MFVkBackendQueueData qData;
+    VulkanBackendQueueData qData;
     VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
-} MFVkBackendCtx;
+} VulkanBackendCtx;
 
-void mfVkBckndCtxInit(MFVkBackendCtx* ctx, const char* appName, MFWindow* window);
-void mfVkBckndCtxDestroy(MFVkBackendCtx* ctx);
+void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window);
+void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx);

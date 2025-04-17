@@ -4,12 +4,12 @@
 
 #include "ctx.h"
 
-typedef struct MFVkBackend_s {
-    MFVkBackendCtx ctx;
-} MFVkBackend;
+typedef struct VulkanBackend_s {
+    VulkanBackendCtx ctx;
+} VulkanBackend;
 
-void mfVkBckndInit(MFVkBackend* backend, const char* appName, MFWindow* window);
-void mfVkBckndShutdown(MFVkBackend* backend);
+void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window);
+void VulkanBckndShutdown(VulkanBackend* backend);
 
-void mfVkBckndBeginframe(MFVkBackend* backend);
-void mfVkBckndEndframe(MFVkBackend* backend);
+void VulkanBckndBeginframe(VulkanBackend* backend);
+void VulkanBckndEndframe(VulkanBackend* backend);

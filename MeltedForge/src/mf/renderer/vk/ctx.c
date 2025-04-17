@@ -4,8 +4,10 @@
 
 #include <string.h>
 
-static MFVkBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
-    MFVkBackendQueueData data = {-1};
+#include "common.h"
+
+static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
+    VulkanBackendQueueData data = {-1};
 
     u32 count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &count, mfnull);
@@ -30,12 +32,12 @@ static MFVkBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalD
     return data;
 }
 
-static b8 IsQueueDataComplete(MFVkBackendQueueData data) {
+static b8 IsQueueDataComplete(VulkanBackendQueueData data) {
     return data.cQueueIdx != -1 && data.gQueueIdx != -1 && data.pQueueIdx != -1 && data.tQueueIdx != -1;
 }
 
 static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
-    MFVkBackendQueueData data = GetDeviceQueueData(surface, device);
+    VulkanBackendQueueData data = GetDeviceQueueData(surface, device);
 
     b8 extSupport = false;
     {
@@ -62,7 +64,7 @@ static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
     return IsQueueDataComplete(data) && extSupport;
 }
 
-void mfVkBckndCtxInit(MFVkBackendCtx* ctx, const char* appName, MFWindow* window) {
+void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
 
     // Vulkan instance
@@ -182,7 +184,7 @@ void mfVkBckndCtxInit(MFVkBackendCtx* ctx, const char* appName, MFWindow* window
     }
 }
 
-void mfVkBckndCtxDestroy(MFVkBackendCtx* ctx) {
+void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     vkDeviceWaitIdle(ctx->device);
 
     vkDestroyDevice(ctx->device, ctx->allocator);
@@ -190,5 +192,5 @@ void mfVkBckndCtxDestroy(MFVkBackendCtx* ctx) {
     vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
 
-    MF_SETMEM(ctx, 0, sizeof(MFVkBackendCtx));
+    MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
