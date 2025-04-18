@@ -64,6 +64,145 @@ static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
     return IsQueueDataComplete(data) && extSupport;
 }
 
+static VulkanScCaps GetScCaps(VulkanBackendCtx* ctx) {
+    VulkanScCaps caps = {0};
+    
+    VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->physicalDevice, ctx->surface, &caps.caps));
+
+    VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(ctx->physicalDevice, ctx->surface, &caps.modeCount, mfnull));
+    caps.modes = MF_ALLOCMEM(VkPresentModeKHR, sizeof(VkPresentModeKHR) * caps.modeCount);
+    VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(ctx->physicalDevice, ctx->surface, &caps.modeCount, caps.modes));
+
+    VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->physicalDevice, ctx->surface, &caps.formatCount, mfnull));
+    caps.formats = MF_ALLOCMEM(VkSurfaceFormatKHR, sizeof(VkSurfaceFormatKHR) * caps.formatCount);
+    VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->physicalDevice, ctx->surface, &caps.formatCount, caps.formats));
+    
+    return caps;
+}
+
+static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* window) {
+
+}
+
+static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
+    VulkanScCaps caps = GetScCaps(ctx);
+
+    // Selecting the present mode
+	{
+		bool set = false;
+		for (u32 i = 0; i < caps.modeCount; i++) {
+			if (caps.modes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
+				ctx->scMode = caps.modes[i];
+				set = true;
+				break;
+			}
+		}
+
+		if (!set)
+			ctx->scMode = VK_PRESENT_MODE_FIFO_KHR;
+	}
+	// Selecting the surface format
+	{
+		bool set = false;
+		for (u32 i = 0; i < caps.formatCount; i++) {
+			if (caps.formats[i].format == VK_FORMAT_B8G8R8A8_UNORM && caps.formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
+				ctx->scFormat = caps.formats[i];
+				set = true;
+				break;
+			}
+		}
+		if (!set)
+			ctx->scFormat = caps.formats[0];
+	}
+	// Selecting the extent
+	{
+		if (caps.caps.currentExtent.width != UINT32_MAX)
+			ctx->scExtent = caps.caps.currentExtent;
+		else {
+			int width, height;
+			glfwGetFramebufferSize(window, &width, &height);
+
+			ctx->scExtent = (VkExtent2D) {
+				(u32)width,
+				(u32)height
+			};
+
+			ctx->scExtent.width = MF_CLAMP(ctx->scExtent.width, caps.caps.minImageExtent.width, caps.caps.maxImageExtent.width);
+			ctx->scExtent.height = MF_CLAMP(ctx->scExtent.height, caps.caps.minImageExtent.height, caps.caps.maxImageExtent.height);
+		}
+	}
+    // Creating the swapchain
+    {
+        VkSurfaceCapabilitiesKHR surfaceCaps = caps.caps;
+
+        uint32_t imgCount = surfaceCaps.minImageCount + 1;
+		if (surfaceCaps.maxImageCount > 0 && imgCount > surfaceCaps.maxImageCount) {
+			imgCount = surfaceCaps.maxImageCount;
+		}
+
+		VkSwapchainCreateInfoKHR info = {
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+    		.surface = ctx->surface,
+    		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+    		.minImageCount = imgCount,
+    		.imageFormat = ctx->scFormat.format,
+    		.imageColorSpace = ctx->scFormat.colorSpace,
+    		.preTransform = surfaceCaps.currentTransform,
+    		.presentMode = ctx->scMode,
+    		.imageArrayLayers = 1,
+    		.imageExtent = ctx->scExtent,
+    		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    		.clipped = VK_TRUE,
+    		.oldSwapchain = mfnull
+        };
+
+		u32 queueCount = 0;
+        u32 queues[4];
+        MF_SETMEM(queues, 0, sizeof(u32) * 4);
+
+        u32 qs[] = {
+            ctx->qData.cQueueIdx,
+            ctx->qData.pQueueIdx,
+            ctx->qData.gQueueIdx,
+            ctx->qData.tQueueIdx
+        };
+        
+        // Checking for duplicate queues
+        {
+            for(u32 i = 0; i < 4; i++) {
+                b8 isUnique = true;
+    
+                for(u32 j = 0; j < queueCount; j++) {
+                    if(qs[i] == queues[j]) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+    
+                if(isUnique) {
+                    queues[queueCount++] = qs[i];
+                }
+            }
+        }
+
+		if (queueCount > 1)
+		{
+			info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+			info.queueFamilyIndexCount = 4;
+			info.pQueueFamilyIndices = qs;
+		}
+		else
+		{
+			info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		}
+
+		VK_CHECK(vkCreateSwapchainKHR(ctx->device, &info, ctx->allocator, &ctx->swapchain));
+    }
+
+    MF_FREEMEM(caps.formats);
+    MF_FREEMEM(caps.modes);
+}
+
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
 
@@ -123,7 +262,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
         u32 queueCount = 0;
         u32 queues[4];
         MF_SETMEM(queues, 0, sizeof(u32) * 4);
-        
+        // Checking for duplicate queues
         {
             u32 qs[] = {
                 ctx->qData.cQueueIdx,
@@ -182,10 +321,14 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
         vkGetDeviceQueue(ctx->device, (u32)ctx->qData.pQueueIdx, 0, &ctx->qData.pQueue);
         vkGetDeviceQueue(ctx->device, (u32)ctx->qData.gQueueIdx, 0, &ctx->qData.gQueue);
     }
+    // Swapchain
+    CreateSwapchain(ctx, mfGetWindowHandle(window));
 }
 
 void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     vkDeviceWaitIdle(ctx->device);
+
+    vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     vkDestroyDevice(ctx->device, ctx->allocator);
 

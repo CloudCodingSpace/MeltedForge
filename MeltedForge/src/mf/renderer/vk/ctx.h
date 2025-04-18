@@ -9,6 +9,13 @@ typedef struct VulkanBackendQueueData_s {
     VkQueue gQueue, tQueue, pQueue, cQueue;
 } VulkanBackendQueueData;
 
+typedef struct VulkanScCaps_s {
+    VkSurfaceCapabilitiesKHR caps;
+    u32 modeCount, formatCount;
+	VkPresentModeKHR* modes;
+	VkSurfaceFormatKHR* formats;
+} VulkanScCaps;
+
 typedef struct VulkanBackendCtx_s {
     VkAllocationCallbacks* allocator;
     VkInstance instance;
@@ -18,6 +25,11 @@ typedef struct VulkanBackendCtx_s {
     VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
+
+    VkExtent2D scExtent;
+    VkPresentModeKHR scMode;
+    VkSurfaceFormatKHR scFormat;
+    VkSwapchainKHR swapchain;
 } VulkanBackendCtx;
 
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window);
