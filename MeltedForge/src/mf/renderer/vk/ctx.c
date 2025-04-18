@@ -198,6 +198,12 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
 
 		VK_CHECK(vkCreateSwapchainKHR(ctx->device, &info, ctx->allocator, &ctx->swapchain));
     }
+    // Getting the swapchain images
+    {
+        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->scImgCount, mfnull));
+        ctx->scImgs = MF_ALLOCMEM(VkImage, sizeof(VkImage) * ctx->scImgCount);
+        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->scImgCount, ctx->scImgs));
+    }
 
     MF_FREEMEM(caps.formats);
     MF_FREEMEM(caps.modes);
@@ -335,5 +341,6 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
 
+    MF_FREEMEM(ctx->scImgs);
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }

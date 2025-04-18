@@ -30,6 +30,8 @@ typedef struct VulkanBackendCtx_s {
     VkPresentModeKHR scMode;
     VkSurfaceFormatKHR scFormat;
     VkSwapchainKHR swapchain;
+    u32 scImgCount;
+    VkImage* scImgs;
 } VulkanBackendCtx;
 
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window);
