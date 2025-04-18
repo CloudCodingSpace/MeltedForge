@@ -204,6 +204,32 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
         ctx->scImgs = MF_ALLOCMEM(VkImage, sizeof(VkImage) * ctx->scImgCount);
         VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->scImgCount, ctx->scImgs));
     }
+    // Creating the image views
+    {
+        VkImageViewCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .format = ctx->scFormat.format,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .components.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .subresourceRange = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseArrayLayer = 0,
+                .baseMipLevel = 0,
+                .layerCount = 1,
+                .levelCount = 1
+            },
+        };
+
+        ctx->scImgViews = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * ctx->scImgCount);
+        for(u32 i = 0; i < ctx->scImgCount; i++) {
+            info.image = ctx->scImgs[i];
+
+            VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &ctx->scImgViews[i]));
+        }
+    }
 
     MF_FREEMEM(caps.formats);
     MF_FREEMEM(caps.modes);
@@ -334,6 +360,8 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
 void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     vkDeviceWaitIdle(ctx->device);
 
+    for(u32 i = 0; i < ctx->scImgCount; i++)
+        vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     vkDestroyDevice(ctx->device, ctx->allocator);
@@ -341,6 +369,7 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
 
+    MF_FREEMEM(ctx->scImgViews);
     MF_FREEMEM(ctx->scImgs);
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
