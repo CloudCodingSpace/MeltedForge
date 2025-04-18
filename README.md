@@ -1,7 +1,7 @@
 # Meltedforge
-![logo](MeltedForge/mfassets/logo.png)
-
 A game engine created in C using Vulkan
+
+<img src="MeltedForge/mfassets/logo.png" alt="MeltedForge Logo" height=128 width=128/>
 
 # Dependencies
  - GLFW
