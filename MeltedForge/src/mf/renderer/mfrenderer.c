@@ -20,6 +20,8 @@ void mfRendererShutdown(MFRenderer* renderer) {
     MF_INFO(mfGetLogger(), "Shutting down the renderer\n");
     
     VulkanBckndShutdown(&renderer->backend);
+
+    MF_SETMEM(renderer, 0, sizeof(MFRenderer));
 }
 
 void mfRendererBeginframe(MFRenderer* renderer) {

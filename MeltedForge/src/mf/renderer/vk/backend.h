@@ -3,9 +3,12 @@
 #include "window/mfwindow.h"
 
 #include "ctx.h"
+#include "cmd.h"
 
 typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
+    VkCommandPool cmdPool;
+    VkCommandBuffer cmdBuffer;
 } VulkanBackend;
 
 void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window);
