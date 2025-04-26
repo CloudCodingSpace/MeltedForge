@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mfutils.h"
+#include "mfcore.h"
 
 #include <stdalign.h>
 #include <math.h>
