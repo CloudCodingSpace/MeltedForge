@@ -8,7 +8,10 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* wind
     VulkanBckndCtxInit(&backend->ctx, appName, window);
 
     backend->cmdPool = VulkanCommandPoolCreate(&backend->ctx, backend->ctx.qData.gQueueIdx);
-    backend->cmdBuffer = VulkanCommandBufferAllocate(&backend->ctx, backend->cmdPool, true);
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->cmdPool, true);
+    }
+
     backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     
     // Framebuffers

@@ -4,10 +4,12 @@
 
 #include "ctx.h"
 
+#define FRAMES_IN_FLIGHT 2
+
 typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
     VkCommandPool cmdPool;
-    VkCommandBuffer cmdBuffer;
+    VkCommandBuffer cmdBuffers[FRAMES_IN_FLIGHT];
     VkRenderPass pass;
     u32 fbCount;
     VkFramebuffer* fbs;
