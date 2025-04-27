@@ -24,9 +24,35 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* wind
 
         backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, MF_ARRAYLEN(views, VkImageView), views, backend->ctx.scExtent); 
     }
+    
+    // Sync objs
+    {
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            VkSemaphoreCreateInfo semaInfo = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+            };
+
+            VkFenceCreateInfo fenceInfo = {
+                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+                .flags = VK_FENCE_CREATE_SIGNALED_BIT
+            };
+
+            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->imgAvailableSemas[i]));
+            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->rndrFinishedSemas[i]));
+            VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &backend->inFlightFences[i]));
+        }
+    }
 }
 
 void VulkanBckndShutdown(VulkanBackend* backend) {
+    vkDeviceWaitIdle(backend->ctx.device);
+
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(backend->ctx.device, backend->imgAvailableSemas[i], backend->ctx.allocator);
+        vkDestroySemaphore(backend->ctx.device, backend->rndrFinishedSemas[i], backend->ctx.allocator);
+        vkDestroyFence(backend->ctx.device, backend->inFlightFences[i], backend->ctx.allocator);
+    }
+
     for(u32 i = 0; i < backend->fbCount; i++) {
         VulkanFbDestroy(&backend->ctx, backend->fbs[i]);
     }

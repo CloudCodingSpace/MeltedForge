@@ -3,16 +3,21 @@
 #include "window/mfwindow.h"
 
 #include "ctx.h"
-
-#define FRAMES_IN_FLIGHT 2
+#include "common.h"
 
 typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
+
     VkCommandPool cmdPool;
     VkCommandBuffer cmdBuffers[FRAMES_IN_FLIGHT];
+
     VkRenderPass pass;
     u32 fbCount;
     VkFramebuffer* fbs;
+
+    VkSemaphore imgAvailableSemas[FRAMES_IN_FLIGHT];
+    VkSemaphore rndrFinishedSemas[FRAMES_IN_FLIGHT];
+    VkFence inFlightFences[FRAMES_IN_FLIGHT];
 } VulkanBackend;
 
 void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window);

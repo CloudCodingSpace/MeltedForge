@@ -32,3 +32,4 @@ MF_INLINE uint32_t FindMemoryType(VkPhysicalDevice device, uint32_t typeFilter, 
 }
 
 #define VK_CHECK(result) check_vk_result(result, __LINE__, __func__, __FILE__)
+#define FRAMES_IN_FLIGHT 2

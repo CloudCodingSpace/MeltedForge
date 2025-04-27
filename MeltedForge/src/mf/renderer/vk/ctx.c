@@ -358,8 +358,6 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
 }
 
 void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
-    vkDeviceWaitIdle(ctx->device);
-
     for(u32 i = 0; i < ctx->scImgCount; i++)
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
