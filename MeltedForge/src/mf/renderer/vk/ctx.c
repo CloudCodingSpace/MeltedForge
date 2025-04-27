@@ -235,6 +235,34 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     MF_FREEMEM(caps.modes);
 }
 
+void GetDepthFormat(VulkanBackendCtx* ctx) {
+    ctx->depthFormat = VK_FORMAT_UNDEFINED;
+
+    VkFormat reqFormats[] = {
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT
+    };
+
+    u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    for(u32 i = 0; i < MF_ARRAYLEN(reqFormats, VkFormat); i++) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(ctx->physicalDevice, reqFormats[i], &props);
+
+        if((props.linearTilingFeatures & flags) == flags) {
+            ctx->depthFormat = reqFormats[i];
+            return;
+        }
+        if((props.optimalTilingFeatures & flags) == flags) {
+            ctx->depthFormat = reqFormats[i];
+            return;
+        }
+    }
+
+    MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
+}
+
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
 
@@ -355,9 +383,17 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     }
     // Swapchain
     CreateSwapchain(ctx, mfGetWindowHandle(window));
+    // Depth
+    {
+        GetDepthFormat(ctx);
+
+        VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    }
 }
 
 void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
+    VulkanImageDestroy(&ctx->depthImage, ctx);
+
     for(u32 i = 0; i < ctx->scImgCount; i++)
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);

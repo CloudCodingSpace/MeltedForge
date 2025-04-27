@@ -4,6 +4,8 @@
 
 #include "window/mfwindow.h"
 
+#include "image.h"
+
 typedef struct VulkanBackendQueueData_s {
     i32 gQueueIdx, tQueueIdx, pQueueIdx, cQueueIdx;
     VkQueue gQueue, tQueue, pQueue, cQueue;
@@ -33,6 +35,9 @@ typedef struct VulkanBackendCtx_s {
     u32 scImgCount;
     VkImage* scImgs;
     VkImageView* scImgViews;
+
+    VkFormat depthFormat;
+    VulkanImage depthImage;
 } VulkanBackendCtx;
 
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window);
