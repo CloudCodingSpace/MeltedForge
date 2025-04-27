@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkImageLayout initiaLay, VkImageLayout finalLay) { // TODO: Make the creation of renderpasses more genetic
+VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkImageLayout initiaLay, VkImageLayout finalLay, b8 hasDepth) { // TODO: Make the creation of renderpasses more genetic
     VkAttachmentDescription colorAttachment = {
         .format = format,
         .initialLayout = initiaLay,
@@ -14,7 +14,7 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE
     };
 
-    VkAttachmentDescription attachments[] = {
+    VkAttachmentDescription attachments[2] = {
         colorAttachment
     };
 
@@ -23,13 +23,9 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
-    VkAttachmentReference refs[] = {
-        colRef
-    };
-
     VkSubpassDescription subpass = {
-        .colorAttachmentCount = MF_ARRAYLEN(refs, VkAttachmentReference),
-        .pColorAttachments = refs
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colRef
     };
 
     VkSubpassDependency dependency = {
@@ -41,9 +37,34 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
     };
 
+    if(hasDepth) {
+        VkAttachmentDescription depthAttachment = {
+            .format = ctx->depthFormat,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+        
+        VkAttachmentReference depthRef = {
+            .attachment = 1,
+            .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+        
+        attachments[1] = depthAttachment;
+        subpass.pDepthStencilAttachment = &depthRef;
+        
+        dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependency.srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+
     VkRenderPassCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = MF_ARRAYLEN(attachments, VkAttachmentDescription),
+        .attachmentCount = (hasDepth) ? 2 : 1,
         .pAttachments = attachments,
         .subpassCount = 1,
         .pSubpasses = &subpass,

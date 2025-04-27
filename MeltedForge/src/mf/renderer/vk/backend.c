@@ -12,14 +12,15 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* wind
         backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->cmdPool, true);
     }
 
-    backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true);
     
     // Framebuffers
     backend->fbCount = backend->ctx.scImgCount;
     backend->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->fbCount);
     for(u32 i = 0; i < backend->fbCount; i++) {
         VkImageView views[] = {
-            backend->ctx.scImgViews[i]
+            backend->ctx.scImgViews[i],
+            backend->ctx.depthImage.view
         };
 
         backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, MF_ARRAYLEN(views, VkImageView), views, backend->ctx.scExtent); 
@@ -76,10 +77,16 @@ void VulkanBckndBeginframe(VulkanBackend* backend) {
     VK_CHECK(vkResetCommandBuffer(backend->cmdBuffers[backend->crntFrmIdx], 0));
     VulkanCommandBufferBegin(backend->cmdBuffers[backend->crntFrmIdx]);
 
+    VkClearValue values[2] = {
+        backend->clearColor
+    };
+    values[1].depthStencil.depth = 1.0f;
+    values[1].depthStencil.stencil = 0.0f;
+
     VkRenderPassBeginInfo rpInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .clearValueCount = 1,
-        .pClearValues = &backend->clearColor,
+        .clearValueCount = MF_ARRAYLEN(values, VkClearColorValue),
+        .pClearValues = values,
         .framebuffer = backend->fbs[backend->scImgIdx],
         .renderArea = (VkRect2D){.extent = backend->ctx.scExtent, .offset = (VkOffset2D){ 0, 0 }},
         .renderPass = backend->pass
