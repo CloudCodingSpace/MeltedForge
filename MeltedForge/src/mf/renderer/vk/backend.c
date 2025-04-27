@@ -42,6 +42,8 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* wind
             VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &backend->inFlightFences[i]));
         }
     }
+
+    backend->crntFrmIdx = 0;
 }
 
 void VulkanBckndShutdown(VulkanBackend* backend) {
@@ -66,9 +68,57 @@ void VulkanBckndShutdown(VulkanBackend* backend) {
 }
 
 void VulkanBckndBeginframe(VulkanBackend* backend) {
+    VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->crntFrmIdx], VK_TRUE, UINT64_MAX));
+    VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->crntFrmIdx]));
 
+    VK_CHECK(vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imgAvailableSemas[backend->crntFrmIdx], VK_NULL_HANDLE, &backend->scImgIdx));
+
+    VK_CHECK(vkResetCommandBuffer(backend->cmdBuffers[backend->crntFrmIdx], 0));
+    VulkanCommandBufferBegin(backend->cmdBuffers[backend->crntFrmIdx]);
+
+    VkRenderPassBeginInfo rpInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .clearValueCount = 1,
+        .pClearValues = &backend->clearColor,
+        .framebuffer = backend->fbs[backend->scImgIdx],
+        .renderArea = (VkRect2D){.extent = backend->ctx.scExtent, .offset = (VkOffset2D){ 0, 0 }},
+        .renderPass = backend->pass
+    };
+
+    vkCmdBeginRenderPass(backend->cmdBuffers[backend->crntFrmIdx], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void VulkanBckndEndframe(VulkanBackend* backend) {
+    vkCmdEndRenderPass(backend->cmdBuffers[backend->crntFrmIdx]);
+    VulkanCommandBufferEnd(backend->cmdBuffers[backend->crntFrmIdx]);
 
+    VkPipelineStageFlags waitDstMask[] = {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &backend->cmdBuffers[backend->crntFrmIdx],
+        .pWaitDstStageMask = waitDstMask,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &backend->rndrFinishedSemas[backend->crntFrmIdx],
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &backend->imgAvailableSemas[backend->crntFrmIdx]
+    };
+
+    VK_CHECK(vkQueueSubmit(backend->ctx.qData.gQueue, 1, &submitInfo, backend->inFlightFences[backend->crntFrmIdx]));
+
+    VkPresentInfoKHR presentInfo = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pImageIndices = &backend->scImgIdx,
+        .swapchainCount = 1,
+        .pSwapchains = &backend->ctx.swapchain,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &backend->rndrFinishedSemas[backend->crntFrmIdx]
+    };
+
+    VK_CHECK(vkQueuePresentKHR(backend->ctx.qData.pQueue, &presentInfo));
+
+    backend->crntFrmIdx = (backend->crntFrmIdx + 1) % FRAMES_IN_FLIGHT;
 }

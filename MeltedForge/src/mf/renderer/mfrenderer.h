@@ -2,6 +2,7 @@
 
 #include "core/mfcore.h"
 #include "core/mfutils.h"
+#include "core/mfmaths.h"
 
 #include "window/mfwindow.h"
 
@@ -12,5 +13,7 @@ void mfRendererShutdown(MFRenderer* renderer);
 
 void mfRendererBeginframe(MFRenderer* renderer);
 void mfRendererEndframe(MFRenderer* renderer);
+
+void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);
 
 size_t mfGetRendererSizeInBytes();

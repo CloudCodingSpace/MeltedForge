@@ -36,6 +36,12 @@ void mfRendererEndframe(MFRenderer* renderer) {
     VulkanBckndEndframe(&renderer->backend);
 }
 
+void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    renderer->backend.clearColor = (VkClearValue){.color = { color.r, color.g, color.b, 1.0f }};
+}
+
 size_t mfGetRendererSizeInBytes() {
     return sizeof(MFRenderer);
 }
