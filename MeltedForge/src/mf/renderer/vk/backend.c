@@ -114,7 +114,7 @@ void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
         backend->clearColor
     };
     values[1].depthStencil.depth = 1.0f;
-    values[1].depthStencil.stencil = 0.0f;
+    values[1].depthStencil.stencil = 0;
 
     VkRenderPassBeginInfo rpInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,

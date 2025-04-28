@@ -12,7 +12,7 @@
 MF_INLINE void check_vk_result(VkResult result, uint32_t lineNum, const char* funcName, const char* fileName) {
     if (result != VK_SUCCESS) {
         slogLoggerSetColor(mfGetLogger(), SLCOLOR_RED);
-        printf("(From vulkan renderer backend) VkResult is %s (line: %d, function: %d, fileName: %s)", string_VkResult(result), lineNum, funcName, fileName);
+        printf("(From vulkan renderer backend) VkResult is %s (line: %d, function: %s, fileName: %s)", string_VkResult(result), lineNum, funcName, fileName);
         slogLoggerSetColor(mfGetLogger(), SLCOLOR_DEFAULT);
         abort();
     }

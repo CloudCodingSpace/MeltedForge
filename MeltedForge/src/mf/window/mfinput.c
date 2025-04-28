@@ -4,12 +4,12 @@
 
 #include <GLFW/glfw3.h>
 
-b8 mfInputIsKeyPressed(MFWindow* window, f32 key) {
+b8 mfInputIsKeyPressed(MFWindow* window, i32 key) {
     MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle shouldn't be null!");
     return glfwGetKey(mfGetWindowHandle(window), key) == GLFW_PRESS;
 }
 
-b8 mfInputIsKeyReleased(MFWindow* window, f32 key) {
+b8 mfInputIsKeyReleased(MFWindow* window, i32 key) {
     MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle shouldn't be null!");
     return glfwGetKey(mfGetWindowHandle(window), key) == GLFW_RELEASE;
 }
@@ -41,12 +41,12 @@ void mfInputNormalMouse(MFWindow* window) {
     glfwSetInputMode(mfGetWindowHandle(window), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
-b8 mfInputIsMBPressed(MFWindow* window, f32 button) {
+b8 mfInputIsMBPressed(MFWindow* window, i32 button) {
     MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle shouldn't be null!");
     return glfwGetMouseButton(mfGetWindowHandle(window), button) == GLFW_PRESS;
 }
 
-b8 mfInputIsMBReleased(MFWindow* window, f32 button) {
+b8 mfInputIsMBReleased(MFWindow* window, i32 button) {
     MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle shouldn't be null!");
     return glfwGetMouseButton(mfGetWindowHandle(window), button) == GLFW_RELEASE;
 }

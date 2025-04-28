@@ -22,7 +22,7 @@ static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysica
 
     u32 count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &count, mfnull);
-    VkQueueFamilyProperties props[count];
+    VkQueueFamilyProperties* props = MF_ALLOCMEM(VkQueueFamilyProperties, sizeof(VkQueueFamilyProperties) * count);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &count, props);
 
     for(u32 i = 0; i < count; i++) {
@@ -40,6 +40,7 @@ static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysica
                 data.pQueueIdx = i;
     }
 
+    MF_FREEMEM(props);
     return data;
 }
 
@@ -59,19 +60,24 @@ static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 
         u32 count = 0;
         vkEnumerateDeviceExtensionProperties(device, mfnull, &count, mfnull);
-        VkExtensionProperties props[count];
+        VkExtensionProperties* props = MF_ALLOCMEM(VkExtensionProperties, sizeof(VkExtensionProperties) * count);
         vkEnumerateDeviceExtensionProperties(device, mfnull, &count, props);
 
         for(u32 i = 0; i < count; i++) {
             for(u32 j = 0; j < deviceExtCount; j++) {
                 if(strcmp(props[i].extensionName, deviceExts[j]) == 0) {
                     extSupport = true;
+                    MF_FREEMEM(props);
                     break;
                 }
             }
-        }
-    }
 
+            if(props == mfnull)
+                break;
+        }
+        if(props != mfnull)
+            MF_FREEMEM(props);
+    }
     return IsQueueDataComplete(data) && extSupport;
 }
 
@@ -308,17 +314,18 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     {
         u32 deviceCount = 0;
         VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &deviceCount, mfnull));
-        VkPhysicalDevice devices[deviceCount];
+        VkPhysicalDevice* devices = MF_ALLOCMEM(VkPhysicalDevice, sizeof(VkPhysicalDevice) * deviceCount);
         VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &deviceCount, devices));
 
         // TODO: Select the most capable physical device if there are more than one
-        for(int i = 0; i < deviceCount; i++) {
+        for(u32 i = 0; i < deviceCount; i++) {
             if(IsDeviceUsable(ctx->surface, devices[i])) {
                 ctx->physicalDevice = devices[i];
                 break;
             }
         }
 
+        MF_FREEMEM(devices);
         MF_ASSERT(ctx->physicalDevice == mfnull, mfGetLogger(), "(From the vulkan backend) Failed to select a suitable GPU in the current PC!");
 
         ctx->qData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
@@ -360,7 +367,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
 
         float qPriority = 1.0f;
 
-        VkDeviceQueueCreateInfo qInfos[queueCount];
+        VkDeviceQueueCreateInfo* qInfos = MF_ALLOCMEM(VkDeviceQueueCreateInfo, sizeof(VkDeviceQueueCreateInfo) * queueCount);
         MF_SETMEM(qInfos, 0, sizeof(VkDeviceQueueCreateInfo) * queueCount);
         for(u32 i = 0; i < queueCount; i++) {
             qInfos[i] = (VkDeviceQueueCreateInfo) {
@@ -384,6 +391,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
         };
 
         VK_CHECK(vkCreateDevice(ctx->physicalDevice, &info, ctx->allocator, &ctx->device));
+        MF_FREEMEM(qInfos);
     }
     // Queues 
     {
