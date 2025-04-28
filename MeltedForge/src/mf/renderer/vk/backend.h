@@ -25,5 +25,5 @@ typedef struct VulkanBackend_s {
 void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window);
 void VulkanBckndShutdown(VulkanBackend* backend);
 
-void VulkanBckndBeginframe(VulkanBackend* backend);
-void VulkanBckndEndframe(VulkanBackend* backend);
+void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window);
+void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window);

@@ -36,11 +36,11 @@ static void runApp(void* st, MFAppConfig* config) {
 
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
-        mfRendererBeginframe(state->renderer);
+        mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layerCount; i++) {
             config->layers[i].onRender(config->layers[i].state, st);
         }
-        mfRendererEndframe(state->renderer);
+        mfRendererEndframe(state->renderer, state->window);
 
         for(u32 i = 0; i < config->layerCount; i++) {
             config->layers[i].onUpdate(config->layers[i].state, st);

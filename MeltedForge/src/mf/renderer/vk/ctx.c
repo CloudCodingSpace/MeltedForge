@@ -407,3 +407,16 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     MF_FREEMEM(ctx->scImgs);
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
+
+void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window) {
+    VK_CHECK(vkDeviceWaitIdle(ctx->device));
+
+    VulkanImageDestroy(&ctx->depthImage, ctx);
+
+    for(u32 i = 0; i < ctx->scImgCount; i++)
+        vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
+    vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
+
+    CreateSwapchain(ctx, mfGetWindowHandle(window));
+    VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+}

@@ -24,16 +24,16 @@ void mfRendererShutdown(MFRenderer* renderer) {
     MF_SETMEM(renderer, 0, sizeof(MFRenderer));
 }
 
-void mfRendererBeginframe(MFRenderer* renderer) {
+void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    VulkanBckndBeginframe(&renderer->backend);
+    VulkanBckndBeginframe(&renderer->backend, window);
 }
 
-void mfRendererEndframe(MFRenderer* renderer) {
+void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    VulkanBckndEndframe(&renderer->backend);
+    VulkanBckndEndframe(&renderer->backend, window);
 }
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {

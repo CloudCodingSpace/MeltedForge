@@ -104,6 +104,9 @@ void mfWindowUpdate(MFWindow* window) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
     }
 
+    glfwGetWindowSize(mfGetWindowHandle(window), &window->config.width, &window->config.height);
+    glfwGetWindowPos(mfGetWindowHandle(window), &window->config.x, &window->config.y);
+
     glfwPollEvents();
 }
 

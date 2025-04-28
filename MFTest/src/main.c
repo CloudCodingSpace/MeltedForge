@@ -34,6 +34,7 @@ MFAppConfig mfClientCreateAppConfig() {
         .onRender = &MFTOnRender,
         .onUpdate = &MFTOnUpdate
     };
+    config.winConfig.resizable = true;
     
     return config;
 }
