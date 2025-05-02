@@ -6,6 +6,8 @@
 
 #include "window/mfwindow.h"
 
+#include "mfutil_types.h"
+
 typedef struct MFRenderer_s MFRenderer;
 
 void mfRendererInit(MFRenderer* renderer, const char* appName, MFWindow* window);
