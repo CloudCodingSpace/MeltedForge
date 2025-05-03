@@ -18,6 +18,7 @@ add_subdirectory(MeltedForge)
 project(MFTest)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/src/*.c")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/shaders" DESTINATION "${CMAKE_BINARY_DIR}")
 
 add_executable(MFTest ${SOURCES})
 target_link_libraries(MFTest PRIVATE mf)
