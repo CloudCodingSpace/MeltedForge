@@ -16,6 +16,8 @@ void mfRendererShutdown(MFRenderer* renderer);
 void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 
+void mfRendererWait(MFRenderer* renderer);
+
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);
 
 size_t mfGetRendererSizeInBytes();

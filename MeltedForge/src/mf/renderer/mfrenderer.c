@@ -36,6 +36,12 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
     VulkanBckndEndframe(&renderer->backend, window);
 }
 
+void mfRendererWait(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    vkDeviceWaitIdle(renderer->backend.ctx.device);
+}
+
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 

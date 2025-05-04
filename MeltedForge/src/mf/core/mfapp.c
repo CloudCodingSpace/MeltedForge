@@ -15,6 +15,7 @@ static void initApp(void* st, MFAppConfig* config) {
 
 static void deinitApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
+    mfRendererWait(state->renderer);
 
     for(u32 i = 0; i < config->layerCount; i++) {
         config->layers[i].onDeinit(config->layers[i].state, st);

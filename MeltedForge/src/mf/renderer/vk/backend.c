@@ -74,8 +74,6 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* wind
 }
 
 void VulkanBckndShutdown(VulkanBackend* backend) {
-    vkDeviceWaitIdle(backend->ctx.device);
-
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(backend->ctx.device, backend->imgAvailableSemas[i], backend->ctx.allocator);
         vkDestroySemaphore(backend->ctx.device, backend->rndrFinishedSemas[i], backend->ctx.allocator);
