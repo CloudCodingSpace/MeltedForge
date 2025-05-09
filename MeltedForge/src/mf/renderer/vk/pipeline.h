@@ -5,7 +5,12 @@
 #include "ctx.h"
 
 typedef struct VulkanPipelineInfo_s {
+    VkRenderPass pass;
     VkExtent2D extent;
+    u32 bindingDescsCount, attribDescsCount;
+    VkVertexInputBindingDescription* bindingDescs;
+    VkVertexInputAttributeDescription* attribDescs;
+    b8 hasDepth;
 } VulkanPipelineInfo;
 
 typedef struct VulkanPipeline_s {
