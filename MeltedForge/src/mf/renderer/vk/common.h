@@ -3,6 +3,8 @@
 #include "core/mfcore.h"
 #include "core/mfutils.h"
 
+#include "../mfutil_types.h"
+
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 

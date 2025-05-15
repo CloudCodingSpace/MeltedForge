@@ -22,4 +22,6 @@ typedef struct MFPipelineInfo_s {
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineInfo* info);
 void mfPipelineDestroy(MFPipeline* pipeline);
 
+void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor);
+
 size_t mfPipelineGetSizeInBytes();

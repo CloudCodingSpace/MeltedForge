@@ -19,6 +19,10 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 void mfRendererWait(MFRenderer* renderer);
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);
+void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
+
+MFViewport mfRendererGetViewport(const MFWindowConfig* config);
+MFRect2D mfRendererGetScissor(const MFWindowConfig* config);
 
 size_t mfGetRendererSizeInBytes();
 void* mfRendererGetBackend(MFRenderer* renderer);

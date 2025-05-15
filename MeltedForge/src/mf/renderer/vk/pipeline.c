@@ -4,6 +4,7 @@
 
 void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo info) {
     pipeline->info = info;
+    pipeline->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // TODO: Support other types of pipeline too
 
     VkPipelineLayoutCreateInfo layInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
@@ -165,4 +166,11 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 void VulkanPipelineDestroy(VulkanBackendCtx* ctx, VulkanPipeline* pipeline) {
     vkDestroyPipeline(ctx->device, pipeline->pipeline, ctx->allocator);
     vkDestroyPipelineLayout(ctx->device, pipeline->layout, ctx->allocator);
+}
+
+void VulkanPipelineBind(VulkanPipeline* pipeline, VkViewport vp, VkRect2D scissor, VkCommandBuffer buffer) {
+    vkCmdBindPipeline(buffer, pipeline->bindPoint, pipeline->pipeline);
+
+    vkCmdSetViewport(buffer, 0, 1, &vp);
+    vkCmdSetScissor(buffer, 0, 1, &scissor);
 }

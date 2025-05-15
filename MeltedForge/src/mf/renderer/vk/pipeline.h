@@ -24,3 +24,5 @@ typedef struct VulkanPipeline_s {
 
 void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo info);
 void VulkanPipelineDestroy(VulkanBackendCtx* ctx, VulkanPipeline* pipeline);
+
+void VulkanPipelineBind(VulkanPipeline* pipeline, VkViewport vp, VkRect2D scissor, VkCommandBuffer buffer);

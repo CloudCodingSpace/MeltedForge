@@ -165,3 +165,7 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
 
     backend->crntFrmIdx = (backend->crntFrmIdx + 1) % FRAMES_IN_FLIGHT;
 }
+
+void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
+    vkCmdDraw(backend->cmdBuffers[backend->crntFrmIdx], vertexCount, instances, firstVertex, firstInstance);
+}
