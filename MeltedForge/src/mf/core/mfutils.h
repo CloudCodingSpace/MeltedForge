@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -32,7 +33,31 @@
     #define MF_INLINE static inline
 #endif
 
-#define MF_ARRAYLEN(arr, T) (sizeof(arr)/sizeof(T)) //! The arr must be statically allocated
+// @note The returned const char* must be freed since it is allocated on the heap
+MF_INLINE char* mfReadFile(SLogger* logger, size_t* size, const char* path, const char* mode) {
+    MF_ASSERT(path == 0, logger, "The file path provided shouldn't be null!");
+    MF_ASSERT(mode == 0, logger, "The file reading mode provided shouldn't be null!");
+    MF_ASSERT(size == 0, logger, "The size pointer provided shouldn't be null!");
+
+    char* content;
+
+    FILE* file = fopen(path, mode);
+    MF_ASSERT(file == 0, logger, "Failed to open the file! Most probably because the file doesn't exists or the reading mode is wrong!");
+
+    fseek(file, 0, SEEK_END);
+    *size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    content = MF_ALLOCMEM(char, sizeof(char) * (*size) + 1);
+    fread(content, sizeof(char), *size, file);
+
+    fclose(file);
+
+    content[*size] = '\0';
+    return content;
+}
+
+#define MF_ARRAYLEN(arr, T) (sizeof(arr)/sizeof(T)) //! The arr must be allocated in the stack
 
 typedef float f32;
 typedef double f64;

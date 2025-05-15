@@ -21,3 +21,4 @@ void mfRendererWait(MFRenderer* renderer);
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);
 
 size_t mfGetRendererSizeInBytes();
+void* mfRendererGetBackend(MFRenderer* renderer);

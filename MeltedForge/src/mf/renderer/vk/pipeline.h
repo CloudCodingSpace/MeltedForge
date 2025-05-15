@@ -11,6 +11,8 @@ typedef struct VulkanPipelineInfo_s {
     VkVertexInputBindingDescription* bindingDescs;
     VkVertexInputAttributeDescription* attribDescs;
     b8 hasDepth;
+    const char* vertPath;
+    const char* fragPath;
 } VulkanPipelineInfo;
 
 typedef struct VulkanPipeline_s {

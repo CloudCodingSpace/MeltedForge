@@ -49,7 +49,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     };
 
     VkPipelineMultisampleStateCreateInfo msaaState = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT, // TODO: Make it configurable
         .sampleShadingEnable = VK_FALSE // TODO: Make it configurable
     };
@@ -94,6 +94,47 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .depthCompareOp = VK_COMPARE_OP_LESS // TODO: Make it configurable
     };
 
+    VkShaderModule vertMod, fragMod;
+    // Modules
+    {
+        size_t vertSize, fragSize;
+        char* vertCode = mfReadFile(mfGetLogger(), &vertSize, info.vertPath, "rb");
+        char* fragCode = mfReadFile(mfGetLogger(), &fragSize, info.fragPath, "rb");
+
+        VkShaderModuleCreateInfo vertInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = vertSize,
+            .pCode = (u32*)vertCode
+        };
+
+        VkShaderModuleCreateInfo fragInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = fragSize,
+            .pCode = (u32*)fragCode
+        };
+
+        VK_CHECK(vkCreateShaderModule(ctx->device, &vertInfo, ctx->allocator, &vertMod));
+        VK_CHECK(vkCreateShaderModule(ctx->device, &fragInfo, ctx->allocator, &fragMod));
+
+        MF_FREEMEM(vertCode);
+        MF_FREEMEM(fragCode);
+    }
+
+    VkPipelineShaderStageCreateInfo stages[2];
+    stages[0] = (VkPipelineShaderStageCreateInfo) {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .module = vertMod,
+            .pName = "main"
+        };
+
+    stages[1] = (VkPipelineShaderStageCreateInfo) {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .module = fragMod,
+            .pName = "main"
+        };
+
     VkGraphicsPipelineCreateInfo ginfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .basePipelineHandle = mfnull,
@@ -107,13 +148,18 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .pInputAssemblyState = &inputState,
         .pMultisampleState = &msaaState,
         .pRasterizationState = &rasState,
-        .pViewportState = &vpState
+        .pViewportState = &vpState,
+        .stageCount = 2,
+        .pStages = stages
     };
 
     if(info.hasDepth)
         ginfo.pDepthStencilState = &depthState;
 
     VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &ginfo, ctx->allocator, &pipeline->pipeline));    
+
+    vkDestroyShaderModule(ctx->device, vertMod, ctx->allocator);
+    vkDestroyShaderModule(ctx->device, fragMod, ctx->allocator);
 }
 
 void VulkanPipelineDestroy(VulkanBackendCtx* ctx, VulkanPipeline* pipeline) {
