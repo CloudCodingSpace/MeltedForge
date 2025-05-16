@@ -8,10 +8,10 @@ struct MFPipeline_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
-    MFPipelineInfo info;
+    MFPipelineConfig info;
 };
 
-void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineInfo* info) {
+void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
     MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_ASSERT(info == mfnull, mfGetLogger(), "The pipeline info handle provided shouldn't be null!");

@@ -9,7 +9,7 @@ typedef struct MFPipeline_s MFPipeline;
 
 #include "mfrenderer.h"
 
-typedef struct MFPipelineInfo_s {
+typedef struct MFPipelineConfig_s {
     MFVec2 extent;
     u32 bindingDescsCount, attribDescsCount;
     MFVertexInputBindingDescription* bindingDescs;
@@ -17,9 +17,9 @@ typedef struct MFPipelineInfo_s {
     b8 hasDepth;
     const char* vertPath;
     const char* fragPath;
-} MFPipelineInfo;
+} MFPipelineConfig;
 
-void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineInfo* info);
+void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info);
 void mfPipelineDestroy(MFPipeline* pipeline);
 
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor);

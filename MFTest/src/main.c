@@ -17,7 +17,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     // Pipeline
     {
-        MFPipelineInfo info = {
+        MFPipelineConfig info = {
             .extent = (MFVec2){ .x = winConfig->width, .y = winConfig->height },
             .hasDepth = true,
             .vertPath = "shaders/default.vert.spv",
