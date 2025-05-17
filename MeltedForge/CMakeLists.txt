@@ -16,7 +16,6 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mfassets" DESTINATION "${CMAKE_BINARY_DIR
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/stb)
 add_subdirectory(libs/slog)
-add_subdirectory(libs/nuklear)
 
 find_package(Vulkan REQUIRED)
 
@@ -29,4 +28,5 @@ endif()
 add_library(mf ${SRCS})
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
-target_link_libraries(mf PUBLIC nuklear glfw stb slog Vulkan::Vulkan)
+target_link_libraries(mf PUBLIC stb slog)
+target_link_libraries(mf PRIVATE glfw Vulkan::Vulkan)
