@@ -5,6 +5,8 @@ static void initApp(void* st, MFAppConfig* config) {
     state->window = MF_ALLOCMEM(MFWindow, mfWindowGetSizeInBytes());
     mfWindowInit(state->window, config->winConfig);
 
+    mfWindowSetIcon(state->window, MF_WINDOW_DEFAULT_ICON_PATH);
+
     state->renderer = MF_ALLOCMEM(MFRenderer, mfGetRendererSizeInBytes());
     mfRendererInit(state->renderer, config->name, state->window);
 

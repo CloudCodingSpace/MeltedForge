@@ -10,6 +10,8 @@ typedef struct MFWindowConfig_s {
     const char* title;
 } MFWindowConfig;
 
+#define MF_WINDOW_DEFAULT_ICON_PATH "mfassets/logo.png"
+
 typedef struct MFWindow_s MFWindow;
 
 void mfWindowInit(MFWindow* window, MFWindowConfig config);
