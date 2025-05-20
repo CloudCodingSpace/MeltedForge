@@ -19,6 +19,22 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
+    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription));
+    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription));
+    
+    for(u32 i = 0; i < info->attribDescsCount; i++) {
+        bindings[i].binding = info->bindingDescs->binding;
+        bindings[i].inputRate = info->bindingDescs->rate;
+        bindings[i].stride = info->bindingDescs->stride;
+    }
+
+    for(u32 i = 0; i < info->bindingDescsCount; i++) {
+        attribs[i].binding = info->attribDescs[i].binding;
+        attribs[i].format = info->attribDescs[i].format;
+        attribs[i].location = info->attribDescs[i].location;
+        attribs[i].offset = info->attribDescs[i].offset;
+    }
+
     VulkanPipelineInfo binfo = {
         .vertPath = info->vertPath,
         .fragPath = info->fragPath,
@@ -28,11 +44,16 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
             info->extent.x,
             info->extent.y
         },
-        .attribDescs = 0, // TODO: Finish this later
-        .bindingDescs = 0 // TODO: Finish this later
+        .attribDescsCount = info->attribDescsCount,
+        .attribDescs = attribs,
+        .bindingDescsCount = info->bindingDescsCount,
+        .bindingDescs = bindings
     };
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, binfo);
+
+    MF_FREEMEM(bindings);
+    MF_FREEMEM(attribs);
 }
 
 void mfPipelineDestroy(MFPipeline* pipeline) {
