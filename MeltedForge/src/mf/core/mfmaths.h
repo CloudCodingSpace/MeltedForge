@@ -31,46 +31,24 @@
 #define MF_FLOAT_MIN -3.40282e+38F
 #define MF_FLOAT_MAX 3.40282e+38F
 
-typedef struct MFVec2_s {
-    union {
-        f32 x, r, s, u;
-    };
-
-    union {
-        f32 y, g, t, v;
-    };
+typedef union {
+    struct { f32 x, y; };
+    struct { f32 r, g; };
+    struct { f32 s, t; };
+    struct { f32 u, v; };
 } MFVec2;
 
-typedef struct MFVec3_s {
-    union {
-        f32 x, r, s, u;
-    };
-
-    union {
-        f32 y, g, t, v;
-    };
-
-    union {
-        f32 z, b, p, w;
-    };
+typedef union {
+    struct { f32 x, y, z; };
+    struct { f32 r, g, b; };
+    struct { f32 s, t, p; };
+    struct { f32 u, v, w; };
 } MFVec3;
 
-typedef struct MFVec4_s {
-    union {
-        f32 x, r, s;
-    };
-
-    union {
-        f32 y, g, t;
-    };
-
-    union {
-        f32 z, b, width;
-    };
-
-    union {
-        f32 w, a, height;
-    };
+typedef union {
+    struct { f32 x, y, z, w; };
+    struct { f32 r, g, b, a; };
+    struct { f32 s, t, width, height; };
 } MFVec4;
 
 typedef struct MFMat2_s {

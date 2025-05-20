@@ -1,7 +1,11 @@
 #include <mf.h>
 
+#include "vertex.h"
+
 typedef struct MFTState_s {
     MFPipeline* pipeline;
+    MFGpuBuffer* vertexBuffer;
+    MFGpuBuffer* indexBuffer;
 } MFTState;
 
 static void MFTOnInit(void* pstate, void* pappState) {
@@ -15,15 +19,57 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
+    // Buffers
+    {
+        state->vertexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
+        state->indexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
+    
+        Vertex vertices[] = {
+            {{ -0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+            {{  0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+            {{  0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+            {{ -0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}}
+        };
+
+        u32 indices[] = {
+            0, 1, 2,
+            2, 3, 0 
+        };
+
+        MFGpuBufferConfig config = {
+            .data = vertices,
+            .size = sizeof(vertices[0]) * MF_ARRAYLEN(vertices, Vertex),
+            .type = MF_GPU_BUFFER_TYPE_VERTEX
+        };
+
+        mfGpuBufferAllocate(state->vertexBuffer, config, appState->renderer);
+        
+        config.data = indices;
+        config.size = sizeof(indices[0]) * MF_ARRAYLEN(indices, u32);
+        config.type = MF_GPU_BUFFER_TYPE_INDEX;
+        
+        mfGpuBufferAllocate(state->indexBuffer, config, appState->renderer);
+    }
+
     // Pipeline
     {
+        u32 attribCount = 0, bindingCount = 1;
+        MFVertexInputAttributeDescription* attribDescs = getVertAttribDescs(&attribCount);
+        MFVertexInputBindingDescription bindingDesc = getVertBindingDesc();
+
         MFPipelineConfig info = {
             .extent = (MFVec2){ .x = winConfig->width, .y = winConfig->height },
             .hasDepth = true,
             .vertPath = "shaders/default.vert.spv",
-            .fragPath = "shaders/default.frag.spv"
+            .fragPath = "shaders/default.frag.spv",
+            .attribDescsCount = attribCount,
+            .attribDescs = attribDescs,
+            .bindingDescsCount = bindingCount,
+            .bindingDescs = &bindingDesc
         };
         mfPipelineInit(state->pipeline, appState->renderer, &info);
+
+        MF_FREEMEM(attribDescs);
     }
 }
 
@@ -31,8 +77,12 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
     
+    mfGpuBufferFree(state->indexBuffer);
+    mfGpuBufferFree(state->vertexBuffer);
     mfPipelineDestroy(state->pipeline);
     
+    MF_FREEMEM(state->vertexBuffer);
+    MF_FREEMEM(state->indexBuffer);
     MF_FREEMEM(state->pipeline);
 }
 
@@ -42,7 +92,9 @@ static void MFTOnRender(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
 
     mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
-    mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
+    mfGpuBufferBind(state->vertexBuffer);
+    mfGpuBufferBind(state->indexBuffer);
+    mfRendererDrawVerticesIndexed(appState->renderer, 6, 1, 0, 0);
 }
 
 static void MFTOnUpdate(void* pstate, void* pappState) {

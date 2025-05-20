@@ -50,8 +50,14 @@ void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
 
 void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-
+    
     VulkanBackendDrawVertices(&renderer->backend, vertexCount, instances, firstVertex, firstInstance);
+}
+
+void mfRendererDrawVerticesIndexed(MFRenderer* renderer, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    VulkanBackendDrawVerticesIndexed(&renderer->backend, indexCount, instances, firstIndex, firstInstance);
 }
 
 MFViewport mfRendererGetViewport(const MFWindowConfig* config) {

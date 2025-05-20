@@ -22,15 +22,15 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription));
     VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription));
     
-    for(u32 i = 0; i < info->attribDescsCount; i++) {
-        bindings[i].binding = info->bindingDescs->binding;
-        bindings[i].inputRate = info->bindingDescs->rate;
-        bindings[i].stride = info->bindingDescs->stride;
+    for (u32 i = 0; i < info->bindingDescsCount; i++) {
+        bindings[i].binding = info->bindingDescs[i].binding;
+        bindings[i].inputRate = (VkVertexInputRate)((int)info->bindingDescs[i].rate);
+        bindings[i].stride = info->bindingDescs[i].stride;
     }
 
-    for(u32 i = 0; i < info->bindingDescsCount; i++) {
+    for (u32 i = 0; i < info->attribDescsCount; i++) {
         attribs[i].binding = info->attribDescs[i].binding;
-        attribs[i].format = info->attribDescs[i].format;
+        attribs[i].format = (VkFormat)((int)info->attribDescs[i].format);
         attribs[i].location = info->attribDescs[i].location;
         attribs[i].offset = info->attribDescs[i].offset;
     }

@@ -25,6 +25,8 @@ void mfGpuBufferFree(MFGpuBuffer* buffer);
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data);
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data);
 
+void mfGpuBufferBind(MFGpuBuffer* buffer);
+
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer);
 
 size_t mfGpuBufferGetSizeInBytes();

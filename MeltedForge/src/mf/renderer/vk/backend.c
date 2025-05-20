@@ -169,3 +169,7 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
     vkCmdDraw(backend->cmdBuffers[backend->crntFrmIdx], vertexCount, instances, firstVertex, firstInstance);
 }
+
+void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
+    vkCmdDrawIndexed(backend->cmdBuffers[backend->crntFrmIdx], indexCount, instances, firstIndex, 0, firstInstance); // TODO: Make the offset configurable if necessary
+}

@@ -4,6 +4,7 @@
         "mfmaths.h": "c",
         "mfutils.h": "c",
         "mfcore.h": "c",
-        "mfrenderer.h": "c"
+        "mfrenderer.h": "c",
+        "vector": "c"
     }
 }

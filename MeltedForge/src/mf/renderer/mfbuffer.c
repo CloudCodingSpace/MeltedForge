@@ -46,8 +46,23 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
     buffer->config.size = size;
-
+    
     VulkanBufferResize(&buffer->buffer, buffer->ctx, buffer->backend->cmdPool, size, data);
+}
+
+void mfGpuBufferBind(MFGpuBuffer* buffer) {
+    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+
+    VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->crntFrmIdx];
+
+    if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {
+        VkDeviceSize offsets[] = { 0 }; // TODO: Make it configurable if necessary
+
+        vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer.handle, offsets);
+    }
+    else {
+        vkCmdBindIndexBuffer(buff, buffer->buffer.handle, 0, VK_INDEX_TYPE_UINT32); // TODO: Make the offset configurable if necessary
+    }
 }
 
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
