@@ -19,8 +19,8 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
-    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription));
-    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription));
+    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingDescsCount);
+    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attribDescsCount);
     
     for (u32 i = 0; i < info->bindingDescsCount; i++) {
         bindings[i].binding = info->bindingDescs[i].binding;
