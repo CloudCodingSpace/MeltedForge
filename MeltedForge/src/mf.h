@@ -2,8 +2,11 @@
 
 #include "mf/window/mfwindow.h"
 #include "mf/window/mfinput.h"
+
 #include "mf/renderer/mfrenderer.h"
 #include "mf/renderer/mfpipeline.h"
+#include "mf/renderer/mfbuffer.h"
+
 #include "mf/core/mfcore.h"
 #include "mf/core/mfutils.h"
 #include "mf/core/mfmaths.h"

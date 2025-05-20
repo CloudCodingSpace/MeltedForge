@@ -3,6 +3,7 @@
         "chrono": "c",
         "mfmaths.h": "c",
         "mfutils.h": "c",
-        "mfcore.h": "c"
+        "mfcore.h": "c",
+        "mfrenderer.h": "c"
     }
 }
