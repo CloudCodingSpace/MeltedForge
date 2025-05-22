@@ -5,6 +5,7 @@
         "mfutils.h": "c",
         "mfcore.h": "c",
         "mfrenderer.h": "c",
-        "vector": "c"
+        "vector": "c",
+        "xiosbase": "c"
     }
 }

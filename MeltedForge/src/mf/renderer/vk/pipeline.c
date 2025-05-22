@@ -7,7 +7,9 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     pipeline->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // TODO: Support other types of pipeline too
 
     VkPipelineLayoutCreateInfo layInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = info.setLayoutCount,
+        .pSetLayouts = info.setLayouts
     };
 
     VK_CHECK(vkCreatePipelineLayout(ctx->device, &layInfo, ctx->allocator, &pipeline->layout));

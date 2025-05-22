@@ -4,11 +4,15 @@
 
 #include "ctx.h"
 #include "common.h"
+#include "buffer.h"
+#include "cmd.h"
 
-void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 width, u32 height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkImageAspectFlags aspectFlags, VkMemoryPropertyFlags memFlags) {
+void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 width, u32 height, b8 gpuResource, u8* pixels, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkImageAspectFlags aspectFlags, VkMemoryPropertyFlags memFlags) {
     image->width = width;    
     image->height = height;
     image->format = format;
+    image->gpuResource = gpuResource;
+    image->pixels = pixels;
 
     // Image
     {
@@ -27,7 +31,7 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
             .usage = usage,
             .samples = VK_SAMPLE_COUNT_1_BIT, // TODO: Make it configurable if required
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // TODO: Make it configurable if required 
-            .mipLevels = 1, // TODO: Make it configurable
+            .mipLevels = 1, // TODO: Make it configurable if required
         };
 
         VK_CHECK(vkCreateImage(ctx->device, &info, ctx->allocator, &image->image));
@@ -66,11 +70,42 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
                 .layerCount = 1,
                 .levelCount = 1
             },
-            .viewType = VK_IMAGE_VIEW_TYPE_2D // TODO: Make it configurable it required
+            .viewType = VK_IMAGE_VIEW_TYPE_2D // TODO: Make it configurable if required
         };
 
         VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &image->view));
     }
+
+    if(!image->gpuResource)
+        return;
+
+    // Samplers
+    {
+        VkSamplerCreateInfo sinfo = {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .anisotropyEnable = VK_FALSE,
+            .magFilter = VK_FILTER_LINEAR,
+            .minFilter = VK_FILTER_LINEAR,
+            .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            .compareEnable = VK_FALSE,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .maxLod = 100,
+            .minLod = -100,
+            .mipLodBias = 0.0f,
+            .unnormalizedCoordinates = VK_FALSE,
+            .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR
+        };
+
+        VK_CHECK(vkCreateSampler(ctx->device, &sinfo, ctx->allocator, &image->sampler));
+    }
+
+    if(!pixels)
+        return;
+
+    VulkanImageSetPixels(image, ctx, pixels);
 }
 
 void VulkanImageDestroy(VulkanImage* image, struct VulkanBackendCtx_s* ctx) {
@@ -78,5 +113,87 @@ void VulkanImageDestroy(VulkanImage* image, struct VulkanBackendCtx_s* ctx) {
     vkDestroyImageView(ctx->device, image->view, ctx->allocator);
     vkDestroyImage(ctx->device, image->image, ctx->allocator);
 
+    if(image->gpuResource)
+        vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
+
     MF_SETMEM(image, 0, sizeof(VulkanImage));
+}
+
+void VulkanImageSetPixels(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u8* pixels) {
+    image->pixels = pixels;
+
+    VulkanBuffer staging;
+    VulkanBufferAllocate(&staging, ctx, ctx->cmdPool, image->width * image->height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
+
+    // Upload to staging buffer
+    void* mem;
+    vkMapMemory(ctx->device, staging.mem, 0, image->width * image->height * 4, 0, &mem);
+    memcpy(mem, pixels, image->width * image->height * 4);
+    vkUnmapMemory(ctx->device, staging.mem);
+
+    // Copy staging buffer to image and transitioning to the appropriate layout
+    {
+        VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->cmdPool, true);
+        VulkanCommandBufferBegin(buff);
+
+        {
+            VkImageMemoryBarrier copy_barrier[1] = {};
+			copy_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			copy_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			copy_barrier[0].oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			copy_barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			copy_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			copy_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			copy_barrier[0].image = image->image;
+			copy_barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			copy_barrier[0].subresourceRange.levelCount = 1;
+			copy_barrier[0].subresourceRange.layerCount = 1;
+			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, copy_barrier);
+        }
+
+        {
+            VkBufferImageCopy region = {
+                .imageOffset = (VkOffset3D){ 0, 0, 0 },
+                .imageSubresource.mipLevel = 0,
+                .imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .imageSubresource.baseArrayLayer = 0,
+                .imageSubresource.layerCount = 1,
+                .imageExtent = (VkExtent3D){ (uint32_t)image->width, (uint32_t)image->height, 1 },
+                .bufferImageHeight = 0,
+                .bufferOffset = 0,
+                .bufferRowLength = 0
+            };
+			vkCmdCopyBufferToImage(buff, staging.handle, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        }
+
+        {
+            VkImageMemoryBarrier use_barrier[1] = {};
+			use_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			use_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			use_barrier[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			use_barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			use_barrier[0].newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			use_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			use_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			use_barrier[0].image = image->image;
+			use_barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			use_barrier[0].subresourceRange.levelCount = 1;
+			use_barrier[0].subresourceRange.layerCount = 1;
+			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, use_barrier);
+        }
+
+        VulkanCommandBufferEnd(buff);
+
+        VkSubmitInfo sinfo = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &buff
+        };
+
+        VK_CHECK(vkQueueSubmit(ctx->qData.tQueue, 1, &sinfo, mfnull));
+
+        VulkanCommandBufferFree(ctx, buff, ctx->cmdPool);
+    }
+
+    VulkanBufferFree(&staging, ctx);
 }

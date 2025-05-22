@@ -23,7 +23,7 @@ void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRender
     if(config.size == 0)
         return;
     else {
-        VulkanBufferAllocate(&buffer->buffer, buffer->ctx, buffer->backend->cmdPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
+        VulkanBufferAllocate(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
     }
 }
 
@@ -39,7 +39,7 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
     MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
 
-    VulkanBufferUploadData(&buffer->buffer, buffer->ctx, buffer->backend->cmdPool, data);
+    VulkanBufferUploadData(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, data);
 }
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
@@ -47,7 +47,7 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     buffer->config.data = data;
     buffer->config.size = size;
     
-    VulkanBufferResize(&buffer->buffer, buffer->ctx, buffer->backend->cmdPool, size, data);
+    VulkanBufferResize(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, size, data);
 }
 
 void mfGpuBufferBind(MFGpuBuffer* buffer) {

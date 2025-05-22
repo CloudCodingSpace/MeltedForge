@@ -33,9 +33,8 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window) {
     VulkanBckndCtxInit(&backend->ctx, appName, window);
 
-    backend->cmdPool = VulkanCommandPoolCreate(&backend->ctx, backend->ctx.qData.gQueueIdx);
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->cmdPool, true);
+        backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.cmdPool, true);
     }
 
     backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true);
@@ -85,7 +84,6 @@ void VulkanBckndShutdown(VulkanBackend* backend) {
     }
     
     VulkanRenderPassDestroy(&backend->ctx, backend->pass);
-    VulkanCommandPoolDestroy(&backend->ctx, backend->cmdPool);
     VulkanBckndCtxDestroy(&backend->ctx);
 
     MF_FREEMEM(backend->fbs);

@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "cmd.h"
 
 static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
     VulkanBackendQueueData data = {-1};
@@ -395,11 +396,44 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     {
         GetDepthFormat(ctx);
 
-        VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, false, mfnull, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    }
+    // Global descriptor pool for shader resources
+    {
+        VkDescriptorPoolSize poolSizes[] = {
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } 
+		};
+
+		VkDescriptorPoolCreateInfo poolInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .maxSets = 1000 * MF_ARRAYLEN(poolSizes, VkDescriptorPoolSize),
+            .poolSizeCount = MF_ARRAYLEN(poolSizes, VkDescriptorPoolSize),
+            .pPoolSizes = poolSizes,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
+        };
+
+        VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->descPool));
+    }
+    // Command Pool
+    {
+        ctx->cmdPool = VulkanCommandPoolCreate(ctx, ctx->qData.gQueueIdx);
     }
 }
 
 void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
+    VulkanCommandPoolDestroy(ctx, ctx->cmdPool);
+    vkDestroyDescriptorPool(ctx->device, ctx->descPool, ctx->allocator);
+
     VulkanImageDestroy(&ctx->depthImage, ctx);
 
     for(u32 i = 0; i < ctx->scImgCount; i++)
@@ -426,5 +460,5 @@ void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     CreateSwapchain(ctx, mfGetWindowHandle(window));
-    VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, false, mfnull, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }

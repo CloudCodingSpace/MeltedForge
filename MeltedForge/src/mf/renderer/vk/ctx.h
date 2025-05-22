@@ -38,6 +38,9 @@ typedef struct VulkanBackendCtx_s {
 
     VkFormat depthFormat;
     VulkanImage depthImage;
+
+    VkDescriptorPool descPool;
+    VkCommandPool cmdPool;
 } VulkanBackendCtx;
 
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window);

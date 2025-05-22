@@ -10,7 +10,6 @@ typedef struct VulkanBackend_s {
     u32 scImgIdx, crntFrmIdx;
     VkClearValue clearColor;
 
-    VkCommandPool cmdPool;
     VkCommandBuffer cmdBuffers[FRAMES_IN_FLIGHT];
 
     VkRenderPass pass;
