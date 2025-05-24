@@ -3,12 +3,16 @@
 #include "vk/backend.h"
 #include "vk/pipeline.h"
 #include "vk/common.h"
+#include "vk/image.h"
 
 struct MFPipeline_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
     MFPipelineConfig info;
+
+    VkDescriptorSet descSet[FRAMES_IN_FLIGHT];
+    VkDescriptorSetLayout descLayout;
 };
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
@@ -21,7 +25,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingDescsCount);
     VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attribDescsCount);
-    
+
     for (u32 i = 0; i < info->bindingDescsCount; i++) {
         bindings[i].binding = info->bindingDescs[i].binding;
         bindings[i].inputRate = (VkVertexInputRate)((int)info->bindingDescs[i].rate);
@@ -33,6 +37,26 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         attribs[i].format = (VkFormat)((int)info->attribDescs[i].format);
         attribs[i].location = info->attribDescs[i].location;
         attribs[i].offset = info->attribDescs[i].offset;
+    }
+
+    // Descriptor Layout
+    {
+        VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * info->resourceDescCount);
+        for(u32 i = 0; i < info->resourceDescCount; i++) {
+            layBindings[i].binding = info->resourceDescs[i].binding;
+            layBindings[i].descriptorType = (VkDescriptorType)((int)info->resourceDescs[i].descriptorType);
+            layBindings[i].descriptorCount = info->resourceDescs[i].descriptorCount;
+            layBindings[i].stageFlags = (VkShaderStageFlags)((int)info->resourceDescs[i].stageFlags);
+        }
+
+        VkDescriptorSetLayoutCreateInfo layInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .bindingCount = info->resourceDescCount,
+            .pBindings = layBindings
+        };
+
+        VK_CHECK(vkCreateDescriptorSetLayout(pipeline->ctx->device, &layInfo, pipeline->ctx->allocator, &pipeline->descLayout));
+        MF_FREEMEM(layBindings);
     }
 
     VulkanPipelineInfo binfo = {
@@ -47,18 +71,72 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         .attribDescsCount = info->attribDescsCount,
         .attribDescs = attribs,
         .bindingDescsCount = info->bindingDescsCount,
-        .bindingDescs = bindings
+        .bindingDescs = bindings,
+        .setLayoutCount = 1,
+        .setLayouts = &pipeline->descLayout
     };
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, binfo);
 
     MF_FREEMEM(bindings);
     MF_FREEMEM(attribs);
+
+    // Descriptor Set
+    {
+        VkDescriptorSetAllocateInfo setInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = pipeline->ctx->descPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &pipeline->descLayout
+        };
+
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            VK_CHECK(vkAllocateDescriptorSets(pipeline->ctx->device, &setInfo, &pipeline->descSet[i]));
+        }
+    }
+    // Updating Descriptor Sets
+    {
+        // TODO: For now, assuming there are only image resources also make this scope more configurable
+        u32 count = info->imgCount;
+
+        VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
+        VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * count);
+
+        for(u32 i = 0; i < count; i++) {
+            imgInfos[i] = (VkDescriptorImageInfo){
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .imageView = mfGetGpuImageBackend(info->images[i]).view,
+                .sampler = mfGetGpuImageBackend(info->images[i]).sampler
+            };
+
+            writes[i] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .dstBinding = info->resourceDescs[i].binding,
+                .dstArrayElement = 0,
+                .pImageInfo = &imgInfos[i]
+            };
+        }
+
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            for(u32 j = 0; j < count; j++) {
+                writes[j].dstSet = pipeline->descSet[i];
+            }
+
+            vkUpdateDescriptorSets(pipeline->ctx->device, count, writes, 0, NULL);
+        }
+
+        MF_FREEMEM(writes);
+        MF_FREEMEM(imgInfos);
+    }
 }
 
 void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
-    
+
+    vkDestroyDescriptorSetLayout(pipeline->ctx->device, pipeline->descLayout, pipeline->ctx->allocator);
+    vkFreeDescriptorSets(pipeline->ctx->device, pipeline->ctx->descPool, FRAMES_IN_FLIGHT, pipeline->descSet);
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
     
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));
@@ -83,6 +161,7 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
         .offset = (VkOffset2D){scissor.offsetX, scissor.offsetY}
     };
 
+    vkCmdBindDescriptorSets(pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline.layout, 0, 1, &pipeline->descSet[pipeline->backend->crntFrmIdx], 0, mfnull);
     VulkanPipelineBind(&pipeline->pipeline, v, s, pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx]);
 }
 

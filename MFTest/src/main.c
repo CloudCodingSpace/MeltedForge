@@ -1,11 +1,14 @@
 #include <mf.h>
 
+#include <stb/stb_image.h>
+
 #include "vertex.h"
 
 typedef struct MFTState_s {
     MFPipeline* pipeline;
     MFGpuBuffer* vertexBuffer;
     MFGpuBuffer* indexBuffer;
+    MFGpuImage* tex;
 } MFTState;
 
 static void MFTOnInit(void* pstate, void* pappState) {
@@ -25,11 +28,11 @@ static void MFTOnInit(void* pstate, void* pappState) {
         state->indexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
     
         Vertex vertices[] = {
-            {{ -0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-            {{  0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-            {{  0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-            {{ -0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}}
-        };
+            {{ -0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
+            {{  0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+            {{  0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+            {{ -0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}
+    };
 
         u32 indices[] = {
             0, 1, 2,
@@ -50,12 +53,38 @@ static void MFTOnInit(void* pstate, void* pappState) {
         
         mfGpuBufferAllocate(state->indexBuffer, config, appState->renderer);
     }
+    // Image
+    {
+        u32 width, height, channels;
+        stbi_set_flip_vertically_on_load(true);
+        u8* pixels = stbi_load(MF_WINDOW_DEFAULT_ICON_PATH, &width, &height, &channels, 4);
 
+        state->tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
+        
+        MFGpuImageConfig config = {
+            .width = width,
+            .height = height,
+            .pixels = pixels
+        };
+        mfGpuImageCreate(state->tex, appState->renderer, config);
+
+        stbi_image_free(pixels);
+    }
     // Pipeline
     {
         u32 attribCount = 0, bindingCount = 1;
         MFVertexInputAttributeDescription* attribDescs = getVertAttribDescs(&attribCount);
         MFVertexInputBindingDescription bindingDesc = getVertBindingDesc();
+
+        u32 resources = 1;
+        MFResourceDesc descs[] = {
+            mfGetGpuImageDescription(0)
+        };
+
+        u32 imageCount = 1;
+        MFGpuImage* images[] = {
+            state->tex
+        };
 
         MFPipelineConfig info = {
             .extent = (MFVec2){ .x = winConfig->width, .y = winConfig->height },
@@ -65,7 +94,11 @@ static void MFTOnInit(void* pstate, void* pappState) {
             .attribDescsCount = attribCount,
             .attribDescs = attribDescs,
             .bindingDescsCount = bindingCount,
-            .bindingDescs = &bindingDesc
+            .bindingDescs = &bindingDesc,
+            .resourceDescCount = resources,
+            .resourceDescs = descs,
+            .imgCount = imageCount,
+            .images = images
         };
         mfPipelineInit(state->pipeline, appState->renderer, &info);
 
@@ -77,6 +110,7 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
     
+    mfGpuImageDestroy(state->tex);
     mfGpuBufferFree(state->indexBuffer);
     mfGpuBufferFree(state->vertexBuffer);
     mfPipelineDestroy(state->pipeline);
@@ -84,6 +118,7 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     MF_FREEMEM(state->vertexBuffer);
     MF_FREEMEM(state->indexBuffer);
     MF_FREEMEM(state->pipeline);
+    MF_FREEMEM(state->tex);
 }
 
 static void MFTOnRender(void* pstate, void* pappState) {

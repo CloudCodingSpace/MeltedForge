@@ -34,6 +34,9 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
             .mipLevels = 1, // TODO: Make it configurable if required
         };
 
+        if(gpuResource)
+            info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
         VK_CHECK(vkCreateImage(ctx->device, &info, ctx->allocator, &image->image));
     }
     // Memory
@@ -191,6 +194,7 @@ void VulkanImageSetPixels(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u8
         };
 
         VK_CHECK(vkQueueSubmit(ctx->qData.tQueue, 1, &sinfo, mfnull));
+        vkDeviceWaitIdle(ctx->device);
 
         VulkanCommandBufferFree(ctx, buff, ctx->cmdPool);
     }

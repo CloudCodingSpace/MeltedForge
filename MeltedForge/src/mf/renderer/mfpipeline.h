@@ -6,14 +6,17 @@ typedef struct MFPipeline_s MFPipeline;
 #include "core/mfutils.h"
 
 #include "mfutil_types.h"
+#include "mfimage.h"
 
 #include "mfrenderer.h"
 
 typedef struct MFPipelineConfig_s {
     MFVec2 extent;
-    u32 bindingDescsCount, attribDescsCount;
+    u32 bindingDescsCount, attribDescsCount, resourceDescCount, imgCount;
     MFVertexInputBindingDescription* bindingDescs;
     MFVertexInputAttributeDescription* attribDescs;
+    MFResourceDesc* resourceDescs;
+    MFGpuImage** images;
     b8 hasDepth;
     const char* vertPath;
     const char* fragPath;
