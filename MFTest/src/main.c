@@ -32,7 +32,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
             {{  0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
             {{  0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
             {{ -0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}
-    };
+        };
 
         u32 indices[] = {
             0, 1, 2,
