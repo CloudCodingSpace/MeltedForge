@@ -57,7 +57,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     {
         u32 width, height, channels;
         stbi_set_flip_vertically_on_load(true);
-        u8* pixels = stbi_load(MF_WINDOW_DEFAULT_ICON_PATH, &width, &height, &channels, 4);
+        u8* pixels = stbi_load("mfassets/logo.png", &width, &height, &channels, 4);
 
         state->tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
         
