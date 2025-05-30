@@ -50,12 +50,14 @@ size_t mfGetGpuImageSizeInBytes() {
     return sizeof(MFGpuImage);
 }
 
-MFResourceDesc mfGetGpuImageDescription(u32 binding) {
+MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image) {
+    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+
     return (MFResourceDesc) {
-        .binding = binding,
+        .binding = image->config.binding,
         .descriptorCount = 1, // TODO: Make it configurable if required
         .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
-        .stageFlags = MF_SHADER_STAGE_FRAGMENT
+        .stageFlags = MF_SHADER_STAGE_FRAGMENT // TODO: Make it configurable if required
     };
 }
 

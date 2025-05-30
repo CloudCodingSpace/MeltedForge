@@ -39,19 +39,30 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         attribs[i].offset = info->attribDescs[i].offset;
     }
 
+
+    // TODO: For now, assuming there are only image resources also make this scope more configurable
+    u32 resourceDescCount = info->imgCount;
+    MFResourceDesc* resourceDescs = MF_ALLOCMEM(MFResourceDesc, sizeof(MFResourceDesc) * resourceDescCount);
+    
+    {
+        for(u32 i = 0; i < resourceDescCount; i++) {
+            resourceDescs[i] = mfGetGpuImageDescription(info->images[i]);
+        }
+    }
+
     // Descriptor Layout
     {
-        VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * info->resourceDescCount);
-        for(u32 i = 0; i < info->resourceDescCount; i++) {
-            layBindings[i].binding = info->resourceDescs[i].binding;
-            layBindings[i].descriptorType = (VkDescriptorType)((int)info->resourceDescs[i].descriptorType);
-            layBindings[i].descriptorCount = info->resourceDescs[i].descriptorCount;
-            layBindings[i].stageFlags = (VkShaderStageFlags)((int)info->resourceDescs[i].stageFlags);
+        VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * resourceDescCount);
+        for(u32 i = 0; i < resourceDescCount; i++) {
+            layBindings[i].binding = resourceDescs[i].binding;
+            layBindings[i].descriptorType = (VkDescriptorType)((int)resourceDescs[i].descriptorType);
+            layBindings[i].descriptorCount = resourceDescs[i].descriptorCount;
+            layBindings[i].stageFlags = (VkShaderStageFlags)((int)resourceDescs[i].stageFlags);
         }
 
         VkDescriptorSetLayoutCreateInfo layInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            .bindingCount = info->resourceDescCount,
+            .bindingCount = resourceDescCount,
             .pBindings = layBindings
         };
 
@@ -113,7 +124,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .descriptorCount = 1,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .dstBinding = info->resourceDescs[i].binding,
+                .dstBinding = resourceDescs[i].binding,
                 .dstArrayElement = 0,
                 .pImageInfo = &imgInfos[i]
             };

@@ -12,10 +12,9 @@ typedef struct MFPipeline_s MFPipeline;
 
 typedef struct MFPipelineConfig_s {
     MFVec2 extent;
-    u32 bindingDescsCount, attribDescsCount, resourceDescCount, imgCount;
+    u32 bindingDescsCount, attribDescsCount, imgCount;
     MFVertexInputBindingDescription* bindingDescs;
     MFVertexInputAttributeDescription* attribDescs;
-    MFResourceDesc* resourceDescs;
     MFGpuImage** images;
     b8 hasDepth;
     const char* vertPath;

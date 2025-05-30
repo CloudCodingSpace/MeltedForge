@@ -64,7 +64,8 @@ static void MFTOnInit(void* pstate, void* pappState) {
         MFGpuImageConfig config = {
             .width = width,
             .height = height,
-            .pixels = pixels
+            .pixels = pixels,
+            .binding = 0
         };
         mfGpuImageCreate(state->tex, appState->renderer, config);
 
@@ -75,11 +76,6 @@ static void MFTOnInit(void* pstate, void* pappState) {
         u32 attribCount = 0, bindingCount = 1;
         MFVertexInputAttributeDescription* attribDescs = getVertAttribDescs(&attribCount);
         MFVertexInputBindingDescription bindingDesc = getVertBindingDesc();
-
-        u32 resources = 1;
-        MFResourceDesc descs[] = {
-            mfGetGpuImageDescription(0)
-        };
 
         u32 imageCount = 1;
         MFGpuImage* images[] = {
@@ -95,8 +91,6 @@ static void MFTOnInit(void* pstate, void* pappState) {
             .attribDescs = attribDescs,
             .bindingDescsCount = bindingCount,
             .bindingDescs = &bindingDesc,
-            .resourceDescCount = resources,
-            .resourceDescs = descs,
             .imgCount = imageCount,
             .images = images
         };
