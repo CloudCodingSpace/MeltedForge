@@ -27,3 +27,5 @@ MFRect2D mfRendererGetScissor(const MFWindowConfig* config);
 
 size_t mfGetRendererSizeInBytes();
 void* mfRendererGetBackend(MFRenderer* renderer);
+u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer);
+u8 mfGetRendererFramesInFlight();

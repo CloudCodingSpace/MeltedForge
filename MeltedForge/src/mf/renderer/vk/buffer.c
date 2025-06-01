@@ -29,7 +29,7 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     VkBufferCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         .size = buffer->size
     };
 

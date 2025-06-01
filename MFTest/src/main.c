@@ -6,10 +6,17 @@
 
 typedef struct MFTState_s {
     MFPipeline* pipeline;
+    MFGpuBuffer** ubos;
     MFGpuBuffer* vertexBuffer;
     MFGpuBuffer* indexBuffer;
     MFGpuImage* tex;
 } MFTState;
+
+typedef struct UBOData_s {
+    MFMat4 proj;
+    MFMat4 view;
+    MFMat4 model;
+} UBOData;
 
 static void MFTOnInit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest init\n");
@@ -26,7 +33,11 @@ static void MFTOnInit(void* pstate, void* pappState) {
     {
         state->vertexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         state->indexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-    
+        state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight());
+        for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
+            state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
+        }
+
         Vertex vertices[] = {
             {{ -0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
             {{  0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
@@ -52,12 +63,34 @@ static void MFTOnInit(void* pstate, void* pappState) {
         config.type = MF_GPU_BUFFER_TYPE_INDEX;
         
         mfGpuBufferAllocate(state->indexBuffer, config, appState->renderer);
+
+        config.type = MF_GPU_BUFFER_TYPE_UBO;
+        config.size = sizeof(UBOData);
+        config.binding = 3;
+        config.stage = MF_SHADER_STAGE_VERTEX;
+
+        UBOData uboData = {
+            .proj = mfMat4Perspective(60.0f * MF_DEG2RAD_MULTIPLIER, (float)winConfig->width/(float)winConfig->height, 0.1f, 100.0f),
+            .view = mfMat4LookAt((MFVec3){0.0f, 0.0f, 2.0f}, (MFVec3){0.0f, 0.0f, -1.0f}, (MFVec3){0.0f, 1.0f, 0.0f}),
+            .model = mfMat4Identity()
+        };
+
+        for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
+            mfGpuBufferAllocate(state->ubos[i], config, appState->renderer);
+            mfGpuBufferUploadData(state->ubos[i], &uboData);
+        }
     }
     // Image
     {
         u32 width, height, channels;
         stbi_set_flip_vertically_on_load(true);
         u8* pixels = stbi_load("mfassets/logo.png", &width, &height, &channels, 4);
+        if (!pixels) {
+            slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
+            slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, stbi_failure_reason());
+            slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "\n");
+            return;
+        }
 
         state->tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
         
@@ -92,7 +125,9 @@ static void MFTOnInit(void* pstate, void* pappState) {
             .bindingDescsCount = bindingCount,
             .bindingDescs = &bindingDesc,
             .imgCount = imageCount,
-            .images = images
+            .images = images,
+            .buffCount = mfGetRendererFramesInFlight(),
+            .buffers = state->ubos
         };
         mfPipelineInit(state->pipeline, appState->renderer, &info);
 
@@ -105,10 +140,17 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     
     mfGpuImageDestroy(state->tex);
+    
+    for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
+        mfGpuBufferFree(state->ubos[i]);
+        MF_FREEMEM(state->ubos[i]);
+    }
+
     mfGpuBufferFree(state->indexBuffer);
     mfGpuBufferFree(state->vertexBuffer);
     mfPipelineDestroy(state->pipeline);
     
+    MF_FREEMEM(state->ubos);
     MF_FREEMEM(state->vertexBuffer);
     MF_FREEMEM(state->indexBuffer);
     MF_FREEMEM(state->pipeline);
@@ -128,6 +170,17 @@ static void MFTOnRender(void* pstate, void* pappState) {
 
 static void MFTOnUpdate(void* pstate, void* pappState) {
     MFDefaultAppState* aState = (MFDefaultAppState*)pappState;
+    MFTState* state = (MFTState*)pstate;
+    const MFWindowConfig* winConfig = mfGetWindowConfig(aState->window);
+
+    UBOData uboData = {
+        .proj = mfMat4Perspective(60.0f * MF_DEG2RAD_MULTIPLIER, (float)winConfig->width/(float)winConfig->height, 0.1f, 100.0f),
+        .view = mfMat4LookAt((MFVec3){0.0f, 0.0f, 2.0f}, (MFVec3){0.0f, 0.0f, -1.0f}, (MFVec3){0.0f, 1.0f, 0.0f}),
+        .model = mfMat4Mul(mfMat4RotateX(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER), mfMat4RotateZ(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER))
+    };
+
+    mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(aState->renderer)], &uboData);
+
     if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(aState->window);
     }

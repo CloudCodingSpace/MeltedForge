@@ -4,6 +4,7 @@
 #include "vk/pipeline.h"
 #include "vk/common.h"
 #include "vk/image.h"
+#include "vk/buffer.h"
 
 struct MFPipeline_s {
     VulkanBackend* backend;
@@ -39,14 +40,15 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         attribs[i].offset = info->attribDescs[i].offset;
     }
 
-
-    // TODO: For now, assuming there are only image resources also make this scope more configurable
-    u32 resourceDescCount = info->imgCount;
+    u32 resourceDescCount = info->imgCount + info->buffCount;
     MFResourceDesc* resourceDescs = MF_ALLOCMEM(MFResourceDesc, sizeof(MFResourceDesc) * resourceDescCount);
     
     {
-        for(u32 i = 0; i < resourceDescCount; i++) {
+        for(u32 i = 0; i < info->imgCount; i++) {
             resourceDescs[i] = mfGetGpuImageDescription(info->images[i]);
+        }
+        for(u32 i = info->imgCount; i < resourceDescCount; i++) {
+            resourceDescs[i] = mfGetGpuBufferDescription(info->buffers[i - info->imgCount]);
         }
     }
 
@@ -107,13 +109,13 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     }
     // Updating Descriptor Sets
     {
-        // TODO: For now, assuming there are only image resources also make this scope more configurable
-        u32 count = info->imgCount;
+        u32 count = info->imgCount + info->buffCount;
 
         VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
-        VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * count);
+        VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * info->imgCount);
+        VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * info->buffCount);
 
-        for(u32 i = 0; i < count; i++) {
+        for(u32 i = 0; i < info->imgCount; i++) {
             imgInfos[i] = (VkDescriptorImageInfo){
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 .imageView = mfGetGpuImageBackend(info->images[i]).view,
@@ -129,6 +131,23 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
                 .pImageInfo = &imgInfos[i]
             };
         }
+        for(u32 i = info->imgCount; i < count; i++) {
+            u32 j = i - info->imgCount;
+            buffInfos[j] = (VkDescriptorBufferInfo){
+                .buffer = mfGetGpuBufferBackend(info->buffers[j])->handle,
+                .offset = 0, // TODO: Make it configurable if required
+                .range = mfGetGpuBufferBackend(info->buffers[j])->size
+            };
+
+            writes[i] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .dstBinding = resourceDescs[i].binding,
+                .dstArrayElement = 0,
+                .pBufferInfo = &buffInfos[j]
+            };
+        }
 
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             for(u32 j = 0; j < count; j++) {
@@ -139,8 +158,11 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         }
 
         MF_FREEMEM(writes);
+        MF_FREEMEM(buffInfos);
         MF_FREEMEM(imgInfos);
     }
+
+    MF_FREEMEM(resourceDescs);
 }
 
 void mfPipelineDestroy(MFPipeline* pipeline) {

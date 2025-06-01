@@ -94,6 +94,16 @@ size_t mfGetRendererSizeInBytes() {
 
 void* mfRendererGetBackend(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-
+    
     return (void*)&renderer->backend;
+}
+
+u8 mfGetRendererFramesInFlight() {
+    return FRAMES_IN_FLIGHT;
+}
+
+u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    
+    return renderer->backend.crntFrmIdx;
 }

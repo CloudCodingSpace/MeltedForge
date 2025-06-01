@@ -12,3 +12,5 @@ typedef struct MFTimer_s {
 void mfTimerStart(MFTimer* timer);
 void mfTimerEnd(MFTimer* timer);
 void mfTimerReset(MFTimer* timer);
+
+f64 mfGetCurrentTime();

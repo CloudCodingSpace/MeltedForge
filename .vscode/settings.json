@@ -6,6 +6,21 @@
         "mfcore.h": "c",
         "mfrenderer.h": "c",
         "vector": "c",
-        "xiosbase": "c"
+        "xiosbase": "c",
+        "common.h": "c",
+        "array": "c",
+        "deque": "c",
+        "format": "c",
+        "initializer_list": "c",
+        "list": "c",
+        "queue": "c",
+        "random": "c",
+        "span": "c",
+        "utility": "c",
+        "xhash": "c",
+        "xstring": "c",
+        "xtree": "c",
+        "xutility": "c",
+        "string_view": "c"
     }
 }

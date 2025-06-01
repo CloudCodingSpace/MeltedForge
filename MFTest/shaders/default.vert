@@ -7,8 +7,14 @@ layout (location = 2) in vec2 uv;
 layout (location = 1) out vec3 oColor;
 layout (location = 2) out vec2 oUv;
 
+layout (binding = 3) uniform UBO {
+    mat4 proj;
+    mat4 view;
+    mat4 model;
+} ubo;
+
 void main() {
-    gl_Position = vec4(pos, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
     oColor = color;
     oUv = uv;
 }

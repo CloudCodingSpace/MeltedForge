@@ -45,3 +45,7 @@ void mfTimerReset(MFTimer* timer) {
     timer->delta = timer->end = timer->start = 0;
     timer->started = false;
 }
+
+f64 mfGetCurrentTime() {
+    return glfwGetTime();
+}
