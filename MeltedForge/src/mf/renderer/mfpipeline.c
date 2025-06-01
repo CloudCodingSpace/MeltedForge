@@ -54,17 +54,31 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     // Descriptor Layout
     {
+        // TODO: Find a better solution for excluding duplicate bindings
         VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * resourceDescCount);
+        u32 uniqueBindingCount = 0;
+
         for(u32 i = 0; i < resourceDescCount; i++) {
-            layBindings[i].binding = resourceDescs[i].binding;
-            layBindings[i].descriptorType = (VkDescriptorType)((int)resourceDescs[i].descriptorType);
-            layBindings[i].descriptorCount = resourceDescs[i].descriptorCount;
-            layBindings[i].stageFlags = (VkShaderStageFlags)((int)resourceDescs[i].stageFlags);
+            bool bindingExists = false;
+            for(u32 j = 0; j < uniqueBindingCount; j++) {
+                if(layBindings[j].binding == resourceDescs[i].binding) {
+                    bindingExists = true;
+                    break;
+                }
+            }
+
+            if(!bindingExists) {
+                layBindings[uniqueBindingCount].binding = resourceDescs[i].binding;
+                layBindings[uniqueBindingCount].descriptorType = (VkDescriptorType)((int)resourceDescs[i].descriptorType);
+                layBindings[uniqueBindingCount].descriptorCount = resourceDescs[i].descriptorCount;
+                layBindings[uniqueBindingCount].stageFlags = (VkShaderStageFlags)((int)resourceDescs[i].stageFlags);
+                uniqueBindingCount++;
+            }
         }
 
         VkDescriptorSetLayoutCreateInfo layInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            .bindingCount = resourceDescCount,
+            .bindingCount = uniqueBindingCount,
             .pBindings = layBindings
         };
 
