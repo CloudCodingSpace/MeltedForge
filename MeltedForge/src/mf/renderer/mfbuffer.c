@@ -74,3 +74,20 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
 size_t mfGpuBufferGetSizeInBytes() {
     return sizeof(MFGpuBuffer);
 }
+
+MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer) {
+    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    
+    return (MFResourceDesc) {
+        .binding = buffer->config.binding,
+        .descriptorCount = 1,
+        .descriptorType = MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER,
+        .stageFlags = buffer->config.stage
+    };
+}
+
+struct VulkanBuffer_s* mfGetGpuBufferBackend(MFGpuBuffer* buffer) {
+    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+
+    return &buffer->buffer;
+}

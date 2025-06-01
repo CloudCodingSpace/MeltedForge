@@ -4,15 +4,20 @@
 #include "core/mfcore.h"
 
 #include "mfrenderer.h"
+#include "mfutil_types.h"
+
+struct VulkanBuffer_s;
 
 typedef enum MFGpuBufferTypes_s {
     MF_GPU_BUFFER_TYPE_NONE,
     MF_GPU_BUFFER_TYPE_VERTEX,
-    MF_GPU_BUFFER_TYPE_INDEX
+    MF_GPU_BUFFER_TYPE_INDEX,
+    MF_GPU_BUFFER_TYPE_UBO
 } MFGpuBufferTypes;
 
 typedef struct MFGpuBufferConfig_s {
-    u64 size;
+    u64 size, binding; // NOTE: The shader binding must be specified for a UBO
+    MFShaderStage stage; // NOTE: The shader stage should be specifies for a UBO
     void* data;
     MFGpuBufferTypes type;
 } MFGpuBufferConfig;
@@ -30,3 +35,5 @@ void mfGpuBufferBind(MFGpuBuffer* buffer);
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer);
 
 size_t mfGpuBufferGetSizeInBytes();
+MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer);
+struct VulkanBuffer_s* mfGetGpuBufferBackend(MFGpuBuffer* buffer);

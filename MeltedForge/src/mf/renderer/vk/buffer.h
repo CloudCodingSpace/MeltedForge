@@ -9,6 +9,7 @@ typedef enum VulkanBufferTypes_e {
     VULKAN_BUFFER_TYPE_NONE,
     VULKAN_BUFFER_TYPE_VERTEX,
     VULKAN_BUFFER_TYPE_INDEX,
+    VULKAN_BUFFER_TYPE_UBO,
     VULKAN_BUFFER_TYPE_STAGING
 } VulkanBufferTypes;
 
@@ -17,6 +18,7 @@ typedef struct VulkanBuffer_s {
     VkDeviceMemory mem;
     u64 size;
     void* data;
+    void* mappedMem;
     VulkanBufferTypes type;
 } VulkanBuffer;
 
