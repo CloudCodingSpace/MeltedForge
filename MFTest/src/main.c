@@ -7,9 +7,8 @@
 typedef struct MFTState_s {
     MFPipeline* pipeline;
     MFGpuBuffer** ubos;
-    MFGpuBuffer* vertexBuffer;
-    MFGpuBuffer* indexBuffer;
     MFGpuImage* tex;
+    MFMesh mesh;
 } MFTState;
 
 typedef struct UBOData_s {
@@ -29,10 +28,8 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
-    // Buffers
+    // UBO & Mesh
     {
-        state->vertexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-        state->indexBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight());
         for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
             state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
@@ -55,24 +52,14 @@ static void MFTOnInit(void* pstate, void* pappState) {
             4, 5, 6, 6, 7, 4
         };
 
+        mfMeshCreate(&state->mesh, appState->renderer, sizeof(vertices[0]) * MF_ARRAYLEN(vertices, Vertex), vertices, MF_ARRAYLEN(indices, u32), indices);
+
         MFGpuBufferConfig config = {
-            .data = vertices,
-            .size = sizeof(vertices[0]) * MF_ARRAYLEN(vertices, Vertex),
-            .type = MF_GPU_BUFFER_TYPE_VERTEX
+            .type = MF_GPU_BUFFER_TYPE_UBO,
+            .size = sizeof(UBOData),
+            .binding = 3,
+            .stage = MF_SHADER_STAGE_VERTEX
         };
-
-        mfGpuBufferAllocate(state->vertexBuffer, config, appState->renderer);
-        
-        config.data = indices;
-        config.size = sizeof(indices[0]) * MF_ARRAYLEN(indices, u32);
-        config.type = MF_GPU_BUFFER_TYPE_INDEX;
-        
-        mfGpuBufferAllocate(state->indexBuffer, config, appState->renderer);
-
-        config.type = MF_GPU_BUFFER_TYPE_UBO;
-        config.size = sizeof(UBOData);
-        config.binding = 3;
-        config.stage = MF_SHADER_STAGE_VERTEX;
 
         UBOData uboData = {
             .proj = mfMat4Perspective(60.0f * MF_DEG2RAD_MULTIPLIER, (float)winConfig->width/(float)winConfig->height, 0.1f, 100.0f),
@@ -151,13 +138,10 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
         MF_FREEMEM(state->ubos[i]);
     }
 
-    mfGpuBufferFree(state->indexBuffer);
-    mfGpuBufferFree(state->vertexBuffer);
+    mfMeshDestroy(&state->mesh);
     mfPipelineDestroy(state->pipeline);
     
     MF_FREEMEM(state->ubos);
-    MF_FREEMEM(state->vertexBuffer);
-    MF_FREEMEM(state->indexBuffer);
     MF_FREEMEM(state->pipeline);
     MF_FREEMEM(state->tex);
 }
@@ -168,9 +152,7 @@ static void MFTOnRender(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
 
     mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
-    mfGpuBufferBind(state->vertexBuffer);
-    mfGpuBufferBind(state->indexBuffer);
-    mfRendererDrawVerticesIndexed(appState->renderer, 12, 1, 0, 0);
+    mfMeshRender(&state->mesh);
 }
 
 static void MFTOnUpdate(void* pstate, void* pappState) {

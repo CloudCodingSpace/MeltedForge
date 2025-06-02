@@ -72,7 +72,7 @@ void mfWindowDestroy(MFWindow* window) {
     }
 
     glfwDestroyWindow(window->handle);
-    MF_SETMEM(window, 0, sizeof(*window));
+    MF_SETMEM(window, 0, sizeof(MFWindow));
 
     MF_INFO(mfGetLogger(), "Destroying MFWindow\n");
 }
