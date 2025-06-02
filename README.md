@@ -25,12 +25,13 @@
 
 ## 📦 Dependencies
 
-- [GLFW](https://www.glfw.org/)
-- [slog](https://github.com/cloudcircuit/slog) (structured logging)
+> **Note:** The following are the **important conditions** met by the PC for **building/running** MeltedForge
+
 - Vulkan SDK (Get from [LunarG](https://vulkan.lunarg.com/))
-- [stb](https://github.com/nothings/stb) single-header libs
-- A GPU driver with **modern Vulkan support**
-- A modern **C & C++** compiler
+- A GPU driver with **modern Vulkan support** (Vulkan 1.2.000+)
+- A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries**
+- CMake (Get from [here](https://cmake.org/download/))
+- Make if using GCC & G++ or Clang & Clang++
 
 ---
 
