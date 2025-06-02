@@ -160,6 +160,8 @@ static void MFTOnUpdate(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfGetWindowConfig(aState->window);
 
+    printf("Rendering took :- %fms\n", mfGetRendererGetFrameTime(aState->renderer));
+
     UBOData uboData = {
         .proj = mfMat4Perspective(60.0f * MF_DEG2RAD_MULTIPLIER, (float)winConfig->width/(float)winConfig->height, 0.1f, 100.0f),
         .view = mfMat4LookAt((MFVec3){0.0f, 0.0f, 2.0f}, (MFVec3){0.0f, 0.0f, -1.0f}, (MFVec3){0.0f, 1.0f, 0.0f}),
@@ -186,6 +188,7 @@ MFAppConfig mfClientCreateAppConfig() {
         .onUpdate = &MFTOnUpdate
     };
     config.winConfig.resizable = true;
-    
+    config.vsync = false;
+
     return config;
 }

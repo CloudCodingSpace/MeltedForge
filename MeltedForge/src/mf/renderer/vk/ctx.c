@@ -105,9 +105,15 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
 			}
 		}
 
-		if (!set)
-			ctx->scMode = VK_PRESENT_MODE_FIFO_KHR;
-	}
+		if (!set) {
+            if(ctx->vsync) {
+			    ctx->scMode = VK_PRESENT_MODE_FIFO_KHR;
+            }
+            else {
+			    ctx->scMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            }
+        }
+    }
 	// Selecting the surface format
 	{
 		bool set = false;

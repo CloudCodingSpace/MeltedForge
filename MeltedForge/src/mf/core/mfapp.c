@@ -8,7 +8,7 @@ static void initApp(void* st, MFAppConfig* config) {
     mfWindowSetIcon(state->window, MF_WINDOW_DEFAULT_ICON_PATH);
 
     state->renderer = MF_ALLOCMEM(MFRenderer, mfGetRendererSizeInBytes());
-    mfRendererInit(state->renderer, config->name, state->window);
+    mfRendererInit(state->renderer, config->name, config->vsync, state->window);
 
     for(u32 i = 0; i < config->layerCount; i++) {
         config->layers[i].onInit(config->layers[i].state, st);

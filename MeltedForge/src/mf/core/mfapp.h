@@ -14,6 +14,7 @@ typedef struct MFLayer_s {
 typedef struct MFAppConfig_s {
     const char* name;
     void* state;
+    b8 vsync;
     MFWindowConfig winConfig;
     u32 layerCount;
     MFLayer* layers;

@@ -30,7 +30,8 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     }
 }
 
-void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window) {
+void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, MFWindow* window) {
+    backend->ctx.vsync = vsync;
     VulkanBckndCtxInit(&backend->ctx, appName, window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {

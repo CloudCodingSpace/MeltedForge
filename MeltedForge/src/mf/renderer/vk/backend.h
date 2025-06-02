@@ -21,7 +21,7 @@ typedef struct VulkanBackend_s {
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
 } VulkanBackend;
 
-void VulkanBckndInit(VulkanBackend* backend, const char* appName, MFWindow* window);
+void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, MFWindow* window);
 void VulkanBckndShutdown(VulkanBackend* backend);
 
 void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window);

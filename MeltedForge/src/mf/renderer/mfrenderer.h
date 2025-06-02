@@ -10,7 +10,7 @@
 
 typedef struct MFRenderer_s MFRenderer;
 
-void mfRendererInit(MFRenderer* renderer, const char* appName, MFWindow* window);
+void mfRendererInit(MFRenderer* renderer, const char* appName, b8 vsync, MFWindow* window);
 void mfRendererShutdown(MFRenderer* renderer);
 
 void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
@@ -25,7 +25,10 @@ void mfRendererDrawVerticesIndexed(MFRenderer* renderer, u32 indexCount, u32 ins
 MFViewport mfRendererGetViewport(const MFWindowConfig* config);
 MFRect2D mfRendererGetScissor(const MFWindowConfig* config);
 
-size_t mfGetRendererSizeInBytes();
 void* mfRendererGetBackend(MFRenderer* renderer);
 u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer);
+f64 mfGetRendererGetDeltaTime(MFRenderer* renderer);
+f64 mfGetRendererGetFrameTime(MFRenderer* renderer);
+
+size_t mfGetRendererSizeInBytes();
 u8 mfGetRendererFramesInFlight();

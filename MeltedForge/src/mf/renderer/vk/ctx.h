@@ -33,6 +33,7 @@ typedef struct VulkanBackendCtx_s {
     VkSurfaceFormatKHR scFormat;
     VkSwapchainKHR swapchain;
     u32 scImgCount;
+    b8 vsync;
     VkImage* scImgs;
     VkImageView* scImgViews;
 

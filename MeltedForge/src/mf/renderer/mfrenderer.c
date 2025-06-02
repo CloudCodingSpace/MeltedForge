@@ -1,18 +1,21 @@
 #include "mfrenderer.h"
+#include "core/mftimer.h"
 
 #include "vk/backend.h"
 
 struct MFRenderer_s {
     VulkanBackend backend;
+    f64 lastTime, deltaTime;
+    MFTimer frameTimer;
 };
 
-void mfRendererInit(MFRenderer* renderer, const char* appName, MFWindow* window) {
+void mfRendererInit(MFRenderer* renderer, const char* appName, b8 vsync, MFWindow* window) {
     MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     MF_INFO(mfGetLogger(), "Creating the renderer\n");
 
-    VulkanBckndInit(&renderer->backend, appName, window);
+    VulkanBckndInit(&renderer->backend, appName, vsync, window);
 }
 
 void mfRendererShutdown(MFRenderer* renderer) {
@@ -27,12 +30,20 @@ void mfRendererShutdown(MFRenderer* renderer) {
 void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
+    f64 crntTime = mfGetCurrentTime() * 1000; // s -> ms
+    renderer->deltaTime = crntTime - renderer->lastTime;
+    renderer->lastTime = crntTime;
+
+    mfTimerStart(&renderer->frameTimer);
+
     VulkanBckndBeginframe(&renderer->backend, window);
 }
 
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
+    mfTimerEnd(&renderer->frameTimer);
+
     VulkanBckndEndframe(&renderer->backend, window);
 }
 
@@ -88,22 +99,34 @@ MFRect2D mfRendererGetScissor(const MFWindowConfig* config) {
     return scissor;
 }
 
-size_t mfGetRendererSizeInBytes() {
-    return sizeof(MFRenderer);
-}
-
 void* mfRendererGetBackend(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
     return (void*)&renderer->backend;
 }
 
-u8 mfGetRendererFramesInFlight() {
-    return FRAMES_IN_FLIGHT;
-}
-
 u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
     return renderer->backend.crntFrmIdx;
+}
+
+f64 mfGetRendererGetDeltaTime(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    
+    return renderer->deltaTime;
+}
+
+f64 mfGetRendererGetFrameTime(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    return renderer->frameTimer.delta;
+}
+
+u8 mfGetRendererFramesInFlight() {
+    return FRAMES_IN_FLIGHT;
+}
+
+size_t mfGetRendererSizeInBytes() {
+    return sizeof(MFRenderer);
 }
