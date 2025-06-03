@@ -84,12 +84,18 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
 
     // Samplers
     {
+        VkPhysicalDeviceFeatures features = {0};
+        vkGetPhysicalDeviceFeatures(ctx->physicalDevice, &features);
+        VkPhysicalDeviceProperties props = {0};
+        vkGetPhysicalDeviceProperties(ctx->physicalDevice, &props);
+
         VkSamplerCreateInfo sinfo = {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
             .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
             .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
             .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .anisotropyEnable = VK_FALSE,
+            .anisotropyEnable = features.samplerAnisotropy,
+            .maxAnisotropy = props.limits.maxSamplerAnisotropy,
             .magFilter = VK_FILTER_LINEAR,
             .minFilter = VK_FILTER_LINEAR,
             .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
