@@ -8,6 +8,7 @@
 #include "mf/renderer/mfbuffer.h"
 #include "mf/renderer/mfimage.h"
 #include "mf/renderer/mfmesh.h"
+#include "mf/renderer/mfcamera.h"
 
 #include "mf/core/mfcore.h"
 #include "mf/core/mfutils.h"

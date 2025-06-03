@@ -9,6 +9,7 @@ typedef struct MFTState_s {
     MFGpuBuffer** ubos;
     MFGpuImage* tex;
     MFMesh mesh;
+    MFCamera camera;
 } MFTState;
 
 typedef struct UBOData_s {
@@ -28,6 +29,8 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
+    mfCameraCreate(&state->camera, appState->window, 60, 0.01f, 1000.0f, 0.05f, 0.1f, (MFVec3){0.0f, 0.0f, 2.0f});
+
     // UBO & Mesh
     {
         state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight());
@@ -36,20 +39,50 @@ static void MFTOnInit(void* pstate, void* pappState) {
         }
 
         Vertex vertices[] = {
-            {{ -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }},
-            {{  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f }},
-            {{  0.5f,  0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-            {{ -0.5f,  0.5f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f }},
+            // Front face (+Z)
+            {{-0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
+            {{ 0.5f, -0.5f,  0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
+            {{ 0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
+            {{-0.5f,  0.5f,  0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
 
-            {{ -0.5f, -0.5f, -0.5f}, { 1.0f, 0.0f, 0.0f }, { 0.0f,0.0f }},
-            {{  0.5f, -0.5f, -0.5f}, { 0.0f, 1.0f, 0.0f }, { 1.0f,0.0f }},
-            {{  0.5f,  0.5f, -0.5f}, { 0.0f, 0.0f, 1.0f }, { 1.0f,1.0f }},
-            {{ -0.5f,  0.5f, -0.5f}, { 1.0f, 1.0f, 1.0f }, { 0.0f,1.0f }}
+            // Back face (-Z)
+            {{ 0.5f, -0.5f, -0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
+            {{-0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
+            {{-0.5f,  0.5f, -0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
+            {{ 0.5f,  0.5f, -0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
+
+            // Left face (-X)
+            {{-0.5f, -0.5f, -0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
+            {{-0.5f, -0.5f,  0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
+            {{-0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
+            {{-0.5f,  0.5f, -0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
+
+            // Right face (+X)
+            {{ 0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
+            {{ 0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
+            {{ 0.5f,  0.5f, -0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
+            {{ 0.5f,  0.5f,  0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
+
+            // Top face (+Y)
+            {{-0.5f,  0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
+            {{ 0.5f,  0.5f,  0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
+            {{ 0.5f,  0.5f, -0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
+            {{-0.5f,  0.5f, -0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
+
+            // Bottom face (-Y)
+            {{-0.5f, -0.5f, -0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
+            {{ 0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
+            {{ 0.5f, -0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
+            {{-0.5f, -0.5f,  0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
         };
 
         u32 indices[] = {
-            0, 1, 2, 2, 3, 0,
-            4, 5, 6, 6, 7, 4
+             2, 1, 0,  0, 3, 2,        // Front
+             6, 5, 4,  4, 7, 6,        // Back
+            10, 9, 8,  8,11,10,        // Left
+            14,13,12, 12,15,14,        // Right
+            18,17,16, 16,19,18,        // Top
+            22,21,20, 20,23,22         // Bottom
         };
 
         mfMeshCreate(&state->mesh, appState->renderer, sizeof(vertices[0]) * MF_ARRAYLEN(vertices, Vertex), vertices, MF_ARRAYLEN(indices, u32), indices);
@@ -62,8 +95,8 @@ static void MFTOnInit(void* pstate, void* pappState) {
         };
 
         UBOData uboData = {
-            .proj = mfMat4Perspective(60.0f * MF_DEG2RAD_MULTIPLIER, (float)winConfig->width/(float)winConfig->height, 0.1f, 100.0f),
-            .view = mfMat4LookAt((MFVec3){0.0f, 0.0f, 2.0f}, (MFVec3){0.0f, 0.0f, -1.0f}, (MFVec3){0.0f, 1.0f, 0.0f}),
+            .proj = state->camera.proj,
+            .view = state->camera.view,
             .model = mfMat4Identity()
         };
 
@@ -138,6 +171,7 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
         MF_FREEMEM(state->ubos[i]);
     }
 
+    mfCameraDestroy(&state->camera);
     mfMeshDestroy(&state->mesh);
     mfPipelineDestroy(state->pipeline);
     
@@ -162,10 +196,13 @@ static void MFTOnUpdate(void* pstate, void* pappState) {
 
     printf("Rendering took :- %fms\n", mfGetRendererGetFrameTime(aState->renderer));
 
+    state->camera.update(&state->camera, mfGetRendererGetDeltaTime(aState->renderer), mfnull);
+
     UBOData uboData = {
-        .proj = mfMat4Perspective(60.0f * MF_DEG2RAD_MULTIPLIER, (float)winConfig->width/(float)winConfig->height, 0.1f, 100.0f),
-        .view = mfMat4LookAt((MFVec3){0.0f, 0.0f, 2.0f}, (MFVec3){0.0f, 0.0f, -1.0f}, (MFVec3){0.0f, 1.0f, 0.0f}),
-        .model = mfMat4Mul(mfMat4RotateX(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER), mfMat4RotateZ(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER))
+        .proj = state->camera.proj,
+        .view = state->camera.view,
+        // .model = mfMat4Mul(mfMat4RotateX(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER), mfMat4RotateZ(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER))
+        .model = mfMat4Identity()
     };
 
     mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(aState->renderer)], &uboData);
