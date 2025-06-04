@@ -29,7 +29,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
-    mfCameraCreate(&state->camera, appState->window, 60, 0.01f, 1000.0f, 0.05f, 0.1f, (MFVec3){0.0f, 0.0f, 2.0f});
+    mfCameraCreate(&state->camera, appState->window, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
     // UBO & Mesh
     {
@@ -184,9 +184,20 @@ static void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
-
+    
     mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
     mfMeshRender(&state->mesh);
+}
+
+static void MFTOnUIRender(void* pstate, void* pappState) {
+    MFTState* state = (MFTState*)pstate;
+    MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
+    
+    igBegin("MFTest", mfnull, ImGuiWindowFlags_None);
+
+    igText("FPS :- %.3f", igGetIO_Nil()->Framerate);
+
+    igEnd();
 }
 
 static void MFTOnUpdate(void* pstate, void* pappState) {
@@ -222,10 +233,12 @@ MFAppConfig mfClientCreateAppConfig() {
         .onInit = &MFTOnInit,
         .onDeinit = &MFTOnDeinit,
         .onRender = &MFTOnRender,
-        .onUpdate = &MFTOnUpdate
+        .onUpdate = &MFTOnUpdate,
+        .onUIRender = &MFTOnUIRender
     };
     config.winConfig.resizable = true;
     config.vsync = false;
+    config.enableUI = true;
 
     return config;
 }

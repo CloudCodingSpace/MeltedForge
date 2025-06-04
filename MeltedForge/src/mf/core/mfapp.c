@@ -8,7 +8,7 @@ static void initApp(void* st, MFAppConfig* config) {
     mfWindowSetIcon(state->window, MF_WINDOW_DEFAULT_ICON_PATH);
 
     state->renderer = MF_ALLOCMEM(MFRenderer, mfGetRendererSizeInBytes());
-    mfRendererInit(state->renderer, config->name, config->vsync, state->window);
+    mfRendererInit(state->renderer, config->name, config->vsync, config->enableUI, state->window);
 
     for(u32 i = 0; i < config->layerCount; i++) {
         config->layers[i].onInit(config->layers[i].state, st);
@@ -42,6 +42,8 @@ static void runApp(void* st, MFAppConfig* config) {
         mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layerCount; i++) {
             config->layers[i].onRender(config->layers[i].state, st);
+            if(config->enableUI)
+                config->layers[i].onUIRender(config->layers[i].state, st);
         }
         mfRendererEndframe(state->renderer, state->window);
 

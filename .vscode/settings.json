@@ -23,6 +23,7 @@
         "xutility": "c",
         "string_view": "c",
         "mf.h": "c",
-        "backend.h": "c"
+        "backend.h": "c",
+        "cimgui.h": "c"
     }
 }

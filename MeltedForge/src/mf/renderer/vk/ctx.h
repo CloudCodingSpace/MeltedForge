@@ -41,6 +41,7 @@ typedef struct VulkanBackendCtx_s {
     VulkanImage depthImage;
 
     VkDescriptorPool descPool;
+    VkDescriptorPool uiDescPool;
     VkCommandPool cmdPool;
 } VulkanBackendCtx;
 

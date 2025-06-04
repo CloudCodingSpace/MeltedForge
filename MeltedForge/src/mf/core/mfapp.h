@@ -9,12 +9,13 @@ typedef struct MFLayer_s {
     void (*onDeinit)(void* state, void* appState);
     void (*onRender)(void* state, void* appState);
     void (*onUpdate)(void* state, void* appState);
+    void (*onUIRender)(void* state, void* appState);
 } MFLayer;
 
 typedef struct MFAppConfig_s {
     const char* name;
     void* state;
-    b8 vsync;
+    b8 vsync, enableUI;
     MFWindowConfig winConfig;
     u32 layerCount;
     MFLayer* layers;

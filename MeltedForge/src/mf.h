@@ -15,3 +15,7 @@
 #include "mf/core/mfmaths.h"
 #include "mf/core/mfentry.h"
 #include "mf/core/mftimer.h"
+
+// UI
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include <cimgui.h>

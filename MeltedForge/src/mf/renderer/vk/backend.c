@@ -6,6 +6,12 @@
 
 #include <GLFW/glfw3.h>
 
+#include <stdbool.h>
+
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include <cimgui.h>
+#include <cimgui_impl.h>
+
 void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     if(backend->ctx.scExtent.width == width && backend->ctx.scExtent.height == height)
         return;
@@ -30,8 +36,9 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     }
 }
 
-void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, MFWindow* window) {
+void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 enableUI, MFWindow* window) {
     backend->ctx.vsync = vsync;
+    backend->enableUI = enableUI;
     VulkanBckndCtxInit(&backend->ctx, appName, window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -71,9 +78,51 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, MFWi
     }
 
     backend->crntFrmIdx = 0;
+
+    if(!enableUI)
+        return;
+
+    // UI
+    {
+        ImGuiContext* ctx = igCreateContext(NULL);
+        igSetCurrentContext(ctx);
+
+        ImGuiIO* io = igGetIO_Nil();
+        io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        
+        ImGuiStyle* style = igGetStyle();
+        style->WindowPadding = (ImVec2){0, 0};
+
+        ImGui_ImplGlfw_InitForVulkan(mfGetWindowHandle(window), true);
+
+        ImGui_ImplVulkan_InitInfo info = {
+            .Allocator = backend->ctx.allocator,
+            .ApiVersion = VK_API_VERSION_1_0,
+            .DescriptorPool = backend->ctx.uiDescPool,
+            .ImageCount = FRAMES_IN_FLIGHT,
+            .MinImageCount = FRAMES_IN_FLIGHT,
+            .Instance = backend->ctx.instance,
+            .Device = backend->ctx.device,
+            .PhysicalDevice = backend->ctx.physicalDevice,
+            .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+            .Subpass = 0,
+            .RenderPass = backend->pass,
+            .Queue = backend->ctx.qData.gQueue,
+            .QueueFamily = backend->ctx.qData.gQueueIdx
+        };
+
+        ImGui_ImplVulkan_Init(&info);
+        ImGui_ImplVulkan_CreateFontsTexture();
+    }
 }
 
 void VulkanBckndShutdown(VulkanBackend* backend) {
+    if(backend->enableUI) {
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        igDestroyContext(igGetCurrentContext());
+    }
+
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(backend->ctx.device, backend->imgAvailableSemas[i], backend->ctx.allocator);
         vkDestroySemaphore(backend->ctx.device, backend->rndrFinishedSemas[i], backend->ctx.allocator);
@@ -123,9 +172,22 @@ void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
     };
 
     vkCmdBeginRenderPass(backend->cmdBuffers[backend->crntFrmIdx], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    if(!backend->enableUI)
+        return;
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    igNewFrame();
 }
 
 void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
+    if(backend->enableUI) {
+        igEndFrame();
+        igRender();
+        ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), backend->cmdBuffers[backend->crntFrmIdx], mfnull);
+    }
+
     vkCmdEndRenderPass(backend->cmdBuffers[backend->crntFrmIdx]);
     VulkanCommandBufferEnd(backend->cmdBuffers[backend->crntFrmIdx]);
 

@@ -9,6 +9,7 @@ typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
     u32 scImgIdx, crntFrmIdx;
     VkClearValue clearColor;
+    b8 enableUI;
 
     VkCommandBuffer cmdBuffers[FRAMES_IN_FLIGHT];
 
@@ -21,7 +22,7 @@ typedef struct VulkanBackend_s {
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
 } VulkanBackend;
 
-void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, MFWindow* window);
+void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 enableUI, MFWindow* window);
 void VulkanBckndShutdown(VulkanBackend* backend);
 
 void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window);

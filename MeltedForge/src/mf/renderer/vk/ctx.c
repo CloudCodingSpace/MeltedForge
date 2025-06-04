@@ -429,6 +429,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
         };
 
         VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->descPool));
+        VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->uiDescPool));
     }
     // Command Pool
     {
@@ -439,6 +440,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
 void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     VulkanCommandPoolDestroy(ctx, ctx->cmdPool);
     vkDestroyDescriptorPool(ctx->device, ctx->descPool, ctx->allocator);
+    vkDestroyDescriptorPool(ctx->device, ctx->uiDescPool, ctx->allocator);
 
     VulkanImageDestroy(&ctx->depthImage, ctx);
 

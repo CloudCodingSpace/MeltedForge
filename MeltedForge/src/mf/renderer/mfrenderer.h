@@ -10,7 +10,7 @@
 
 typedef struct MFRenderer_s MFRenderer;
 
-void mfRendererInit(MFRenderer* renderer, const char* appName, b8 vsync, MFWindow* window);
+void mfRendererInit(MFRenderer* renderer, const char* appName, b8 vsync, b8 enableUI, MFWindow* window);
 void mfRendererShutdown(MFRenderer* renderer);
 
 void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
