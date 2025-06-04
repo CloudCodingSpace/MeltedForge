@@ -4,3 +4,6 @@
 [submodule "slog"]
 	path = MeltedForge/libs/slog
 	url = https://github.com/CloudCodingSpace/slog
+[submodule "cimgui"]
+	path = MeltedForge/libs/cimgui
+	url = https://github.com/cimgui/cimgui
