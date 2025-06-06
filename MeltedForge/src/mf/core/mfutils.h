@@ -7,6 +7,13 @@
 
 #include <slog/slog.h>
 
+#ifndef true
+    #define true 1
+#endif
+#ifndef false
+    #define false 0
+#endif
+
 #define MF_ALLOCMEM(T, size) (T*)memset((T*)malloc(size), 0, size)
 #define MF_SETMEM(mem, val, size) memset(mem, val, size)
 #define MF_FREEMEM(mem) free(mem); mem = 0

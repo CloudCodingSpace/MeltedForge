@@ -16,6 +16,7 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mfassets" DESTINATION "${CMAKE_BINARY_DIR
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/stb)
 add_subdirectory(libs/slog)
+add_subdirectory(libs/tinyobj)
 
 find_package(Vulkan REQUIRED)
 
@@ -52,6 +53,6 @@ target_link_libraries(cimgui PRIVATE glfw Vulkan::Vulkan)
 add_library(mf ${SRCS})
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
-target_link_libraries(mf PUBLIC stb slog cimgui)
+target_link_libraries(mf PUBLIC stb slog cimgui tinyobj)
 target_link_libraries(mf PRIVATE glfw Vulkan::Vulkan)
 set_property(TARGET mf PROPERTY C_STANDARD 23)
