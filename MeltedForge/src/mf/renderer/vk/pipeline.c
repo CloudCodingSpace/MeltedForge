@@ -16,15 +16,18 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineColorBlendAttachmentState blendState = {
         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-        .blendEnable = VK_FALSE,
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD
+        .blendEnable = VK_FALSE
     };
+
+    if(info.transparent) {
+        blendState.blendEnable = VK_TRUE,
+        blendState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        blendState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        blendState.colorBlendOp = VK_BLEND_OP_ADD,
+        blendState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        blendState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        blendState.alphaBlendOp = VK_BLEND_OP_ADD;
+    }
 
     VkPipelineColorBlendStateCreateInfo blendInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -67,7 +70,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     VkPipelineRasterizationStateCreateInfo rasState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .cullMode = VK_CULL_MODE_BACK_BIT, // TODO: Make it configurable
-        .frontFace = VK_FRONT_FACE_CLOCKWISE, // TODO: Make it configurable
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, // TODO: Make it configurable
         .depthBiasEnable = VK_FALSE, // TODO: Make it configurable
         .depthClampEnable = VK_FALSE, // TODO: Make it configurable
         .lineWidth = 1.0f, // TODO: Make it configurable

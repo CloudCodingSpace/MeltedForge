@@ -8,7 +8,7 @@ typedef struct MFTState_s {
     MFPipeline* pipeline;
     MFGpuBuffer** ubos;
     MFGpuImage* tex;
-    MFMesh mesh;
+    MFModel model;
     MFCamera camera;
 } MFTState;
 
@@ -31,61 +31,14 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     mfCameraCreate(&state->camera, appState->window, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
-    // UBO & Mesh
+    // UBO & Model
     {
         state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight());
         for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
             state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         }
 
-        Vertex vertices[] = {
-            // Front face (+Z)
-            {{-0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f,  0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
-            {{-0.5f,  0.5f,  0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
-
-            // Back face (-Z)
-            {{ 0.5f, -0.5f, -0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
-            {{-0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
-            {{-0.5f,  0.5f, -0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
-            {{ 0.5f,  0.5f, -0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
-
-            // Left face (-X)
-            {{-0.5f, -0.5f, -0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
-            {{-0.5f, -0.5f,  0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
-            {{-0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
-            {{-0.5f,  0.5f, -0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
-
-            // Right face (+X)
-            {{ 0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f, -0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
-            {{ 0.5f,  0.5f,  0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
-
-            // Top face (+Y)
-            {{-0.5f,  0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
-            {{ 0.5f,  0.5f,  0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f, -0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
-            {{-0.5f,  0.5f, -0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
-
-            // Bottom face (-Y)
-            {{-0.5f, -0.5f, -0.5f}, {1, 0, 0}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},
-            {{ 0.5f, -0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},
-            {{-0.5f, -0.5f,  0.5f}, {1, 1, 1}, {0.0f, 1.0f}},
-        };
-
-        u32 indices[] = {
-             2, 1, 0,  0, 3, 2,        // Front
-             6, 5, 4,  4, 7, 6,        // Back
-            10, 9, 8,  8,11,10,        // Left
-            14,13,12, 12,15,14,        // Right
-            18,17,16, 16,19,18,        // Top
-            22,21,20, 20,23,22         // Bottom
-        };
-
-        mfMeshCreate(&state->mesh, appState->renderer, sizeof(vertices[0]) * MF_ARRAYLEN(vertices, Vertex), vertices, MF_ARRAYLEN(indices, u32), indices);
+        mfModelLoadAndCreate(&state->model, "meshes/BossDragon.obj", appState->renderer, sizeof(Vertex), vertBuilder);
 
         MFGpuBufferConfig config = {
             .type = MF_GPU_BUFFER_TYPE_UBO,
@@ -109,7 +62,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     {
         u32 width, height, channels;
         stbi_set_flip_vertically_on_load(true);
-        u8* pixels = stbi_load("mfassets/logo.png", &width, &height, &channels, 4);
+        u8* pixels = stbi_load("meshes/BossDragon.png", &width, &height, &channels, 4);
         if (!pixels) {
             slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
             slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, stbi_failure_reason());
@@ -143,6 +96,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
         MFPipelineConfig info = {
             .extent = (MFVec2){ .x = winConfig->width, .y = winConfig->height },
             .hasDepth = true,
+            .transparent = false,
             .vertPath = "shaders/default.vert.spv",
             .fragPath = "shaders/default.frag.spv",
             .attribDescsCount = attribCount,
@@ -231,7 +185,7 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     }
 
     mfCameraDestroy(&state->camera);
-    mfMeshDestroy(&state->mesh);
+    mfModelDestroy(&state->model);
     mfPipelineDestroy(state->pipeline);
     
     MF_FREEMEM(state->ubos);
@@ -245,7 +199,7 @@ static void MFTOnRender(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
     mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
-    mfMeshRender(&state->mesh);
+    mfModelRender(&state->model);
 }
 
 static void MFTOnUIRender(void* pstate, void* pappState) {
