@@ -15,5 +15,3 @@ typedef struct MFModel_s {
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder);
 void mfModelDestroy(MFModel* model);
-
-void mfModelRender(MFModel* model);

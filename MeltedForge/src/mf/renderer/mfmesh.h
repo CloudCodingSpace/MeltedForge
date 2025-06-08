@@ -9,6 +9,7 @@ typedef struct MFMesh_s {
     MFGpuBuffer* vertBuffer;
     MFGpuBuffer* indBuffer;
     MFRenderer* renderer;
+    MFMat4 modelMat;
 
     u64 vertSize; // Size of the vertex buffer
     u32 vertCount; // Number of vertices including each triangle in this case equals the length of all the indices

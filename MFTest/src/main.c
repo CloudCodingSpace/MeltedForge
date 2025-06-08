@@ -39,6 +39,9 @@ static void MFTOnInit(void* pstate, void* pappState) {
         }
 
         mfModelLoadAndCreate(&state->model, "meshes/BossDragon.obj", appState->renderer, sizeof(Vertex), vertBuilder);
+        for(u32 i = 0; i < state->model.meshCount; i++) {
+            state->model.meshes[i].modelMat = mfMat4Identity();
+        }
 
         MFGpuBufferConfig config = {
             .type = MF_GPU_BUFFER_TYPE_UBO,
@@ -198,8 +201,19 @@ static void MFTOnRender(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
-    mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
-    mfModelRender(&state->model);
+    UBOData uboData = {
+        .proj = state->camera.proj,
+        .view = state->camera.view
+    };
+
+    for(u64 i = 0; i < state->model.meshCount; i++) {
+        uboData.model = state->model.meshes[i].modelMat;
+
+        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
+
+        mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
+        mfMeshRender(&state->model.meshes[i]);
+    }
 }
 
 static void MFTOnUIRender(void* pstate, void* pappState) {
@@ -218,18 +232,7 @@ static void MFTOnUpdate(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfGetWindowConfig(aState->window);
 
-    printf("Rendering took :- %fms\n", mfGetRendererGetFrameTime(aState->renderer));
-
     state->camera.update(&state->camera, mfGetRendererGetDeltaTime(aState->renderer), mfnull);
-
-    UBOData uboData = {
-        .proj = state->camera.proj,
-        .view = state->camera.view,
-        // .model = mfMat4Mul(mfMat4RotateX(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER), mfMat4RotateZ(mfGetCurrentTime() * 90.0f * MF_DEG2RAD_MULTIPLIER))
-        .model = mfMat4Identity()
-    };
-
-    mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(aState->renderer)], &uboData);
 
     if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(aState->window);

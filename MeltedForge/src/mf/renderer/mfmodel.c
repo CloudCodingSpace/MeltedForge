@@ -91,11 +91,3 @@ void mfModelDestroy(MFModel* model) {
 
     MF_SETMEM(model, 0, sizeof(MFModel));
 }
-
-void mfModelRender(MFModel* model) {
-    MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
-
-    for(u64 i = 0; i < model->meshCount; i++) {
-        mfMeshRender(&model->meshes[i]);
-    }
-}
