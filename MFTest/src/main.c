@@ -4,19 +4,27 @@
 
 #include "vertex.h"
 
+typedef struct UBOData_s {
+    MFMat4 proj;
+    MFMat4 view;
+    MFMat4 model;
+} UBOData;
+
+typedef struct LightUBOData_s {
+    MFVec3 lightPos;
+    f32 ambientFactor;
+    MFVec3 camPos;
+    f32 specularFactor;
+} LightUBOData;
+
 typedef struct MFTState_s {
     MFPipeline* pipeline;
     MFGpuBuffer** ubos;
     MFGpuImage* tex;
     MFModel model;
     MFCamera camera;
+    LightUBOData lightData;
 } MFTState;
-
-typedef struct UBOData_s {
-    MFMat4 proj;
-    MFMat4 view;
-    MFMat4 model;
-} UBOData;
 
 static void MFTOnInit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest init\n");
@@ -33,12 +41,15 @@ static void MFTOnInit(void* pstate, void* pappState) {
 
     // UBO & Model
     {
-        state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight());
+        state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight() * 2);
         for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
             state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         }
+        for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
+            state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
+        }
 
-        mfModelLoadAndCreate(&state->model, "meshes/BossDragon.obj", appState->renderer, sizeof(Vertex), vertBuilder);
+        mfModelLoadAndCreate(&state->model, "meshes/StanfordDragon.obj", appState->renderer, sizeof(Vertex), vertBuilder);
         for(u32 i = 0; i < state->model.meshCount; i++) {
             state->model.meshes[i].modelMat = mfMat4Identity();
         }
@@ -46,7 +57,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
         MFGpuBufferConfig config = {
             .type = MF_GPU_BUFFER_TYPE_UBO,
             .size = sizeof(UBOData),
-            .binding = 3,
+            .binding = 2,
             .stage = MF_SHADER_STAGE_VERTEX
         };
 
@@ -60,12 +71,28 @@ static void MFTOnInit(void* pstate, void* pappState) {
             mfGpuBufferAllocate(state->ubos[i], config, appState->renderer);
             mfGpuBufferUploadData(state->ubos[i], &uboData);
         }
+
+        config.size = sizeof(LightUBOData);
+        config.binding = 1;
+        config.stage = MF_SHADER_STAGE_FRAGMENT;
+
+        state->lightData = (LightUBOData) {
+            .ambientFactor = 0.01f,
+            .camPos = state->camera.pos,
+            .lightPos = (MFVec3){0.0f, 20.0f, 20.0f},
+            .specularFactor = 32
+        };
+
+        for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
+            mfGpuBufferAllocate(state->ubos[i], config, appState->renderer);
+            mfGpuBufferUploadData(state->ubos[i], &state->lightData);
+        }
     }
     // Image
     {
         u32 width, height, channels;
         stbi_set_flip_vertically_on_load(true);
-        u8* pixels = stbi_load("meshes/BossDragon.png", &width, &height, &channels, 4);
+        u8* pixels = stbi_load("meshes/white.jpg", &width, &height, &channels, 4);
         if (!pixels) {
             slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
             slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, stbi_failure_reason());
@@ -108,7 +135,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
             .bindingDescs = &bindingDesc,
             .imgCount = imageCount,
             .images = images,
-            .buffCount = mfGetRendererFramesInFlight(),
+            .buffCount = mfGetRendererFramesInFlight() * 2,
             .buffers = state->ubos
         };
         mfPipelineInit(state->pipeline, appState->renderer, &info);
@@ -186,6 +213,10 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
         mfGpuBufferFree(state->ubos[i]);
         MF_FREEMEM(state->ubos[i]);
     }
+    for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
+        mfGpuBufferFree(state->ubos[i]);
+        MF_FREEMEM(state->ubos[i]);
+    }
 
     mfCameraDestroy(&state->camera);
     mfModelDestroy(&state->model);
@@ -209,7 +240,10 @@ static void MFTOnRender(void* pstate, void* pappState) {
     for(u64 i = 0; i < state->model.meshCount; i++) {
         uboData.model = state->model.meshes[i].modelMat;
 
+        state->lightData.camPos = state->camera.pos;
+
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
+        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
 
         mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
         mfMeshRender(&state->model.meshes[i]);
@@ -223,6 +257,19 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
     igBegin("MFTest", mfnull, ImGuiWindowFlags_None);
 
     igText("FPS :- %.3f", igGetIO_Nil()->Framerate);
+
+    float data[3] = {
+        state->lightData.lightPos.x,
+        state->lightData.lightPos.y,
+        state->lightData.lightPos.z
+    };
+    igDragFloat3("LightPos", data, 0.1f, -50.0f, 50.0f, mfnull, ImGuiSliderFlags_None);
+    igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
+    igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
+
+    state->lightData.lightPos.x = data[0];
+    state->lightData.lightPos.y = data[1];
+    state->lightData.lightPos.z = data[2];
 
     igEnd();
 }

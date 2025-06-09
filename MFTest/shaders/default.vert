@@ -6,8 +6,9 @@ layout (location = 2) in vec2 uv;
 
 layout (location = 1) out vec3 oNormal;
 layout (location = 2) out vec2 oUv;
+layout (location = 3) out vec3 oFragPos;
 
-layout (binding = 3) uniform UBO {
+layout (binding = 2) uniform UBO {
     mat4 proj;
     mat4 view;
     mat4 model;
@@ -15,6 +16,7 @@ layout (binding = 3) uniform UBO {
 
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
+    oFragPos = (ubo.model * vec4(pos, 1.0)).xyz;
     oNormal = normal;
     oUv = uv;
 }
