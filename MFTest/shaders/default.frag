@@ -1,5 +1,7 @@
 #version 450
 
+#include <mfshaderutils.h>
+
 layout(location = 0) out vec4 outColor;
 
 layout (location = 1) in vec3 oNormal;
@@ -16,15 +18,11 @@ layout (binding = 1) uniform LightUBO {
 } ubo;
 
 void main() {
-    vec3 norm = normalize(oNormal);
-    vec3 lightDir = normalize(ubo.lightPos - oFragPos);
-
-    float diffuse = max(dot(norm, lightDir), 0.0);
-
-    vec3 viewDir = normalize(ubo.camPos - oFragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), ubo.specularFactor);
-
-    outColor = texture(u_Tex, oUv) * (diffuse + ubo.ambientFactor + spec);
+    outColor = texture(u_Tex, oUv) * vec4(mfComputePhongLighting(oNormal, 
+                                    oFragPos, 
+                                    ubo.lightPos, 
+                                    ubo.camPos, 
+                                    vec3(1, 1, 1), 
+                                    ubo.specularFactor, 
+                                    ubo.ambientFactor), 1.0);
 }

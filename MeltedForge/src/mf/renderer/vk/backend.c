@@ -93,7 +93,7 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
         ImGuiStyle* style = igGetStyle();
         style->WindowPadding = (ImVec2){0, 0};
 
-        ImFontAtlas_AddFontFromFileTTF(io->Fonts, "mfassets/consolas.ttf", 18.0f, mfnull, mfnull);
+        ImFontAtlas_AddFontFromFileTTF(io->Fonts, "mfassets/fonts/consolas.ttf", 18.0f, mfnull, mfnull);
 
         ImGui_ImplGlfw_InitForVulkan(mfGetWindowHandle(window), true);
 
