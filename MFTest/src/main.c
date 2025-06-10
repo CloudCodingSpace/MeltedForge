@@ -8,6 +8,7 @@ typedef struct UBOData_s {
     MFMat4 proj;
     MFMat4 view;
     MFMat4 model;
+    MFMat4 normalMat;
 } UBOData;
 
 typedef struct LightUBOData_s {
@@ -64,7 +65,8 @@ static void MFTOnInit(void* pstate, void* pappState) {
         UBOData uboData = {
             .proj = state->camera.proj,
             .view = state->camera.view,
-            .model = mfMat4Identity()
+            .model = mfMat4Identity(),
+            .normalMat = mfMat4Identity()
         };
 
         for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
@@ -234,7 +236,8 @@ static void MFTOnRender(void* pstate, void* pappState) {
     
     UBOData uboData = {
         .proj = state->camera.proj,
-        .view = state->camera.view
+        .view = state->camera.view,
+        .normalMat = mfMat4Identity()
     };
 
     for(u64 i = 0; i < state->model.meshCount; i++) {

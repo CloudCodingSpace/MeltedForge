@@ -12,11 +12,12 @@ layout (binding = 2) uniform UBO {
     mat4 proj;
     mat4 view;
     mat4 model;
+    mat4 normalMat;
 } ubo;
 
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
     oFragPos = (ubo.model * vec4(pos, 1.0)).xyz;
-    oNormal = normal;
+    oNormal = normal * mat3(ubo.normalMat);
     oUv = uv;
 }
