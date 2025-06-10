@@ -2,6 +2,14 @@
 
 #include <stdint.h>
 
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    tinyobj_vertex_index_t key;
+    u32 value;
+} VertexIndexMap;
+
 void file_reader(void* ctx, const char* filename, int is_mtl, const char* base_dir, char** out_buf, uint64_t* out_len) {
     FILE* f = fopen(filename, "rb");
     if (!f) {
@@ -21,7 +29,12 @@ void file_reader(void* ctx, const char* filename, int is_mtl, const char* base_d
     fclose(f);
 }
 
-void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) { // TODO: Add a proper material system
+static b8 vertex_index_cmp(const tinyobj_vertex_index_t* a, const tinyobj_vertex_index_t* b) {
+    return a->v_idx == b->v_idx && a->vt_idx == b->vt_idx && a->vn_idx == b->vn_idx;
+}
+
+// TODO: Use material data
+void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
     MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
 
     tinyobj_attrib_t attrib;
@@ -32,48 +45,57 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
 
     tinyobj_attrib_init(&attrib);
 
-    int ret = tinyobj_parse_obj(
-        &attrib,
-        &shapes,
-        &shapesCount,
-        &mats,
-        &matCount,
-        filePath,
-        &file_reader,
-        mfnull,
-        TINYOBJ_FLAG_TRIANGULATE
-    );
-
+    int ret = tinyobj_parse_obj(&attrib, &shapes, &shapesCount, &mats, &matCount, filePath, &file_reader, mfnull, TINYOBJ_FLAG_TRIANGULATE);
     MF_ASSERT(ret != TINYOBJ_SUCCESS, mfGetLogger(), "Failed to load the model!");
 
     model->meshCount = shapesCount;
     model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * shapesCount);
 
-    for (size_t s = 0; s < shapesCount; ++s) {
+    for (u64 s = 0; s < shapesCount; s++) {
         tinyobj_shape_t* shape = &shapes[s];
         u32 faceCount = shape->length;
-        u32 vertexCount = faceCount * 3;
 
-        u8* vertices = MF_ALLOCMEM(u8, vertexCount * perVertSize);
-        u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * vertexCount);
+        u8* vertices = MF_ALLOCMEM(u8, perVertSize * faceCount * 3);
+        u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * faceCount * 3);
 
-        for (u32 f = 0; f < faceCount; ++f) {
-            for (u32 v = 0; v < 3; ++v) {
+        VertexIndexMap* remapTable = MF_ALLOCMEM(VertexIndexMap, sizeof(VertexIndexMap) * faceCount * 3);
+        u32 remapCount = 0;
+        u32 nextIndex = 0;
+
+        for (u32 f = 0; f < faceCount; f++) {
+            for (u32 v = 0; v < 3; v++) {
                 u32 i = f * 3 + v;
                 u32 globalIdx = shape->face_offset + i;
-
                 tinyobj_vertex_index_t idx = attrib.faces[globalIdx];
 
-                builder(vertices + i * perVertSize, &attrib, &idx);
+                u32 found = 0;
+                for (u32 k = 0; k < remapCount; k++) {
+                    if (vertex_index_cmp(&remapTable[k].key, &idx)) {
+                        indices[i] = remapTable[k].value;
+                        found = 1;
+                        break;
+                    }
+                }
 
-                indices[i] = i; //! FIXME: Deduplicate the indices
+                if (!found) {
+                    builder(vertices + nextIndex * perVertSize, &attrib, &idx);
+
+                    remapTable[remapCount].key = idx;
+                    remapTable[remapCount].value = nextIndex;
+
+                    indices[i] = nextIndex;
+
+                    remapCount++;
+                    nextIndex++;
+                }
             }
         }
 
-        mfMeshCreate(&model->meshes[s], renderer, perVertSize * vertexCount, vertices, vertexCount, indices);
+        mfMeshCreate(&model->meshes[s], renderer, perVertSize * nextIndex, vertices, faceCount * 3, indices);
 
         MF_FREEMEM(vertices);
         MF_FREEMEM(indices);
+        MF_FREEMEM(remapTable);
     }
 
     tinyobj_attrib_free(&attrib);
