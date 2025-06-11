@@ -16,6 +16,8 @@ typedef struct LightUBOData_s {
     f32 ambientFactor;
     MFVec3 camPos;
     f32 specularFactor;
+    MFVec3 lightColor;
+    float lightIntensity;
 } LightUBOData;
 
 typedef struct MFTState_s {
@@ -82,7 +84,9 @@ static void MFTOnInit(void* pstate, void* pappState) {
             .ambientFactor = 0.01f,
             .camPos = state->camera.pos,
             .lightPos = (MFVec3){0.0f, 20.0f, 20.0f},
-            .specularFactor = 32
+            .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
+            .specularFactor = 32,
+            .lightIntensity = 100
         };
 
         for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
@@ -257,22 +261,35 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     
-    igBegin("MFTest", mfnull, ImGuiWindowFlags_None);
+    igBegin("Settings", mfnull, ImGuiWindowFlags_None);
 
     igText("FPS :- %.3f", igGetIO_Nil()->Framerate);
 
-    float data[3] = {
+    float posData[3] = {
         state->lightData.lightPos.x,
         state->lightData.lightPos.y,
         state->lightData.lightPos.z
     };
-    igDragFloat3("LightPos", data, 0.1f, -50.0f, 50.0f, mfnull, ImGuiSliderFlags_None);
+
+    float colorData[3] = {
+        state->lightData.lightColor.x,
+        state->lightData.lightColor.y,
+        state->lightData.lightColor.z
+    };
+
+    igDragFloat3("LightPos", posData, 0.1f, -50.0f, 50.0f, mfnull, ImGuiSliderFlags_None);
     igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
     igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
+    igDragFloat("lightIntensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
+    igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-    state->lightData.lightPos.x = data[0];
-    state->lightData.lightPos.y = data[1];
-    state->lightData.lightPos.z = data[2];
+    state->lightData.lightPos.x = posData[0];
+    state->lightData.lightPos.y = posData[1];
+    state->lightData.lightPos.z = posData[2];
+
+    state->lightData.lightColor.x = colorData[0];
+    state->lightData.lightColor.y = colorData[1];
+    state->lightData.lightColor.z = colorData[2];
 
     igEnd();
 }

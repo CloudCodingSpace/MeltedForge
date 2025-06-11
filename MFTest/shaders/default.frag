@@ -1,6 +1,6 @@
 #version 450
 
-#include <mfshaderutils.h>
+#include <mfshaderutils.glsl>
 
 layout(location = 0) out vec4 outColor;
 
@@ -15,14 +15,18 @@ layout (binding = 1) uniform LightUBO {
     float ambientFactor;
     vec3 camPos;
     float specularFactor;
+    vec3 lightColor;
+    float lightIntensity;
 } ubo;
 
 void main() {
     outColor = texture(u_Tex, oUv) * vec4(mfComputePhongLighting(oNormal, 
                                     oFragPos, 
-                                    ubo.lightPos, 
+                                    ubo.lightPos - oFragPos, 
                                     ubo.camPos, 
-                                    vec3(1, 1, 1), 
+                                    ubo.lightColor, 
                                     ubo.specularFactor, 
-                                    ubo.ambientFactor), 1.0);
+                                    ubo.ambientFactor, 
+                                    ubo.lightIntensity, 
+                                    true), 1.0);
 }
