@@ -89,6 +89,7 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
 
         ImGuiIO* io = igGetIO_Nil();
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         
         ImGuiStyle* style = igGetStyle();
         style->WindowPadding = (ImVec2){0, 0};
@@ -188,6 +189,9 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
         igEndFrame();
         igRender();
         ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), backend->cmdBuffers[backend->crntFrmIdx], mfnull);
+
+        igUpdatePlatformWindows();
+        igRenderPlatformWindowsDefault(mfnull, mfnull);
     }
 
     vkCmdEndRenderPass(backend->cmdBuffers[backend->crntFrmIdx]);
