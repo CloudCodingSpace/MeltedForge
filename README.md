@@ -3,7 +3,7 @@
 **MeltedForge** is a game engine written in **C** using **Vulkan**, with a focus on minimal dependencies, performance, and clean design.
 
 <p align="center">
-  <img src="MeltedForge/mfassets/logo.png" alt="MeltedForge Logo" height="128" width="128"/>
+  <img src="MeltedForge/mfassets/logo/logo.png" alt="MeltedForge Logo" height="128" width="128"/>
 </p>
 
 ---
