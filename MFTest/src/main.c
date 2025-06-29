@@ -28,6 +28,8 @@ typedef struct MFTState_s {
     MFCamera camera;
     LightUBOData lightData;
     MFRenderTarget* rt;
+    
+    ImVec2 sceneViewport;
 } MFTState;
 
 static void MFTOnInit(void* pstate, void* pappState) {
@@ -46,6 +48,9 @@ static void MFTOnInit(void* pstate, void* pappState) {
     state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
     mfRenderTargetCreate(state->rt, appState->renderer, true);
     mfRendererSetRenderTarget(appState->renderer, state->rt);
+
+    state->sceneViewport.x = mfRenderTargetGetWidth(state->rt);
+    state->sceneViewport.y = mfRenderTargetGetHeight(state->rt);
 
     // UBO & Model
     {
@@ -245,6 +250,10 @@ static void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
+
+    if((state->sceneViewport.x != mfRenderTargetGetWidth(state->rt)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->rt))) {
+        mfRenderTargetResize(state->rt, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
+    }
     
     UBOData uboData = {
         .proj = state->camera.proj,
@@ -260,7 +269,15 @@ static void MFTOnRender(void* pstate, void* pappState) {
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
 
-        mfPipelineBind(state->pipeline, mfRendererGetViewport(winConfig), mfRendererGetScissor(winConfig));
+        MFViewport vp = mfRendererGetViewport(winConfig);
+        MFRect2D scissor = mfRendererGetScissor(winConfig);
+
+        vp.width = state->sceneViewport.x;
+        vp.height = state->sceneViewport.y;
+        scissor.extentX = state->sceneViewport.x;
+        scissor.extentY = state->sceneViewport.y;
+
+        mfPipelineBind(state->pipeline, vp, scissor);
         mfMeshRender(&state->model.meshes[i]);
     }
 }
@@ -268,11 +285,12 @@ static void MFTOnRender(void* pstate, void* pappState) {
 static void MFTOnUIRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
-    const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
 
     igBegin("Scene", mfnull, ImGuiWindowFlags_None);
-    
-    igImage((ImTextureID)mfRenderTargetGetHandle(state->rt), (ImVec2){winConfig->width, winConfig->height}, (ImVec2){0, 0}, (ImVec2){1, 1});
+
+    igGetContentRegionAvail(&state->sceneViewport);
+
+    igImage((ImTextureID)mfRenderTargetGetHandle(state->rt), (ImVec2){mfRenderTargetGetWidth(state->rt), mfRenderTargetGetHeight(state->rt)}, (ImVec2){0, 0}, (ImVec2){1, 1});
 
     igEnd();
     
@@ -307,8 +325,6 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
     state->lightData.lightColor.z = colorData[2];
 
     igEnd();
-
-
 }
 
 static void MFTOnUpdate(void* pstate, void* pappState) {
