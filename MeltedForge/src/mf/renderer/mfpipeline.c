@@ -16,6 +16,21 @@ struct MFPipeline_s {
     VkDescriptorSetLayout descLayout;
 };
 
+struct MFRenderTarget_s {
+    MFRenderer* renderer;
+    VulkanBackend* backend;
+
+    VulkanImage* images;
+    VkFramebuffer* fbs;
+    VkRenderPass pass;
+    VkDescriptorSet* descs;
+
+    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
+    VkFence fences[FRAMES_IN_FLIGHT];
+
+    b8 hasDepth;
+};
+
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
     MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
@@ -102,6 +117,10 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         .setLayoutCount = 1,
         .setLayouts = &pipeline->descLayout
     };
+
+    if(pipeline->backend->rt != mfnull) {
+        binfo.pass = pipeline->backend->rt->pass;
+    }
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, binfo);
 
@@ -208,8 +227,13 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
         .offset = (VkOffset2D){scissor.offsetX, scissor.offsetY}
     };
 
-    vkCmdBindDescriptorSets(pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline.layout, 0, 1, &pipeline->descSet[pipeline->backend->crntFrmIdx], 0, mfnull);
-    VulkanPipelineBind(&pipeline->pipeline, v, s, pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx]);
+    VkCommandBuffer buff = pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx];
+    if(pipeline->backend->rt != mfnull) {
+        buff = pipeline->backend->rt->buffs[pipeline->backend->crntFrmIdx];
+    }
+
+    vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline.layout, 0, 1, &pipeline->descSet[pipeline->backend->crntFrmIdx], 0, mfnull);
+    VulkanPipelineBind(&pipeline->pipeline, v, s, buff);
 }
 
 size_t mfPipelineGetSizeInBytes() {

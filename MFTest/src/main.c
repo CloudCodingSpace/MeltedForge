@@ -27,6 +27,7 @@ typedef struct MFTState_s {
     MFModel model;
     MFCamera camera;
     LightUBOData lightData;
+    MFRenderTarget* rt;
 } MFTState;
 
 static void MFTOnInit(void* pstate, void* pappState) {
@@ -41,6 +42,10 @@ static void MFTOnInit(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
     mfCameraCreate(&state->camera, appState->window, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
+
+    state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
+    mfRenderTargetCreate(state->rt, appState->renderer, true);
+    mfRendererSetRenderTarget(appState->renderer, state->rt);
 
     // UBO & Model
     {
@@ -224,10 +229,13 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
         MF_FREEMEM(state->ubos[i]);
     }
 
+    mfRenderTargetDestroy(state->rt);
+
     mfCameraDestroy(&state->camera);
     mfModelDestroy(&state->model);
     mfPipelineDestroy(state->pipeline);
-    
+
+    MF_FREEMEM(state->rt);
     MF_FREEMEM(state->ubos);
     MF_FREEMEM(state->pipeline);
     MF_FREEMEM(state->tex);
@@ -260,6 +268,13 @@ static void MFTOnRender(void* pstate, void* pappState) {
 static void MFTOnUIRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
+    const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
+
+    igBegin("Scene", mfnull, ImGuiWindowFlags_None);
+    
+    igImage((ImTextureID)mfRenderTargetGetHandle(state->rt), (ImVec2){winConfig->width, winConfig->height}, (ImVec2){0, 0}, (ImVec2){1, 1});
+
+    igEnd();
     
     igBegin("Settings", mfnull, ImGuiWindowFlags_None);
 
@@ -277,7 +292,7 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
         state->lightData.lightColor.z
     };
 
-    igDragFloat3("LightPos", posData, 0.1f, -50.0f, 50.0f, mfnull, ImGuiSliderFlags_None);
+    igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
     igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
     igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
     igDragFloat("lightIntensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
@@ -292,6 +307,8 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
     state->lightData.lightColor.z = colorData[2];
 
     igEnd();
+
+
 }
 
 static void MFTOnUpdate(void* pstate, void* pappState) {

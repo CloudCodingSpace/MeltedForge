@@ -5,6 +5,8 @@
 #include "ctx.h"
 #include "common.h"
 
+struct MFRenderTarget_s;
+
 typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
     u32 scImgIdx, crntFrmIdx;
@@ -20,6 +22,8 @@ typedef struct VulkanBackend_s {
     VkSemaphore imgAvailableSemas[FRAMES_IN_FLIGHT];
     VkSemaphore rndrFinishedSemas[FRAMES_IN_FLIGHT];
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
+
+    struct MFRenderTarget_s* rt;
 } VulkanBackend;
 
 void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 enableUI, MFWindow* window);

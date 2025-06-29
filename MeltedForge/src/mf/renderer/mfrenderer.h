@@ -4,6 +4,8 @@
 #include "core/mfutils.h"
 #include "core/mfmaths.h"
 
+#include "mfrender_target.h"
+
 #include "window/mfwindow.h"
 
 #include "mfutil_types.h"
@@ -17,6 +19,8 @@ void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 
 void mfRendererWait(MFRenderer* renderer);
+
+void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt);
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);
 void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);

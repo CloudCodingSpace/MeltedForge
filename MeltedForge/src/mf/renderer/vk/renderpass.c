@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkImageLayout initiaLay, VkImageLayout finalLay, b8 hasDepth) { // TODO: Make the creation of renderpasses more genetic
+VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkImageLayout initiaLay, VkImageLayout finalLay, b8 hasDepth, b8 renderTarget) { // TODO: Make the creation of renderpasses more generic
     VkAttachmentDescription colorAttachment = {
         .format = format,
         .initialLayout = initiaLay,
@@ -60,6 +60,10 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependency.srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+
+    if(renderTarget) {
+        dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     }
 
     VkRenderPassCreateInfo info = {

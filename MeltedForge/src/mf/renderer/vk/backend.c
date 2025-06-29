@@ -12,6 +12,23 @@
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
+#include "../mfrender_target.h"
+
+struct MFRenderTarget_s {
+    void* renderer;
+    VulkanBackend* backend;
+
+    VulkanImage* images;
+    VkFramebuffer* fbs;
+    VkRenderPass pass;
+    VkDescriptorSet* descs;
+
+    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
+    VkFence fences[FRAMES_IN_FLIGHT];
+
+    b8 hasDepth;
+};
+
 void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     if(backend->ctx.scExtent.width == width && backend->ctx.scExtent.height == height)
         return;
@@ -45,7 +62,7 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
         backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.cmdPool, true);
     }
 
-    backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true);
+    backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true, false);
     
     // Framebuffers
     backend->fbCount = backend->ctx.scImgCount;
@@ -144,6 +161,11 @@ void VulkanBckndShutdown(VulkanBackend* backend) {
 }
 
 void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
+    if(backend->rt != mfnull) {
+        VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->rt->fences[backend->crntFrmIdx], VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->rt->fences[backend->crntFrmIdx]));
+    }
+
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->crntFrmIdx], VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->crntFrmIdx]));
 
@@ -156,6 +178,9 @@ void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
         VK_CHECK(result);
     }
 
+    if(backend->rt != mfnull) {
+        mfRenderTargetBegin(backend->rt);
+    }
     VK_CHECK(vkResetCommandBuffer(backend->cmdBuffers[backend->crntFrmIdx], 0));
     VulkanCommandBufferBegin(backend->cmdBuffers[backend->crntFrmIdx]);
 
@@ -185,6 +210,10 @@ void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
 }
 
 void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
+    if(backend->rt != mfnull) {
+        mfRenderTargetEnd(backend->rt);
+    }
+
     if(backend->enableUI) {
         igEndFrame();
         igRender();
@@ -212,6 +241,10 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
         .pWaitSemaphores = &backend->imgAvailableSemas[backend->crntFrmIdx]
     };
 
+    if(backend->rt != mfnull) {
+        submitInfo.pWaitSemaphores = &backend->rndrFinishedSemas[backend->crntFrmIdx];
+    }
+
     VK_CHECK(vkQueueSubmit(backend->ctx.qData.gQueue, 1, &submitInfo, backend->inFlightFences[backend->crntFrmIdx]));
 
     VkPresentInfoKHR presentInfo = {
@@ -234,9 +267,19 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
 }
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
-    vkCmdDraw(backend->cmdBuffers[backend->crntFrmIdx], vertexCount, instances, firstVertex, firstInstance);
+    VkCommandBuffer buff = backend->cmdBuffers[backend->crntFrmIdx];
+    if(backend->rt != mfnull) {
+        buff = backend->rt->buffs[backend->crntFrmIdx];
+    }
+
+    vkCmdDraw(buff, vertexCount, instances, firstVertex, firstInstance);
 }
 
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
-    vkCmdDrawIndexed(backend->cmdBuffers[backend->crntFrmIdx], indexCount, instances, firstIndex, 0, firstInstance); // TODO: Make the offset configurable if necessary
+    VkCommandBuffer buff = backend->cmdBuffers[backend->crntFrmIdx];
+    if(backend->rt != mfnull) {
+        buff = backend->rt->buffs[backend->crntFrmIdx];
+    }
+
+    vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // TODO: Make the offset configurable if necessary
 }

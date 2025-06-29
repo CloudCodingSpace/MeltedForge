@@ -11,6 +11,21 @@ struct MFGpuBuffer_s {
     MFGpuBufferConfig config;
 };
 
+struct MFRenderTarget_s {
+    MFRenderer* renderer;
+    VulkanBackend* backend;
+
+    VulkanImage* images;
+    VkFramebuffer* fbs;
+    VkRenderPass pass;
+    VkDescriptorSet* descs;
+
+    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
+    VkFence fences[FRAMES_IN_FLIGHT];
+
+    b8 hasDepth;
+};
+
 void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer) {
     MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
@@ -54,6 +69,9 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
 
     VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->crntFrmIdx];
+    if(buffer->backend->rt != mfnull) {
+        buff = buffer->backend->rt->buffs[buffer->backend->crntFrmIdx];
+    }
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {
         VkDeviceSize offsets[] = { 0 }; // TODO: Make it configurable if necessary

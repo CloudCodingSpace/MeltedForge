@@ -49,8 +49,14 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
 
 void mfRendererWait(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-
+    
     vkDeviceWaitIdle(renderer->backend.ctx.device);
+}
+
+void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    renderer->backend.rt = rt;
 }
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
