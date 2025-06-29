@@ -2,7 +2,6 @@
 
 void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
     MF_ASSERT(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");
-    const MFWindowConfig* config = mfGetWindowConfig(camera->window);
     b8 moved = false;
 
     // Key input
@@ -88,12 +87,12 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
         if(!moved)
             return;
 
-        camera->proj = mfMat4Perspective(camera->fov * MF_DEG2RAD_MULTIPLIER, (f32)config->width/(f32)config->height, camera->nearPlane, camera->farPlane);
+        camera->proj = mfMat4Perspective(camera->fov * MF_DEG2RAD_MULTIPLIER, (f32)camera->width/(f32)camera->height, camera->nearPlane, camera->farPlane);
         camera->view = mfMat4LookAt(camera->pos, mfVec3Add(camera->pos, camera->front), camera->up);
     }
 }
 
-void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 fov, f32 nearPlane, f32 farPlane, f32 speed, f32 sensitivity, MFVec3 pos) {
+void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f32 fov, f32 nearPlane, f32 farPlane, f32 speed, f32 sensitivity, MFVec3 pos) {
     MF_ASSERT(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
     MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");    
     
@@ -105,6 +104,8 @@ void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 fov, f32 nearPlane, 
     camera->sensitivity = sensitivity;
     camera->speed = speed;
     camera->firstMouse = true;
+    camera->width = width;
+    camera->height = height;
 
     camera->front = mfVec3Create(0, 0, -1);
     camera->up = mfVec3Create(0, 1, 0);

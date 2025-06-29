@@ -43,7 +43,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
-    mfCameraCreate(&state->camera, appState->window, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
+    mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
     state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
     mfRenderTargetCreate(state->rt, appState->renderer, true);
@@ -332,6 +332,8 @@ static void MFTOnUpdate(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfGetWindowConfig(aState->window);
 
+    state->camera.width = state->sceneViewport.x;
+    state->camera.height = state->sceneViewport.y;
     state->camera.update(&state->camera, mfGetRendererGetDeltaTime(aState->renderer), mfnull);
 
     if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
