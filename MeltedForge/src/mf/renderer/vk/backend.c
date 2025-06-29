@@ -172,6 +172,9 @@ void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imgAvailableSemas[backend->crntFrmIdx], VK_NULL_HANDLE, &backend->scImgIdx);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         OnResize(backend, (u32)mfGetWindowConfig(window)->width, (u32)mfGetWindowConfig(window)->height, window);
+        if(backend->rt != mfnull) {
+            mfRenderTargetResize(backend->rt, (MFVec2){mfRenderTargetGetWidth(backend->rt), mfRenderTargetGetHeight(backend->rt)});
+        }
         return;
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -259,6 +262,9 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
     VkResult result = vkQueuePresentKHR(backend->ctx.qData.pQueue, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         OnResize(backend, (u32)mfGetWindowConfig(window)->width, (u32)mfGetWindowConfig(window)->height, window);
+        if(backend->rt != mfnull) {
+            mfRenderTargetResize(backend->rt, (MFVec2){mfRenderTargetGetWidth(backend->rt), mfRenderTargetGetHeight(backend->rt)});
+        }
         return;
     }
     VK_CHECK(result);
