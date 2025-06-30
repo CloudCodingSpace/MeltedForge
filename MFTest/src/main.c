@@ -286,6 +286,8 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
+    igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
+
     igBegin("Scene", mfnull, ImGuiWindowFlags_None);
 
     igGetContentRegionAvail(&state->sceneViewport);

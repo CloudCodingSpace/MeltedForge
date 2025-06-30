@@ -55,7 +55,7 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
         };
 
         if(hasDepth) {
-            views[1] = rt->backend->ctx.depthImage.view;
+            views[1] = rt->backend->ctx.depthImage.view; //! FIXME: Per render-target must have it's own depth image with the appropriate dimension!!!!!!!!
             count++;
         }
 
