@@ -2,6 +2,7 @@
 #include "core/mftimer.h"
 
 #include "vk/backend.h"
+#include "vk/render_target.h"
 
 struct MFRenderer_s {
     VulkanBackend backend;
@@ -73,34 +74,44 @@ void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances
 
 void mfRendererDrawVerticesIndexed(MFRenderer* renderer, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-
+    
     VulkanBackendDrawVerticesIndexed(&renderer->backend, indexCount, instances, firstIndex, firstInstance);
 }
 
-MFViewport mfRendererGetViewport(const MFWindowConfig* config) {
-    MF_ASSERT(config == mfnull, mfGetLogger(), "The window config handle provided shouldn't be null!");
-
+MFViewport mfRendererGetViewport(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    
     MFViewport vp = {
         .x = 0,
         .y = 0,
-        .width = config->width,
-        .height = config->height,
+        .width = renderer->backend.ctx.scExtent.width,
+        .height = renderer->backend.ctx.scExtent.height,
         .maxDepth = 1.0f,
         .minDepth = 0.0f
     };
 
+    if(renderer->backend.rt != mfnull) {
+        vp.width = renderer->backend.rt->images[0].width;
+        vp.height = renderer->backend.rt->images[0].height;
+    }
+    
     return vp;
 }
 
-MFRect2D mfRendererGetScissor(const MFWindowConfig* config) {
-    MF_ASSERT(config == mfnull, mfGetLogger(), "The window config handle provided shouldn't be null!");
+MFRect2D mfRendererGetScissor(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     MFRect2D scissor = {
         .offsetX = 0,
         .offsetY = 0,
-        .extentX = config->width,
-        .extentY = config->height
+        .extentX = renderer->backend.ctx.scExtent.width,
+        .extentY = renderer->backend.ctx.scExtent.height
     };
+
+    if(renderer->backend.rt != mfnull) {
+        scissor.extentX = renderer->backend.rt->images[0].width;
+        scissor.extentY = renderer->backend.rt->images[0].height;
+    }
 
     return scissor;
 }

@@ -13,21 +13,7 @@
 #include <cimgui_impl.h>
 
 #include "../mfrender_target.h"
-
-struct MFRenderTarget_s {
-    void* renderer;
-    VulkanBackend* backend;
-
-    VulkanImage* images;
-    VkFramebuffer* fbs;
-    VkRenderPass pass;
-    VkDescriptorSet* descs;
-
-    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
-    VkFence fences[FRAMES_IN_FLIGHT];
-
-    b8 hasDepth;
-};
+#include "render_target.h"
 
 void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     if(backend->ctx.scExtent.width == width && backend->ctx.scExtent.height == height)

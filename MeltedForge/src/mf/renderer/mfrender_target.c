@@ -13,20 +13,7 @@
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-struct MFRenderTarget_s {
-    MFRenderer* renderer;
-    VulkanBackend* backend;
-
-    VulkanImage* images;
-    VkFramebuffer* fbs;
-    VkRenderPass pass;
-    VkDescriptorSet* descs;
-
-    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
-    VkFence fences[FRAMES_IN_FLIGHT];
-
-    b8 hasDepth;
-};
+#include "vk/render_target.h"
 
 void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth) {
     MF_ASSERT(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");

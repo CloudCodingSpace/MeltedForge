@@ -249,7 +249,6 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
 static void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
-    const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
 
     if((state->sceneViewport.x != mfRenderTargetGetWidth(state->rt)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->rt))) {
         mfRenderTargetResize(state->rt, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
@@ -269,13 +268,13 @@ static void MFTOnRender(void* pstate, void* pappState) {
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
 
-        MFViewport vp = mfRendererGetViewport(winConfig);
-        MFRect2D scissor = mfRendererGetScissor(winConfig);
+        MFViewport vp = mfRendererGetViewport(appState->renderer);
+        MFRect2D scissor = mfRendererGetScissor(appState->renderer);
 
-        vp.width = state->sceneViewport.x;
-        vp.height = state->sceneViewport.y;
-        scissor.extentX = state->sceneViewport.x;
-        scissor.extentY = state->sceneViewport.y;
+        // vp.width = state->sceneViewport.x;
+        // vp.height = state->sceneViewport.y;
+        // scissor.extentX = state->sceneViewport.x;
+        // scissor.extentY = state->sceneViewport.y;
 
         mfPipelineBind(state->pipeline, vp, scissor);
         mfMeshRender(&state->model.meshes[i]);
