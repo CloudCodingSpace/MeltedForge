@@ -5,7 +5,8 @@
 typedef struct GLFWwindow GLFWwindow;
 
 typedef struct MFWindowConfig_s {
-    i32 x, y, width, height;
+    f64 x, y;
+    i32 width, height;
     b8 fullscreen, resizable, centered;
     const char* title;
 } MFWindowConfig;

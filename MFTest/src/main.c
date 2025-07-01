@@ -271,11 +271,6 @@ static void MFTOnRender(void* pstate, void* pappState) {
         MFViewport vp = mfRendererGetViewport(appState->renderer);
         MFRect2D scissor = mfRendererGetScissor(appState->renderer);
 
-        // vp.width = state->sceneViewport.x;
-        // vp.height = state->sceneViewport.y;
-        // scissor.extentX = state->sceneViewport.x;
-        // scissor.extentY = state->sceneViewport.y;
-
         mfPipelineBind(state->pipeline, vp, scissor);
         mfMeshRender(&state->model.meshes[i]);
     }

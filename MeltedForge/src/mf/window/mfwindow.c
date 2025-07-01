@@ -12,6 +12,20 @@ struct MFWindow_s {
     b8 init;
 };
 
+static void size_callback(GLFWwindow* window, int x, int y) {
+    MFWindow* win = (MFWindow*)glfwGetWindowUserPointer(window);
+
+    win->config.width = x;
+    win->config.height = y;
+}
+
+static void pos_callback(GLFWwindow* window, double x, double y) {
+    MFWindow* win = (MFWindow*)glfwGetWindowUserPointer(window);
+
+    win->config.x = x;
+    win->config.y = y;
+}
+
 void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     mfCheckCurrentContext();
 
@@ -48,6 +62,9 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     }
     window->config.title = glfwGetWindowTitle(window->handle);
     glfwMakeContextCurrent(window->handle);
+    glfwSetWindowUserPointer(window->handle, window);
+    glfwSetFramebufferSizeCallback(window->handle, size_callback);
+    glfwSetCursorPosCallback(window->handle, pos_callback);
 
     glfwSetWindowPos(window->handle, config.x, config.y);
 
@@ -103,9 +120,6 @@ void mfWindowUpdate(MFWindow* window) {
     if(!window->init) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
     }
-
-    glfwGetWindowSize(mfGetWindowHandle(window), &window->config.width, &window->config.height);
-    glfwGetWindowPos(mfGetWindowHandle(window), &window->config.x, &window->config.y);
 
     glfwPollEvents();
 }
