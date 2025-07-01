@@ -87,6 +87,9 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
         if(!moved)
             return;
 
+        if(camera->height == 0 && camera->width == 0)
+            return;
+
         camera->proj = mfMat4Perspective(camera->fov * MF_DEG2RAD_MULTIPLIER, (f32)camera->width/(f32)camera->height, camera->nearPlane, camera->farPlane);
         camera->view = mfMat4LookAt(camera->pos, mfVec3Add(camera->pos, camera->front), camera->up);
     }
