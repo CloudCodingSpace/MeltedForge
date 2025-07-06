@@ -122,6 +122,12 @@ void* mfRendererGetBackend(MFRenderer* renderer) {
     return (void*)&renderer->backend;
 }
 
+void* mfRendererGetPass(MFRenderer* renderer) {
+    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    return (void*)renderer->backend.pass;
+}
+
 u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer) {
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     

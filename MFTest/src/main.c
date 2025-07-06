@@ -30,7 +30,45 @@ typedef struct MFTState_s {
     MFRenderTarget* rt;
     
     ImVec2 sceneViewport;
+    void* renderer;
 } MFTState;
+
+static void CreatePipeline(MFTState* state) {
+    u32 attribCount = 0, bindingCount = 1;
+    MFVertexInputAttributeDescription* attribDescs = getVertAttribDescs(&attribCount);
+    MFVertexInputBindingDescription bindingDesc = getVertBindingDesc();
+
+    u32 imageCount = 1;
+    MFGpuImage* images[] = {
+        state->tex
+    };
+
+    MFPipelineConfig info = {
+        .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
+        .hasDepth = true,
+        .transparent = false,
+        .vertPath = "shaders/default.vert.spv",
+        .fragPath = "shaders/default.frag.spv",
+        .attribDescsCount = attribCount,
+        .attribDescs = attribDescs,
+        .bindingDescsCount = bindingCount,
+        .bindingDescs = &bindingDesc,
+        .imgCount = imageCount,
+        .images = images,
+        .buffCount = mfGetRendererFramesInFlight() * 2,
+        .buffers = state->ubos,
+        .pass = mfRenderTargetGetPass(state->rt)
+    };
+    mfPipelineInit(state->pipeline, state->renderer, &info);
+
+    MF_FREEMEM(attribDescs);
+}
+
+static void RecreatePipeline(void* pstate) {
+    MFTState* state = (MFTState*)pstate;
+    mfPipelineDestroy(state->pipeline);
+    CreatePipeline(state);
+}
 
 static void MFTOnInit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest init\n");
@@ -39,7 +77,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
     
     MFTState* state = (MFTState*)pstate;
-    state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
+    state->renderer = appState->renderer;
     
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     
@@ -47,6 +85,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
 
     state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
     mfRenderTargetCreate(state->rt, appState->renderer, true);
+    mfRenderTargetSetResizeCallback(state->rt, &RecreatePipeline, state);
     mfRendererSetRenderTarget(appState->renderer, state->rt);
 
     state->sceneViewport.x = mfRenderTargetGetWidth(state->rt);
@@ -128,36 +167,9 @@ static void MFTOnInit(void* pstate, void* pappState) {
 
         stbi_image_free(pixels);
     }
-    // Pipeline
-    {
-        u32 attribCount = 0, bindingCount = 1;
-        MFVertexInputAttributeDescription* attribDescs = getVertAttribDescs(&attribCount);
-        MFVertexInputBindingDescription bindingDesc = getVertBindingDesc();
-
-        u32 imageCount = 1;
-        MFGpuImage* images[] = {
-            state->tex
-        };
-
-        MFPipelineConfig info = {
-            .extent = (MFVec2){ .x = winConfig->width, .y = winConfig->height },
-            .hasDepth = true,
-            .transparent = false,
-            .vertPath = "shaders/default.vert.spv",
-            .fragPath = "shaders/default.frag.spv",
-            .attribDescsCount = attribCount,
-            .attribDescs = attribDescs,
-            .bindingDescsCount = bindingCount,
-            .bindingDescs = &bindingDesc,
-            .imgCount = imageCount,
-            .images = images,
-            .buffCount = mfGetRendererFramesInFlight() * 2,
-            .buffers = state->ubos
-        };
-        mfPipelineInit(state->pipeline, appState->renderer, &info);
-
-        MF_FREEMEM(attribDescs);
-    }
+    
+    state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
+    CreatePipeline(state);
     
     // UI customization
     {

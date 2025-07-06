@@ -38,6 +38,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+    pipeline->info = *info;
 
     VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingDescsCount);
     VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attribDescsCount);
@@ -69,7 +70,6 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     // Descriptor Layout
     {
-        // TODO: Find a better solution for excluding duplicate bindings
         VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * resourceDescCount);
         u32 uniqueBindingCount = 0;
 
@@ -101,26 +101,21 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         MF_FREEMEM(layBindings);
     }
 
+    VkDescriptorSetLayout setLayouts[1] = { pipeline->descLayout };
+
     VulkanPipelineInfo binfo = {
         .vertPath = info->vertPath,
         .fragPath = info->fragPath,
-        .pass = pipeline->backend->pass, // TODO: Change this if we support more than one renderpass
+        .pass = info->pass,
         .hasDepth = info->hasDepth,
-        .extent = (VkExtent2D) {
-            info->extent.x,
-            info->extent.y
-        },
+        .extent = (VkExtent2D) { info->extent.x, info->extent.y },
         .attribDescsCount = info->attribDescsCount,
         .attribDescs = attribs,
         .bindingDescsCount = info->bindingDescsCount,
         .bindingDescs = bindings,
         .setLayoutCount = 1,
-        .setLayouts = &pipeline->descLayout
+        .setLayouts = setLayouts
     };
-
-    if(pipeline->backend->rt != mfnull) {
-        binfo.pass = pipeline->backend->rt->pass;
-    }
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, binfo);
 
@@ -140,10 +135,10 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
             VK_CHECK(vkAllocateDescriptorSets(pipeline->ctx->device, &setInfo, &pipeline->descSet[i]));
         }
     }
+
     // Updating Descriptor Sets
     {
         u32 count = info->imgCount + info->buffCount;
-
         VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
         VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * info->imgCount);
         VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * info->buffCount);
@@ -154,7 +149,6 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
                 .imageView = mfGetGpuImageBackend(info->images[i]).view,
                 .sampler = mfGetGpuImageBackend(info->images[i]).sampler
             };
-
             writes[i] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .descriptorCount = 1,
@@ -168,10 +162,9 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
             u32 j = i - info->imgCount;
             buffInfos[j] = (VkDescriptorBufferInfo){
                 .buffer = mfGetGpuBufferBackend(info->buffers[j])->handle,
-                .offset = 0, // TODO: Make it configurable if required
+                .offset = 0,
                 .range = mfGetGpuBufferBackend(info->buffers[j])->size
             };
-
             writes[i] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .descriptorCount = 1,
@@ -186,7 +179,6 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
             for(u32 j = 0; j < count; j++) {
                 writes[j].dstSet = pipeline->descSet[i];
             }
-
             vkUpdateDescriptorSets(pipeline->ctx->device, count, writes, 0, NULL);
         }
 
@@ -204,7 +196,7 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     vkDestroyDescriptorSetLayout(pipeline->ctx->device, pipeline->descLayout, pipeline->ctx->allocator);
     vkFreeDescriptorSets(pipeline->ctx->device, pipeline->ctx->descPool, FRAMES_IN_FLIGHT, pipeline->descSet);
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
-    
+
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));
 }
 

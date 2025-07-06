@@ -15,6 +15,9 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent);
 void mfRenderTargetBegin(MFRenderTarget* rt);
 void mfRenderTargetEnd(MFRenderTarget* rt);
 
+void mfRenderTargetSetResizeCallback(MFRenderTarget* rt, void (*callback)(void* userData), void* userData);
+void* mfRenderTargetGetPass(MFRenderTarget* rt);
+
 u32 mfRenderTargetGetWidth(MFRenderTarget* rt);
 u32 mfRenderTargetGetHeight(MFRenderTarget* rt);
 

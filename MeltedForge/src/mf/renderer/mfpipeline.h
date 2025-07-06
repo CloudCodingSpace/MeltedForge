@@ -21,6 +21,7 @@ typedef struct MFPipelineConfig_s {
     b8 hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
+    void* pass;
 } MFPipelineConfig;
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info);

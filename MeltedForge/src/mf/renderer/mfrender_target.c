@@ -20,6 +20,7 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
     MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     rt->hasDepth = hasDepth;
+    rt->resizeCallback = mfnull;
 
     rt->renderer = renderer;
     rt->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
@@ -28,6 +29,7 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
     rt->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * rt->backend->ctx.scImgCount);
     rt->descs = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * rt->backend->ctx.scImgCount);
     
+    VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, rt->backend->ctx.scExtent.width, rt->backend->ctx.scExtent.height, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     rt->pass = VulkanRenderPassCreate(&rt->backend->ctx, rt->backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, hasDepth, true);
     
     for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
@@ -42,7 +44,7 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
         };
 
         if(hasDepth) {
-            views[1] = rt->backend->ctx.depthImage.view; //! FIXME: Per render-target must have it's own depth image with the appropriate dimension!!!!!!!!
+            views[1] = rt->depthImage.view;
             count++;
         }
 
@@ -76,6 +78,8 @@ void mfRenderTargetDestroy(MFRenderTarget* rt) {
         VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
         VulkanImageDestroy(&rt->images[i], &rt->backend->ctx);
     }
+
+    VulkanImageDestroy(&rt->depthImage, &rt->backend->ctx);
     
     VulkanRenderPassDestroy(&rt->backend->ctx, rt->pass);
     
@@ -94,7 +98,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
     }
 
     VK_CHECK(vkDeviceWaitIdle(rt->backend->ctx.device));
-
+    
     // Deleting
     {
         for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
@@ -104,16 +108,17 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             VulkanImageDestroy(&rt->images[i], &rt->backend->ctx);
         }
         
-        VulkanRenderPassDestroy(&rt->backend->ctx, rt->pass);
-
+        VulkanImageDestroy(&rt->depthImage, &rt->backend->ctx);
+        
         MF_SETMEM(rt->descs, 0, sizeof(VkDescriptorSet) * rt->backend->ctx.scImgCount);
         MF_SETMEM(rt->fbs, 0, sizeof(VkFramebuffer) * rt->backend->ctx.scImgCount);
         MF_SETMEM(rt->images, 0, sizeof(VulkanImage) * rt->backend->ctx.scImgCount);
+        MF_SETMEM(&rt->depthImage, 0, sizeof(VulkanImage));
     }
     // Re-creating
     {
-        rt->pass = VulkanRenderPassCreate(&rt->backend->ctx, rt->backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, rt->hasDepth, true);
-    
+        VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, extent.x, extent.y, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             VK_CHECK(vkResetCommandBuffer(rt->buffs[i], 0));
             VulkanCommandBufferBegin(rt->buffs[i]);
@@ -131,7 +136,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             };
 
             if(rt->hasDepth) {
-                views[1] = rt->backend->ctx.depthImage.view;
+                views[1] = rt->depthImage.view;
                 count++;
             }
 
@@ -139,6 +144,10 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
 
             rt->descs[i] = ImGui_ImplVulkan_AddTexture(rt->images[i].sampler, rt->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
+    }
+
+    if(rt->resizeCallback != mfnull) {
+        rt->resizeCallback(rt->userData);
     }
 
     // Begin the pass
@@ -192,7 +201,7 @@ void mfRenderTargetBegin(MFRenderTarget* rt) {
         .pClearValues = values,
         .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].width, rt->images[0].height}, .offset = (VkOffset2D){0, 0}},
         .renderPass = rt->pass,
-        .framebuffer = rt->fbs[rt->backend->scImgIdx]
+        .framebuffer = rt->fbs[rt->backend->crntFrmIdx]
     }; 
 
     vkCmdBeginRenderPass(buff, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -222,6 +231,21 @@ void mfRenderTargetEnd(MFRenderTarget* rt) {
     };
 
     VK_CHECK(vkQueueSubmit(rt->backend->ctx.qData.gQueue, 1, &info, rt->fences[rt->backend->crntFrmIdx]));
+}
+
+void mfRenderTargetSetResizeCallback(MFRenderTarget* rt, void (*callback)(void* userData), void* userData) {
+    MF_ASSERT(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_ASSERT(userData == mfnull, mfGetLogger(), "The user data provided shouldn't be null!");
+    MF_ASSERT(callback == mfnull, mfGetLogger(), "The resize callback func ptr provided shouldn't be null!");
+
+    rt->userData = userData;
+    rt->resizeCallback = callback;
+}
+
+void* mfRenderTargetGetPass(MFRenderTarget* rt) {
+    MF_ASSERT(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+
+    return (void*)rt->pass;
 }
 
 u32 mfRenderTargetGetWidth(MFRenderTarget* rt) {

@@ -14,9 +14,8 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE
     };
 
-    VkAttachmentDescription attachments[2] = {
-        colorAttachment
-    };
+    VkAttachmentDescription attachments[2] = {0};
+    attachments[0] = colorAttachment;
 
     VkAttachmentReference colRef = {
         .attachment = 0,

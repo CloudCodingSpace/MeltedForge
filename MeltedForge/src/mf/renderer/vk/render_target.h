@@ -8,6 +8,9 @@ struct MFRenderTarget_s {
     void* renderer;
     struct VulkanBackend_s* backend;
 
+    void* userData;
+    void (*resizeCallback)(void* userData);
+    VulkanImage depthImage;
     VulkanImage* images;
     VkFramebuffer* fbs;
     VkRenderPass pass;
