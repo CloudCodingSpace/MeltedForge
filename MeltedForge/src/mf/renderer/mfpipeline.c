@@ -5,30 +5,16 @@
 #include "vk/common.h"
 #include "vk/image.h"
 #include "vk/buffer.h"
+#include "vk/render_target.h"
 
 struct MFPipeline_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
-    MFPipelineConfig info;
 
+    VkDescriptorPool descPool;
     VkDescriptorSet descSet[FRAMES_IN_FLIGHT];
     VkDescriptorSetLayout descLayout;
-};
-
-struct MFRenderTarget_s {
-    MFRenderer* renderer;
-    VulkanBackend* backend;
-
-    VulkanImage* images;
-    VkFramebuffer* fbs;
-    VkRenderPass pass;
-    VkDescriptorSet* descs;
-
-    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
-    VkFence fences[FRAMES_IN_FLIGHT];
-
-    b8 hasDepth;
 };
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
@@ -38,7 +24,6 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
-    pipeline->info = *info;
 
     VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingDescsCount);
     VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attribDescsCount);
@@ -122,11 +107,28 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     MF_FREEMEM(bindings);
     MF_FREEMEM(attribs);
 
+    // Descriptor Pool
+    {
+        VkDescriptorPoolSize poolSizes[] = {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, info->imgCount * FRAMES_IN_FLIGHT },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, info->buffCount * FRAMES_IN_FLIGHT },
+        };
+
+        VkDescriptorPoolCreateInfo poolInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .poolSizeCount = 2,
+            .pPoolSizes = poolSizes,
+            .maxSets = FRAMES_IN_FLIGHT,
+        };
+
+        VK_CHECK(vkCreateDescriptorPool(pipeline->ctx->device, &poolInfo, pipeline->ctx->allocator, &pipeline->descPool));
+    }
+
     // Descriptor Set
     {
         VkDescriptorSetAllocateInfo setInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = pipeline->ctx->descPool,
+            .descriptorPool = pipeline->descPool,
             .descriptorSetCount = 1,
             .pSetLayouts = &pipeline->descLayout
         };
@@ -194,7 +196,8 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
 
     vkDestroyDescriptorSetLayout(pipeline->ctx->device, pipeline->descLayout, pipeline->ctx->allocator);
-    vkFreeDescriptorSets(pipeline->ctx->device, pipeline->ctx->descPool, FRAMES_IN_FLIGHT, pipeline->descSet);
+    vkFreeDescriptorSets(pipeline->ctx->device, pipeline->descPool, FRAMES_IN_FLIGHT, pipeline->descSet);
+    vkDestroyDescriptorPool(pipeline->ctx->device, pipeline->descPool, pipeline->ctx->allocator);
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
 
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));

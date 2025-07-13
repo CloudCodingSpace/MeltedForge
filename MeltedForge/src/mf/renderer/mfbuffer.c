@@ -78,7 +78,7 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
 
         vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer.handle, offsets);
     }
-    else {
+    else if (buffer->config.type == MF_GPU_BUFFER_TYPE_INDEX) {
         vkCmdBindIndexBuffer(buff, buffer->buffer.handle, 0, VK_INDEX_TYPE_UINT32); // TODO: Make the offset configurable if necessary
     }
 }

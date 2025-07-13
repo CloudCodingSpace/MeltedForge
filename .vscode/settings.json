@@ -24,6 +24,7 @@
         "string_view": "c",
         "mf.h": "c",
         "backend.h": "c",
-        "cimgui.h": "c"
+        "cimgui.h": "c",
+        "render_target.h": "c"
     }
 }
