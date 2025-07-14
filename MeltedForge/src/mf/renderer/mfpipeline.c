@@ -119,6 +119,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
             .poolSizeCount = 2,
             .pPoolSizes = poolSizes,
             .maxSets = FRAMES_IN_FLIGHT,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
         };
 
         VK_CHECK(vkCreateDescriptorPool(pipeline->ctx->device, &poolInfo, pipeline->ctx->allocator, &pipeline->descPool));

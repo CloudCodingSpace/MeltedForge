@@ -3,27 +3,13 @@
 #include "vk/backend.h"
 #include "vk/ctx.h"
 #include "vk/buffer.h"
+#include "vk/render_target.h"
 
 struct MFGpuBuffer_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanBuffer buffer;
     MFGpuBufferConfig config;
-};
-
-struct MFRenderTarget_s {
-    MFRenderer* renderer;
-    VulkanBackend* backend;
-
-    VulkanImage* images;
-    VkFramebuffer* fbs;
-    VkRenderPass pass;
-    VkDescriptorSet* descs;
-
-    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
-    VkFence fences[FRAMES_IN_FLIGHT];
-
-    b8 hasDepth;
 };
 
 void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer) {

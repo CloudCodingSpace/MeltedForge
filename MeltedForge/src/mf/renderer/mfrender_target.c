@@ -118,11 +118,6 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
     // Re-creating
     {
         VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, extent.x, extent.y, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        
-        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VK_CHECK(vkResetCommandBuffer(rt->buffs[i], 0));
-            VulkanCommandBufferBegin(rt->buffs[i]);
-        }
 
         for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
             VulkanImageCreate(&rt->images[i], &rt->backend->ctx, extent.x, 
@@ -148,6 +143,54 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
 
     if(rt->resizeCallback != mfnull) {
         rt->resizeCallback(rt->userData);
+    }
+
+    // Transitioning the images explicitly
+    {
+        VkCommandBuffer cmd = rt->buffs[0];
+        VK_CHECK(vkResetCommandBuffer(cmd, 0));
+        VulkanCommandBufferBegin(cmd);
+
+        for (u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
+            VkImageMemoryBarrier barrier = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .srcAccessMask = 0,
+                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = rt->images[i].image,
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1
+                }
+            };
+
+            vkCmdPipelineBarrier(
+                cmd,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                0, 0, NULL, 0, NULL, 1, &barrier
+            );
+        }
+
+        VulkanCommandBufferEnd(cmd);
+        VkSubmitInfo submitInfo = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cmd
+        };
+        VK_CHECK(vkQueueSubmit(rt->backend->ctx.qData.gQueue, 1, &submitInfo, VK_NULL_HANDLE));
+        VK_CHECK(vkQueueWaitIdle(rt->backend->ctx.qData.gQueue));
+    }
+
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VK_CHECK(vkResetCommandBuffer(rt->buffs[i], 0));
+        VulkanCommandBufferBegin(rt->buffs[i]);
     }
 
     // Begin the pass
@@ -263,7 +306,7 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* rt) {
 void* mfRenderTargetGetHandle(MFRenderTarget* rt) {
     MF_ASSERT(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
 
-    return rt->descs[rt->backend->scImgIdx];
+    return rt->descs[rt->backend->crntFrmIdx];
 }
 
 size_t mfGetRenderTargetSizeInBytes() {
