@@ -25,14 +25,14 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
     rt->renderer = renderer;
     rt->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
-    rt->images = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * rt->backend->ctx.scImgCount);
-    rt->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * rt->backend->ctx.scImgCount);
-    rt->descs = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * rt->backend->ctx.scImgCount);
+    rt->images = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
+    rt->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
+    rt->descs = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
     VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, rt->backend->ctx.scExtent.width, rt->backend->ctx.scExtent.height, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     rt->pass = VulkanRenderPassCreate(&rt->backend->ctx, rt->backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, hasDepth, true);
     
-    for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VulkanImageCreate(&rt->images[i], &rt->backend->ctx, rt->backend->ctx.scExtent.width, 
                         rt->backend->ctx.scExtent.height, true, mfnull, 
                         rt->backend->ctx.scFormat.format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
@@ -72,7 +72,7 @@ void mfRenderTargetDestroy(MFRenderTarget* rt) {
         vkDestroyFence(rt->backend->ctx.device, rt->fences[i], rt->backend->ctx.allocator);
     }
     
-    for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         ImGui_ImplVulkan_RemoveTexture(rt->descs[i]);
         
         VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
@@ -101,7 +101,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
     
     // Deleting
     {
-        for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             ImGui_ImplVulkan_RemoveTexture(rt->descs[i]);
             
             VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
@@ -110,16 +110,16 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
         
         VulkanImageDestroy(&rt->depthImage, &rt->backend->ctx);
         
-        MF_SETMEM(rt->descs, 0, sizeof(VkDescriptorSet) * rt->backend->ctx.scImgCount);
-        MF_SETMEM(rt->fbs, 0, sizeof(VkFramebuffer) * rt->backend->ctx.scImgCount);
-        MF_SETMEM(rt->images, 0, sizeof(VulkanImage) * rt->backend->ctx.scImgCount);
+        MF_SETMEM(rt->descs, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
+        MF_SETMEM(rt->fbs, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
+        MF_SETMEM(rt->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
         MF_SETMEM(&rt->depthImage, 0, sizeof(VulkanImage));
     }
     // Re-creating
     {
         VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, extent.x, extent.y, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-        for(u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             VulkanImageCreate(&rt->images[i], &rt->backend->ctx, extent.x, 
                             extent.y, true, mfnull, 
                             rt->backend->ctx.scFormat.format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
@@ -151,7 +151,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
         VK_CHECK(vkResetCommandBuffer(cmd, 0));
         VulkanCommandBufferBegin(cmd);
 
-        for (u32 i = 0; i < rt->backend->ctx.scImgCount; i++) {
+        for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             VkImageMemoryBarrier barrier = {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
                 .srcAccessMask = 0,
@@ -212,7 +212,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             .pClearValues = values,
             .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].width, rt->images[0].height}, .offset = (VkOffset2D){0, 0}},
             .renderPass = rt->pass,
-            .framebuffer = rt->fbs[rt->backend->scImgIdx]
+            .framebuffer = rt->fbs[rt->backend->crntFrmIdx]
         }; 
 
         vkCmdBeginRenderPass(rt->buffs[rt->backend->crntFrmIdx], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
