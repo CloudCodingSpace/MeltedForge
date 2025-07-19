@@ -16,8 +16,8 @@ typedef enum MFGpuBufferTypes_s {
 } MFGpuBufferTypes;
 
 typedef struct MFGpuBufferConfig_s {
-    u64 size, binding; // NOTE: The shader binding must be specified for a GPU resource
-    MFShaderStage stage; // NOTE: The shader stage should be specifies for a GPU resource
+    u64 size, binding;
+    MFShaderStage stage;
     void* data;
     MFGpuBufferTypes type;
 } MFGpuBufferConfig;

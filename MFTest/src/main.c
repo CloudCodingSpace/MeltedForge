@@ -4,6 +4,8 @@
 
 #include "vertex.h"
 
+#pragma region Structs
+
 typedef struct UBOData_s {
     MFMat4 proj;
     MFMat4 view;
@@ -32,6 +34,10 @@ typedef struct MFTState_s {
     ImVec2 sceneViewport;
     void* renderer;
 } MFTState;
+
+#pragma endregion
+
+#pragma region PipelineFuncs
 
 static void CreatePipeline(MFTState* state) {
     u32 attribCount = 0, bindingCount = 1;
@@ -70,27 +76,33 @@ static void RecreatePipeline(void* pstate) {
     CreatePipeline(state);
 }
 
+#pragma endregion
+
+#pragma region MFTestFuncs
+
 static void MFTOnInit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest init\n");
 
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
-    mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
-    
+    const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
+
     state->renderer = appState->renderer;
     
-    const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
-    
+    mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
+
     mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
-    state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
-    mfRenderTargetCreate(state->rt, appState->renderer, true);
-    mfRenderTargetSetResizeCallback(state->rt, &RecreatePipeline, state);
-    mfRendererSetRenderTarget(appState->renderer, state->rt);
+    // Viewport and render target
+    {
+        state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
+        mfRenderTargetCreate(state->rt, appState->renderer, true);
+        mfRenderTargetSetResizeCallback(state->rt, &RecreatePipeline, state);
+        mfRendererSetRenderTarget(appState->renderer, state->rt);
 
-    state->sceneViewport.x = mfRenderTargetGetWidth(state->rt);
-    state->sceneViewport.y = mfRenderTargetGetHeight(state->rt);
-
+        state->sceneViewport.x = mfRenderTargetGetWidth(state->rt);
+        state->sceneViewport.y = mfRenderTargetGetHeight(state->rt);
+    }
     // UBO & Model
     {
         state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight() * 2);
@@ -170,7 +182,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
     
     state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
     CreatePipeline(state);
-    
+
     // UI customization
     {
         ImGuiIO* io = igGetIO_Nil();
@@ -294,45 +306,47 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
 
     igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
 
-    igBegin("Scene", mfnull, ImGuiWindowFlags_None);
-
-    igGetContentRegionAvail(&state->sceneViewport);
-
-    igImage((ImTextureID)mfRenderTargetGetHandle(state->rt), (ImVec2){mfRenderTargetGetWidth(state->rt), mfRenderTargetGetHeight(state->rt)}, (ImVec2){0, 0}, (ImVec2){1, 1});
-
-    igEnd();
+    // Scene window
+    {
+        igBegin("Scene", mfnull, ImGuiWindowFlags_None);
+        igGetContentRegionAvail(&state->sceneViewport);
+        igImage((ImTextureID)mfRenderTargetGetHandle(state->rt), (ImVec2){mfRenderTargetGetWidth(state->rt), mfRenderTargetGetHeight(state->rt)}, (ImVec2){0, 0}, (ImVec2){1, 1});
+        igEnd();
+    }
     
-    igBegin("Settings", mfnull, ImGuiWindowFlags_None);
+    // Settings window
+    {
+        igBegin("Settings", mfnull, ImGuiWindowFlags_None);
+        igText("FPS :- %.3f", igGetIO_Nil()->Framerate);
 
-    igText("FPS :- %.3f", igGetIO_Nil()->Framerate);
+        float posData[3] = {
+            state->lightData.lightPos.x,
+            state->lightData.lightPos.y,
+            state->lightData.lightPos.z
+        };
 
-    float posData[3] = {
-        state->lightData.lightPos.x,
-        state->lightData.lightPos.y,
-        state->lightData.lightPos.z
-    };
+        float colorData[3] = {
+            state->lightData.lightColor.x,
+            state->lightData.lightColor.y,
+            state->lightData.lightColor.z
+        };
 
-    float colorData[3] = {
-        state->lightData.lightColor.x,
-        state->lightData.lightColor.y,
-        state->lightData.lightColor.z
-    };
+        igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
+        igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
+        igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
+        igDragFloat("lightIntensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
+        igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-    igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
-    igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
-    igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
-    igDragFloat("lightIntensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
-    igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
+        state->lightData.lightPos.x = posData[0];
+        state->lightData.lightPos.y = posData[1];
+        state->lightData.lightPos.z = posData[2];
 
-    state->lightData.lightPos.x = posData[0];
-    state->lightData.lightPos.y = posData[1];
-    state->lightData.lightPos.z = posData[2];
+        state->lightData.lightColor.x = colorData[0];
+        state->lightData.lightColor.y = colorData[1];
+        state->lightData.lightColor.z = colorData[2];
 
-    state->lightData.lightColor.x = colorData[0];
-    state->lightData.lightColor.y = colorData[1];
-    state->lightData.lightColor.z = colorData[2];
-
-    igEnd();
+        igEnd();
+    }
 }
 
 static void MFTOnUpdate(void* pstate, void* pappState) {
@@ -348,6 +362,8 @@ static void MFTOnUpdate(void* pstate, void* pappState) {
         mfWindowClose(aState->window);
     }
 }
+
+#pragma endregion
 
 MFAppConfig mfClientCreateAppConfig() {
     MFAppConfig config = mfCreateDefaultApp("MFTest");

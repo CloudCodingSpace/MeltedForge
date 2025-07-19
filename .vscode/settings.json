@@ -25,6 +25,15 @@
         "mf.h": "c",
         "backend.h": "c",
         "cimgui.h": "c",
-        "render_target.h": "c"
+        "render_target.h": "c",
+        "mfcamera.h": "c",
+        "mfwindow.h": "c",
+        "mfimage.h": "c",
+        "mfpipeline.h": "c",
+        "mfbuffer.h": "c",
+        "mfmesh.h": "c",
+        "mfmodel.h": "c",
+        "mfentry.h": "c",
+        "mftimer.h": "c"
     }
 }

@@ -32,12 +32,20 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
     MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_ASSERT(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
     
-    
+    memcpy(image->config.pixels, pixels, sizeof(u8) * image->config.width * image->config.height * 4);
+
+    VulkanImageSetPixels(&image->image, image->ctx, image->config.pixels);
 }
 
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
     MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     
+    image->config.width = width;
+    image->config.height = height;
+
+    VulkanImageDestroy(&image->image, image->ctx);
+
+    VulkanImageCreate(&image->image, image->ctx, image->config.width, image->config.height, true, image->config.pixels, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
 const MFGpuImageConfig* mfGetGpuImageConfig(MFGpuImage* image) {

@@ -131,7 +131,7 @@ void VulkanImageDestroy(VulkanImage* image, struct VulkanBackendCtx_s* ctx) {
 void VulkanImageSetPixels(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u8* pixels) {
     image->pixels = pixels;
 
-    VulkanBuffer staging;
+    VulkanBuffer staging = {};
     VulkanBufferAllocate(&staging, ctx, ctx->cmdPool, image->width * image->height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
