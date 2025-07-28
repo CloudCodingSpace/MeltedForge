@@ -113,7 +113,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
             state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         }
 
-        mfModelLoadAndCreate(&state->model, "meshes/StanfordDragon.obj", appState->renderer, sizeof(Vertex), vertBuilder);
+        mfModelLoadAndCreate(&state->model, "meshes/Mickey Mouse.obj", appState->renderer, sizeof(Vertex), vertBuilder);
         for(u32 i = 0; i < state->model.meshCount; i++) {
             state->model.meshes[i].modelMat = mfMat4Identity();
         }

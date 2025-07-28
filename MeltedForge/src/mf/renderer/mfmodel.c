@@ -91,6 +91,34 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
             }
         }
 
+        // TODO: FIX THIS TO NOT ONLY CONSIDER THE FIRST MATERIAL
+        {
+            if(matCount > 0) {
+                tinyobj_material_t* mat = &mats[0];
+            
+                model->mat.alpha_texpath = mat->alpha_texname;
+                model->mat.bump_texpath = mat->bump_texname;
+                model->mat.ambient_texpath = mat->ambient_texname;
+                model->mat.diffuse_texpath = mat->diffuse_texname;
+                model->mat.specular_texpath = mat->specular_texname;
+                model->mat.displacement_texpath = mat->displacement_texname;
+                model->mat.specular_highlight_texpath = mat->specular_highlight_texname;
+
+                model->mat.illum = mat->illum;
+                model->mat.ior = mat->ior;
+                model->mat.opaque = mat->dissolve;
+                model->mat.shininess = mat->shininess;
+
+                for(u32 i = 0; i < 3; i++) {
+                    model->mat.ambient[i] = mat->ambient[i];
+                    model->mat.diffuse[i] = mat->diffuse[i];
+                    model->mat.emission[i] = mat->emission[i];
+                    model->mat.specular[i] = mat->specular[i];
+                    model->mat.transmittance[i] = mat->transmittance[i];
+                }
+            }
+        }
+
         mfMeshCreate(&model->meshes[s], renderer, perVertSize * nextIndex, vertices, faceCount * 3, indices);
 
         MF_FREEMEM(vertices);
