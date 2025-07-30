@@ -144,3 +144,50 @@ MF_INLINE i32 mfStringFindLast(SLogger* logger, const char* s, const char a) {
         i++;
     }
 }
+
+typedef struct MFArray_s {
+    u64 len;
+    u64 capacity;
+    u64 elementSize;
+    void* data;
+} MFArray;
+
+MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 len, u64 elementSize) {
+    MF_ASSERT(len == 0, logger, "The length of the new array can't be allocated and set as 0!");
+    MF_ASSERT(elementSize == 0, logger, "The element size of the new array can't be allocated and set as 0!");
+
+    MFArray array = {0};
+    array.len = len;
+    array.elementSize = elementSize;
+    array.capacity = len;
+
+    array.data = malloc(elementSize * len);
+    memset(array.data, 0, elementSize * len);
+
+    return array;
+}
+
+MF_INLINE void mfArrayDestroy(MFArray* array, SLogger* logger) {
+    MF_ASSERT(array == mfnull, logger, "The array provided shouldn't be 0!");
+    
+    free(array->data);
+    
+    memset(array, 0, sizeof(MFArray));
+}
+
+MF_INLINE void mfArrayResize(MFArray* array, u64 newLen, SLogger* logger) {
+    MF_ASSERT(array == mfnull, logger, "The array provided shouldn't be 0!");
+    
+    if(array->capacity >= newLen)
+        return;
+
+    void* data = malloc(array->elementSize * newLen);
+    memset(data, 0, array->elementSize * newLen);
+    
+    memcpy(data, array->data, array->elementSize * array->len);
+
+    free(array->data);
+
+    array->data = data;
+    array->capacity = newLen;
+}
