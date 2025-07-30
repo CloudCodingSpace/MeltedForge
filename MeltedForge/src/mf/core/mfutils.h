@@ -7,6 +7,8 @@
 
 #include <slog/slog.h>
 
+#define mfnull 0
+
 #ifndef true
     #define true 1
 #endif
@@ -40,8 +42,22 @@
     #define MF_INLINE static inline
 #endif
 
+#define MF_ARRAYLEN(arr, T) (sizeof(arr)/sizeof(T)) //! The arr must be allocated in the stack
+
+typedef float f32;
+typedef double f64;
+typedef signed int i32;
+typedef unsigned int u32;
+typedef signed long long i64;
+typedef unsigned long long u64;
+typedef char i8;
+typedef unsigned char u8;
+typedef signed short i16;
+typedef unsigned short u16;
+typedef bool b8;
+
 // @note The returned const char* must be freed since it is allocated on the heap
-MF_INLINE char* mfReadFile(SLogger* logger, size_t* size, const char* path, const char* mode) {
+MF_INLINE char* mfReadFile(SLogger* logger, u64* size, const char* path, const char* mode) {
     MF_ASSERT(path == 0, logger, "The file path provided shouldn't be null!");
     MF_ASSERT(mode == 0, logger, "The file reading mode provided shouldn't be null!");
     MF_ASSERT(size == 0, logger, "The size pointer provided shouldn't be null!");
@@ -64,16 +80,67 @@ MF_INLINE char* mfReadFile(SLogger* logger, size_t* size, const char* path, cons
     return content;
 }
 
-#define MF_ARRAYLEN(arr, T) (sizeof(arr)/sizeof(T)) //! The arr must be allocated in the stack
+MF_INLINE u32 mfStringLen(SLogger* logger, const char* a) {
+    MF_ASSERT(a == mfnull, logger, "The string provided to find the length shouldn't be null!");
+    
+    i32 i = 0;
+    while(true) {
+        if(a[i] == '\0')
+            return i;
+        i++;
+    }
+}
 
-typedef float f32;
-typedef double f64;
-typedef signed int i32;
-typedef unsigned int u32;
-typedef signed long long i64;
-typedef unsigned long long u64;
-typedef char i8;
-typedef unsigned char u8;
-typedef signed short i16;
-typedef unsigned short u16;
-typedef bool b8;
+// @note The returned const char* must be freed since it is allocated on the heap
+MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const char* b) {
+    MF_ASSERT(a == mfnull, logger, "The string provided shouldn't be null!");
+    MF_ASSERT(a == mfnull, logger, "The string provided shouldn't be null!");
+
+    i32 lena = mfStringLen(logger, a);
+    i32 len = lena + mfStringLen(logger, b) + 1;
+    char* final = (char*)malloc(sizeof(char) * len);
+    
+    for(i32 i = 0; i < lena; i++) {
+        final[i] = a[i];
+    }
+    
+    for(i32 i = lena; i < len; i++) {
+        i32 j = i - lena;
+        final[i] = b[j];
+    }
+    
+    final[len] = '\0';
+    
+    return final;
+}
+
+MF_INLINE i32 mfStringFind(SLogger* logger, const char* s, const char a) {
+    MF_ASSERT(s == mfnull, logger, "The string provided shouldn't be null!");
+    
+    i32 i = 0;
+    while(true) {
+        if(s[i] == '\0')
+            return -1;
+        
+        if(s[i] == a)
+            return i;
+        
+        i++;
+    }
+}
+
+MF_INLINE i32 mfStringFindLast(SLogger* logger, const char* s, const char a) {
+    MF_ASSERT(s == mfnull, logger, "The string provided shouldn't be null!");
+    
+    i32 i = 0;
+    i32 idx = -1;
+    while(true) {
+        if(s[i] == '\0')
+            return idx;
+        
+        if(s[i] == a)
+            idx = i;
+
+        i++;
+    }
+}

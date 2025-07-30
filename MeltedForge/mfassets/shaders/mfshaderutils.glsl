@@ -15,7 +15,7 @@ vec3 mfComputePhongLighting(vec3 normal, vec3 fragPos, vec3 lightDir, vec3 camPo
 
     vec3 color = lightColor * (diffuse + spec + ambientFactor);
 
-    return (isPoint) ? (color * attenuation * lightIntensity) : color;
+    return (isPoint) ? (color * attenuation * lightIntensity) : color * lightIntensity;
 }
 
 #endif

@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <slog/slog.h>
 
-#define mfnull 0
-
 typedef struct MFContext_s MFContext;
 
 void mfInit(void);

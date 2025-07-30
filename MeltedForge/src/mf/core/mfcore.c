@@ -1,4 +1,5 @@
 #include "mfcore.h"
+#include "mfutils.h"
 
 #include <slog/slog.h>
 #include <GLFW/glfw3.h>
