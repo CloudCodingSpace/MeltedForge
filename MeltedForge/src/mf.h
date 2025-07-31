@@ -11,6 +11,10 @@
 #include "mf/renderer/mfmesh.h"
 #include "mf/renderer/mfmodel.h"
 
+#include "mf/ecs/mfcomponents.h"
+#include "mf/ecs/mfentity.h"
+#include "mf/ecs/mfscene.h"
+
 #include "mf/core/mfcore.h"
 #include "mf/core/mfutils.h"
 #include "mf/core/mfmaths.h"

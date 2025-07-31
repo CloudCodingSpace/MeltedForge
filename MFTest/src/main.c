@@ -281,16 +281,17 @@ static void MFTOnRender(void* pstate, void* pappState) {
     UBOData uboData = {
         .proj = state->camera.proj,
         .view = state->camera.view,
-        .normalMat = mfMat4Identity()
+        .normalMat = mfMat4Identity(),
+        .model = mfMat4Identity()
     };
+
+    mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
+    mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
 
     for(u64 i = 0; i < state->model.meshCount; i++) {
         uboData.model = state->model.meshes[i].modelMat;
 
         state->lightData.camPos = state->camera.pos;
-
-        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
-        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
 
         MFViewport vp = mfRendererGetViewport(appState->renderer);
         MFRect2D scissor = mfRendererGetScissor(appState->renderer);

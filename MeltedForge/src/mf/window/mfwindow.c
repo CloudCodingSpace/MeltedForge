@@ -27,8 +27,6 @@ static void pos_callback(GLFWwindow* window, double x, double y) {
 }
 
 void mfWindowInit(MFWindow* window, MFWindowConfig config) {
-    mfCheckCurrentContext();
-
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
     }
@@ -79,8 +77,6 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
 }
 
 void mfWindowDestroy(MFWindow* window) {
-    mfCheckCurrentContext();
-
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
     }

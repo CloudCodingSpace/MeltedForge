@@ -18,7 +18,7 @@
 
 #define MF_ALLOCMEM(T, size) (T*)memset((T*)malloc(size), 0, size)
 #define MF_SETMEM(mem, val, size) memset(mem, val, size)
-#define MF_FREEMEM(mem) free(mem); mem = 0
+#define MF_FREEMEM(mem) free((void*)mem); mem = 0
 
 #define MF_MIN(x, y) (x < y ? x : y)
 #define MF_MAX(x, y) (x > y ? x : y)
@@ -95,10 +95,10 @@ MF_INLINE u32 mfStringLen(SLogger* logger, const char* a) {
 MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const char* b) {
     MF_ASSERT(a == mfnull, logger, "The string provided shouldn't be null!");
     MF_ASSERT(a == mfnull, logger, "The string provided shouldn't be null!");
-
+    
     i32 lena = mfStringLen(logger, a);
     i32 len = lena + mfStringLen(logger, b) + 1;
-    char* final = (char*)malloc(sizeof(char) * len);
+    char* final = MF_ALLOCMEM(char, sizeof(char) * len);
     
     for(i32 i = 0; i < lena; i++) {
         final[i] = a[i];
@@ -112,6 +112,19 @@ MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const 
     final[len] = '\0';
     
     return final;
+}
+
+// @note The returned const char* must be freed since it is allocated on the heap
+MF_INLINE const char* mfStringDuplicate(SLogger* logger, const char* a) {
+    MF_ASSERT(a == mfnull, logger, "The string provided shouldn't be null!");
+    
+    i32 len = mfStringLen(logger, a);
+    char* str = MF_ALLOCMEM(char, sizeof(char) * len);
+    memcpy(str, a, sizeof(char) * len);
+
+    str[len] = '\0';
+
+    return str;
 }
 
 MF_INLINE i32 mfStringFind(SLogger* logger, const char* s, const char a) {
@@ -157,7 +170,6 @@ MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 len, u64 elementSize) {
     MF_ASSERT(elementSize == 0, logger, "The element size of the new array can't be allocated and set as 0!");
 
     MFArray array = {0};
-    array.len = len;
     array.elementSize = elementSize;
     array.capacity = len;
 
