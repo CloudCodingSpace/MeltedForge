@@ -34,6 +34,7 @@
         "mfmesh.h": "c",
         "mfmodel.h": "c",
         "mfentry.h": "c",
-        "mftimer.h": "c"
+        "mftimer.h": "c",
+        "mfentity.h": "c"
     }
 }

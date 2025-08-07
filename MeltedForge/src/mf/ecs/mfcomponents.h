@@ -4,6 +4,13 @@
 
 #include "renderer/mfmodel.h"
 
+// TODO: Add more components when necessary
+typedef enum MFComponentsType_e {
+    MF_COMPONENT_TYPE_NONE,
+    MF_COMPONENT_TYPE_MESH,
+    MF_COMPONENT_TYPE_TRANSFORM
+} MFComponentsType;
+
 typedef struct MFTransformComponent_s {
     MFVec3 scale;
     MFVec3 position;
@@ -15,4 +22,7 @@ typedef struct MFMeshComponent_s {
     const char* path;
 } MFMeshComponent;
 
-// TODO: Add more components when necessary
+typedef struct MFComponentGroup_s {
+    MFMeshComponent* mesh;
+    MFTransformComponent* transform;
+} MFComponentGroup;
