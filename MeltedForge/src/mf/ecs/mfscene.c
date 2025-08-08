@@ -98,3 +98,41 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformCompo
 
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;
 }
+
+MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u32 id) {
+    MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_ASSERT(id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
+    MF_ASSERT(entity->valid != true, mfGetLogger(), "The entity's id provided isn't valid anymore!");
+
+    if(entity->ownerScene != scene) {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        return mfnull;
+    }
+
+    if(!mfEntityHasMeshComponent(entity))
+        return mfnull;
+
+    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    return grp->mesh;
+}
+
+MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u32 id) {
+    MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_ASSERT(id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
+    MF_ASSERT(entity->valid != true, mfGetLogger(), "The entity's id provided isn't valid anymore!");
+
+    if(entity->ownerScene != scene) {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        return mfnull;
+    }
+
+    if(!mfEntityHasTransformComponent(entity))
+        return mfnull;
+
+    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    return grp->transform;
+}
