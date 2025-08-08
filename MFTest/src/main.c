@@ -93,6 +93,22 @@ static void MFTOnInit(void* pstate, void* pappState) {
 
     mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
+    MFScene scene = {};
+    mfSceneCreate(&scene, state->camera, appState->renderer);
+    const MFEntity* e19 = mfSceneCreateEntity(&scene);
+    const MFEntity* e18 = mfSceneCreateEntity(&scene);
+    const MFEntity* e16 = mfSceneCreateEntity(&scene);
+    const MFEntity* e15 = mfSceneCreateEntity(&scene);
+    const MFEntity* e14 = mfSceneCreateEntity(&scene);
+    const MFEntity* e13 = mfSceneCreateEntity(&scene);
+    const MFEntity* e12 = mfSceneCreateEntity(&scene);
+
+    MFMeshComponent comp1 = {};
+    comp1.path = "meshes/Mickey Mouse.obj";
+    mfSceneEntityAddMeshComponent(&scene, e19->id, comp1);
+    
+    mfSceneDestroy(&scene);
+
     // Viewport and render target
     {
         state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());

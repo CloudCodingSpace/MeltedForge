@@ -35,6 +35,8 @@
         "mfmodel.h": "c",
         "mfentry.h": "c",
         "mftimer.h": "c",
-        "mfentity.h": "c"
+        "mfentity.h": "c",
+        "xlocale": "c",
+        "mfcaptureengine.h": "c"
     }
 }

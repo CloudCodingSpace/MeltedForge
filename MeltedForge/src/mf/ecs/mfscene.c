@@ -6,10 +6,10 @@ void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     
     scene->camera = camera;
     scene->renderer = renderer;
-    scene->entities = mfArrayCreate(mfGetLogger(), 2, sizeof(MFEntity));
-    scene->meshCompPool = mfArrayCreate(mfGetLogger(), 2, sizeof(MFMeshComponent));
-    scene->transformCompPool = mfArrayCreate(mfGetLogger(), 2, sizeof(MFTransformComponent));
-    scene->compGrpTable = mfArrayCreate(mfGetLogger(), 2, sizeof(MFComponentGroup));
+    scene->entities = mfArrayCreate(mfGetLogger(), 4, sizeof(MFEntity));
+    scene->meshCompPool = mfArrayCreate(mfGetLogger(), 4, sizeof(MFMeshComponent));
+    scene->transformCompPool = mfArrayCreate(mfGetLogger(), 4, sizeof(MFTransformComponent));
+    scene->compGrpTable = mfArrayCreate(mfGetLogger(), 4, sizeof(MFComponentGroup));
 }
 
 void mfSceneDestroy(MFScene* scene) {
@@ -33,59 +33,67 @@ void mfSceneUpdate(MFScene* scene) {
     
 }
 
-MFEntity* mfSceneCreateEntity(MFScene* scene) {
+const MFEntity* mfSceneCreateEntity(MFScene* scene) {
     MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     
     MFComponentGroup grp = {};
 
     MFEntity entity = {};
+    entity.compGrpId = scene->compGrpTable.len;
     entity.components = MF_COMPONENT_TYPE_NONE;
     entity.uuid = 0xffffffff; // TODO: Find a way to generate UUIDs!!
-    entity.id = scene->compGrpTable.len;
+    entity.id = scene->entities.len;
     entity.ownerScene = (void*)scene;
+    entity.valid = true;
 
     mfArrayAddElement(scene->compGrpTable, MFComponentGroup, mfGetLogger(), grp);
     mfArrayAddElement(scene->entities, MFEntity, mfGetLogger(), entity);
 
-    return &mfArrayGet(scene->entities, MFEntity, scene->entities.len - 1);
+    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, scene->entities.len - 1);
+
+    return e;
 }
 
-//! Find a way to identify if the entity belongs to this scene!
-void mfSceneEntityAddMeshComponent(MFScene* scene, MFEntity* entity, MFMeshComponent comp) {
+void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp) {
     MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_ASSERT(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
- 
+    MF_ASSERT(id > scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+    
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
+    MF_ASSERT(entity->valid != true, mfGetLogger(), "The entity provided isn't valid anymore!");
+    
     if(entity->ownerScene != scene) {
         slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
     }
-
-    if((entity->components & MF_COMPONENT_TYPE_MESH) == MF_COMPONENT_TYPE_MESH)
+    
+    if(mfEntityHasMeshComponent(entity))
         return;
     
     mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
-
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->id);
+    
+    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->mesh = &mfArrayGet(scene->meshCompPool, MFMeshComponent, scene->meshCompPool.len - 1);
-
+    
     entity->components |= MF_COMPONENT_TYPE_MESH;
 }
 
-//! Find a way to identify if the entity belongs to this scene!
-void mfSceneEntityAddTransformComponent(MFScene* scene, MFEntity* entity, MFTransformComponent comp) {
+void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformComponent comp) {
     MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_ASSERT(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
+    MF_ASSERT(id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
+    MF_ASSERT(entity->valid != true, mfGetLogger(), "The entity's id provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
         slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
     }
 
-    if((entity->components & MF_COMPONENT_TYPE_TRANSFORM) == MF_COMPONENT_TYPE_TRANSFORM)
+    if(mfEntityHasTransformComponent(entity))
         return;
     
     mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->id);
+    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->transform = &mfArrayGet(scene->transformCompPool, MFTransformComponent, scene->transformCompPool.len - 1);
 
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;

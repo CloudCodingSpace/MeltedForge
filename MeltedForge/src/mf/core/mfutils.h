@@ -173,35 +173,41 @@ MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 len, u64 elementSize) {
 MF_INLINE void mfArrayDestroy(MFArray* array, SLogger* logger) {
     MF_ASSERT(array == mfnull, logger, "The array provided shouldn't be 0!");
 
-    if (array->len == 0)
+    if (array->capacity == 0)
         return;
 
     free(array->data);
     memset(array, 0, sizeof(MFArray));
 }
 
-MF_INLINE void mfArrayResize(MFArray* array, u64 newLen, SLogger* logger) {
+MF_INLINE void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger) {
     MF_ASSERT(array == mfnull, logger, "The array provided shouldn't be 0!");
 
-    if (array->capacity >= newLen)
+    if (newCapacity == 0) {
+        MF_FATAL_ABORT(logger, "New capacity cannot be zero!");
+    }
+
+    if (newCapacity <= array->capacity)
         return;
 
-    void* data = malloc(array->elementSize * newLen);
-    memset(data, 0, array->elementSize * newLen);
+    void* newData = realloc(array->data, array->elementSize * newCapacity);
+    if (!newData) {
+        MF_FATAL_ABORT(logger, "Failed to allocate memory for array resize!");
+    }
 
-    memcpy(data, array->data, array->elementSize * array->len);
-    free(array->data);
+    memset((u8*)newData + (array->elementSize * array->capacity), 0, (newCapacity - array->capacity) * array->elementSize);
 
-    array->data = data;
-    array->capacity = newLen;
+    array->data = newData;
+    array->capacity = newCapacity;
 }
 
 #define mfArrayGet(arr, type, index) (((type*)(arr).data)[(index)])
 #define mfArrayAddElement(arr, type, logger, element) \
     do { \
         if ((arr).len == (arr).capacity) { \
-            mfArrayResize(&(arr), (arr).capacity * 2, (logger)); \
+            u64 newCap = (arr).capacity == 0 ? 1 : (arr).capacity * 2; \
+            mfArrayResize(&(arr), newCap, (logger)); \
         } \
-        mfArrayGet((arr), type, (arr).len) = (element); \
+        memcpy(&mfArrayGet((arr), type, (arr).len), &element, sizeof(element)); \
         (arr).len++; \
     } while(0)
