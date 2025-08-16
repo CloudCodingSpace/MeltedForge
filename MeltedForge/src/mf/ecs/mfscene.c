@@ -14,6 +14,16 @@ void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
 
 void mfSceneDestroy(MFScene* scene) {
     MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+
+    for(u32 i = 0; i < scene->entities.len; i++) {
+        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        
+        if(!mfEntityHasMeshComponent(e))
+            continue;
+
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, e->id);
+        mfModelDestroy(&comp->model);
+    }
     
     mfArrayDestroy(&scene->entities, mfGetLogger());
     mfArrayDestroy(&scene->transformCompPool, mfGetLogger());
@@ -21,10 +31,17 @@ void mfSceneDestroy(MFScene* scene) {
     mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
 }
 
-//! IMPLEMENT THIS
-void mfSceneRender(MFScene* scene) {
+void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scene, void* state), void* state) {
     MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_ASSERT(entityDraw == mfnull, mfGetLogger(), "The entity draw function ptr handle shouldn't be null!");
     
+    for(u64 i = 0; i < scene->entities.len; i++) {
+        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        if(!mfEntityHasMeshComponent(e) || !mfEntityHasTransformComponent(e))
+            continue;
+        
+        entityDraw(e, scene, state);
+    }
 }
 
 //! IMPLEMENT THIS
@@ -56,6 +73,9 @@ const MFEntity* mfSceneCreateEntity(MFScene* scene) {
 
 void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp) {
     MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_ASSERT(comp.path == mfnull, mfGetLogger(), "The path for the mesh component shouldn't be null!");
+    MF_ASSERT(comp.perVertSize == 0, mfGetLogger(), "The perVertSize for the mesh component shouldn't be 0!");
+    MF_ASSERT(comp.vertBuilder == mfnull, mfGetLogger(), "The vertBuilder for the mesh component shouldn't be null!");
     MF_ASSERT(id > scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
     
     MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
@@ -73,7 +93,9 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp)
     
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->mesh = &mfArrayGet(scene->meshCompPool, MFMeshComponent, scene->meshCompPool.len - 1);
-    
+
+    mfModelLoadAndCreate(&grp->mesh->model, comp.path, scene->renderer, comp.perVertSize, comp.vertBuilder);
+
     entity->components |= MF_COMPONENT_TYPE_MESH;
 }
 

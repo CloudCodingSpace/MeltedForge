@@ -20,6 +20,8 @@ typedef struct MFTransformComponent_s {
 typedef struct MFMeshComponent_s {
     MFModel model;
     const char* path;
+    u64 perVertSize;
+    MFModelVertexBuilder vertBuilder;
 } MFMeshComponent;
 
 typedef struct MFComponentGroup_s {

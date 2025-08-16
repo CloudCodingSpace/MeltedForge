@@ -26,7 +26,8 @@ typedef struct MFTState_s {
     MFPipeline* pipeline;
     MFGpuBuffer** ubos;
     MFGpuImage* tex;
-    MFModel model;
+    MFScene scene;
+    const MFEntity* entity;
     MFCamera camera;
     LightUBOData lightData;
     MFRenderTarget* rt;
@@ -80,6 +81,34 @@ static void RecreatePipeline(void* pstate) {
 
 #pragma region MFTestFuncs
 
+static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
+    MFTState* state = (MFTState*)pstate;
+
+    UBOData uboData = {
+        .proj = state->camera.proj,
+        .view = state->camera.view,
+        .normalMat = mfMat4Identity(),
+        .model = mfMat4Identity()
+    };
+    
+    MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, e->id);
+    
+    for(u64 i = 0; i < comp->model.meshCount; i++) {
+        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer)], &uboData);
+        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
+
+        uboData.model = mfMat4Identity();
+
+        state->lightData.camPos = state->camera.pos;
+
+        MFViewport vp = mfRendererGetViewport(scene->renderer);
+        MFRect2D scissor = mfRendererGetScissor(scene->renderer);
+
+        mfPipelineBind(state->pipeline, vp, scissor);
+        mfMeshRender(&comp->model.meshes[i]);
+    }
+}
+
 static void MFTOnInit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest init\n");
 
@@ -93,22 +122,6 @@ static void MFTOnInit(void* pstate, void* pappState) {
 
     mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
-    MFScene scene = {};
-    mfSceneCreate(&scene, state->camera, appState->renderer);
-    const MFEntity* e19 = mfSceneCreateEntity(&scene);
-    const MFEntity* e18 = mfSceneCreateEntity(&scene);
-    const MFEntity* e16 = mfSceneCreateEntity(&scene);
-    const MFEntity* e15 = mfSceneCreateEntity(&scene);
-    const MFEntity* e14 = mfSceneCreateEntity(&scene);
-    const MFEntity* e13 = mfSceneCreateEntity(&scene);
-    const MFEntity* e12 = mfSceneCreateEntity(&scene);
-
-    MFMeshComponent comp1 = {};
-    comp1.path = "meshes/Mickey Mouse.obj";
-    mfSceneEntityAddMeshComponent(&scene, e19->id, comp1);
-    
-    mfSceneDestroy(&scene);
-
     // Viewport and render target
     {
         state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
@@ -119,7 +132,28 @@ static void MFTOnInit(void* pstate, void* pappState) {
         state->sceneViewport.x = mfRenderTargetGetWidth(state->rt);
         state->sceneViewport.y = mfRenderTargetGetHeight(state->rt);
     }
-    // UBO & Model
+    // Scene & entities
+    {
+        mfSceneCreate(&state->scene, state->camera, appState->renderer);
+
+        state->entity = mfSceneCreateEntity(&state->scene);
+
+        MFMeshComponent mComp = {
+            .path = "meshes/Mickey Mouse.obj",
+            .perVertSize = sizeof(Vertex),
+            .vertBuilder = vertBuilder
+        };
+
+        MFTransformComponent tComp = {
+            .position = (MFVec3){0, 0, 0},
+            .rotationXYZ = (MFVec3){0, 0, 0},
+            .scale = (MFVec3){1, 1, 1}
+        };
+
+        mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
+        mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
+    }
+    // UBO
     {
         state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight() * 2);
         for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
@@ -127,11 +161,6 @@ static void MFTOnInit(void* pstate, void* pappState) {
         }
         for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
             state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-        }
-
-        mfModelLoadAndCreate(&state->model, "meshes/Mickey Mouse.obj", appState->renderer, sizeof(Vertex), vertBuilder);
-        for(u32 i = 0; i < state->model.meshCount; i++) {
-            state->model.meshes[i].modelMat = mfMat4Identity();
         }
 
         MFGpuBufferConfig config = {
@@ -274,10 +303,11 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
         MF_FREEMEM(state->ubos[i]);
     }
 
+    mfSceneDestroy(&state->scene);
+
     mfRenderTargetDestroy(state->rt);
 
     mfCameraDestroy(&state->camera);
-    mfModelDestroy(&state->model);
     mfPipelineDestroy(state->pipeline);
 
     MF_FREEMEM(state->rt);
@@ -293,28 +323,9 @@ static void MFTOnRender(void* pstate, void* pappState) {
     if((state->sceneViewport.x != mfRenderTargetGetWidth(state->rt)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->rt))) {
         mfRenderTargetResize(state->rt, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
     }
-    
-    UBOData uboData = {
-        .proj = state->camera.proj,
-        .view = state->camera.view,
-        .normalMat = mfMat4Identity(),
-        .model = mfMat4Identity()
-    };
 
-    mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer)], &uboData);
-    mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(appState->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
-
-    for(u64 i = 0; i < state->model.meshCount; i++) {
-        uboData.model = state->model.meshes[i].modelMat;
-
-        state->lightData.camPos = state->camera.pos;
-
-        MFViewport vp = mfRendererGetViewport(appState->renderer);
-        MFRect2D scissor = mfRendererGetScissor(appState->renderer);
-
-        mfPipelineBind(state->pipeline, vp, scissor);
-        mfMeshRender(&state->model.meshes[i]);
-    }
+    mfSceneRender(&state->scene, renderEntity, pstate);
+    mfSceneUpdate(&state->scene);
 }
 
 static void MFTOnUIRender(void* pstate, void* pappState) {

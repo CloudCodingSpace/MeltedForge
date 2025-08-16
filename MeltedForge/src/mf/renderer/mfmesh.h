@@ -9,7 +9,6 @@ typedef struct MFMesh_s {
     MFGpuBuffer* vertBuffer;
     MFGpuBuffer* indBuffer;
     MFRenderer* renderer;
-    MFMat4 modelMat;
 
     u64 vertSize;
     u32 vertCount;

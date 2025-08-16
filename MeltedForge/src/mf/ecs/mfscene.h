@@ -21,7 +21,7 @@ typedef struct MFScene_s {
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer);
 void mfSceneDestroy(MFScene* scene);
 
-void mfSceneRender(MFScene* scene);
+void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scene, void* state), void* state);
 void mfSceneUpdate(MFScene* scene);
 
 const MFEntity* mfSceneCreateEntity(MFScene* scene);
