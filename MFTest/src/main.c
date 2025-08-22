@@ -91,9 +91,20 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         .model = mfMat4Identity()
     };
     
-    MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, e->id);
+    MFMeshComponent* mcomp = mfSceneEntityGetMeshComponent(scene, e->id);
+    MFTransformComponent* tcomp = mfSceneEntityGetTransformComponent(scene, e->id);
+
+    {
+        MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
+        MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+        MFMat4 scale = mfMat4Identity();
+        mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
+
+        uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
+        uboData.normalMat = mfMat4Transpose(mfMat4Inverse(uboData.model));
+    }
     
-    for(u64 i = 0; i < comp->model.meshCount; i++) {
+    for(u64 i = 0; i < mcomp->model.meshCount; i++) {
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer)], &uboData);
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
 
@@ -105,7 +116,7 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         MFRect2D scissor = mfRendererGetScissor(scene->renderer);
 
         mfPipelineBind(state->pipeline, vp, scissor);
-        mfMeshRender(&comp->model.meshes[i]);
+        mfMeshRender(&mcomp->model.meshes[i]);
     }
 }
 
@@ -146,7 +157,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
 
         MFTransformComponent tComp = {
             .position = (MFVec3){0, 0, 0},
-            .rotationXYZ = (MFVec3){0, 0, 0},
+            .rotationXYZ = (MFVec3){45, 0, 0},
             .scale = (MFVec3){1, 1, 1}
         };
 
