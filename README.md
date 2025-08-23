@@ -50,3 +50,5 @@ like bin/out/build for the binary output. Then run the following commands :-
 cmake -S . -B <path-to-build-dir>
 cmake --build <path-to-build-dir> --parallel
 ```
+
+> **Note:** Before running the executable of the MFTest, make sure that the shaders are compiled. Helper scripts to compile shaders on Window are in the scripts folder.
