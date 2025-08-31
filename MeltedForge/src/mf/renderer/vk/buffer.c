@@ -22,7 +22,7 @@ void staging_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     };
 
     VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // TODO: Make the offset configurable if necessary
+    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
 }
 
 void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
@@ -45,9 +45,9 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     };
 
     VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // TODO: Make the offset configurable if necessary
+    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
 
-    vkMapMemory(ctx->device, buffer->mem, 0, buffer->size, 0, &buffer->mappedMem);  // TODO: Make the offset configurable if necessary
+    vkMapMemory(ctx->device, buffer->mem, 0, buffer->size, 0, &buffer->mappedMem);  // NOTE: Make the offset configurable if necessary
 }
 
 void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool) {
@@ -70,7 +70,7 @@ void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool
     };
 
     VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // TODO: Make the offset configurable if necessary
+    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
 
     if(buffer->data) {
         VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
@@ -97,7 +97,7 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
     };
 
     VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // TODO: Make the offset configurable if necessary
+    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
 
     if(buffer->data) {
         VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
@@ -165,8 +165,8 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
 
         VkBufferCopy region = {
             .size = staging.size,
-            .dstOffset = 0, // TODO: Make the offset configurable if necessary
-            .srcOffset = 0 // TODO: Make the offset configurable if necessary
+            .dstOffset = 0, // NOTE: Make the offset configurable if necessary
+            .srcOffset = 0 // NOTE: Make the offset configurable if necessary
         };
 
         vkCmdCopyBuffer(buff, staging.handle, buffer->handle, 1, &region);

@@ -63,9 +63,9 @@ MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image) {
 
     return (MFResourceDesc) {
         .binding = image->config.binding,
-        .descriptorCount = 1, // TODO: Make it configurable if required
+        .descriptorCount = 1, // NOTE: Make it configurable if required
         .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
-        .stageFlags = MF_SHADER_STAGE_FRAGMENT // TODO: Make it configurable if required
+        .stageFlags = MF_SHADER_STAGE_FRAGMENT // NOTE: Make it configurable if required
     };
 }
 

@@ -18,20 +18,20 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
     {
         VkImageCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-            .arrayLayers = 1, // TODO: Make it configurable if required
+            .arrayLayers = 1, // NOTE: Make it configurable if required
             .extent = (VkExtent3D) {
                 .depth = 1,
                 .width = width,
                 .height = height
             },
             .format = format,
-            .imageType = VK_IMAGE_TYPE_2D, // TODO: Make it configurable if required
+            .imageType = VK_IMAGE_TYPE_2D, // NOTE: Make it configurable if required
             .tiling = tiling,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .usage = usage,
-            .samples = VK_SAMPLE_COUNT_1_BIT, // TODO: Make it configurable if required
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // TODO: Make it configurable if required 
-            .mipLevels = 1, // TODO: Make it configurable if required
+            .samples = VK_SAMPLE_COUNT_1_BIT, // NOTE: Make it configurable if required
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // NOTE: Make it configurable if required 
+            .mipLevels = 1, // NOTE: Make it configurable if required
         };
 
         if(gpuResource)
@@ -73,7 +73,7 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
                 .layerCount = 1,
                 .levelCount = 1
             },
-            .viewType = VK_IMAGE_VIEW_TYPE_2D // TODO: Make it configurable if required
+            .viewType = VK_IMAGE_VIEW_TYPE_2D // NOTE: Make it configurable if required
         };
 
         VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &image->view));

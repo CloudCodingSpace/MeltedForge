@@ -273,5 +273,5 @@ void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u3
         buff = backend->rt->buffs[backend->crntFrmIdx];
     }
 
-    vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // TODO: Make the offset configurable if necessary
+    vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // NOTE: Make the offset configurable if necessary
 }

@@ -57,25 +57,25 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineInputAssemblyStateCreateInfo inputState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .primitiveRestartEnable = VK_FALSE, // TODO: Make it configurable
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST // TODO: Make it configurable
+        .primitiveRestartEnable = VK_FALSE, // NOTE: Make it configurable
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST // NOTE: Make it configurable
     };
 
     VkPipelineMultisampleStateCreateInfo msaaState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT, // TODO: Make it configurable
-        .sampleShadingEnable = VK_FALSE // TODO: Make it configurable
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT, // NOTE: Make it configurable
+        .sampleShadingEnable = VK_FALSE // NOTE: Make it configurable
     };
 
     VkPipelineRasterizationStateCreateInfo rasState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .cullMode = VK_CULL_MODE_BACK_BIT, // TODO: Make it configurable
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, // TODO: Make it configurable
-        .depthBiasEnable = VK_FALSE, // TODO: Make it configurable
-        .depthClampEnable = VK_FALSE, // TODO: Make it configurable
-        .lineWidth = 1.0f, // TODO: Make it configurable
-        .polygonMode = VK_POLYGON_MODE_FILL, // TODO: Make it configurable
-        .rasterizerDiscardEnable = VK_FALSE // TODO: Make it configurable
+        .cullMode = VK_CULL_MODE_BACK_BIT, // NOTE: Make it configurable
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, // NOTE: Make it configurable
+        .depthBiasEnable = VK_FALSE, // NOTE: Make it configurable
+        .depthClampEnable = VK_FALSE, // NOTE: Make it configurable
+        .lineWidth = 1.0f, // NOTE: Make it configurable
+        .polygonMode = VK_POLYGON_MODE_FILL, // NOTE: Make it configurable
+        .rasterizerDiscardEnable = VK_FALSE // NOTE: Make it configurable
     };
 
     VkRect2D scissor = {
@@ -104,7 +104,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS // TODO: Make it configurable
+        .depthCompareOp = VK_COMPARE_OP_LESS // NOTE: Make it configurable
     };
 
     VkShaderModule vertMod, fragMod;

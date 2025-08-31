@@ -60,12 +60,12 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     }
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {
-        VkDeviceSize offsets[] = { 0 }; // TODO: Make it configurable if necessary
+        VkDeviceSize offsets[] = { 0 }; // NOTE: Make it configurable if necessary
 
         vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer.handle, offsets);
     }
     else if (buffer->config.type == MF_GPU_BUFFER_TYPE_INDEX) {
-        vkCmdBindIndexBuffer(buff, buffer->buffer.handle, 0, VK_INDEX_TYPE_UINT32); // TODO: Make the offset configurable if necessary
+        vkCmdBindIndexBuffer(buff, buffer->buffer.handle, 0, VK_INDEX_TYPE_UINT32); // NOTE: Make the offset configurable if necessary
     }
 }
 

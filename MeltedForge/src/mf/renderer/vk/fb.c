@@ -7,7 +7,7 @@ VkFramebuffer VulkanFbCreate(VulkanBackendCtx* ctx, VkRenderPass pass, u32 imgVi
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .attachmentCount = imgViewCount,
         .pAttachments = imgViews,
-        .layers = 1, // TODO: Make it configurable
+        .layers = 1, // NOTE: Make it configurable
         .renderPass = pass,
         .width = extent.width,
         .height = extent.height
