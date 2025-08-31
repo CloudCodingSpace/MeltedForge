@@ -17,7 +17,7 @@ void mfSceneDestroy(MFScene* scene) {
 
     for(u32 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
-        if(e->id = MF_INFINITY)
+        if(e->id == UINT_MAX)
             continue;
         
         if(!mfEntityHasMeshComponent(e))
@@ -39,7 +39,7 @@ void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scen
     
     for(u64 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
-        if(e->id == MF_INFINITY)
+        if(e->id == UINT_MAX)
             continue;
 
         if(!mfEntityHasMeshComponent(e) || !mfEntityHasTransformComponent(e))
@@ -104,7 +104,7 @@ void mfSceneDeleteEntity(MFScene* scene, MFEntity* e) {
     MF_SETMEM(grp, 0, sizeof(*grp));
     MF_SETMEM(e, 0, sizeof(*e));
 
-    e->id = MF_INFINITY;
+    e->id = UINT_MAX;
 }
 
 void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp) {
