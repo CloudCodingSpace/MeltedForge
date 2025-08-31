@@ -430,7 +430,7 @@ MFAppConfig mfClientCreateAppConfig() {
         .onUIRender = &MFTOnUIRender
     };
     config.winConfig.resizable = true;
-    config.vsync = true;
+    config.vsync = false;
     config.enableUI = true;
 
     return config;

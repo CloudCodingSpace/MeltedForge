@@ -11,7 +11,8 @@ static void initApp(void* st, MFAppConfig* config) {
     mfRendererInit(state->renderer, config->name, config->vsync, config->enableUI, state->window);
 
     for(u32 i = 0; i < config->layerCount; i++) {
-        config->layers[i].onInit(config->layers[i].state, st);
+        if(config->layers[i].onInit)
+            config->layers[i].onInit(config->layers[i].state, st);
     }
 }
 
@@ -20,7 +21,8 @@ static void deinitApp(void* st, MFAppConfig* config) {
     mfRendererWait(state->renderer);
 
     for(u32 i = 0; i < config->layerCount; i++) {
-        config->layers[i].onDeinit(config->layers[i].state, st);
+        if(config->layers[i].onDeinit)
+            config->layers[i].onDeinit(config->layers[i].state, st);
         if(config->layers[i].state != 0)
             MF_FREEMEM(config->layers[i].state);
     }
@@ -41,14 +43,16 @@ static void runApp(void* st, MFAppConfig* config) {
     while(mfIsWindowOpen(state->window)) {
         mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layerCount; i++) {
-            config->layers[i].onRender(config->layers[i].state, st);
-            if(config->enableUI)
+            if(config->layers[i].onRender)
+                config->layers[i].onRender(config->layers[i].state, st);
+            if(config->enableUI && config->layers[i].onUIRender)
                 config->layers[i].onUIRender(config->layers[i].state, st);
         }
         mfRendererEndframe(state->renderer, state->window);
 
         for(u32 i = 0; i < config->layerCount; i++) {
-            config->layers[i].onUpdate(config->layers[i].state, st);
+            if(config->layers[i].onUpdate)
+                config->layers[i].onUpdate(config->layers[i].state, st);
         }
         mfWindowUpdate(state->window);
     }
