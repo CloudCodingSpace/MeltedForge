@@ -37,6 +37,7 @@
         "mftimer.h": "c",
         "mfentity.h": "c",
         "xlocale": "c",
-        "mfcaptureengine.h": "c"
+        "mfcaptureengine.h": "c",
+        "mfscene.h": "c"
     }
 }

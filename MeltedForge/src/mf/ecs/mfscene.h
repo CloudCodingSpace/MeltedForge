@@ -25,6 +25,7 @@ void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scen
 void mfSceneUpdate(MFScene* scene);
 
 const MFEntity* mfSceneCreateEntity(MFScene* scene);
+void mfSceneDeleteEntity(MFScene* scene, MFEntity* e);
 void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp);
 void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformComponent comp);
 

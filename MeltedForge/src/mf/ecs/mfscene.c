@@ -17,6 +17,8 @@ void mfSceneDestroy(MFScene* scene) {
 
     for(u32 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        if(e->id = MF_INFINITY)
+            continue;
         
         if(!mfEntityHasMeshComponent(e))
             continue;
@@ -69,6 +71,37 @@ const MFEntity* mfSceneCreateEntity(MFScene* scene) {
     MFEntity* e = &mfArrayGet(scene->entities, MFEntity, scene->entities.len - 1);
 
     return e;
+}
+
+void mfSceneDeleteEntity(MFScene* scene, MFEntity* e) {
+    MF_ASSERT(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_ASSERT(e == mfnull, mfGetLogger(), "The entity handle shouldn't be null!"); 
+
+    if(e->ownerScene != scene) {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        return;
+    }
+
+    if(mfEntityHasMeshComponent(e)) {
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, e->id);
+        mfModelDestroy(&comp->model);
+        
+        MF_SETMEM(comp, 0, sizeof(*comp));
+    }
+    if(mfEntityHasTransformComponent(e)) {
+        MFTransformComponent* trans = mfSceneEntityGetTransformComponent(scene, e->id);
+        MF_SETMEM(trans, 0, sizeof(*trans));
+    }
+    
+    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, e->compGrpId);
+    
+    scene->compGrpTable.len--;
+    scene->entities.len--;
+
+    MF_SETMEM(grp, 0, sizeof(*grp));
+    MF_SETMEM(e, 0, sizeof(*e));
+
+    e->id = MF_INFINITY;
 }
 
 void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp) {

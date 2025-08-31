@@ -314,6 +314,7 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
         MF_FREEMEM(state->ubos[i]);
     }
 
+    mfSceneDeleteEntity(&state->scene, (MFEntity*)(void*)state->entity);
     mfSceneDestroy(&state->scene);
 
     mfRenderTargetDestroy(state->rt);
