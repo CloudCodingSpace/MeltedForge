@@ -95,8 +95,9 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     MFTransformComponent* tcomp = mfSceneEntityGetTransformComponent(scene, e->id);
 
     {
+        f64 time = mfGetCurrentTime();
         MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
-        MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+        MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
         MFMat4 scale = mfMat4Identity();
         mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
 
@@ -354,10 +355,20 @@ static void MFTOnUIRender(void* pstate, void* pappState) {
         igEnd();
     }
     
+    // Perf window
+    {
+        igBegin("Performance", mfnull, ImGuiWindowFlags_None);
+        
+        igText("Frame time :- %.3f", mfGetRendererGetFrameTime(appState->renderer));
+        igText("Delta time :- %.3f", mfGetRendererGetDeltaTime(appState->renderer));
+        igText("FPS :- %.3f", (f64)(1000.0/mfGetRendererGetDeltaTime(appState->renderer)));
+
+        igEnd();
+    }
+
     // Settings window
     {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
-        igText("FPS :- %.3f", igGetIO_Nil()->Framerate);
 
         float posData[3] = {
             state->lightData.lightPos.x,
@@ -419,7 +430,7 @@ MFAppConfig mfClientCreateAppConfig() {
         .onUIRender = &MFTOnUIRender
     };
     config.winConfig.resizable = true;
-    config.vsync = false;
+    config.vsync = true;
     config.enableUI = true;
 
     return config;
