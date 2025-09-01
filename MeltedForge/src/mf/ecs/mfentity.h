@@ -9,7 +9,6 @@ typedef struct MFEntity_s {
     u32 id;
     u32 compGrpId;
     u32 components;
-    bool valid;
 } MFEntity;
 
 MF_INLINE b8 mfEntityHasMeshComponent(const MFEntity* entity) {
