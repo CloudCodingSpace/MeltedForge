@@ -29,14 +29,51 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
     rt->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
     rt->descs = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
-    VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, rt->backend->ctx.scExtent.width, rt->backend->ctx.scExtent.height, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    rt->pass = VulkanRenderPassCreate(&rt->backend->ctx, rt->backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, hasDepth, true);
-    
+    {
+        VulkanImageInfo info = {
+            .ctx = &rt->backend->ctx,
+            .width = rt->backend->ctx.scExtent.width,
+            .height = rt->backend->ctx.scExtent.height,
+            .gpuResource = false,
+            .pixels = mfnull,
+            .format = rt->backend->ctx.depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        };
+
+        VulkanImageCreate(&rt->depthImage, info);
+    }
+    {
+        VulkanRenderPassInfo info = {
+            .format = rt->backend->ctx.scFormat.format,
+            .initiaLay = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLay = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .hasDepth = hasDepth,
+            .renderTarget = true
+        };
+
+        rt->pass = VulkanRenderPassCreate(&rt->backend->ctx, info);
+    }
+
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VulkanImageCreate(&rt->images[i], &rt->backend->ctx, rt->backend->ctx.scExtent.width, 
-                        rt->backend->ctx.scExtent.height, true, mfnull, 
-                        rt->backend->ctx.scFormat.format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-                        VK_IMAGE_ASPECT_COLOR_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        {
+            VulkanImageInfo info = {
+                .ctx = &rt->backend->ctx,
+                .width = rt->backend->ctx.scExtent.width,
+                .height = rt->backend->ctx.scExtent.height,
+                .gpuResource = true,
+                .pixels = mfnull,
+                .format = rt->backend->ctx.scFormat.format,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+                .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            };
+
+            VulkanImageCreate(&rt->images[i], info);
+        }
 
         u32 count = 1;
         VkImageView views[2] = {
@@ -76,10 +113,10 @@ void mfRenderTargetDestroy(MFRenderTarget* rt) {
         ImGui_ImplVulkan_RemoveTexture(rt->descs[i]);
         
         VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
-        VulkanImageDestroy(&rt->images[i], &rt->backend->ctx);
+        VulkanImageDestroy(&rt->images[i]);
     }
 
-    VulkanImageDestroy(&rt->depthImage, &rt->backend->ctx);
+    VulkanImageDestroy(&rt->depthImage);
     
     VulkanRenderPassDestroy(&rt->backend->ctx, rt->pass);
     
@@ -105,10 +142,10 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             ImGui_ImplVulkan_RemoveTexture(rt->descs[i]);
             
             VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
-            VulkanImageDestroy(&rt->images[i], &rt->backend->ctx);
+            VulkanImageDestroy(&rt->images[i]);
         }
         
-        VulkanImageDestroy(&rt->depthImage, &rt->backend->ctx);
+        VulkanImageDestroy(&rt->depthImage);
         
         MF_SETMEM(rt->descs, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
         MF_SETMEM(rt->fbs, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
@@ -117,13 +154,41 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
     }
     // Re-creating
     {
-        VulkanImageCreate(&rt->depthImage, &rt->backend->ctx, extent.x, extent.y, false, mfnull, rt->backend->ctx.depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        {
+            VulkanImageInfo info = {
+                .ctx = &rt->backend->ctx,
+                .width = extent.x,
+                .height = extent.y,
+                .gpuResource = false,
+                .pixels = mfnull,
+                .format = rt->backend->ctx.depthFormat,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+                .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            };
+
+            VulkanImageCreate(&rt->depthImage, info);
+        }
+
 
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VulkanImageCreate(&rt->images[i], &rt->backend->ctx, extent.x, 
-                            extent.y, true, mfnull, 
-                            rt->backend->ctx.scFormat.format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-                            VK_IMAGE_ASPECT_COLOR_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            {
+                VulkanImageInfo info = {
+                    .ctx = &rt->backend->ctx,
+                    .width = extent.x,
+                    .height = extent.y,
+                    .gpuResource = true,
+                    .pixels = mfnull,
+                    .format = rt->backend->ctx.scFormat.format,
+                    .tiling = VK_IMAGE_TILING_OPTIMAL,
+                    .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                    .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                };
+
+                VulkanImageCreate(&rt->images[i], info);
+            }
 
             u32 count = 1;
             VkImageView views[2] = {
@@ -210,7 +275,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             .clearValueCount = count,
             .pClearValues = values,
-            .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].width, rt->images[0].height}, .offset = (VkOffset2D){0, 0}},
+            .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].info.width, rt->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
             .renderPass = rt->pass,
             .framebuffer = rt->fbs[rt->backend->crntFrmIdx]
         }; 
@@ -242,7 +307,7 @@ void mfRenderTargetBegin(MFRenderTarget* rt) {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = count,
         .pClearValues = values,
-        .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].width, rt->images[0].height}, .offset = (VkOffset2D){0, 0}},
+        .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].info.width, rt->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
         .renderPass = rt->pass,
         .framebuffer = rt->fbs[rt->backend->crntFrmIdx]
     }; 
@@ -294,13 +359,13 @@ void* mfRenderTargetGetPass(MFRenderTarget* rt) {
 u32 mfRenderTargetGetWidth(MFRenderTarget* rt) {
     MF_ASSERT(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    return rt->images[0].width;
+    return rt->images[0].info.width;
 }
 
 u32 mfRenderTargetGetHeight(MFRenderTarget* rt) {
     MF_ASSERT(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    return rt->images[0].height;
+    return rt->images[0].info.height;
 }
 
 void* mfRenderTargetGetHandle(MFRenderTarget* rt) {

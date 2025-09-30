@@ -48,7 +48,17 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
         backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.cmdPool, true);
     }
 
-    backend->pass = VulkanRenderPassCreate(&backend->ctx, backend->ctx.scFormat.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true, false);
+    {
+        VulkanRenderPassInfo info = {
+            .format = backend->ctx.scFormat.format,
+            .initiaLay = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLay = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .hasDepth = true,
+            .renderTarget = false
+        };
+
+        backend->pass = VulkanRenderPassCreate(&backend->ctx, info);
+    }
     
     // Framebuffers
     backend->fbCount = backend->ctx.scImgCount;

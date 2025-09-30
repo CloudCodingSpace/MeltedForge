@@ -402,7 +402,20 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     {
         GetDepthFormat(ctx);
 
-        VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, false, mfnull, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        VulkanImageInfo info = {
+            .ctx = ctx,
+            .width = ctx->scExtent.width,
+            .height = ctx->scExtent.height,
+            .gpuResource = false,
+            .pixels = mfnull,
+            .format = ctx->depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        };
+
+        VulkanImageCreate(&ctx->depthImage, info);
     }
     // Global descriptor pool for shader resources
     {
@@ -440,7 +453,7 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     VulkanCommandPoolDestroy(ctx, ctx->cmdPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescPool, ctx->allocator);
 
-    VulkanImageDestroy(&ctx->depthImage, ctx);
+    VulkanImageDestroy(&ctx->depthImage);
 
     for(u32 i = 0; i < ctx->scImgCount; i++)
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
@@ -459,12 +472,28 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
 void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
 
-    VulkanImageDestroy(&ctx->depthImage, ctx);
+    VulkanImageDestroy(&ctx->depthImage);
 
     for(u32 i = 0; i < ctx->scImgCount; i++)
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     CreateSwapchain(ctx, mfGetWindowHandle(window));
-    VulkanImageCreate(&ctx->depthImage, ctx, ctx->scExtent.width, ctx->scExtent.height, false, mfnull, ctx->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    {
+        VulkanImageInfo info = {
+            .ctx = ctx,
+            .width = ctx->scExtent.width,
+            .height = ctx->scExtent.height,
+            .gpuResource = false,
+            .pixels = mfnull,
+            .format = ctx->depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        };
+
+        VulkanImageCreate(&ctx->depthImage, info);
+    }
 }

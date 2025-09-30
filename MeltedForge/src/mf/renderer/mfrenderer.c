@@ -91,8 +91,8 @@ MFViewport mfRendererGetViewport(MFRenderer* renderer) {
     };
 
     if(renderer->backend.rt != mfnull) {
-        vp.width = renderer->backend.rt->images[0].width;
-        vp.height = renderer->backend.rt->images[0].height;
+        vp.width = renderer->backend.rt->images[0].info.width;
+        vp.height = renderer->backend.rt->images[0].info.height;
     }
     
     return vp;
@@ -109,8 +109,8 @@ MFRect2D mfRendererGetScissor(MFRenderer* renderer) {
     };
 
     if(renderer->backend.rt != mfnull) {
-        scissor.extentX = renderer->backend.rt->images[0].width;
-        scissor.extentY = renderer->backend.rt->images[0].height;
+        scissor.extentX = renderer->backend.rt->images[0].info.width;
+        scissor.extentY = renderer->backend.rt->images[0].info.height;
     }
 
     return scissor;

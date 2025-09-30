@@ -16,14 +16,27 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
     
     image->config = config;
     image->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
+
+    VulkanImageInfo info = {
+        .ctx = image->ctx,
+        .width = config.width,
+        .height = config.height,
+        .gpuResource = true,
+        .pixels = config.pixels,
+        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
+        .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
     
-    VulkanImageCreate(&image->image, image->ctx, config.width, config.height, true, config.pixels, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    VulkanImageCreate(&image->image, info);
 }
 
 void mfGpuImageDestroy(MFGpuImage* image) {
     MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
  
-    VulkanImageDestroy(&image->image, image->ctx);
+    VulkanImageDestroy(&image->image);
 
     MF_SETMEM(image, 0, sizeof(MFGpuImage));
 }
@@ -34,7 +47,7 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
     
     memcpy(image->config.pixels, pixels, sizeof(u8) * image->config.width * image->config.height * 4);
 
-    VulkanImageSetPixels(&image->image, image->ctx, image->config.pixels);
+    VulkanImageSetPixels(&image->image, image->config.pixels);
 }
 
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
@@ -43,9 +56,22 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
     image->config.width = width;
     image->config.height = height;
 
-    VulkanImageDestroy(&image->image, image->ctx);
+    VulkanImageDestroy(&image->image);
 
-    VulkanImageCreate(&image->image, image->ctx, image->config.width, image->config.height, true, image->config.pixels, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    VulkanImageInfo info = {
+        .ctx = image->ctx,
+        .width = image->config.width,
+        .height = image->config.height,
+        .gpuResource = true,
+        .pixels = image->config.pixels,
+        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
+        .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
+    
+    VulkanImageCreate(&image->image, info);
 }
 
 const MFGpuImageConfig* mfGetGpuImageConfig(MFGpuImage* image) {

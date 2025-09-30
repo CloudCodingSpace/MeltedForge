@@ -7,12 +7,8 @@
 #include "buffer.h"
 #include "cmd.h"
 
-void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 width, u32 height, b8 gpuResource, u8* pixels, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits usage, VkImageAspectFlags aspectFlags, VkMemoryPropertyFlags memFlags) {
-    image->width = width;    
-    image->height = height;
-    image->format = format;
-    image->gpuResource = gpuResource;
-    image->pixels = pixels;
+void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
+    image->info = pinfo;
 
     // Image
     {
@@ -21,38 +17,38 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
             .arrayLayers = 1, // NOTE: Make it configurable if required
             .extent = (VkExtent3D) {
                 .depth = 1,
-                .width = width,
-                .height = height
+                .width = pinfo.width,
+                .height = pinfo.height
             },
-            .format = format,
+            .format = pinfo.format,
             .imageType = VK_IMAGE_TYPE_2D, // NOTE: Make it configurable if required
-            .tiling = tiling,
+            .tiling = pinfo.tiling,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .usage = usage,
+            .usage = pinfo.usage,
             .samples = VK_SAMPLE_COUNT_1_BIT, // NOTE: Make it configurable if required
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // NOTE: Make it configurable if required 
             .mipLevels = 1, // NOTE: Make it configurable if required
         };
 
-        if(gpuResource)
+        if(pinfo.gpuResource)
             info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-        VK_CHECK(vkCreateImage(ctx->device, &info, ctx->allocator, &image->image));
+        VK_CHECK(vkCreateImage(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->image));
     }
     // Memory
     {
         VkMemoryRequirements req = {0};
-        vkGetImageMemoryRequirements(ctx->device, image->image, &req);
+        vkGetImageMemoryRequirements(pinfo.ctx->device, image->image, &req);
     
         VkMemoryAllocateInfo info = {
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
             .allocationSize = req.size,
-            .memoryTypeIndex = FindMemoryType(ctx->physicalDevice, req.memoryTypeBits, memFlags)
+            .memoryTypeIndex = FindMemoryType(pinfo.ctx->physicalDevice, req.memoryTypeBits, pinfo.memFlags)
         };
 
-        VK_CHECK(vkAllocateMemory(ctx->device, &info, ctx->allocator, &image->mem));
+        VK_CHECK(vkAllocateMemory(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->mem));
 
-        VK_CHECK(vkBindImageMemory(ctx->device, image->image, image->mem, 0));
+        VK_CHECK(vkBindImageMemory(pinfo.ctx->device, image->image, image->mem, 0));
     }
     // Image View
     {
@@ -64,10 +60,10 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
                 .b = VK_COMPONENT_SWIZZLE_IDENTITY,
                 .a = VK_COMPONENT_SWIZZLE_IDENTITY
             },
-            .format = format,
+            .format = pinfo.format,
             .image = image->image,
             .subresourceRange = (VkImageSubresourceRange) {
-                .aspectMask = aspectFlags,
+                .aspectMask = pinfo.aspectFlags,
                 .baseArrayLayer = 0,
                 .baseMipLevel = 0,
                 .layerCount = 1,
@@ -76,18 +72,18 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
             .viewType = VK_IMAGE_VIEW_TYPE_2D // NOTE: Make it configurable if required
         };
 
-        VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &image->view));
+        VK_CHECK(vkCreateImageView(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->view));
     }
 
-    if(!image->gpuResource)
+    if(!pinfo.gpuResource)
         return;
 
     // Samplers
     {
         VkPhysicalDeviceFeatures features = {0};
-        vkGetPhysicalDeviceFeatures(ctx->physicalDevice, &features);
+        vkGetPhysicalDeviceFeatures(pinfo.ctx->physicalDevice, &features);
         VkPhysicalDeviceProperties props = {0};
-        vkGetPhysicalDeviceProperties(ctx->physicalDevice, &props);
+        vkGetPhysicalDeviceProperties(pinfo.ctx->physicalDevice, &props);
 
         VkSamplerCreateInfo sinfo = {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -108,41 +104,41 @@ void VulkanImageCreate(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u32 w
             .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR
         };
 
-        VK_CHECK(vkCreateSampler(ctx->device, &sinfo, ctx->allocator, &image->sampler));
+        VK_CHECK(vkCreateSampler(pinfo.ctx->device, &sinfo, pinfo.ctx->allocator, &image->sampler));
     }
 
-    if(!pixels)
+    if(!pinfo.pixels)
         return;
 
-    VulkanImageSetPixels(image, ctx, pixels);
+    VulkanImageSetPixels(image, pinfo.pixels);
 }
 
-void VulkanImageDestroy(VulkanImage* image, struct VulkanBackendCtx_s* ctx) {
-    vkFreeMemory(ctx->device, image->mem, ctx->allocator);
-    vkDestroyImageView(ctx->device, image->view, ctx->allocator);
-    vkDestroyImage(ctx->device, image->image, ctx->allocator);
+void VulkanImageDestroy(VulkanImage* image) {
+    vkFreeMemory(image->info.ctx->device, image->mem, image->info.ctx->allocator);
+    vkDestroyImageView(image->info.ctx->device, image->view, image->info.ctx->allocator);
+    vkDestroyImage(image->info.ctx->device, image->image, image->info.ctx->allocator);
 
-    if(image->gpuResource)
-        vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
+    if(image->info.gpuResource)
+        vkDestroySampler(image->info.ctx->device, image->sampler, image->info.ctx->allocator);
 
     MF_SETMEM(image, 0, sizeof(VulkanImage));
 }
 
-void VulkanImageSetPixels(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u8* pixels) {
-    image->pixels = pixels;
+void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
+    image->info.pixels = pixels;
 
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, ctx, ctx->cmdPool, image->width * image->height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, image->info.ctx, image->info.ctx->cmdPool, image->info.width * image->info.height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
     void* mem;
-    vkMapMemory(ctx->device, staging.mem, 0, image->width * image->height * 4, 0, &mem);
-    memcpy(mem, pixels, image->width * image->height * 4);
-    vkUnmapMemory(ctx->device, staging.mem);
+    vkMapMemory(image->info.ctx->device, staging.mem, 0, image->info.width * image->info.height * 4, 0, &mem);
+    memcpy(mem, pixels, image->info.width * image->info.height * 4);
+    vkUnmapMemory(image->info.ctx->device, staging.mem);
 
     // Copy staging buffer to image and transitioning to the appropriate layout
     {
-        VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->cmdPool, true);
+        VkCommandBuffer buff = VulkanCommandBufferAllocate(image->info.ctx, image->info.ctx->cmdPool, true);
         VulkanCommandBufferBegin(buff);
 
         {
@@ -167,7 +163,7 @@ void VulkanImageSetPixels(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u8
                 .imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .imageSubresource.baseArrayLayer = 0,
                 .imageSubresource.layerCount = 1,
-                .imageExtent = (VkExtent3D){ (uint32_t)image->width, (uint32_t)image->height, 1 },
+                .imageExtent = (VkExtent3D){ (uint32_t)image->info.width, (uint32_t)image->info.height, 1 },
                 .bufferImageHeight = 0,
                 .bufferOffset = 0,
                 .bufferRowLength = 0
@@ -199,11 +195,11 @@ void VulkanImageSetPixels(VulkanImage* image, struct VulkanBackendCtx_s* ctx, u8
             .pCommandBuffers = &buff
         };
 
-        VK_CHECK(vkQueueSubmit(ctx->qData.tQueue, 1, &sinfo, mfnull));
-        vkDeviceWaitIdle(ctx->device);
+        VK_CHECK(vkQueueSubmit(image->info.ctx->qData.tQueue, 1, &sinfo, mfnull));
+        vkDeviceWaitIdle(image->info.ctx->device);
 
-        VulkanCommandBufferFree(ctx, buff, ctx->cmdPool);
+        VulkanCommandBufferFree(image->info.ctx, buff, image->info.ctx->cmdPool);
     }
 
-    VulkanBufferFree(&staging, ctx);
+    VulkanBufferFree(&staging, image->info.ctx);
 }

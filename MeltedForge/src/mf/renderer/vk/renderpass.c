@@ -2,11 +2,11 @@
 
 #include "common.h"
 
-VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkImageLayout initiaLay, VkImageLayout finalLay, b8 hasDepth, b8 renderTarget) { // TODO: Make the creation of renderpasses more generic
+VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo pinfo) {
     VkAttachmentDescription colorAttachment = {
-        .format = format,
-        .initialLayout = initiaLay,
-        .finalLayout = finalLay,
+        .format = pinfo.format,
+        .initialLayout = pinfo.initiaLay,
+        .finalLayout = pinfo.finalLay,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -52,7 +52,7 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
-    if(hasDepth) {        
+    if(pinfo.hasDepth) {        
         attachments[1] = depthAttachment;
         subpass.pDepthStencilAttachment = &depthRef;
         
@@ -61,13 +61,13 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VkFormat format, VkIm
         dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
 
-    if(renderTarget) {
+    if(pinfo.renderTarget) {
         dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     }
 
     VkRenderPassCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = (hasDepth) ? 2 : 1,
+        .attachmentCount = (pinfo.hasDepth) ? 2 : 1,
         .pAttachments = attachments,
         .subpassCount = 1,
         .pSubpasses = &subpass,
