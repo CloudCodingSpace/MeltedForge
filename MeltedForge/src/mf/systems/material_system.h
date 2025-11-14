@@ -3,5 +3,16 @@
 #include "core/mfutils.h"
 #include "renderer/mfmodel.h"
 
-MFArray mfMaterialSystemGetModelMatImages(MFModel* model, void* renderer);
+typedef enum MFModelMatTextures_e {
+    MF_MODEL_MAT_TEXTURE_AMBIENT = 0,
+    MF_MODEL_MAT_TEXTURE_DIFFUSE,
+    MF_MODEL_MAT_TEXTURE_SPECULAR,
+    MF_MODEL_MAT_TEXTURE_SPECULAR_HIGHLIGHT,
+    MF_MODEL_MAT_TEXTURE_BUMP,
+    MF_MODEL_MAT_TEXTURE_DISPLACEMENT,
+    MF_MODEL_MAT_TEXTURE_ALPHA,
+    MF_MODEL_MAT_TEXTURE_MAX
+} MFModelMatTextures;
+
+MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, void* renderer);
 void mfMaterialSystemDeleteModelMatImages(MFArray* array);

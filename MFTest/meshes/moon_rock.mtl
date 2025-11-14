@@ -9,5 +9,3 @@ Ni 1.500000
 d 1.000000
 illum 2
 map_Kd textures/moon_rock_01_diff_1k.jpg
-map_Ns textures/moon_rock_01_rough_1k.exr
-map_Bump -bm 1.000000 textures/moon_rock_01_nor_gl_1k.exr

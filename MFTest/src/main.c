@@ -25,14 +25,17 @@ typedef struct LightUBOData_s {
 typedef struct MFTState_s {
     MFPipeline* pipeline;
     MFGpuBuffer** ubos;
-    MFGpuImage* tex;
+
     MFScene scene;
     const MFEntity* entity;
+    MFArray modelMatImgs;
+
     MFCamera camera;
     LightUBOData lightData;
+
     MFRenderTarget* rt;
-    
     ImVec2 sceneViewport;
+
     void* renderer;
 } MFTState;
 
@@ -47,7 +50,7 @@ static void CreatePipeline(MFTState* state) {
 
     u32 imageCount = 1;
     MFGpuImage* images[] = {
-        state->tex
+        mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE)
     };
 
     MFPipelineConfig info = {
@@ -212,31 +215,11 @@ static void MFTOnInit(void* pstate, void* pappState) {
             mfGpuBufferUploadData(state->ubos[i], &state->lightData);
         }
     }
-    // Image
+    // Model Images
     {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-
-        u32 width, height, channels;
-        stbi_set_flip_vertically_on_load(true);
-        u8* pixels = stbi_load(mfStringConcatenate(mfGetLogger(), "meshes/", comp->model.mat.diffuse_texpath), &width, &height, &channels, 4);
-        if (!pixels) {
-            slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
-            slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, stbi_failure_reason());
-            slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "\n");
-            return;
-        }
-
-        state->tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
-        
-        MFGpuImageConfig config = {
-            .width = width,
-            .height = height,
-            .pixels = pixels
-        };
-        mfGpuImageCreate(state->tex, appState->renderer, config);
-        mfGpuImageSetBinding(state->tex, 2);
-
-        stbi_image_free(pixels);
+        state->modelMatImgs = mfMaterialSystemGetModelMatImages(&comp->model, "meshes/", state->renderer);
+        mfGpuImageSetBinding(mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE), 2);
     }
     
     state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
@@ -306,7 +289,7 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
     
-    mfGpuImageDestroy(state->tex);
+    mfMaterialSystemDeleteModelMatImages(&state->modelMatImgs);
     
     for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
         mfGpuBufferFree(state->ubos[i]);
@@ -328,7 +311,6 @@ static void MFTOnDeinit(void* pstate, void* pappState) {
     MF_FREEMEM(state->rt);
     MF_FREEMEM(state->ubos);
     MF_FREEMEM(state->pipeline);
-    MF_FREEMEM(state->tex);
 }
 
 static void MFTOnRender(void* pstate, void* pappState) {
