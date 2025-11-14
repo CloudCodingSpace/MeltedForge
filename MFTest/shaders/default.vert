@@ -8,7 +8,7 @@ layout (location = 1) out vec3 oNormal;
 layout (location = 2) out vec2 oUv;
 layout (location = 3) out vec3 oFragPos;
 
-layout (binding = 2) uniform UBO {
+layout (binding = 0) uniform UBO {
     mat4 proj;
     mat4 view;
     mat4 model;

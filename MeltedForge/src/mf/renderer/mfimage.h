@@ -25,5 +25,7 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height);
 const MFGpuImageConfig* mfGetGpuImageConfig(MFGpuImage* image);
 size_t mfGetGpuImageSizeInBytes();
 
+void mfGpuImageSetBinding(MFGpuImage* image, u32 binding);
+
 MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image);
 struct VulkanImage_s mfGetGpuImageBackend(MFGpuImage* image);

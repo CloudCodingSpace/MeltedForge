@@ -84,6 +84,13 @@ size_t mfGetGpuImageSizeInBytes() {
     return sizeof(MFGpuImage);
 }
 
+void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
+    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_ASSERT(binding < 0 || binding > 100, mfGetLogger(), "The binding slot provided should be valid!");
+
+    image->config.binding = binding;
+}
+
 MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image) {
     MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
 

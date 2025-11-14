@@ -21,6 +21,8 @@
 #include "mf/core/mfentry.h"
 #include "mf/core/mftimer.h"
 
+#include "mf/systems/material_system.h"
+
 // UI
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>

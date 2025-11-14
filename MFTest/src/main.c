@@ -95,13 +95,13 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     MFTransformComponent* tcomp = mfSceneEntityGetTransformComponent(scene, e->id);
 
     {
-        f64 time = mfGetCurrentTime();
-        MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
-        MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-        MFMat4 scale = mfMat4Identity();
-        mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
+        // f64 time = mfGetCurrentTime();
+        // MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
+        // MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+        // MFMat4 scale = mfMat4Identity();
+        // mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
 
-        uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
+        mfMat4Scale(&uboData.model, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
         uboData.normalMat = mfMat4Transpose(mfMat4Inverse(uboData.model));
     }
     
@@ -151,7 +151,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "meshes/Mickey Mouse.obj",
+            .path = "meshes/moon_rock.obj",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
@@ -159,7 +159,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
         MFTransformComponent tComp = {
             .position = (MFVec3){0, 0, 0},
             .rotationXYZ = (MFVec3){45, 0, 0},
-            .scale = (MFVec3){1, 1, 1}
+            .scale = (MFVec3){15, 15, 15}
         };
 
         mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
@@ -178,7 +178,7 @@ static void MFTOnInit(void* pstate, void* pappState) {
         MFGpuBufferConfig config = {
             .type = MF_GPU_BUFFER_TYPE_UBO,
             .size = sizeof(UBOData),
-            .binding = 2,
+            .binding = 0,
             .stage = MF_SHADER_STAGE_VERTEX
         };
 
@@ -214,9 +214,11 @@ static void MFTOnInit(void* pstate, void* pappState) {
     }
     // Image
     {
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+
         u32 width, height, channels;
         stbi_set_flip_vertically_on_load(true);
-        u8* pixels = stbi_load("meshes/white.jpg", &width, &height, &channels, 4);
+        u8* pixels = stbi_load(mfStringConcatenate(mfGetLogger(), "meshes/", comp->model.mat.diffuse_texpath), &width, &height, &channels, 4);
         if (!pixels) {
             slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
             slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, stbi_failure_reason());
@@ -229,10 +231,10 @@ static void MFTOnInit(void* pstate, void* pappState) {
         MFGpuImageConfig config = {
             .width = width,
             .height = height,
-            .pixels = pixels,
-            .binding = 0
+            .pixels = pixels
         };
         mfGpuImageCreate(state->tex, appState->renderer, config);
+        mfGpuImageSetBinding(state->tex, 2);
 
         stbi_image_free(pixels);
     }
