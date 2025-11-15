@@ -7,11 +7,14 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
     u8 blackColor[4] = {0x00, 0x00, 0x00, 0xff};
     u32 width, height, channels;
     stbi_set_flip_vertically_on_load(true);
+
     u8* pixels = stbi_load(path, &width, &height, &channels, 4);
     if (!pixels) {
+        const char* msg = mfStringConcatenate(mfGetLogger(), stbi_failure_reason(), "\n");
         slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, stbi_failure_reason());
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, msg);
+        MF_FREEMEM(msg);
+
         pixels = blackColor;
         width = 1;
         height = 1;
