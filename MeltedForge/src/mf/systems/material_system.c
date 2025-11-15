@@ -42,20 +42,41 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
     arr.len = MF_MODEL_MAT_TEXTURE_MAX;
 
     MFModelMaterial mat = model->mat;
-    if(mat.alpha_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_ALPHA) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.alpha_texpath), renderer);    
-    if(mat.ambient_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_AMBIENT) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.ambient_texpath), renderer);    
-    if(mat.bump_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_BUMP) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.bump_texpath), renderer);    
-    if(mat.diffuse_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.diffuse_texpath), renderer);    
-    if(mat.displacement_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DISPLACEMENT) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.displacement_texpath), renderer);
-    if(mat.specular_highlight_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR_HIGHLIGHT) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.specular_highlight_texpath), renderer);
-    if(mat.specular_texpath)
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR) = loadImage(mfStringConcatenate(mfGetLogger(), basePath, mat.specular_texpath), renderer);
+    if(mat.alpha_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.alpha_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_ALPHA) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.ambient_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.ambient_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_AMBIENT) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.bump_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.bump_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_BUMP) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.diffuse_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.diffuse_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.displacement_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.displacement_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DISPLACEMENT) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.specular_highlight_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.specular_highlight_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR_HIGHLIGHT) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.specular_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.specular_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
 
     return arr;
 }

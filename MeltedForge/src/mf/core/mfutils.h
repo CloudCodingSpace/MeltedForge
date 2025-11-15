@@ -137,16 +137,32 @@ MF_INLINE i32 mfStringFind(SLogger* logger, const char* s, const char a) {
 
 MF_INLINE i32 mfStringFindLast(SLogger* logger, const char* s, const char a) {
     MF_ASSERT(s == mfnull, logger, "The string provided shouldn't be null!");
-
+    
     i32 i = 0;
     i32 idx = -1;
     while (true) {
         if (s[i] == '\0')
-            return idx;
+        return idx;
         if (s[i] == a)
-            idx = i;
+        idx = i;
         i++;
     }
+}
+
+MF_INLINE b8 mfStringEndsWith(SLogger* logger, const char* a, const char* b) {
+    MF_ASSERT(a == mfnull, logger, "The string provided shouldn't be null!");
+    MF_ASSERT(b == mfnull, logger, "The string provided shouldn't be null!");
+
+    if(mfStringLen(logger, a) < mfStringLen(logger, b))
+        return false;
+
+    for(int i = 0; i < strlen(b); i++) {
+        int j = mfStringLen(logger, a) - mfStringLen(logger, b) + i;
+        if(a[j] != b[i])
+            return false;
+    }
+
+    return true;
 }
 
 typedef struct MFArray_s {
