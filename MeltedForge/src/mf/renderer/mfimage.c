@@ -23,7 +23,7 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
         .height = config.height,
         .gpuResource = true,
         .pixels = config.pixels,
-        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .format = VK_FORMAT_R8G8B8A8_UNORM,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
         .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,

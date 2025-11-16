@@ -36,9 +36,6 @@ static b8 vertex_index_cmp(const tinyobj_vertex_index_t* a, const tinyobj_vertex
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
     MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
 
-    const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate);
-    aiReleaseImport(scene);
-
     tinyobj_attrib_t attrib;
     tinyobj_shape_t* shapes = mfnull;
     u64 shapesCount = 0;
