@@ -4,6 +4,10 @@
 #include "core/mfutils.h"
 #include "core/mfcore.h"
 
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include <tinyobj/tinyobjloader_c.h>
 
 typedef void (*MFModelVertexBuilder)(void* dst, const tinyobj_attrib_t* attrib, const tinyobj_vertex_index_t* idx);
