@@ -48,7 +48,7 @@ MF_INLINE void vertBuilder(void* dst, const tinyobj_attrib_t* attrib, const tiny
         vertex->pos.z = attrib->vertices[3 * idx->v_idx + 2];
     }
 
-    if (idx->v_idx >= 0) {
+    if (idx->vn_idx >= 0) {
         vertex->normal.x = attrib->normals[3 * idx->vn_idx + 0];
         vertex->normal.y = attrib->normals[3 * idx->vn_idx + 1];
         vertex->normal.z = attrib->normals[3 * idx->vn_idx + 2];
