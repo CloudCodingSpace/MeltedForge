@@ -36,9 +36,34 @@ static b8 vertex_index_cmp(const tinyobj_vertex_index_t* a, const tinyobj_vertex
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
     MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
 
-    const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate);
-    aiReleaseImport(scene);
+    // Assimp test
+    {
+        const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_OptimizeMeshes);
 
+        for(int i = 0; i < scene->mNumMeshes; i++) {
+            struct aiMesh* mesh = scene->mMeshes[i];
+            for(int j = 0; j < mesh->mNumVertices; j++) {
+                struct aiVector3D vertices = mesh->mVertices[j];
+                struct aiVector3D texCoords = mesh->mTextureCoords[0][j];
+                struct aiVector3D normals = mesh->mNormals[j];
+                struct aiVector3D tangents = mesh->mTangents[j];
+                // Process these info ...
+            }
+            for(int j = 0; j < mesh->mNumFaces; j++) {
+                struct aiFace face = mesh->mFaces[j];
+                // Process these info ...
+            }
+            
+            // Material
+            {
+                struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+                // Process these info ...
+            }
+        }
+        aiReleaseImport(scene);
+    }
+
+    // REMOVE tinyobjloader
     tinyobj_attrib_t attrib;
     tinyobj_shape_t* shapes = mfnull;
     u64 shapesCount = 0;
