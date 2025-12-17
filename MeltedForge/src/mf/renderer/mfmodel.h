@@ -10,7 +10,14 @@
 
 #include <tinyobj/tinyobjloader_c.h>
 
-typedef void (*MFModelVertexBuilder)(void* dst, const tinyobj_attrib_t* attrib, const tinyobj_vertex_index_t* idx);
+typedef struct MFModelVertexBuilderData_s {
+    MFVec3 pos;
+    MFVec3 normal;
+    MFVec3 tangent;
+    MFVec2 texCoord;
+} MFModelVertexBuilderData;
+
+typedef void (*MFModelVertexBuilder)(void* dst, MFModelVertexBuilderData data);
 
 typedef struct MFModelMaterial_s {
     float ambient[3];

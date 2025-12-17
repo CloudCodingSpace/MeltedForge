@@ -39,29 +39,10 @@ MF_INLINE MFVertexInputAttributeDescription* getVertAttribDescs(u32* count) {
     return desc;
 }
 
-MF_INLINE void vertBuilder(void* dst, const tinyobj_attrib_t* attrib, const tinyobj_vertex_index_t* idx) {
+MF_INLINE void vertBuilder(void* dst, MFModelVertexBuilderData data) {
     Vertex* vertex = (Vertex*)dst;
 
-    if (idx->v_idx >= 0) {
-        vertex->pos.x = attrib->vertices[3 * idx->v_idx + 0];
-        vertex->pos.y = attrib->vertices[3 * idx->v_idx + 1];
-        vertex->pos.z = attrib->vertices[3 * idx->v_idx + 2];
-    }
-
-    if (idx->vn_idx >= 0) {
-        vertex->normal.x = attrib->normals[3 * idx->vn_idx + 0];
-        vertex->normal.y = attrib->normals[3 * idx->vn_idx + 1];
-        vertex->normal.z = attrib->normals[3 * idx->vn_idx + 2];
-    }
-    else {
-        vertex->normal.x = vertex->normal.y = vertex->normal.z = 0.0f;
-    }
-
-    if (idx->vt_idx >= 0) {
-        vertex->uv.x = attrib->texcoords[2 * idx->vt_idx + 0];
-        vertex->uv.y = attrib->texcoords[2 * idx->vt_idx + 1];
-    } 
-    else {
-        vertex->uv.x = vertex->uv.y =  0.0f;
-    }
+    vertex->pos = data.pos;
+    vertex->normal = data.normal;
+    vertex->uv = data.texCoord;
 }
