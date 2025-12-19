@@ -14,6 +14,7 @@
 - Engine & editor level UI
 - UI customization
 - Rendering multiple entities
+- Render targets (Ability to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport)
 
 ## 🚀 Goals
 
