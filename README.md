@@ -8,18 +8,26 @@
 
 ---
 
+## Features
+- Model loading along with the material data
+- Entity Component System (ECS)
+- Engine & editor level UI
+- UI customization
+- Rendering multiple entities
+
 ## 🚀 Goals
 
 - 🔁 Cross-platform
 - 🎮 Support for both **3D and 2D** games
 - 🔥 Realistic graphics (PBR coming soon 👀)
-- 🧠 Entity Component System (ECS)
 - 🎵 Sound system support
 - 🕹️ Animation system
 - 🧩 Flexible and modular
 - 🧰 Built to showcase what **C** can really do in game dev
 - 🐢 Low-end spec friendly (hopefully)
 - 🙌 Beginner-friendly setup and usage
+- Multithreading
+- Async model loading
 
 ---
 
