@@ -8,8 +8,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <tinyobj/tinyobjloader_c.h>
-
 typedef struct MFModelVertexBuilderData_s {
     MFVec3 pos;
     MFVec3 normal;
@@ -23,19 +21,20 @@ typedef struct MFModelMaterial_s {
     float ambient[3];
     float diffuse[3];
     float specular[3];
-    float transmittance[3];
     float emission[3];
     float shininess;
     float ior;  // index of refraction
     bool opaque;
-    int illum; // illumination model (see http://www.fileformat.info/format/material/)
 
     const char* ambient_texpath;
     const char* diffuse_texpath;
     const char* specular_texpath;
-    const char* specular_highlight_texpath;
     const char* bump_texpath;
     const char* displacement_texpath;
+    const char* shininess_texpath;
+    const char* lightmap_texpath;
+    const char* emission_texpath;
+    const char* metalness_texpath;
     const char* alpha_texpath;
 } MFModelMaterial;
 

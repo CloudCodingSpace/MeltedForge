@@ -70,14 +70,29 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DISPLACEMENT) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
-    if(mat.specular_highlight_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.specular_highlight_texpath);
-        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR_HIGHLIGHT) = loadImage(path, renderer);
-        MF_FREEMEM(path);
-    }
     if(mat.specular_texpath) {
         const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.specular_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.lightmap_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.lightmap_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_LIGHTMAP) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.shininess_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.shininess_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SHININESS) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.metalness_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.metalness_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_METALNESS) = loadImage(path, renderer);
+        MF_FREEMEM(path);
+    }
+    if(mat.emission_texpath) {
+        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.emission_texpath);
+        mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_EMISSIVE) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
 

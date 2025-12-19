@@ -18,7 +18,7 @@
 
 #define MF_ALLOCMEM(T, size) ((T*)memset((T*)malloc(size), 0, (size)))
 #define MF_SETMEM(mem, val, size) do { memset((mem), (val), (size)); } while(0)
-#define MF_FREEMEM(mem) do { free((void*)(mem)); (mem) = 0; } while(0)
+#define MF_FREEMEM(mem) do { if((mem)) { free((void*)(mem)); (mem) = 0; } } while(0)
 
 #define MF_MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MF_MAX(x, y) ((x) > (y) ? (x) : (y))
