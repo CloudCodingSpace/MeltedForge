@@ -18,6 +18,7 @@ typedef struct MFPipelineConfig_s {
     MFVertexInputAttributeDescription* attribDescs;
     MFGpuImage** images;
     MFGpuBuffer** buffers;
+    MFCompareOp depthCompareOp;
     b8 hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;

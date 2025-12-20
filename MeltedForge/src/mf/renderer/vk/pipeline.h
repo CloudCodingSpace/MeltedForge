@@ -11,6 +11,7 @@ typedef struct VulkanPipelineInfo_s {
     VkVertexInputBindingDescription* bindingDescs;
     VkVertexInputAttributeDescription* attribDescs;
     VkDescriptorSetLayout* setLayouts;
+    VkCompareOp depthCompareOp;
     b8 hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
@@ -23,7 +24,7 @@ typedef struct VulkanPipeline_s {
     VulkanPipelineInfo info;
 } VulkanPipeline;
 
-void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo info);
+void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo* info);
 void VulkanPipelineDestroy(VulkanBackendCtx* ctx, VulkanPipeline* pipeline);
 
 void VulkanPipelineBind(VulkanPipeline* pipeline, VkViewport vp, VkRect2D scissor, VkCommandBuffer buffer);

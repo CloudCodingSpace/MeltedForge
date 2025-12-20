@@ -40,6 +40,8 @@
         "mfcaptureengine.h": "c",
         "mfscene.h": "c",
         "filesystem": "c",
-        "thread": "c"
+        "thread": "c",
+        "vertex.h": "c",
+        "mfutil_types.h": "c"
     }
 }

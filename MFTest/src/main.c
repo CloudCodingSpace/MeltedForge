@@ -56,6 +56,7 @@ static void CreatePipeline(MFTState* state) {
     MFPipelineConfig info = {
         .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
         .hasDepth = true,
+        .depthCompareOp = MF_COMPARE_OP_LESS,
         .transparent = false,
         .vertPath = "shaders/default.vert.spv",
         .fragPath = "shaders/default.frag.spv",

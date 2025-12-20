@@ -2,14 +2,14 @@
 
 #include "common.h"
 
-void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo info) {
-    pipeline->info = info;
+void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo* info) {
+    pipeline->info = *info;
     pipeline->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // TODO: Support other types of pipeline too
 
     VkPipelineLayoutCreateInfo layInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = info.setLayoutCount,
-        .pSetLayouts = info.setLayouts
+        .setLayoutCount = info->setLayoutCount,
+        .pSetLayouts = info->setLayouts
     };
 
     VK_CHECK(vkCreatePipelineLayout(ctx->device, &layInfo, ctx->allocator, &pipeline->layout));
@@ -19,7 +19,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .blendEnable = VK_FALSE
     };
 
-    if(info.transparent) {
+    if(info->transparent) {
         blendState.blendEnable = VK_TRUE,
         blendState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
         blendState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
@@ -49,10 +49,10 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineVertexInputStateCreateInfo vertState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexAttributeDescriptionCount = info.attribDescsCount,
-        .pVertexAttributeDescriptions = info.attribDescs,
-        .vertexBindingDescriptionCount = info.bindingDescsCount,
-        .pVertexBindingDescriptions = info.bindingDescs
+        .vertexAttributeDescriptionCount = info->attribDescsCount,
+        .pVertexAttributeDescriptions = info->attribDescs,
+        .vertexBindingDescriptionCount = info->bindingDescsCount,
+        .pVertexBindingDescriptions = info->bindingDescs
     };
 
     VkPipelineInputAssemblyStateCreateInfo inputState = {
@@ -79,7 +79,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     };
 
     VkRect2D scissor = {
-        .extent = info.extent,
+        .extent = info->extent,
         .offset = (VkOffset2D){.x = 0, .y = 0}
     };
 
@@ -88,8 +88,8 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .y = 0,
         .maxDepth = 1.0f,
         .minDepth = 0.0f,
-        .width = info.extent.width,
-        .height = info.extent.height
+        .width = info->extent.width,
+        .height = info->extent.height
     };
 
     VkPipelineViewportStateCreateInfo vpState = {
@@ -104,15 +104,19 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS // NOTE: Make it configurable
+        .depthCompareOp = VK_COMPARE_OP_LESS
     };
+
+    if((((int)info->depthCompareOp) <= VK_COMPARE_OP_ALWAYS) && (((int)info->depthCompareOp) >= 0)) {
+        depthState.depthCompareOp = info->depthCompareOp;
+    }
 
     VkShaderModule vertMod, fragMod;
     // Modules
     {
         size_t vertSize, fragSize;
-        char* vertCode = mfReadFile(mfGetLogger(), &vertSize, info.vertPath, "rb");
-        char* fragCode = mfReadFile(mfGetLogger(), &fragSize, info.fragPath, "rb");
+        char* vertCode = mfReadFile(mfGetLogger(), &vertSize, info->vertPath, "rb");
+        char* fragCode = mfReadFile(mfGetLogger(), &fragSize, info->fragPath, "rb");
 
         VkShaderModuleCreateInfo vertInfo = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -135,25 +139,25 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineShaderStageCreateInfo stages[2];
     stages[0] = (VkPipelineShaderStageCreateInfo) {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .module = vertMod,
-            .pName = "main"
-        };
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = vertMod,
+        .pName = "main"
+    };
 
     stages[1] = (VkPipelineShaderStageCreateInfo) {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .module = fragMod,
-            .pName = "main"
-        };
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = fragMod,
+        .pName = "main"
+    };
 
     VkGraphicsPipelineCreateInfo ginfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .basePipelineHandle = mfnull,
         .basePipelineIndex = -1,
         .layout = pipeline->layout,
-        .renderPass = info.pass,
+        .renderPass = info->pass,
         .subpass = 0,
         .pColorBlendState = &blendInfo,
         .pDynamicState = &dInfo,
@@ -166,7 +170,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .pStages = stages
     };
 
-    if(info.hasDepth)
+    if(info->hasDepth)
         ginfo.pDepthStencilState = &depthState;
 
     VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &ginfo, ctx->allocator, &pipeline->pipeline));    

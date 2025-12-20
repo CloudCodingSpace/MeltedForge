@@ -92,6 +92,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         .vertPath = info->vertPath,
         .fragPath = info->fragPath,
         .pass = info->pass,
+        .depthCompareOp = (VkCompareOp)(int)info->depthCompareOp,
         .hasDepth = info->hasDepth,
         .extent = (VkExtent2D) { info->extent.x, info->extent.y },
         .attribDescsCount = info->attribDescsCount,
@@ -102,7 +103,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         .setLayouts = setLayouts
     };
 
-    VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, binfo);
+    VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);
 
     MF_FREEMEM(bindings);
     MF_FREEMEM(attribs);

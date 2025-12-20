@@ -429,6 +429,18 @@ typedef enum MFResourceDescriptionType_e {
     MF_RES_DESCRIPTION_TYPE_MAX_ENUM = 0x7FFFFFFF
 } MFResourceDescriptionType;
 
+typedef enum MFCompareOp_e {
+    MF_COMPARE_OP_NEVER = 0,
+    MF_COMPARE_OP_LESS = 1,
+    MF_COMPARE_OP_EQUAL = 2,
+    MF_COMPARE_OP_LESS_OR_EQUAL = 3,
+    MF_COMPARE_OP_GREATER = 4,
+    MF_COMPARE_OP_NOT_EQUAL = 5,
+    MF_COMPARE_OP_GREATER_OR_EQUAL = 6,
+    MF_COMPARE_OP_ALWAYS = 7,
+    MF_COMPARE_OP_MAX_ENUM = 0x7FFFFFFF
+} MFCompareOp;
+
 typedef struct MFResourceDesc_s {
     u32 binding;
     MFResourceDescriptionType descriptorType;
