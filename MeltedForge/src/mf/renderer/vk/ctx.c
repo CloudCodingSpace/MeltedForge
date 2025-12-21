@@ -88,12 +88,6 @@ static VulkanScCaps GetScCaps(VulkanBackendCtx* ctx) {
 }
 
 static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* window) {
-
-}
-
-static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
-    VulkanScCaps caps = GetScCaps(ctx);
-
     // Selecting the present mode
 	{
 		bool set = false;
@@ -144,6 +138,12 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
 			ctx->scExtent.height = MF_CLAMP(ctx->scExtent.height, caps.caps.minImageExtent.height, caps.caps.maxImageExtent.height);
 		}
 	}
+}
+
+static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
+    VulkanScCaps caps = GetScCaps(ctx);
+
+    SelectScCaps(ctx, caps, window);
     // Creating the swapchain
     {
         VkSurfaceCapabilitiesKHR surfaceCaps = caps.caps;
