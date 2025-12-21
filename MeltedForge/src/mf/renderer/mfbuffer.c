@@ -13,9 +13,9 @@ struct MFGpuBuffer_s {
 };
 
 void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
-    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_ASSERT(config.type == MF_GPU_BUFFER_TYPE_NONE, mfGetLogger(), "The gpu buffer type can't be none!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(config.type == MF_GPU_BUFFER_TYPE_NONE, mfGetLogger(), "The gpu buffer type can't be none!");
 
     buffer->config = config;
     buffer->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
@@ -29,7 +29,7 @@ void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRender
 }
 
 void mfGpuBufferFree(MFGpuBuffer* buffer) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     
     VulkanBufferFree(&buffer->buffer, buffer->ctx);
 
@@ -37,14 +37,14 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
 }
 
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
 
     VulkanBufferUploadData(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, data);
 }
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
     buffer->config.size = size;
     
@@ -52,7 +52,7 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
 }
 
 void mfGpuBufferBind(MFGpuBuffer* buffer) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
 
     VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->crntFrmIdx];
     if(buffer->backend->rt != mfnull) {
@@ -70,7 +70,7 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
 }
 
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
 
     return &buffer->config;
 }
@@ -80,7 +80,7 @@ size_t mfGpuBufferGetSizeInBytes() {
 }
 
 MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     
     return (MFResourceDesc) {
         .binding = buffer->config.binding,
@@ -91,7 +91,7 @@ MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer) {
 }
 
 struct VulkanBuffer_s* mfGetGpuBufferBackend(MFGpuBuffer* buffer) {
-    MF_ASSERT(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
 
     return &buffer->buffer;
 }

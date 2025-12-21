@@ -322,7 +322,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
         }
 
         MF_FREEMEM(devices);
-        MF_ASSERT(ctx->physicalDevice == mfnull, mfGetLogger(), "(From the vulkan backend) Failed to select a suitable GPU in the current PC!");
+        MF_PANIC_IF(ctx->physicalDevice == mfnull, mfGetLogger(), "(From the vulkan backend) Failed to select a suitable GPU in the current PC!");
 
         ctx->qData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
     }

@@ -1,10 +1,10 @@
 #include "mfmesh.h"
 
 void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indCount, u32* indices) {
-    MF_ASSERT(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
-    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_ASSERT(vertices == mfnull, mfGetLogger(), "The vertices provided shouldn't be null!");
-    MF_ASSERT(indices == mfnull, mfGetLogger(), "The indices provided shouldn't be null!");
+    MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(vertices == mfnull, mfGetLogger(), "The vertices provided shouldn't be null!");
+    MF_PANIC_IF(indices == mfnull, mfGetLogger(), "The indices provided shouldn't be null!");
 
     mesh->vertSize = vertSize;
     mesh->vertCount = indCount;
@@ -29,7 +29,7 @@ void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertic
 }
 
 void mfMeshDestroy(MFMesh* mesh) {
-    MF_ASSERT(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
+    MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
     
     mfGpuBufferFree(mesh->indBuffer);
     mfGpuBufferFree(mesh->vertBuffer);
@@ -41,7 +41,7 @@ void mfMeshDestroy(MFMesh* mesh) {
 }
 
 void mfMeshRender(MFMesh* mesh) {
-    MF_ASSERT(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
+    MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
 
     mfGpuBufferBind(mesh->vertBuffer);
     mfGpuBufferBind(mesh->indBuffer);

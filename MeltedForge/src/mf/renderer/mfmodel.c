@@ -29,7 +29,7 @@ char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
     int count = aiGetMaterialTextureCount(mat, type);
     if(count >= 1) {
         struct aiString path;
-        MF_ASSERT(aiGetMaterialTexture(mat, type, 0, &path, mfnull, mfnull, mfnull, mfnull, mfnull, mfnull) != AI_SUCCESS,
+        MF_PANIC_IF(aiGetMaterialTexture(mat, type, 0, &path, mfnull, mfnull, mfnull, mfnull, mfnull, mfnull) != AI_SUCCESS,
                                             mfGetLogger(), "Couldn't retrieve the material's texture path from the model!");
         //! NOTE: SUS CUZ THE HEADER SAYS PATH.LENGTH IS THE BINARY LENGTH AND NOT THE LENGTH OF THE UTF-8 MULTI-BYTE SEQUENCE
         u64 size = path.length + 1;
@@ -46,13 +46,13 @@ char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
 }
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
-    MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
 
     MF_SETMEM(&model->mat, 0, sizeof(MFModelMaterial));
 
     // Loading the model
     const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_OptimizeMeshes);
-    MF_ASSERT((!scene) || (!scene->mRootNode), mfGetLogger(), aiGetErrorString());
+    MF_PANIC_IF((!scene) || (!scene->mRootNode), mfGetLogger(), aiGetErrorString());
 
     model->meshCount = scene->mNumMeshes;
     model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * scene->mNumMeshes);
@@ -155,7 +155,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
 }
 
 void mfModelDestroy(MFModel* model) {
-    MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     
     for(u64 i = 0; i < model->meshCount; i++) {
         mfMeshDestroy(&model->meshes[i]);        

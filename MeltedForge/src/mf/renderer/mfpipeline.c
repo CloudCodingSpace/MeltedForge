@@ -18,9 +18,9 @@ struct MFPipeline_s {
 };
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
-    MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
-    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_ASSERT(info == mfnull, mfGetLogger(), "The pipeline info handle provided shouldn't be null!");
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(info == mfnull, mfGetLogger(), "The pipeline info handle provided shouldn't be null!");
 
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
@@ -195,7 +195,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 }
 
 void mfPipelineDestroy(MFPipeline* pipeline) {
-    MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
 
     vkDestroyDescriptorSetLayout(pipeline->ctx->device, pipeline->descLayout, pipeline->ctx->allocator);
     vkFreeDescriptorSets(pipeline->ctx->device, pipeline->descPool, FRAMES_IN_FLIGHT, pipeline->descSet);
@@ -206,7 +206,7 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
 }
 
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
-    MF_ASSERT(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     vp.y = vp.height;
     vp.height *= -1.0f;
 

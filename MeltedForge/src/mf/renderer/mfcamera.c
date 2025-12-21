@@ -1,7 +1,7 @@
 #include "mfcamera.h"
 
 void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
-    MF_ASSERT(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");
+    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");
     b8 moved = false;
 
     // Key input
@@ -96,8 +96,8 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
 }
 
 void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f32 fov, f32 nearPlane, f32 farPlane, f32 speed, f32 sensitivity, MFVec3 pos) {
-    MF_ASSERT(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
-    MF_ASSERT(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");    
+    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
+    MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");    
     
     camera->pos = pos;
     camera->window = window;
@@ -128,7 +128,7 @@ void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f
 }
 
 void mfCameraDestroy(MFCamera* camera) {
-    MF_ASSERT(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
+    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
 
     MF_SETMEM(camera, 0, sizeof(MFCamera));
 }

@@ -37,9 +37,9 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
 }
 
 MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, void* renderer) {
-    MF_ASSERT(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
-    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_ASSERT(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
+    MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
 
     MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
     arr.len = MF_MODEL_MAT_TEXTURE_MAX;
@@ -100,7 +100,7 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
 }
 
 void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
-    MF_ASSERT(array == mfnull, mfGetLogger(), "The provided MFArray handle shouldn't be null!");
+    MF_PANIC_IF(array == mfnull, mfGetLogger(), "The provided MFArray handle shouldn't be null!");
 
     for(int i = 0; i < array->len; i++) {
         if(mfArrayGet(*array, MFGpuImage*, i) != mfnull)

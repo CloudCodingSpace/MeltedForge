@@ -11,8 +11,8 @@ struct MFGpuImage_s {
 };
 
 void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig config) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
-    MF_ASSERT(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
     image->config = config;
     image->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
@@ -34,7 +34,7 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
 }
 
 void mfGpuImageDestroy(MFGpuImage* image) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
  
     VulkanImageDestroy(&image->image);
 
@@ -42,8 +42,8 @@ void mfGpuImageDestroy(MFGpuImage* image) {
 }
 
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
-    MF_ASSERT(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
     
     memcpy(image->config.pixels, pixels, sizeof(u8) * image->config.width * image->config.height * 4);
 
@@ -51,7 +51,7 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
 }
 
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     
     image->config.width = width;
     image->config.height = height;
@@ -75,7 +75,7 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
 }
 
 const MFGpuImageConfig* mfGetGpuImageConfig(MFGpuImage* image) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     
     return &image->config;
 }
@@ -85,14 +85,14 @@ size_t mfGetGpuImageSizeInBytes() {
 }
 
 void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
-    MF_ASSERT(binding < 0 || binding > 100, mfGetLogger(), "The binding slot provided should be valid!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(binding < 0 || binding > 100, mfGetLogger(), "The binding slot provided should be valid!");
 
     image->config.binding = binding;
 }
 
 MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
 
     return (MFResourceDesc) {
         .binding = image->config.binding,
@@ -103,7 +103,7 @@ MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image) {
 }
 
 struct VulkanImage_s mfGetGpuImageBackend(MFGpuImage* image) {
-    MF_ASSERT(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     
     return image->image;
 }
