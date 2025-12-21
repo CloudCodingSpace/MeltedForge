@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <slog/slog.h>
 
@@ -45,15 +46,15 @@
 
 typedef float f32;
 typedef double f64;
-typedef signed int i32;
-typedef unsigned int u32;
-typedef signed long long i64;
-typedef unsigned long long u64;
-typedef char i8;
-typedef unsigned char u8;
-typedef signed short i16;
-typedef unsigned short u16;
-typedef bool b8;
+typedef int32_t i32;
+typedef uint32_t u32;
+typedef int64_t i64;
+typedef uint64_t u64;
+typedef int8_t i8;
+typedef uint8_t u8;
+typedef int16_t i16;
+typedef uint16_t u16;
+typedef uint8_t b8;
 
 // @note The returned const char* must be freed since it is allocated on the heap
 MF_INLINE char* mfReadFile(SLogger* logger, u64* size, const char* path, const char* mode) {
@@ -75,6 +76,20 @@ MF_INLINE char* mfReadFile(SLogger* logger, u64* size, const char* path, const c
 
     content[*size] = '\0';
     return content;
+}
+
+MF_INLINE void mfWriteFile(SLogger* logger, u64 size, const char* path, const char* data, const char* mode) {
+    MF_ASSERT(path == 0, logger, "The file path provided shouldn't be null!");
+    MF_ASSERT(mode == 0, logger, "The file reading mode provided shouldn't be null!");
+    MF_ASSERT(data == 0, logger, "The data pointer provided shouldn't be null!");
+    MF_ASSERT(size == 0, logger, "The size provided shouldn't be 0!");
+
+    FILE* file = fopen(path, mode);
+    MF_ASSERT(file == 0, logger, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
+
+    fwrite(data, 1, size, file);
+
+    fclose(file);
 }
 
 MF_INLINE u32 mfStringLen(SLogger* logger, const char* a) {
