@@ -16,10 +16,14 @@
 #include "mf/ecs/mfscene.h"
 
 #include "mf/core/mfcore.h"
+#include "mf/core/mfapp.h"
 #include "mf/core/mfutils.h"
 #include "mf/core/mfmaths.h"
-#include "mf/core/mfentry.h"
 #include "mf/core/mftimer.h"
+
+#ifdef MF_INCLUDE_ENTRY
+    #include "mf/core/mfentry.h"
+#endif
 
 #include "mf/systems/material_system.h"
 

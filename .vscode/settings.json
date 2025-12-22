@@ -42,6 +42,8 @@
         "filesystem": "c",
         "thread": "c",
         "vertex.h": "c",
-        "mfutil_types.h": "c"
+        "mfutil_types.h": "c",
+        "stb_image.h": "c",
+        "mftest.h": "c"
     }
 }
