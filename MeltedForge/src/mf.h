@@ -27,6 +27,8 @@
 
 #include "mf/systems/material_system.h"
 
+#include "mf/serializer/mfserializer.h"
+
 // UI
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>

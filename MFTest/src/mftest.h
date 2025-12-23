@@ -29,14 +29,17 @@ typedef struct MFTState_s {
     MFScene scene;
     const MFEntity* entity;
     MFArray modelMatImgs;
-
+    
     MFCamera camera;
     LightUBOData lightData;
-
+    
     MFRenderTarget* rt;
     ImVec2 sceneViewport;
-
+    
     void* renderer;
+    
+    // Test
+    MFSerializer serializer;
 } MFTState;
 
 void MFTOnInit(void* pstate, void* pappState);

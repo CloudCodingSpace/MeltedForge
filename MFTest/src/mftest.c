@@ -92,7 +92,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
 
     state->renderer = appState->renderer;
-    
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
 
     mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
@@ -243,11 +242,17 @@ void MFTOnInit(void* pstate, void* pappState) {
         colors[ImGuiCol_DockingPreview]         = (ImVec4){0.20f, 0.29f, 0.41f, 0.70f};
         colors[ImGuiCol_TitleBgActive]          = (ImVec4){0.12f, 0.12f, 0.12f, 1.00f};
     }
+    // Serializer test
+    {
+        mfSerializerCreate(&state->serializer, sizeof(int) * 12);
+    }
 }
 
 void MFTOnDeinit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
+
+    mfSerializerDestroy(&state->serializer);
     
     mfMaterialSystemDeleteModelMatImages(&state->modelMatImgs);
     
