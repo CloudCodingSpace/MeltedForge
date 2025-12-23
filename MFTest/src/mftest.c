@@ -244,7 +244,11 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Serializer test
     {
-        mfSerializerCreate(&state->serializer, sizeof(int) * 12);
+        mfSerializerCreate(&state->serializer, sizeof(i32) * 10);
+
+        for(i32 i = 1; i <= 10; i++) {
+            mfSerializeI32(&state->serializer, i);
+        }
     }
 }
 
