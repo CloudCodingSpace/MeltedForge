@@ -244,9 +244,20 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Serializer test
     {
-        mfSerializerCreate(&state->serializer, sizeof(char) * 100);
+        u64 size = sizeof(char) * 100;
+        size += sizeof(f64);
+        mfSerializerCreate(&state->serializer, size);
 
-        mfSerializeString(&state->serializer, "Hello from MFTest!");
+        mfSerializeString(&state->serializer, "Hello from MFTest!\n");
+        mfSerializeF64(&state->serializer, 3.14159265);
+        
+        mfSerializerRewind(&state->serializer);
+        
+        const char* string = mfDeserializeString(&state->serializer);
+        printf("%f\n", mfDeserializeF64(&state->serializer));
+        
+        printf("%s\n", string);
+        MF_FREEMEM(string);
     }
 }
 
