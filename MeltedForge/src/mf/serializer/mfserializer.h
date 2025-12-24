@@ -20,3 +20,11 @@ void mfSerializeI32(MFSerializer* serializer, i32 value);
 void mfSerializeU32(MFSerializer* serializer, u32 value);
 void mfSerializeI64(MFSerializer* serializer, i64 value);
 void mfSerializeU64(MFSerializer* serializer, u64 value);
+
+void mfSerializeF32(MFSerializer* serializer, f32 value);
+void mfSerializeF64(MFSerializer* serializer, f64 value);
+
+void mfSerializeB8(MFSerializer* serializer, b8 value);
+
+void mfSerializeChar(MFSerializer* serializer, char value);
+void mfSerializeString(MFSerializer* serializer, char* value);
