@@ -37,9 +37,6 @@ typedef struct MFTState_s {
     ImVec2 sceneViewport;
     
     void* renderer;
-    
-    // Test
-    MFSerializer serializer;
 } MFTState;
 
 void MFTOnInit(void* pstate, void* pappState);

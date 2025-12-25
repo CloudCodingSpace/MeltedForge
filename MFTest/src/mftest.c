@@ -242,31 +242,12 @@ void MFTOnInit(void* pstate, void* pappState) {
         colors[ImGuiCol_DockingPreview]         = (ImVec4){0.20f, 0.29f, 0.41f, 0.70f};
         colors[ImGuiCol_TitleBgActive]          = (ImVec4){0.12f, 0.12f, 0.12f, 1.00f};
     }
-    // Serializer test
-    {
-        u64 size = sizeof(char) * 100;
-        size += sizeof(f64);
-        mfSerializerCreate(&state->serializer, size);
-
-        mfSerializeString(&state->serializer, "Hello from MFTest!\n");
-        mfSerializeF64(&state->serializer, 3.14159265);
-        
-        mfSerializerRewind(&state->serializer);
-        
-        const char* string = mfDeserializeString(&state->serializer);
-        printf("%f\n", mfDeserializeF64(&state->serializer));
-        
-        printf("%s\n", string);
-        MF_FREEMEM(string);
-    }
 }
 
 void MFTOnDeinit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
 
-    mfSerializerDestroy(&state->serializer);
-    
     mfMaterialSystemDeleteModelMatImages(&state->modelMatImgs);
     
     for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
