@@ -25,14 +25,15 @@
 #define MF_MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MF_CLAMP(value, min, max) (((value) <= (min)) ? (min) : ((value) >= (max)) ? (max) : (value))
 
-#define MF_FATAL_ABORT(logger, msg) do { slogLogConsole((logger), SLOG_SEVERITY_FATAL, (msg)); abort(); } while(0)
-#define MF_PANIC_IF(expr, logger, msg) do { if ((expr)) { MF_FATAL_ABORT((logger), (msg)); } } while(0)
-
 #ifdef _DEBUG
     #define MF_INFO(logger, msg) do { slogLogConsole((logger), SLOG_SEVERITY_INFO, (msg)); } while(0)
 #else
     #define MF_INFO(logger, msg) do {} while(0)
 #endif
+
+#define MF_FATAL_ABORT(logger, msg) do { slogLogConsole((logger), SLOG_SEVERITY_FATAL, (msg)); abort(); } while(0)
+#define MF_PANIC_IF(expr, logger, msg) do { if ((expr)) { MF_FATAL_ABORT((logger), (msg)); } } while(0)
+#define MF_DO_IF(expr, work) do { if ((expr)) { {work}; } } while(0)
 
 #if defined(__clang__) || defined(__gcc__)
     #define MF_INLINE __attribute__((always_inline)) inline
@@ -42,6 +43,7 @@
     #define MF_INLINE static inline
 #endif
 
+//* @note Only works if arr is an array, and not if it is a pointer to the array!
 #define MF_ARRAYLEN(arr, T) (sizeof(arr) / sizeof(T))
 
 typedef float f32;

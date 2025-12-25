@@ -4,9 +4,12 @@ void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(bufferSize == 0, mfGetLogger(), "The serializer's bufferSize provided shouldn't be 0!");
     
-    serializer->bufferSize = bufferSize;
+    serializer->bufferSize = bufferSize + (sizeof(u32) * 2); //* NOTE: FOR THE 2 SIGNATURES
     serializer->offset = 0;
-    serializer->buffer = MF_ALLOCMEM(u8, bufferSize);
+    serializer->buffer = MF_ALLOCMEM(u8, serializer->bufferSize);
+
+    mfSerializeU32(serializer, MF_SIGNATURE_HEADER);
+    mfSerializeU32(serializer, MF_SIGNATURE_VERSION);
 }
 
 void mfSerializerDestroy(MFSerializer* serializer) {
@@ -19,7 +22,30 @@ void mfSerializerDestroy(MFSerializer* serializer) {
 void mfSerializerRewind(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
 
+    serializer->offset = sizeof(u32) * 2; //* For skipping past the signatures while deserializing!
+}
+
+b8 mfSerializerIfValid(MFSerializer* serializer) {
+    MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
+    MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
+
+    u64 offset = serializer->offset;
     serializer->offset = 0;
+    b8 b = mfDeserializeU32(serializer) == MF_SIGNATURE_HEADER;
+    serializer->offset = offset;
+
+    return b;
+}
+
+b8 mfSerializerIfSameVersion(MFSerializer* serializer) {
+    MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
+    MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
+
+    u64 offset = serializer->offset;
+    serializer->offset = sizeof(u32); //* NOTE: For the header signature
+    b8 b = mfDeserializeU32(serializer) == MF_SIGNATURE_VERSION;
+    serializer->offset = offset;
+    return b;
 }
 
 void mfSerializeI8(MFSerializer* serializer, i8 value) {

@@ -27,6 +27,7 @@
 
 #include "mf/systems/material_system.h"
 
+#include "mf/serializer/mfserializerutils.h"
 #include "mf/serializer/mfserializer.h"
 
 // UI

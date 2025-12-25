@@ -3,6 +3,8 @@
 #include "core/mfcore.h"
 #include "core/mfutils.h"
 
+#include "mfserializerutils.h"
+
 typedef struct MFSerializer_s {
     u64 bufferSize;
     u8* buffer;
@@ -12,6 +14,9 @@ typedef struct MFSerializer_s {
 void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize);
 void mfSerializerDestroy(MFSerializer* serializer);
 void mfSerializerRewind(MFSerializer* serializer);
+
+b8 mfSerializerIfValid(MFSerializer* serializer);
+b8 mfSerializerIfSameVersion(MFSerializer* serializer);
 
 void mfSerializeI8(MFSerializer* serializer, i8 value);
 void mfSerializeU8(MFSerializer* serializer, u8 value);
