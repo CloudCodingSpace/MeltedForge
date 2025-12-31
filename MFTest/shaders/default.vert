@@ -18,6 +18,6 @@ layout (binding = 0) uniform UBO {
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
     oFragPos = (ubo.model * vec4(pos, 1.0)).xyz;
-    oNormal = normal * mat3(ubo.normalMat);
+    oNormal = mat3(ubo.normalMat) * normal;
     oUv = uv;
 }
