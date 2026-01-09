@@ -56,21 +56,19 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     MFTransformComponent* tcomp = mfSceneEntityGetTransformComponent(scene, e->id);
 
     {
-        // f64 time = mfGetCurrentTime();
-        // MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
-        // MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-        // MFMat4 scale = mfMat4Identity();
-        // mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
+        f64 time = mfGetCurrentTime();
+        MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
+        MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+        MFMat4 scale = mfMat4Identity();
+        mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
 
-        mfMat4Scale(&uboData.model, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
-        uboData.normalMat = mfMat4Transpose(mfMat4Inverse(uboData.model));
+        uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
+        uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
     }
     
     for(u64 i = 0; i < mcomp->model.meshCount; i++) {
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer)], &uboData);
         mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
-
-        uboData.model = mfMat4Identity();
 
         state->lightData.camPos = state->camera.pos;
 
