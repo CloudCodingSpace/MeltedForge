@@ -8,8 +8,16 @@ void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize) {
     serializer->offset = 0;
     serializer->buffer = MF_ALLOCMEM(u8, serializer->bufferSize);
 
-    mfSerializeU32(serializer, MF_SIGNATURE_HEADER);
-    mfSerializeU32(serializer, MF_SIGNATURE_VERSION);
+    //Serializing the header & version
+    {
+        u32 header = MF_SIGNATURE_HEADER;
+        u32 version = MF_SIGNATURE_VERSION;
+
+        memcpy(serializer->buffer + serializer->offset, &header, sizeof(u32));
+        serializer->offset += sizeof(u32);
+        memcpy(serializer->buffer + serializer->offset, &version, sizeof(u32));
+        serializer->offset += sizeof(u32);
+    }
 }
 
 void mfSerializerDestroy(MFSerializer* serializer) {
@@ -28,10 +36,15 @@ void mfSerializerRewind(MFSerializer* serializer) {
 b8 mfSerializerIfValid(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
+    MF_DO_IF(serializer->bufferSize < (sizeof(u32)*2), {
+        return false;
+    });
 
     u64 offset = serializer->offset;
     serializer->offset = 0;
-    b8 b = mfDeserializeU32(serializer) == MF_SIGNATURE_HEADER;
+    u32 header = 0;
+    memcpy(&header, serializer->buffer + serializer->offset, sizeof(u32));
+    b8 b = header == MF_SIGNATURE_HEADER;
     serializer->offset = offset;
 
     return b;
@@ -40,10 +53,15 @@ b8 mfSerializerIfValid(MFSerializer* serializer) {
 b8 mfSerializerIfSameVersion(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
+    MF_DO_IF(serializer->bufferSize < (sizeof(u32) * 2), {
+        return false;
+    });
 
     u64 offset = serializer->offset;
     serializer->offset = sizeof(u32); //* NOTE: For the header signature
-    b8 b = mfDeserializeU32(serializer) == MF_SIGNATURE_VERSION;
+    u32 ver = 0;
+    memcpy(&ver, serializer->buffer + serializer->offset, sizeof(u32));
+    b8 b = ver == MF_SIGNATURE_VERSION;
     serializer->offset = offset;
     return b;
 }
