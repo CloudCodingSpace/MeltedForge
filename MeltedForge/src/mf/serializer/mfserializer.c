@@ -53,6 +53,11 @@ void mfSerializeI8(MFSerializer* serializer, i8 value) {
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(i8));
     serializer->offset += sizeof(i8);
 }
@@ -61,6 +66,11 @@ void mfSerializeU8(MFSerializer* serializer, u8 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
+    
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
 
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(u8));
     serializer->offset += sizeof(u8);
@@ -71,6 +81,11 @@ void mfSerializeI16(MFSerializer* serializer, i16 value) {
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
+    MF_DO_IF((mfSerializerIfValid(serializer) && mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(i16));
     serializer->offset += sizeof(i16);
 }
@@ -79,6 +94,11 @@ void mfSerializeU16(MFSerializer* serializer, u16 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
+
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
 
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(u16));
     serializer->offset += sizeof(u16);
@@ -89,6 +109,11 @@ void mfSerializeI32(MFSerializer* serializer, i32 value) {
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(i32));
     serializer->offset += sizeof(i32);
 }
@@ -97,6 +122,11 @@ void mfSerializeU32(MFSerializer* serializer, u32 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
+
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
 
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(u32));
     serializer->offset += sizeof(u32);
@@ -107,6 +137,11 @@ void mfSerializeI64(MFSerializer* serializer, i64 value) {
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(i64));
     serializer->offset += sizeof(i64);
 }
@@ -115,7 +150,12 @@ void mfSerializeU64(MFSerializer* serializer, u64 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(u64));
     serializer->offset += sizeof(u64);
 }
@@ -124,7 +164,12 @@ void mfSerializeF32(MFSerializer* serializer, f32 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(f32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+ 
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+   
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(f32));
     serializer->offset += sizeof(f32);
 }
@@ -133,7 +178,12 @@ void mfSerializeF64(MFSerializer* serializer, f64 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(f64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+ 
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
+  
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(f64));
     serializer->offset += sizeof(f64);
 }
@@ -146,6 +196,11 @@ void mfSerializeChar(MFSerializer* serializer, char value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(char)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
+
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });
     
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(char));
     serializer->offset += sizeof(char);
@@ -155,6 +210,11 @@ void mfSerializeString(MFSerializer* serializer, char* value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        return;
+    });   
+
     //! NOTE: Things may break if the length is too long for a u32 to store, which is very less likely but still to be noted!
     u64 stringSize = (sizeof(char) * mfStringLen(mfGetLogger(), value)) + sizeof(u32);
     MF_PANIC_IF((serializer->offset + stringSize) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
@@ -170,6 +230,11 @@ i8 mfDeserializeI8(MFSerializer* serializer) {
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
     
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the output buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     i8 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(i8));
     serializer->offset += sizeof(i8);
@@ -180,7 +245,12 @@ u8 mfDeserializeU8(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+     
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+   
     u8 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(u8));
     serializer->offset += sizeof(u8);
@@ -191,6 +261,11 @@ i16 mfDeserializeI16(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
     
     i16 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(i16));
@@ -202,7 +277,12 @@ u16 mfDeserializeU16(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     u16 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(u16));
     serializer->offset += sizeof(u16);
@@ -213,7 +293,12 @@ i32 mfDeserializeI32(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+ 
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     i32 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(i32));
     serializer->offset += sizeof(i32);
@@ -224,7 +309,12 @@ u32 mfDeserializeU32(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    }); 
+
     u32 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(u32));
     serializer->offset += sizeof(u32);
@@ -235,7 +325,12 @@ i64 mfDeserializeI64(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     i64 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(i64));
     serializer->offset += sizeof(i64);
@@ -246,7 +341,12 @@ u64 mfDeserializeU64(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     u64 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(u64));
     serializer->offset += sizeof(u64);
@@ -257,7 +357,12 @@ f32 mfDeserializeF32(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(f32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     f32 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(f32));
     serializer->offset += sizeof(f32);
@@ -268,7 +373,12 @@ f64 mfDeserializeF64(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(f64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return 0;
+    });
+
     f64 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(f64));
     serializer->offset += sizeof(f64);
@@ -283,7 +393,12 @@ char mfDeserializeChar(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(char)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return '\0';
+    });
+
     char value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(char));
     serializer->offset += sizeof(char);
@@ -295,7 +410,12 @@ char* mfDeserializeString(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(u32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-    
+   
+    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        return "\0";
+    });
+
     u32 len = mfDeserializeU32(serializer);
     u64 stringSize = sizeof(char) * len;
     MF_PANIC_IF((serializer->offset + stringSize) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
