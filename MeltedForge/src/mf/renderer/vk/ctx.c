@@ -279,6 +279,14 @@ void GetDepthFormat(VulkanBackendCtx* ctx) {
 void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
 
+    // Checking supported vulkan version
+    {
+        uint32_t version;
+        VK_CHECK(vkEnumerateInstanceVersion(&version));
+        bool supported = (VK_API_VERSION_MAJOR(version) == 1) && (VK_API_VERSION_MINOR(&version) >= 2);
+        MF_PANIC_IF(!supported, mfGetLogger(), "(From the vulkan backend) Minimum version support of Vulkan 1.2 is required!\n");
+    }
+
     // Vulkan instance
     {
         VkApplicationInfo appInfo = {
@@ -287,7 +295,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
             .pApplicationName = appName,
             .engineVersion = VK_MAKE_VERSION(1, 0, 0),
             .pEngineName = "MeltedForge",
-            .apiVersion = VK_API_VERSION_1_0
+            .apiVersion = VK_API_VERSION_1_2
         };
 
         u32 extCount = 0;
