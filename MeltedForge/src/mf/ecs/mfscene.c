@@ -1,6 +1,9 @@
 #include "mfscene.h"
 
 #include "core/mfutils.h"
+#include "ecs/mfcomponents.h"
+#include "renderer/mfmesh.h"
+#include "serializer/mfserializer.h"
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
@@ -129,9 +132,11 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp)
     mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
     
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    grp->mesh = &mfArrayGet(scene->meshCompPool, MFMeshComponent, scene->meshCompPool.len - 1);
+    //grp->meshIdx = &mfArrayGet(scene->meshCompPool, MFMeshComponent, scene->meshCompPool.len - 1);
+    grp->meshIdx = scene->meshCompPool.len - 1;
 
-    mfModelLoadAndCreate(&grp->mesh->model, comp.path, scene->renderer, comp.perVertSize, comp.vertBuilder);
+    MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
+    mfModelLoadAndCreate(&c->model, comp.path, scene->renderer, comp.perVertSize, comp.vertBuilder);
 
     entity->components |= MF_COMPONENT_TYPE_MESH;
 }
@@ -153,7 +158,8 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformCompo
     
     mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    grp->transform = &mfArrayGet(scene->transformCompPool, MFTransformComponent, scene->transformCompPool.len - 1);
+    //grp->transform = &mfArrayGet(scene->transformCompPool, MFTransformComponent, scene->transformCompPool.len - 1);
+    grp->transformIdx = scene->transformCompPool.len - 1;
 
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;
 }
@@ -174,7 +180,8 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u32 id) {
         return mfnull;
 
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    return grp->mesh;
+    MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
+    return c;
 }
 
 MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u32 id) {
@@ -193,5 +200,72 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u32 id)
         return mfnull;
 
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    return grp->transform;
+    MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, grp->transformIdx);
+
+    return t;
+}
+
+void mfSceneSerialize(MFScene* scene, const char* fileName) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
+
+    u64 size = sizeof(u32); // For the scene signature
+    size += sizeof(u64) * 4; // For the sizes of the 4 mfarrays
+    size += sizeof(MFEntity) * scene->entities.len;
+    size += sizeof(MFMeshComponent) * scene->meshCompPool.len;
+    size += sizeof(MFTransformComponent) * scene->transformCompPool.len;
+    size += sizeof(MFComponentGroup) * scene->compGrpTable.len;
+
+    MFSerializer s = {};
+    mfSerializerCreate(&s, size);
+
+    mfSerializeU32(&s, MF_SIGNATURE_SCENE_FILE);
+
+    // Entity array 
+    {
+        mfSerializeU64(&s, scene->entities.len);
+        for(u64 i = 0; i < scene->entities.len; i++) {
+            MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+            mfSerializeU64(&s, e->uuid);
+            mfSerializeU32(&s, e->id);
+            mfSerializeU32(&s, e->compGrpId);
+            mfSerializeU32(&s, e->components);
+        }
+    }
+    // Mesh comp array 
+    {
+        mfSerializeU64(&s, scene->meshCompPool.len);
+        for(u64 i = 0; i < scene->meshCompPool.len; i++) {
+            MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+            mfSerializeString(&s, c->path);
+            mfSerializeU64(&s, c->perVertSize);
+        }
+    }
+    // Transform comp array 
+    {
+        mfSerializeU64(&s, scene->transformCompPool.len);
+        for(u64 i = 0; i < scene->transformCompPool.len; i++) {
+            MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+            mfSerializeF32(&s, t->position.x);
+            mfSerializeF32(&s, t->position.y);
+            mfSerializeF32(&s, t->position.z);
+            mfSerializeF32(&s, t->rotationXYZ.x);
+            mfSerializeF32(&s, t->rotationXYZ.y);
+            mfSerializeF32(&s, t->rotationXYZ.z);
+            mfSerializeF32(&s, t->scale.x);
+            mfSerializeF32(&s, t->scale.y);
+            mfSerializeF32(&s, t->scale.z);
+        }
+    }
+    // Component group array 
+    {
+        mfSerializeU64(&s, scene->compGrpTable.len);
+        for(u64 i = 0; i < scene->compGrpTable.len; i++) {
+            MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+            mfSerializeU64(&s, g->meshIdx);
+            mfSerializeU64(&s, g->transformIdx);
+        }
+    }
+
+    mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
 }

@@ -25,6 +25,6 @@ typedef struct MFMeshComponent_s {
 } MFMeshComponent;
 
 typedef struct MFComponentGroup_s {
-    MFMeshComponent* mesh;
-    MFTransformComponent* transform;
+    u64 meshIdx;
+    u64 transformIdx;
 } MFComponentGroup;

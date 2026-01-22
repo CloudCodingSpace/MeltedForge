@@ -6,6 +6,7 @@
 
 #include "renderer/mfrenderer.h"
 #include "renderer/mfcamera.h"
+#include "window/mfwindow.h"
 
 typedef struct MFScene_s {
     MFArray entities;

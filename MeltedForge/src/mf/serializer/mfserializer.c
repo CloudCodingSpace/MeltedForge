@@ -224,7 +224,7 @@ void mfSerializeChar(MFSerializer* serializer, char value) {
     serializer->offset += sizeof(char);
 }
 
-void mfSerializeString(MFSerializer* serializer, char* value) {
+void mfSerializeString(MFSerializer* serializer, const char* value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     

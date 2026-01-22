@@ -1,4 +1,5 @@
 #include "mftest.h"
+#include "ecs/mfscene.h"
 
 #pragma region PipelineFuncs
 
@@ -245,6 +246,8 @@ void MFTOnInit(void* pstate, void* pappState) {
 void MFTOnDeinit(void* pstate, void* pappState) {
     slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
+
+    mfSceneSerialize(&state->scene, "./mftscene.bin");
 
     mfMaterialSystemDeleteModelMatImages(&state->modelMatImgs);
     

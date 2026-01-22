@@ -7,5 +7,6 @@
 //* NOTE: May add more signatures in the future! Also, each signature is a u32 in type!
 typedef enum MFSignatures_e {
     MF_SIGNATURE_HEADER = MF_CREATE_SIGNATURE_BYTES('M', 'F', 'H', 'R'),
-    MF_SIGNATURE_VERSION = MF_CREATE_SIGNATURE_BYTES('V', 'D', 'E', 'V')
+    MF_SIGNATURE_VERSION = MF_CREATE_SIGNATURE_BYTES('V', 'D', 'E', 'V'),
+    MF_SIGNATURE_SCENE_FILE = MF_CREATE_SIGNATURE_BYTES('M', 'F', 'S', 'F')
 } MFSignatures;

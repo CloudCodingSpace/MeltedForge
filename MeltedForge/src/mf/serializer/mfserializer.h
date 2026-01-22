@@ -33,7 +33,7 @@ void mfSerializeF64(MFSerializer* serializer, f64 value);
 void mfSerializeB8(MFSerializer* serializer, b8 value);
 
 void mfSerializeChar(MFSerializer* serializer, char value);
-void mfSerializeString(MFSerializer* serializer, char* value);
+void mfSerializeString(MFSerializer* serializer, const char* value);
 
 i8 mfDeserializeI8(MFSerializer* serializer);
 u8 mfDeserializeU8(MFSerializer* serializer);
