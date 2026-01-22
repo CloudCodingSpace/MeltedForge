@@ -6,7 +6,6 @@
 
 #include "renderer/mfrenderer.h"
 #include "renderer/mfcamera.h"
-#include "window/mfwindow.h"
 
 typedef struct MFScene_s {
     MFArray entities;
@@ -31,3 +30,5 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformCompo
 
 MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u32 id);
 MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u32 id);
+
+void mfSceneSerialize(MFScene* scene, const char* fileName);

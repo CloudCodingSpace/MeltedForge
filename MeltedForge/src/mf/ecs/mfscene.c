@@ -1,5 +1,7 @@
 #include "mfscene.h"
 
+#include "core/mfutils.h"
+
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle shouldn't be null!");
