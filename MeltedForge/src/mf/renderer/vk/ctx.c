@@ -283,8 +283,9 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     {
         uint32_t version;
         VK_CHECK(vkEnumerateInstanceVersion(&version));
-        bool supported = (VK_API_VERSION_MAJOR(version) == 1) && (VK_API_VERSION_MINOR(&version) >= 2);
-        MF_PANIC_IF(!supported, mfGetLogger(), "(From the vulkan backend) Minimum version support of Vulkan 1.2 is required!\n");
+        bool supported = (VK_API_VERSION_MAJOR(version) == 1) && (VK_API_VERSION_MINOR(version) >= 4);
+        if(!supported)
+            MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Minimum version support of Vulkan 1.2 is required!\n");
     }
 
     // Vulkan instance
