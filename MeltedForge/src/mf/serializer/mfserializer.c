@@ -288,7 +288,7 @@ i16 mfDeserializeI16(MFSerializer* serializer) {
     i16 value = 0;
     memcpy(&value, serializer->buffer + serializer->offset, sizeof(i16));
     serializer->offset += sizeof(i16);
-    return value;        
+    return value;
 }
 
 u16 mfDeserializeU16(MFSerializer* serializer) {

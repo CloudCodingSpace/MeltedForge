@@ -16,23 +16,23 @@
 - Rendering multiple entities
 - Render targets (Ability to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport)
 
-## 🚀 Goals
+## Goals
 
-- 🔁 Cross-platform
-- 🎮 Support for both **3D and 2D** games
-- 🔥 Realistic graphics (PBR coming soon 👀)
-- 🎵 Sound system support
-- 🕹️ Animation system
-- 🧩 Flexible and modular
-- 🧰 Built to showcase what **C** can really do in game dev
-- 🐢 Low-end spec friendly (hopefully)
-- 🙌 Beginner-friendly setup and usage
+- Cross-platform
+- Support for both **3D and 2D** games
+- Realistic graphics (PBR coming soon 👀)
+- Sound system support
+- Animation system
+- Flexible and modular
+- Built to showcase what **C** can really do in game dev
+- Low-end spec friendly (hopefully)
+- Beginner-friendly setup and usage
 - Multithreading
 - Async model loading
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 > **Note:** The following are the **important conditions** met by the PC for **building/running** MeltedForge
 
@@ -44,7 +44,7 @@
 
 ---
 
-## 🛠️ Build Instructions
+## Build Instructions
 
 > **Note:** This repo uses submodules. Make sure to clone it **recursively**.
 
