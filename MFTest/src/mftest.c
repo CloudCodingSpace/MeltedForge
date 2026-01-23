@@ -1,5 +1,6 @@
 #include "mftest.h"
 #include "ecs/mfscene.h"
+#include "vertex.h"
 
 #pragma region PipelineFuncs
 
@@ -109,25 +110,25 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Scene & entities
     {
-        mfSceneDeserialize(&state->scene, "./mftscene.bin");
         mfSceneCreate(&state->scene, state->camera, appState->renderer);
+        if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", vertBuilder)) {
+            state->entity = mfSceneCreateEntity(&state->scene);
 
-        state->entity = mfSceneCreateEntity(&state->scene);
+            MFMeshComponent mComp = {
+                .path = "meshes/moon_rock.obj",
+                .perVertSize = sizeof(Vertex),
+                .vertBuilder = vertBuilder
+            };
 
-        MFMeshComponent mComp = {
-            .path = "meshes/moon_rock.obj",
-            .perVertSize = sizeof(Vertex),
-            .vertBuilder = vertBuilder
-        };
+            MFTransformComponent tComp = {
+                .position = (MFVec3){0, 0, 0},
+                .rotationXYZ = (MFVec3){45, 0, 0},
+                .scale = (MFVec3){15, 15, 15}
+            };
 
-        MFTransformComponent tComp = {
-            .position = (MFVec3){0, 0, 0},
-            .rotationXYZ = (MFVec3){45, 0, 0},
-            .scale = (MFVec3){15, 15, 15}
-        };
-
-        mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
-        mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
+            mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
+            mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
+        }
     }
     // UBO
     {

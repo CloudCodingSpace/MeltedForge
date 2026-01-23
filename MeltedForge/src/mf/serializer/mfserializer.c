@@ -1,4 +1,5 @@
 #include "mfserializer.h"
+#include "slog/slog.h"
 
 void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");

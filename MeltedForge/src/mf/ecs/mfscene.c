@@ -1,10 +1,14 @@
 #include "mfscene.h"
 
+#include "core/mfcore.h"
 #include "core/mfutils.h"
 #include "ecs/mfcomponents.h"
+#include "ecs/mfentity.h"
 #include "renderer/mfmesh.h"
+#include "renderer/mfmodel.h"
 #include "serializer/mfserializer.h"
 #include "serializer/mfserializerutils.h"
+#include "slog/slog.h"
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
@@ -133,7 +137,6 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp)
     mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
     
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    //grp->meshIdx = &mfArrayGet(scene->meshCompPool, MFMeshComponent, scene->meshCompPool.len - 1);
     grp->meshIdx = scene->meshCompPool.len - 1;
 
     MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
@@ -159,7 +162,6 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformCompo
     
     mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    //grp->transform = &mfArrayGet(scene->transformCompPool, MFTransformComponent, scene->transformCompPool.len - 1);
     grp->transformIdx = scene->transformCompPool.len - 1;
 
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;
@@ -272,7 +274,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     mfWriteFile(mfGetLogger(), s.offset, fileName, (const char*)s.buffer, "wb");
 }
 
-b8 mfSceneDeserialize(MFScene* scene, const char* fileName) {
+b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
 
@@ -291,7 +293,6 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName) {
     fclose(file);
 
     MFSerializer s = {
-        .offset = sizeof(u32) * 2,
         .buffer = content,
         .bufferSize = fileSize
     };
@@ -300,6 +301,60 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName) {
     if(sign != MF_SIGNATURE_SCENE_FILE) {
         MF_FREEMEM(content);
         return false;
+    }
+
+    mfArrayDestroy(&scene->entities, mfGetLogger());
+    mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
+    mfArrayDestroy(&scene->meshCompPool, mfGetLogger());
+    mfArrayDestroy(&scene->transformCompPool, mfGetLogger());
+
+    u64 eLen = mfDeserializeU64(&s);
+    scene->entities = mfArrayCreate(mfGetLogger(), eLen, sizeof(MFEntity));
+    for(u64 i = 0; i < eLen; i++) {
+        MFEntity e;
+        e.ownerScene = scene;
+        e.uuid = mfDeserializeU32(&s);
+        e.id = mfDeserializeU32(&s);
+        e.compGrpId = mfDeserializeU32(&s);
+        e.components = mfDeserializeU32(&s);
+        mfArrayAddElement(scene->entities, MFEntity, mfGetLogger(), e);
+    }
+
+    u64 mLen = mfDeserializeU64(&s);
+    scene->meshCompPool = mfArrayCreate(mfGetLogger(), mLen, sizeof(MFMeshComponent));
+
+    for(u64 i = 0; i < mLen; i++) {
+        MFMeshComponent c;
+        c.path = mfDeserializeString(&s);
+        c.perVertSize = mfDeserializeU64(&s);
+        c.vertBuilder = vertexBuilder;
+        mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, c.vertBuilder);
+        mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), c);
+    }
+   
+    u64 tLen = mfDeserializeU64(&s);
+    scene->transformCompPool = mfArrayCreate(mfGetLogger(), tLen, sizeof(MFTransformComponent));
+    for(u64 i = 0; i < tLen; i++) {
+        MFTransformComponent t;
+        t.position.x = mfDeserializeF32(&s);
+        t.position.y = mfDeserializeF32(&s);
+        t.position.z = mfDeserializeF32(&s);
+        t.rotationXYZ.x = mfDeserializeF32(&s);
+        t.rotationXYZ.y = mfDeserializeF32(&s);
+        t.rotationXYZ.z = mfDeserializeF32(&s);
+        t.scale.x = mfDeserializeF32(&s);
+        t.scale.y = mfDeserializeF32(&s);
+        t.scale.z = mfDeserializeF32(&s);
+        mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), t);
+    }
+
+    u64 gLen = mfDeserializeU64(&s);
+    scene->compGrpTable = mfArrayCreate(mfGetLogger(), gLen, sizeof(MFComponentGroup));
+    for(u64 i = 0; i < gLen; i++) {
+        MFComponentGroup g;
+        g.meshIdx = mfDeserializeU64(&s);
+        g.transformIdx = mfDeserializeU64(&s);
+        mfArrayAddElement(scene->compGrpTable, MFComponentGroup, mfGetLogger(), g);
     }
 
     mfSerializerDestroy(&s);

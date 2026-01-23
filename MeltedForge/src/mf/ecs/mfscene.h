@@ -35,4 +35,4 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u32 id)
 void mfSceneSerialize(MFScene* scene, const char* fileName);
 // @note Returns false if the scene file doesnt exists or if the file isn't a scene file!
 //       Else it returns true.
-b8 mfSceneDeserialize(MFScene* scene, const char* fileName);
+b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertBuilder);
