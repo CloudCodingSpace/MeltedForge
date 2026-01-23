@@ -215,6 +215,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     size += sizeof(MFMeshComponent) * scene->meshCompPool.len;
     size += sizeof(MFTransformComponent) * scene->transformCompPool.len;
     size += sizeof(MFComponentGroup) * scene->compGrpTable.len;
+    size += sizeof(char) * 1000000; // Overallocating for any extra lengthy strings
 
     MFSerializer s = {};
     mfSerializerCreate(&s, size);
