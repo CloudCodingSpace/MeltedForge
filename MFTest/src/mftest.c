@@ -107,6 +107,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Scene & entities
     {
+        mfSceneDeserialize(&state->scene, "./mftscene.bin");
         mfSceneCreate(&state->scene, state->camera, appState->renderer);
 
         state->entity = mfSceneCreateEntity(&state->scene);

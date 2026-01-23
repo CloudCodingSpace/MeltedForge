@@ -4,6 +4,7 @@
 #include "ecs/mfcomponents.h"
 #include "renderer/mfmesh.h"
 #include "serializer/mfserializer.h"
+#include "serializer/mfserializerutils.h"
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
@@ -268,5 +269,40 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         }
     }
 
-    mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
+    mfWriteFile(mfGetLogger(), s.offset, fileName, (const char*)s.buffer, "wb");
+}
+
+b8 mfSceneDeserialize(MFScene* scene, const char* fileName) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
+
+    FILE* file = fopen(fileName, "rb");
+    if(file == mfnull)
+        return false;
+    
+    u64 fileSize = 0;
+    fseek(file, 0, SEEK_END);
+    fileSize = ftell(file);
+    fseek(file, SEEK_SET, 0);
+
+    u8* content = MF_ALLOCMEM(u8, fileSize * sizeof(u8));
+    fread(content, fileSize, 1, file);
+
+    fclose(file);
+
+    MFSerializer s = {
+        .offset = sizeof(u32) * 2,
+        .buffer = content,
+        .bufferSize = fileSize
+    };
+
+    u32 sign = mfDeserializeU32(&s);
+    if(sign != MF_SIGNATURE_SCENE_FILE) {
+        MF_FREEMEM(content);
+        return false;
+    }
+
+    mfSerializerDestroy(&s);
+
+    return true;
 }
