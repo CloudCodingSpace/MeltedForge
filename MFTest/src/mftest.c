@@ -1,5 +1,6 @@
 #include "mftest.h"
 #include "ecs/mfscene.h"
+#include "slog/slog.h"
 #include "vertex.h"
 
 #pragma region PipelineFuncs
@@ -128,6 +129,8 @@ void MFTOnInit(void* pstate, void* pappState) {
 
             mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
             mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
+        } else {
+            state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
         }
     }
     // UBO

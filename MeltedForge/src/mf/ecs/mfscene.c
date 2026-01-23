@@ -271,7 +271,17 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         }
     }
 
-    mfWriteFile(mfGetLogger(), s.offset, fileName, (const char*)s.buffer, "wb");
+    //mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
+    {
+        FILE* file = fopen(fileName, "wb");
+        MF_PANIC_IF(file == mfnull, mfGetLogger(), "Failed to write to file!");
+
+        fwrite(s.buffer, s.bufferSize, 1, file);
+
+        fclose(file);
+    }
+
+    mfSerializerDestroy(&s);
 }
 
 b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
@@ -293,6 +303,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     fclose(file);
 
     MFSerializer s = {
+        .offset = sizeof(u32) * 2,
         .buffer = content,
         .bufferSize = fileSize
     };
@@ -313,7 +324,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     for(u64 i = 0; i < eLen; i++) {
         MFEntity e;
         e.ownerScene = scene;
-        e.uuid = mfDeserializeU32(&s);
+        e.uuid = mfDeserializeU64(&s);
         e.id = mfDeserializeU32(&s);
         e.compGrpId = mfDeserializeU32(&s);
         e.components = mfDeserializeU32(&s);
@@ -331,7 +342,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
         mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, c.vertBuilder);
         mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), c);
     }
-   
+
     u64 tLen = mfDeserializeU64(&s);
     scene->transformCompPool = mfArrayCreate(mfGetLogger(), tLen, sizeof(MFTransformComponent));
     for(u64 i = 0; i < tLen; i++) {
