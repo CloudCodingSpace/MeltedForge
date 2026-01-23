@@ -28,15 +28,15 @@ static void pos_callback(GLFWwindow* window, double x, double y) {
 
 void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
 
     if(window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle is already initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle is already initialized!");
     }
 
     if(!glfwInit()) {
-        MF_FATAL_ABORT(mfGetLogger(), "Failed to initialize the system for creating the window!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "Failed to initialize the system for creating the window!");
     }
 
     glfwWindowHint(GLFW_RESIZABLE, config.resizable);
@@ -56,7 +56,7 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
 
     window->handle = glfwCreateWindow(config.width, config.height, config.title, monitor, mfnull);
     if(window->handle == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "Failed to create the window!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "Failed to create the window!");
     }
     window->config.title = glfwGetWindowTitle(window->handle);
     glfwMakeContextCurrent(window->handle);
@@ -73,29 +73,29 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     window->config = config;
     window->init = true;
 
-    MF_INFO(mfGetLogger(), "Creating MFWindow\n");
+    MF_INFO(mfGetLogger(), "Creating MFWindow");
 }
 
 void mfWindowDestroy(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle can't be destroyed because it is not initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle can't be destroyed because it is not initialized!");
     }
 
     glfwDestroyWindow(window->handle);
     MF_SETMEM(window, 0, sizeof(MFWindow));
 
-    MF_INFO(mfGetLogger(), "Destroying MFWindow\n");
+    MF_INFO(mfGetLogger(), "Destroying MFWindow");
 }
 
 void mfWindowSetIcon(MFWindow* window, const char* path) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
 
     i32 channels;
@@ -106,15 +106,15 @@ void mfWindowSetIcon(MFWindow* window, const char* path) {
     glfwSetWindowIcon(window->handle, 1, img);
     stbi_image_free(data);
 
-    MF_INFO(mfGetLogger(), "Set an icon to MFWindow\n");
+    MF_INFO(mfGetLogger(), "Set an icon to MFWindow");
 }
 
 void mfWindowUpdate(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
 
     glfwPollEvents();
@@ -122,51 +122,51 @@ void mfWindowUpdate(MFWindow* window) {
 
 void mfWindowClose(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     glfwSetWindowShouldClose(window->handle, true);
-    MF_INFO(mfGetLogger(), "Closed MFWindow\n");
+    MF_INFO(mfGetLogger(), "Closed MFWindow");
 }
 
 void mfWindowShow(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     glfwShowWindow(window->handle);
 }
 
 void mfWindowHide(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     glfwHideWindow(window->handle);
 }
 
 b8 mfIsWindowOpen(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     return !glfwWindowShouldClose(window->handle);
 }
 
 const char* mfGetWindowTitle(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
 
     return glfwGetWindowTitle(window->handle);
@@ -174,13 +174,13 @@ const char* mfGetWindowTitle(MFWindow* window) {
 
 void mfSetWindowTitle(MFWindow* window, const char* title) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     if(title == mfnull) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The title that is to be set shouldn't be null!\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The title that is to be set shouldn't be null!");
         return;
     }
 
@@ -189,20 +189,20 @@ void mfSetWindowTitle(MFWindow* window, const char* title) {
 
 GLFWwindow* mfGetWindowHandle(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     return window->handle;
 }
 
 const MFWindowConfig* mfGetWindowConfig(MFWindow* window) {
     if(window == mfnull) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
     if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!\n");
+        MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     return &window->config;
 }

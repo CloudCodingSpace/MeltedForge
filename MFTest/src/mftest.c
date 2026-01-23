@@ -84,11 +84,13 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
 #pragma region MFTest
 
 void MFTOnInit(void* pstate, void* pappState) {
-    slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest init\n");
-
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
+   
+    slogLoggerReset(&state->logger);
+    slogLoggerSetName(&state->logger, "MFTest");
+    MF_INFO(&state->logger, "MFTest init");
 
     state->renderer = appState->renderer;
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
@@ -245,8 +247,10 @@ void MFTOnInit(void* pstate, void* pappState) {
 }
 
 void MFTOnDeinit(void* pstate, void* pappState) {
-    slogLogConsole(mfGetLogger(), SLOG_SEVERITY_INFO, "MFTest deinit\n");
     MFTState* state = (MFTState*)pstate;
+    
+    MF_INFO(&state->logger, "MFTest deinit");
+    slogLoggerReset(&state->logger);
 
     mfSceneSerialize(&state->scene, "./mftscene.bin");
 

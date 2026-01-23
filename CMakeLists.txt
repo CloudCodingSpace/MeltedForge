@@ -19,6 +19,12 @@ add_subdirectory(MeltedForge)
 #TestBench
 project(MFTest)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_compile_definitions(_DEBUG)
+else()
+  add_compile_definitions(NDEBUG)
+endif()
+
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/src/*.c")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/shaders" DESTINATION "${CMAKE_BINARY_DIR}")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/meshes" DESTINATION "${CMAKE_BINARY_DIR}")

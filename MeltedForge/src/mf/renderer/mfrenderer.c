@@ -14,14 +14,14 @@ void mfRendererInit(MFRenderer* renderer, const char* appName, b8 vsync, b8 enab
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
-    MF_INFO(mfGetLogger(), "Creating the renderer\n");
+    MF_INFO(mfGetLogger(), "Creating the renderer");
 
     VulkanBckndInit(&renderer->backend, appName, vsync, enableUI, window);
 }
 
 void mfRendererShutdown(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_INFO(mfGetLogger(), "Shutting down the renderer\n");
+    MF_INFO(mfGetLogger(), "Shutting down the renderer");
     
     VulkanBckndShutdown(&renderer->backend);
 

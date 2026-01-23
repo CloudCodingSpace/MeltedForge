@@ -26,13 +26,13 @@
 #define MF_CLAMP(value, min, max) (((value) <= (min)) ? (min) : ((value) >= (max)) ? (max) : (value))
 
 #ifdef _DEBUG
-    #define MF_INFO(logger, msg) do { slogLogConsole((logger), SLOG_SEVERITY_INFO, (msg)); } while(0)
+    #define MF_INFO(logger, msg, ...) do { slogLogConsole((logger), SLOG_SEVERITY_INFO, (msg), ##__VA_ARGS__); } while(0)
 #else
-    #define MF_INFO(logger, msg) do {} while(0)
+    #define MF_INFO(logger, msg, ...) do {} while(0)
 #endif
 
-#define MF_FATAL_ABORT(logger, msg) do { slogLogConsole((logger), SLOG_SEVERITY_FATAL, (msg)); abort(); } while(0)
-#define MF_PANIC_IF(expr, logger, msg) do { if ((expr)) { MF_FATAL_ABORT((logger), (msg)); } } while(0)
+#define MF_FATAL_ABORT(logger, msg, ...) do { slogLogConsole((logger), SLOG_SEVERITY_FATAL, (msg), ##__VA_ARGS__); abort(); } while(0)
+#define MF_PANIC_IF(expr, logger, msg, ...) do { if ((expr)) { MF_FATAL_ABORT((logger), (msg), ##__VA_ARGS__); } } while(0)
 #define MF_DO_IF(expr, work) do { if ((expr)) { {work}; } } while(0)
 
 #if defined(__clang__) || defined(__gcc__)

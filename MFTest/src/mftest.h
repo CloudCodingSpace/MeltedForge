@@ -23,6 +23,8 @@ typedef struct LightUBOData_s {
 } LightUBOData;
 
 typedef struct MFTState_s {
+    SLogger logger;
+
     MFPipeline* pipeline;
     MFGpuBuffer** ubos;
 
