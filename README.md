@@ -15,12 +15,14 @@
 - UI customization
 - Rendering multiple entities
 - Render targets (Ability to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport)
+- Binary serialization & deserialization
+
+---
 
 ## Goals
 
 - Cross-platform
-- Support for both **3D and 2D** games
-- Realistic graphics (PBR coming soon 👀)
+- Realistic graphics
 - Sound system support
 - Animation system
 - Flexible and modular
