@@ -17,7 +17,7 @@
     #define false 0
 #endif
 
-#define MF_ALLOCMEM(T, size) ((T*)memset((T*)malloc(size), 0, (size)))
+#define MF_ALLOCMEM(T, size) ((T*)calloc(1, size))
 #define MF_SETMEM(mem, val, size) do { memset((mem), (val), (size)); } while(0)
 #define MF_FREEMEM(mem) do { if((mem)) { free((void*)(mem)); (mem) = 0; } } while(0)
 
@@ -123,7 +123,6 @@ MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const 
         final[i] = b[j];
     }
 
-    final[len] = '\0';
     return final;
 }
 
