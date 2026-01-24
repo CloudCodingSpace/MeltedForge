@@ -3,6 +3,8 @@
 #include "slog/slog.h"
 #include "vertex.h"
 
+#define INFO(logger, msg, ...) slogLogConsole(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
+
 #pragma region PipelineFuncs
 
 static void CreatePipeline(MFTState* state) {
@@ -92,7 +94,7 @@ void MFTOnInit(void* pstate, void* pappState) {
    
     slogLoggerReset(&state->logger);
     slogLoggerSetName(&state->logger, "MFTest");
-    MF_INFO(&state->logger, "MFTest init");
+    INFO(&state->logger, "MFTest init");
 
     state->renderer = appState->renderer;
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
@@ -253,7 +255,7 @@ void MFTOnInit(void* pstate, void* pappState) {
 void MFTOnDeinit(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     
-    MF_INFO(&state->logger, "MFTest deinit");
+    INFO(&state->logger, "MFTest deinit");
     slogLoggerReset(&state->logger);
 
     mfSceneSerialize(&state->scene, "./mftscene.bin");

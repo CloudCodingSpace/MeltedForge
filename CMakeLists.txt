@@ -6,10 +6,10 @@ if(MSVC)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
     add_compile_options(/arch:AVX2)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_C_FLAGS_DEBUG "-g")
-    set(CMAKE_C_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -D_DEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG "-g -D_DEBUG")
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 endif()
 
 set(CMAKE_C_STANDARD 17)
@@ -18,12 +18,6 @@ add_subdirectory(MeltedForge)
 
 #TestBench
 project(MFTest)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_compile_definitions(_DEBUG)
-else()
-  add_compile_definitions(NDEBUG)
-endif()
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/src/*.c")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MFTest/shaders" DESTINATION "${CMAKE_BINARY_DIR}")
