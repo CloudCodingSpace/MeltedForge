@@ -22,12 +22,12 @@ void log_fatal(const char* msg) {
 
 void mfInit(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!\n");
+        printf("[MeltedForge]: The current context shouldn't be null!");
         abort();
     }
     
     if(ctx->init) {
-        slogLogConsole(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!\n");
+        slogLogConsole(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!");
         return;
     }
     
@@ -39,12 +39,12 @@ void mfInit(void) {
 
 void mfShutdown(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!\n");
+        printf("[MeltedForge]: The current context shouldn't be null!");
         abort();
     }
     
     if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!\n");
+        printf("[MeltedForge]: The current context is not yet initialized!");
         abort();
     }
 
@@ -54,7 +54,7 @@ void mfShutdown(void) {
 
 void mfSetCurrentContext(MFContext* ctx_) {
     if(ctx_ == mfnull) {
-        printf("[MeltedForge]: The context provided shouldn't be null!\n");
+        printf("[MeltedForge]: The context provided shouldn't be null!");
         abort();
     }
     
@@ -63,7 +63,7 @@ void mfSetCurrentContext(MFContext* ctx_) {
 
 MFContext* mfCheckCurrentContext(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context is null as it is not set!\n");
+        printf("[MeltedForge]: The current context is null as it is not set!");
         abort();
     }
     return ctx;
@@ -75,7 +75,7 @@ size_t mfGetContextSizeInBytes(void) {
 
 SLogger* mfGetLogger(void) {
     if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!\n");
+        printf("[MeltedForge]: The current context shouldn't be null!");
         abort();
     }
     

@@ -5,12 +5,12 @@
 
 void mfTimerStart(MFTimer* timer) {
     if(timer == mfnull) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer should be a valid pointer to a MFTimer!\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer should be a valid pointer to a MFTimer!");
         return;
     }
 
     if(timer->started) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer is not yet ended for the next start!\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer is not yet ended for the next start!");
         return;
     }
 
@@ -21,12 +21,12 @@ void mfTimerStart(MFTimer* timer) {
 
 void mfTimerEnd(MFTimer* timer) {
     if(timer == mfnull) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer should be a valid pointer to a MFTimer!\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer should be a valid pointer to a MFTimer!");
         return;
     }
 
     if(!timer->started) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer is not yet started to be ended!\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer is not yet started to be ended!");
         return;
     }
 
@@ -38,7 +38,7 @@ void mfTimerEnd(MFTimer* timer) {
 
 void mfTimerReset(MFTimer* timer) {
     if(timer == mfnull) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer should be a valid pointer to a MFTimer!\n");
+        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The timer should be a valid pointer to a MFTimer!");
         return;
     }
 
