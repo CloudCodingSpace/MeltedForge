@@ -75,6 +75,9 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
         VK_CHECK(vkCreateImageView(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->view));
     }
 
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Created an image of resolution: %dx%d", 
+                    image->info.width, image->info.height);
+
     if(!pinfo.gpuResource)
         return;
 
@@ -120,6 +123,9 @@ void VulkanImageDestroy(VulkanImage* image) {
 
     if(image->info.gpuResource)
         vkDestroySampler(image->info.ctx->device, image->sampler, image->info.ctx->allocator);
+
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Destroyed an image of  resolution: %dx%d",
+                        image->info.width, image->info.height);
 
     MF_SETMEM(image, 0, sizeof(VulkanImage));
 }

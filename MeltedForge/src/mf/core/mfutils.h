@@ -26,7 +26,7 @@
 #define MF_CLAMP(value, min, max) (((value) <= (min)) ? (min) : ((value) >= (max)) ? (max) : (value))
 
 #ifdef _DEBUG
-    #define MF_INFO(logger, msg, ...) do { slogLogConsole((logger), SLOG_SEVERITY_INFO, (msg), ##__VA_ARGS__); } while(0)
+    #define MF_INFO(logger, msg, ...) do { slogLogConsole((logger), SLOG_SEVERITY_DEBUG, (msg), ##__VA_ARGS__); } while(0)
 #else
     #define MF_INFO(logger, msg, ...) do {} while(0)
 #endif

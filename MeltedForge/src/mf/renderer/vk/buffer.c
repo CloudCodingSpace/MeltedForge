@@ -23,6 +23,7 @@ void staging_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
 
     VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
     VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
 }
 
 void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
@@ -48,6 +49,7 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
 
     vkMapMemory(ctx->device, buffer->mem, 0, buffer->size, 0, &buffer->mappedMem);  // NOTE: Make the offset configurable if necessary
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
 }
 
 void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool) {
@@ -75,6 +77,7 @@ void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool
     if(buffer->data) {
         VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
     }
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
 }
 
 void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool) {
@@ -102,6 +105,8 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
     if(buffer->data) {
         VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
     }
+
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
 }
 
 void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, u64 size, void* data, VulkanBufferTypes type) {
@@ -132,6 +137,8 @@ void VulkanBufferFree(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
 
     buffer->handle = 0;
     buffer->mem = 0;
+
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Freed a buffer of size: %zu bytes", buffer->size);
 }
 
 void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, void* data) {
