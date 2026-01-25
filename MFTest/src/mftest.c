@@ -114,7 +114,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Scene & entities
     {
         mfSceneCreate(&state->scene, state->camera, appState->renderer);
-        if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", vertBuilder)) {
+        if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {

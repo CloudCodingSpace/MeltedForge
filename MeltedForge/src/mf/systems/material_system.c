@@ -5,7 +5,7 @@
 
 MFGpuImage* loadImage(const char* path, void* renderer) {
     u8 blackColor[4] = {0x00, 0x00, 0x00, 0xff};
-    u32 width, height, channels;
+    i32 width, height, channels;
     stbi_set_flip_vertically_on_load(true);
 
     u8* pixels = stbi_load(path, &width, &height, &channels, 4);
