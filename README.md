@@ -16,6 +16,7 @@
 - Rendering multiple entities
 - Render targets (Ability to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport)
 - Binary serialization & deserialization
+- WIP Material system
 
 ---
 
@@ -41,8 +42,9 @@
 - Vulkan SDK (Get from [LunarG](https://vulkan.lunarg.com/))
 - A GPU driver with **modern Vulkan support** (Vulkan 1.2.000+)
 - A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries**
+    (Preferably GCC & G++ or MSVC, but currently clang is not tested and supported)
 - CMake (Get from [here](https://cmake.org/download/))
-- Make if using GCC & G++ or Clang & Clang++
+- Make if using GCC & G++
 
 ---
 
@@ -63,3 +65,10 @@ cmake --build <path-to-build-dir> --parallel
 ```
 
 > **Note:** Before running the executable of the MFTest, make sure that the shaders are compiled. Helper scripts to compile shaders on Window are in the scripts folder.
+
+## Technical Details (For developers and nerds)
+ - This engine is mostly using C. But there *is* some usage of other languages like C++ since
+    3rd party vendors like Dear ImGui and Assimp use it.
+ - Currently supports compilers like GCC, G++ and MSVC.
+ - Aims at having support for Clang, Clang++ support, but currently it is not tested and 
+    does not have support.
