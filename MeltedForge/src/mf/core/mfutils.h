@@ -36,14 +36,12 @@
 #define MF_DO_IF(expr, work) do { if ((expr)) { {work}; } } while(0)
 
 #if defined(__clang__) || defined(__gcc__)
-    //#define MF_INLINE __attribute__((always_inline)) inline
+    #define MF_INLINE __attribute__((always_inline)) inline
 #elif defined(_MSC_VER)
     #define MF_INLINE __forceinline
 #else
     #define MF_INLINE static inline
 #endif
-
-#define MF_INLINE static inline
 
 //* @note Only works if arr is an array, and not if it is a pointer to the array!
 #define MF_ARRAYLEN(arr, T) (sizeof(arr) / sizeof(T))
