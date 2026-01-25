@@ -42,7 +42,7 @@
 - Vulkan SDK (Get from [LunarG](https://vulkan.lunarg.com/))
 - A GPU driver with **modern Vulkan support** (Vulkan 1.2.000+)
 - A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries**
-    (Preferably GCC & G++ or MSVC, but currently clang is not tested and supported)
+    (Preferably GCC & G++ or MSVC, but currently clang is not tested and is not supported)
 - CMake (Get from [here](https://cmake.org/download/))
 - Make if using GCC & G++
 
@@ -70,5 +70,5 @@ cmake --build <path-to-build-dir> --parallel
  - This engine is mostly using C. But there *is* some usage of other languages like C++ since
     3rd party vendors like Dear ImGui and Assimp use it.
  - Currently supports compilers like GCC, G++ and MSVC.
- - Aims at having support for Clang, Clang++ support, but currently it is not tested and 
+ - Aims at having support for Clang & Clang++, but currently it is not tested and 
     does not have support.
