@@ -22,7 +22,7 @@
 
 ## Goals
 
-- Cross-platform
+- Cross-platform (Only on desktop platforms)
 - Realistic graphics
 - Sound system support
 - Animation system
@@ -72,3 +72,5 @@ cmake --build <path-to-build-dir> --parallel
  - Currently supports compilers like GCC, G++ and MSVC.
  - Aims at having support for Clang & Clang++, but currently it is not tested and 
     does not have support.
+ - Currently tested in and developed on Windows with MSVC and GCC/G++
+ - Linux isn't tested yet.
