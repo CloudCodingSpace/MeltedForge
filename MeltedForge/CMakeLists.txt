@@ -7,7 +7,6 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
@@ -60,9 +59,29 @@ target_compile_definitions(cimgui PUBLIC "CIMGUI_NO_EXPORT")
 target_compile_definitions(cimgui PUBLIC "IMGUI_IMPL_API=extern \"C\"")
 target_link_libraries(cimgui PRIVATE glfw Vulkan::Vulkan)
 
+function(EnableFlags target)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE
+            $<$<CONFIG:Debug>:/Zi>
+            $<$<CONFIG:Release>:/O2>
+        )
+    else()
+        target_compile_options(${target} PRIVATE
+            $<$<CONFIG:Debug>:-g>
+            $<$<CONFIG:Release>:-O3>
+        )
+    endif()
+
+    target_compile_definitions(${target} PRIVATE
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<CONFIG:Release>:NDEBUG>
+    )
+endfunction()
+
 add_library(mf ${SRCS})
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
 target_link_libraries(mf PUBLIC stb slog cimgui assimp)
 target_link_libraries(mf PRIVATE glfw Vulkan::Vulkan)
 set_property(TARGET mf PROPERTY C_STANDARD 23)
+EnableFlags(mf)
