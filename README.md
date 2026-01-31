@@ -66,6 +66,8 @@ cmake --build <path-to-build-dir> --parallel
 
 > **Note:** Before running the executable of the MFTest, make sure that the shaders are compiled. Helper scripts to compile shaders on Window are in the scripts folder.
 
+---
+
 ## Technical Details (For developers and nerds)
  - This engine is mostly using C. But there *is* some usage of other languages like C++ since
     3rd party vendors like Dear ImGui and Assimp use it.
@@ -74,3 +76,13 @@ cmake --build <path-to-build-dir> --parallel
     does not have support.
  - Currently tested in and developed on Windows with MSVC and GCC/G++
  - Linux isn't tested yet.
+
+ ---
+
+## Documentation
+
+> **Note:** The documentation is currently a work in progress. The github repo is [here](https://github.com/CloudCodingSpace/MFDocs).
+
+The deployed url for the docs is [here](https://cloudcodingspace.github.io/MFDocs).
+It would be great if it would be pointed out for any grammartical or any suggestions spotted. If so, then
+it would be much appreciated if a pull request is opened in the documentation's repo.
