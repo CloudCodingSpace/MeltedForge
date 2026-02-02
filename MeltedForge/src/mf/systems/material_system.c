@@ -40,58 +40,63 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
+    
+    const char* bPath = basePath;
+    char lastChar = basePath[mfStringLen(mfGetLogger(), basePath) - 1];
+    if(lastChar != '\\' && lastChar != '/')
+        bPath = mfStringConcatenate(mfGetLogger(), basePath, "/");
 
     MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
     arr.len = MF_MODEL_MAT_TEXTURE_MAX;
 
     MFModelMaterial mat = model->mat;
     if(mat.alpha_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.alpha_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.alpha_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_ALPHA) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.ambient_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.ambient_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.ambient_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_AMBIENT) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.bump_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.bump_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.bump_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_BUMP) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.diffuse_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.diffuse_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.diffuse_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.displacement_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.displacement_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.displacement_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DISPLACEMENT) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.specular_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.specular_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.specular_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SPECULAR) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.lightmap_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.lightmap_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.lightmap_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_LIGHTMAP) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.shininess_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.shininess_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.shininess_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_SHININESS) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.metalness_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.metalness_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.metalness_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_METALNESS) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }
     if(mat.emission_texpath) {
-        const char* path = mfStringConcatenate(mfGetLogger(), basePath, mat.emission_texpath);
+        const char* path = mfStringConcatenate(mfGetLogger(), bPath, mat.emission_texpath);
         mfArrayGet(arr, MFGpuImage*, MF_MODEL_MAT_TEXTURE_EMISSIVE) = loadImage(path, renderer);
         MF_FREEMEM(path);
     }

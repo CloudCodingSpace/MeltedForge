@@ -185,7 +185,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Model Images
     {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        state->modelMatImgs = mfMaterialSystemGetModelMatImages(&comp->model, "meshes/", state->renderer);
+        state->modelMatImgs = mfMaterialSystemGetModelMatImages(&comp->model, "meshes", state->renderer);
         mfGpuImageSetBinding(mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE), 2);
     }
     

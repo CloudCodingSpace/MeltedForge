@@ -4,7 +4,6 @@
 #include "core/mfutils.h"
 #include "ecs/mfcomponents.h"
 #include "ecs/mfentity.h"
-#include "renderer/mfmesh.h"
 #include "renderer/mfmodel.h"
 #include "serializer/mfserializer.h"
 #include "serializer/mfserializerutils.h"
@@ -107,9 +106,6 @@ void mfSceneDeleteEntity(MFScene* scene, MFEntity* e) {
     
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, e->compGrpId);
     
-    scene->compGrpTable.len--;
-    scene->entities.len--;
-
     MF_SETMEM(grp, 0, sizeof(*grp));
     MF_SETMEM(e, 0, sizeof(*e));
 
@@ -218,7 +214,14 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     size += sizeof(MFMeshComponent) * scene->meshCompPool.len;
     size += sizeof(MFTransformComponent) * scene->transformCompPool.len;
     size += sizeof(MFComponentGroup) * scene->compGrpTable.len;
-    size += sizeof(char) * 1000000; // Overallocating for any extra lengthy strings
+
+    for(int i = 0; i < scene->meshCompPool.len; i++) {
+        MFMeshComponent* comp = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+        if(!comp)
+            continue;
+        size += sizeof(u32);
+        size += sizeof(char) * mfStringLen(mfGetLogger(), comp->path);
+    }
 
     MFSerializer s = {};
     mfSerializerCreate(&s, size);
@@ -230,6 +233,8 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         mfSerializeU64(&s, scene->entities.len);
         for(u64 i = 0; i < scene->entities.len; i++) {
             MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+            if(!e)
+                continue;
             mfSerializeU64(&s, e->uuid);
             mfSerializeU32(&s, e->id);
             mfSerializeU32(&s, e->compGrpId);
@@ -241,6 +246,8 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         mfSerializeU64(&s, scene->meshCompPool.len);
         for(u64 i = 0; i < scene->meshCompPool.len; i++) {
             MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+            if(!c)
+                continue;
             mfSerializeString(&s, c->path);
             mfSerializeU64(&s, c->perVertSize);
         }
@@ -250,6 +257,8 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         mfSerializeU64(&s, scene->transformCompPool.len);
         for(u64 i = 0; i < scene->transformCompPool.len; i++) {
             MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+            if(!t)
+                continue;
             mfSerializeF32(&s, t->position.x);
             mfSerializeF32(&s, t->position.y);
             mfSerializeF32(&s, t->position.z);
@@ -266,20 +275,14 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         mfSerializeU64(&s, scene->compGrpTable.len);
         for(u64 i = 0; i < scene->compGrpTable.len; i++) {
             MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+            if(!g)
+                continue;
             mfSerializeU64(&s, g->meshIdx);
             mfSerializeU64(&s, g->transformIdx);
         }
     }
 
-    //mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
-    {
-        FILE* file = fopen(fileName, "wb");
-        MF_PANIC_IF(file == mfnull, mfGetLogger(), "Failed to write to file!");
-
-        fwrite(s.buffer, s.bufferSize, 1, file);
-
-        fclose(file);
-    }
+    mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
 
     mfSerializerDestroy(&s);
 }
@@ -288,19 +291,22 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
 
-    FILE* file = fopen(fileName, "rb");
-    if(file == mfnull)
-        return false;
-    
     u64 fileSize = 0;
-    fseek(file, 0, SEEK_END);
-    fileSize = ftell(file);
-    fseek(file, SEEK_SET, 0);
+    u8* content = mfnull;
+    {
+        FILE* file = fopen(fileName, "rb");
+        if(file == mfnull)
+            return false;
+        
+        fseek(file, 0, SEEK_END);
+        fileSize = ftell(file);
+        fseek(file, SEEK_SET, 0);
 
-    u8* content = MF_ALLOCMEM(u8, fileSize * sizeof(u8));
-    fread(content, fileSize, 1, file);
+        content = MF_ALLOCMEM(u8, fileSize * sizeof(u8));
+        fread(content, fileSize, 1, file);
 
-    fclose(file);
+        fclose(file);
+    }
 
     MFSerializer s = {
         .offset = sizeof(u32) * 2,
