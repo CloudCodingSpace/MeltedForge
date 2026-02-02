@@ -14,20 +14,21 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
     {
         VkImageCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-            .arrayLayers = 1, // NOTE: Make it configurable if required
+            .arrayLayers = pinfo.arrayLayers,
             .extent = (VkExtent3D) {
                 .depth = 1,
                 .width = pinfo.width,
                 .height = pinfo.height
             },
             .format = pinfo.format,
-            .imageType = VK_IMAGE_TYPE_2D, // NOTE: Make it configurable if required
+            .imageType = pinfo.type, 
             .tiling = pinfo.tiling,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .usage = pinfo.usage,
             .samples = VK_SAMPLE_COUNT_1_BIT, // NOTE: Make it configurable if required
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // NOTE: Make it configurable if required 
             .mipLevels = 1, // NOTE: Make it configurable if required
+            .flags = pinfo.imageFlags
         };
 
         if(pinfo.gpuResource)
@@ -69,7 +70,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
                 .layerCount = 1,
                 .levelCount = 1
             },
-            .viewType = VK_IMAGE_VIEW_TYPE_2D // NOTE: Make it configurable if required
+            .viewType = pinfo.viewType
         };
 
         VK_CHECK(vkCreateImageView(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->view));

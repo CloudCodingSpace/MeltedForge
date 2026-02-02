@@ -17,6 +17,10 @@ typedef struct VulkanImageInfo_s {
     VkImageUsageFlagBits usage;
     VkImageAspectFlags aspectFlags;
     VkMemoryPropertyFlags memFlags;
+    u32 arrayLayers;
+    VkImageType type;
+    VkImageViewType viewType;
+    VkImageCreateFlags imageFlags;
 } VulkanImageInfo;
 
 typedef struct VulkanImage_s {

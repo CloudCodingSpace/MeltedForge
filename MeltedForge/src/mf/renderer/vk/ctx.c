@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include <string.h>
+#include <vulkan/vulkan_core.h>
 
 #include "common.h"
 #include "cmd.h"
@@ -421,7 +422,10 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .arrayLayers = 1,
+            .type = VK_IMAGE_TYPE_2D
         };
 
         VulkanImageCreate(&ctx->depthImage, info);
@@ -500,7 +504,10 @@ void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .type = VK_IMAGE_TYPE_2D,
+            .arrayLayers = 1,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D
         };
 
         VulkanImageCreate(&ctx->depthImage, info);
