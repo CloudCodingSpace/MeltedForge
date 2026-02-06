@@ -17,8 +17,8 @@ typedef struct MFAppConfig_s {
     void* state;
     b8 vsync, enableUI;
     MFWindowConfig winConfig;
-    u32 layerCount;
-    MFLayer* layers;
+    MFArray layers;
+
     void (*initApp)(void* state, struct MFAppConfig_s*);
     void (*shutdownApp)(void* state, struct MFAppConfig_s*);
     void (*runApp)(void* state, struct MFAppConfig_s*);

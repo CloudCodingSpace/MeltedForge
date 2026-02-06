@@ -5,10 +5,8 @@
 
 MFAppConfig mfClientCreateAppConfig() {
     MFAppConfig config = mfCreateDefaultApp("MFTest");
-    
-    config.layerCount = 1;
-    config.layers = MF_ALLOCMEM(MFLayer, sizeof(MFLayer) * config.layerCount);
-    config.layers[0] = (MFLayer){
+
+    MFLayer testLayer = {
         .state = MF_ALLOCMEM(MFTState, sizeof(MFTState)),
         .onInit = &MFTOnInit,
         .onDeinit = &MFTOnDeinit,
@@ -16,6 +14,11 @@ MFAppConfig mfClientCreateAppConfig() {
         .onUpdate = &MFTOnUpdate,
         .onUIRender = &MFTOnUIRender
     };
+
+    MFArray layers = mfArrayCreate(mfGetLogger(), 1, sizeof(MFLayer));
+    mfArrayAddElement(layers, MFLayer, mfGetLogger(), testLayer);
+   
+    config.layers = layers;
     config.winConfig.resizable = true;
     config.vsync = false;
     config.enableUI = true;

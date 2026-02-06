@@ -69,12 +69,11 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
 
         uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
         uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
+        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer)], &uboData);
+        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
     }
     
     for(u64 i = 0; i < mcomp->model.meshCount; i++) {
-        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer)], &uboData);
-        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
-
         state->lightData.camPos = state->camera.pos;
 
         MFViewport vp = mfRendererGetViewport(scene->renderer);

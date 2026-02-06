@@ -10,9 +10,10 @@ static void initApp(void* st, MFAppConfig* config) {
     state->renderer = MF_ALLOCMEM(MFRenderer, mfGetRendererSizeInBytes());
     mfRendererInit(state->renderer, config->name, config->vsync, config->enableUI, state->window);
 
-    for(u32 i = 0; i < config->layerCount; i++) {
-        if(config->layers[i].onInit)
-            config->layers[i].onInit(config->layers[i].state, st);
+    for(u32 i = 0; i < config->layers.len; i++) {
+        MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+        if(layer->onInit)
+            layer->onInit(layer->state, st);
     }
 }
 
@@ -20,15 +21,16 @@ static void deinitApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
     mfRendererWait(state->renderer);
 
-    for(u32 i = 0; i < config->layerCount; i++) {
-        if(config->layers[i].onDeinit)
-            config->layers[i].onDeinit(config->layers[i].state, st);
-        if(config->layers[i].state != 0)
-            MF_FREEMEM(config->layers[i].state);
+    for(u32 i = 0; i < config->layers.len; i++) {
+        MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+        if(layer->onDeinit)
+            layer->onDeinit(layer->state, st);
+        if(layer->state != 0)
+            MF_FREEMEM(layer->state);
     }
     
-    if(config->layers && config->layerCount > 0)
-        MF_FREEMEM(config->layers);
+    if(config->layers.data && config->layers.len > 0)
+        mfArrayDestroy(&config->layers, mfGetLogger());
 
     mfRendererShutdown(state->renderer);
     mfWindowDestroy(state->window);
@@ -42,17 +44,19 @@ static void runApp(void* st, MFAppConfig* config) {
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
         mfRendererBeginframe(state->renderer, state->window);
-        for(u32 i = 0; i < config->layerCount; i++) {
-            if(config->layers[i].onRender)
-                config->layers[i].onRender(config->layers[i].state, st);
-            if(config->enableUI && config->layers[i].onUIRender)
-                config->layers[i].onUIRender(config->layers[i].state, st);
+        for(u32 i = 0; i < config->layers.len; i++) {
+            MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+            if(layer->onRender)
+                layer->onRender(layer->state, st);
+            if(config->enableUI && layer->onUIRender)
+                layer->onUIRender(layer->state, st);
         }
         mfRendererEndframe(state->renderer, state->window);
 
-        for(u32 i = 0; i < config->layerCount; i++) {
-            if(config->layers[i].onUpdate)
-                config->layers[i].onUpdate(config->layers[i].state, st);
+        for(u32 i = 0; i < config->layers.len; i++) {
+            MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+            if(layer->onUpdate)
+                layer->onUpdate(layer->state, st);
         }
         mfWindowUpdate(state->window);
     }

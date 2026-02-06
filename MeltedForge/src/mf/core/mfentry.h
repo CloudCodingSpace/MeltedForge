@@ -5,11 +5,12 @@
 MFAppConfig mfClientCreateAppConfig();
 
 int main(int argc, const char** argv) {
-    MFAppConfig config = mfClientCreateAppConfig();
     MFContext* context = MF_ALLOCMEM(MFContext, mfGetContextSizeInBytes());
-
+    
     mfSetCurrentContext(context);
     mfInit();
+    
+    MFAppConfig config = mfClientCreateAppConfig();
     
     if(config.initApp)
         config.initApp(config.state, &config);
