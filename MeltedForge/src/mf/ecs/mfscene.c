@@ -84,10 +84,12 @@ const MFEntity* mfSceneCreateEntity(MFScene* scene) {
     return e;
 }
 
-void mfSceneDeleteEntity(MFScene* scene, MFEntity* e) {
+void mfSceneDeleteEntity(MFScene* scene, u32 id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(e == mfnull, mfGetLogger(), "The entity handle shouldn't be null!"); 
+    MF_PANIC_IF((id < 0) || (id >= scene->entities.len), mfGetLogger(), "The entity id should be valid!"); 
 
+    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, id);
+    MF_PANIC_IF((e->id != id), mfGetLogger(), "The entity id should be valid!"); 
     if(e->ownerScene != scene) {
         slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
