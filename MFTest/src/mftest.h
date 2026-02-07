@@ -4,8 +4,6 @@
 
 #include <stb/stb_image.h>
 
-#include "vertex.h"
-
 typedef struct UBOData_s {
     MFMat4 proj;
     MFMat4 view;

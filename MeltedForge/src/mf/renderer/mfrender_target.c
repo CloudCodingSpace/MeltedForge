@@ -218,10 +218,6 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
         }
     }
 
-    if(rt->resizeCallback != mfnull) {
-        rt->resizeCallback(rt->userData);
-    }
-
     // Transitioning the images explicitly
     {
         VkCommandBuffer cmd = rt->buffs[0];
@@ -293,6 +289,10 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
         }; 
 
         vkCmdBeginRenderPass(rt->buffs[rt->backend->crntFrmIdx], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    }
+
+    if(rt->resizeCallback != mfnull) {
+        rt->resizeCallback(rt->userData);
     }
 }
 
