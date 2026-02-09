@@ -3,6 +3,8 @@ project(mf C CXX)
 
 cmake_policy(SET CMP0069 NEW)
 
+set(SLOG_BUILD_TEST OFF CACHE BOOL "" FORCE)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -47,7 +49,7 @@ target_sources(cimgui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/cimgui/imgui/imgui_tables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/cimgui/imgui/backends/imgui_impl_vulkan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/cimgui/imgui/backends/imgui_impl_glfw.cpp
-    )
+)
 
 target_include_directories(cimgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libs/cimgui)
 target_include_directories(cimgui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/cimgui/imgui)
@@ -72,9 +74,18 @@ function(EnableFlags target)
         )
     endif()
 
-    target_compile_definitions(${target} PRIVATE
-        $<$<CONFIG:Debug>:_DEBUG>
-        $<$<CONFIG:Release>:NDEBUG>
+    if(WIN32)
+        set(MF_PLATFORM "MF_PLATFORM_WINDOWS")
+    elseif(APPLE)
+        set(MF_PLATFORM "MF_PLATFORM_MAC")
+    elseif(UNIX AND NOT APPLE)
+        set(MF_PLATFORM "MF_PLATFORM_LINUX")
+    endif()
+
+    target_compile_definitions(${target} PUBLIC
+        $<$<CONFIG:Debug>:_DEBUG;MF_DEBUG>
+        $<$<CONFIG:Release>:NDEBUG;MF_NDEBUG>
+        ${MF_PLATFORM}
     )
 endfunction()
 
