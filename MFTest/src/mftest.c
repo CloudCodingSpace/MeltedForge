@@ -1,5 +1,6 @@
 #include "mftest.h"
 #include "cimgui.h"
+#include "core/mfmaths.h"
 #include "ecs/mfscene.h"
 #include "renderer/mfrenderer.h"
 #include "slog/slog.h"
@@ -271,17 +272,11 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
 
-        float posData[3] = {
-            state->lightData.lightPos.x,
-            state->lightData.lightPos.y,
-            state->lightData.lightPos.z
-        };
+        float posData[3] = {0};
+        mfCopyVec3ToFloatArr(posData, state->lightData.lightPos);
 
-        float colorData[3] = {
-            state->lightData.lightColor.x,
-            state->lightData.lightColor.y,
-            state->lightData.lightColor.z
-        };
+        float colorData[3] = {0};
+        mfCopyVec3ToFloatArr(colorData, state->lightData.lightColor);
 
         igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
         igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
@@ -289,13 +284,8 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igDragFloat("lightIntensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
         igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-        state->lightData.lightPos.x = posData[0];
-        state->lightData.lightPos.y = posData[1];
-        state->lightData.lightPos.z = posData[2];
-
-        state->lightData.lightColor.x = colorData[0];
-        state->lightData.lightColor.y = colorData[1];
-        state->lightData.lightColor.z = colorData[2];
+        state->lightData.lightPos = mfCopyFloatArrToVec3(posData);
+        state->lightData.lightColor = mfCopyFloatArrToVec3(colorData);
 
         igEnd();
     }

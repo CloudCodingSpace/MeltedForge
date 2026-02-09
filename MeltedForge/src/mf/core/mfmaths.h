@@ -676,3 +676,40 @@ MF_INLINE MFMat4 mfMat4Transpose(MFMat4 mat) {
 
     return result;
 }
+
+/*   Utils   */
+MF_INLINE void mfCopyVec2ToFloatArr(f32* out, MFVec2 v) {
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    out[0] = v.x;
+    out[1] = v.y;
+}
+
+MF_INLINE MFVec2 mfCopyFloatArrToVec2(f32* in) {
+    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    return mfVec2Create(in[0], in[1]);
+}
+
+MF_INLINE void mfCopyVec3ToFloatArr(f32* out, MFVec3 v) {
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    out[0] = v.x;
+    out[1] = v.y;
+    out[2] = v.z;
+}
+
+MF_INLINE MFVec3 mfCopyFloatArrToVec3(f32* in) {
+    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    return mfVec3Create(in[0], in[1], in[2]);
+}
+
+MF_INLINE void mfCopyVec4ToFloatArr(f32* out, MFVec4 v) {
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    out[0] = v.x;
+    out[1] = v.y;
+    out[2] = v.z;
+    out[3] = v.w;
+}
+
+MF_INLINE MFVec4 mfCopyFloatArrToVec4(f32* in) {
+    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    return mfVec4Create(in[0], in[1], in[2], in[3]);
+}
