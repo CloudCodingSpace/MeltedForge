@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/mfcore.h"
 #include "core/mfutils.h"
 
 #include "mfserializerutils.h"
@@ -11,7 +10,7 @@ typedef struct MFSerializer_s {
     u64 offset;
 } MFSerializer;
 
-void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize);
+void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize, b8 deserializer);
 void mfSerializerDestroy(MFSerializer* serializer);
 void mfSerializerRewind(MFSerializer* serializer);
 

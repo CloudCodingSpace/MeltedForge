@@ -1,12 +1,25 @@
 #include "mfserializer.h"
+#include "core/mfutils.h"
+#include "core/mfcore.h"
 #include "slog/slog.h"
 
-void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize) {
+void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize, b8 deserializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(bufferSize == 0, mfGetLogger(), "The serializer's bufferSize provided shouldn't be 0!");
-    
-    serializer->bufferSize = bufferSize + (sizeof(u32) * 2); //* NOTE: FOR THE 2 SIGNATURES
+   
+    serializer->bufferSize = bufferSize;
     serializer->offset = 0;
+    if(deserializer) {
+        MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The deserializer's buffer shoudln't be null!");
+        MF_PANIC_IF((!mfSerializerIfValid(serializer)) || (!mfSerializerIfSameVersion(serializer)), mfGetLogger(), 
+        "The deserializer isn't valid! (Maybe the version is different or it is not exported by MeltedForge)");
+    
+        serializer->offset = sizeof(u32) * 2;
+        return;
+    }
+
+    serializer->bufferSize = bufferSize + (sizeof(u32) * 2); //* NOTE: FOR THE 2 SIGNATURES
+
     serializer->buffer = MF_ALLOCMEM(u8, serializer->bufferSize);
 
     //Serializing the header & version
@@ -127,11 +140,6 @@ void mfSerializeI32(MFSerializer* serializer, i32 value) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_PANIC_IF((serializer->offset + sizeof(i32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
-
-    MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
-        return;
-    });
 
     memcpy(serializer->buffer + serializer->offset, &value, sizeof(i32));
     serializer->offset += sizeof(i32);

@@ -226,7 +226,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     }
 
     MFSerializer s = {};
-    mfSerializerCreate(&s, size);
+    mfSerializerCreate(&s, size, false);
 
     mfSerializeU32(&s, MF_SIGNATURE_SCENE_FILE);
 
@@ -311,10 +311,9 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     }
 
     MFSerializer s = {
-        .offset = sizeof(u32) * 2,
         .buffer = content,
-        .bufferSize = fileSize
     };
+    mfSerializerCreate(&s, fileSize, true);
 
     u32 sign = mfDeserializeU32(&s);
     if(sign != MF_SIGNATURE_SCENE_FILE) {
