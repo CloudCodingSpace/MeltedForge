@@ -84,5 +84,5 @@ cmake --build <path-to-build-dir> --parallel
 > **Note:** The documentation is currently a work in progress. The github repo is [here](https://github.com/CloudCodingSpace/MFDocs).
 
 The deployed url for the docs is [here](https://cloudcodingspace.github.io/MFDocs).
-It would be great if it would be pointed out for any grammartical or any suggestions spotted. If so, then
+It would be great if it would be pointed out for any grammartical errors or any suggestions spotted. If so, then
 it would be much appreciated if a pull request is opened in the documentation's repo.
