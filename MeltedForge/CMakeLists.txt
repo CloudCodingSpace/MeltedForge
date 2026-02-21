@@ -61,34 +61,6 @@ target_compile_definitions(cimgui PUBLIC "CIMGUI_NO_EXPORT")
 target_compile_definitions(cimgui PUBLIC "IMGUI_IMPL_API=extern \"C\"")
 target_link_libraries(cimgui PRIVATE glfw Vulkan::Vulkan)
 
-function(EnableFlags target)
-    if(MSVC)
-        target_compile_options(${target} PRIVATE
-            $<$<CONFIG:Debug>:/Zi>
-            $<$<CONFIG:Release>:/O2>
-        )
-    else()
-        target_compile_options(${target} PRIVATE
-            $<$<CONFIG:Debug>:-g>
-            $<$<CONFIG:Release>:-O3>
-        )
-    endif()
-
-    if(WIN32)
-        set(MF_PLATFORM "MF_PLATFORM_WINDOWS")
-    elseif(APPLE)
-        set(MF_PLATFORM "MF_PLATFORM_MAC")
-    elseif(UNIX AND NOT APPLE)
-        set(MF_PLATFORM "MF_PLATFORM_LINUX")
-    endif()
-
-    target_compile_definitions(${target} PUBLIC
-        $<$<CONFIG:Debug>:_DEBUG;MF_DEBUG>
-        $<$<CONFIG:Release>:NDEBUG;MF_NDEBUG>
-        ${MF_PLATFORM}
-    )
-endfunction()
-
 add_library(mf ${SRCS})
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
