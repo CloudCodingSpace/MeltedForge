@@ -31,12 +31,6 @@ add_subdirectory(libs/assimp)
 
 find_package(Vulkan REQUIRED)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_compile_definitions(_DEBUG)
-else()
-  add_compile_definitions(NDEBUG)
-endif()
-
 #cimgui
 add_library(cimgui STATIC)
 target_sources(cimgui PRIVATE
