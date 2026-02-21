@@ -64,8 +64,6 @@ cmake -S . -B <path-to-build-dir>
 cmake --build <path-to-build-dir> --parallel
 ```
 
-> **Note:** Before running the executable of the MFTest, make sure that the shaders are compiled. Helper scripts to compile shaders on Window are in the scripts folder.
-
 ---
 
 ## Technical Details (For developers and nerds)
