@@ -9,12 +9,15 @@ typedef struct MFEntity_s {
     u32 id;
     u32 compGrpId;
     u32 components;
+    bool valid;
 } MFEntity;
 
 MF_INLINE b8 mfEntityHasMeshComponent(const MFEntity* entity) {
+    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity provided shouldn't be null!");
     return (((entity->components & MF_COMPONENT_TYPE_MESH) == MF_COMPONENT_TYPE_MESH) ? true : false);
 }
 
 MF_INLINE b8 mfEntityHasTransformComponent(const MFEntity* entity) {
+    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity provided shouldn't be null!");
     return (((entity->components & MF_COMPONENT_TYPE_TRANSFORM) == MF_COMPONENT_TYPE_TRANSFORM) ? true : false);
 }
