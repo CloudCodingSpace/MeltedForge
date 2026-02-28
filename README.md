@@ -51,6 +51,13 @@
 
 ---
 
+## Roadmap
+
+There is a public read-only roadmap of this engine.
+It is hosted on trello. It can be found [here](https://trello.com/b/Zt1Azhtg/meltedforge)
+
+---
+
 ## Dependencies
 
 > **Note:** The following are the **important conditions** met by the PC for **building/running** MeltedForge
