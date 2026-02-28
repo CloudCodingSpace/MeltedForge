@@ -9,14 +9,33 @@
 ---
 
 ## Features
+
 - Model loading along with the material data
-- Entity Component System (ECS)
 - Engine & editor level UI
 - UI customization
-- Rendering multiple entities
 - Render targets (Ability to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport)
-- Binary serialization & deserialization
-- WIP Material system
+- A binary serialization/deserialization api
+
+---
+
+## WIP (Work In Progress)
+
+- Material system
+- Entity Component System (ECS)
+- Loading complex model scenes
+- Documentation
+- Shader resource management like UBOs and textures
+
+---
+
+## Reasons for starting
+
+- Partly curiosity.
+- To showcase what **C** can really do in game dev
+- Beginner-friendly setup and usage
+- Low-end devices friendly (hopefully)
+- To serve as a helpful learning resource for both me (@CloudCodingSpace) and other devs
+- To gain experience in low-level game related systems 
 
 ---
 
@@ -27,9 +46,6 @@
 - Sound system support
 - Animation system
 - Flexible and modular
-- Built to showcase what **C** can really do in game dev
-- Low-end spec friendly (hopefully)
-- Beginner-friendly setup and usage
 - Multithreading
 - Async model loading
 
@@ -67,13 +83,13 @@ cmake --build <path-to-build-dir> --parallel
 ---
 
 ## Technical Details (For developers and nerds)
- - This engine is mostly using C. But there *is* some usage of other languages like C++ since
+- This engine is mostly using C. But there *is* some usage of other languages like C++ since
     3rd party vendors like Dear ImGui and Assimp use it.
- - Currently supports compilers like GCC, G++ and MSVC.
- - Aims at having support for Clang & Clang++, but currently it is not tested and 
+- Currently supports compilers like GCC, G++ and MSVC.
+- Aims at having support for Clang & Clang++, but currently it is not tested and 
     does not have support.
- - Currently tested in and developed on Windows with MSVC and GCC/G++
- - Linux isn't tested yet.
+- Currently tested in and developed on Windows with MSVC and GCC/G++
+- Linux isn't tested yet.
 
  ---
 
