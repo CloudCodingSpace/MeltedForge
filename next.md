@@ -1,7 +1,6 @@
 # For devs
 Stuff to do next (Only next tiny steps to do!) :-
 
- - use the latest version of slog
  - remove any unnecessary vulkan code from the renderer frontend
  - plan on removing stuffs like mfmesh, mfmodel from the renderer, cuz the renderer should only render.
  - refactor the ecs

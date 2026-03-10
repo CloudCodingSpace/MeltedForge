@@ -15,11 +15,6 @@ struct MFContext_s {
 
 static MFContext* ctx = mfnull;
 
-void log_fatal(const char* msg) {
-    slogLogConsole(&ctx->logger, SLOG_SEVERITY_FATAL, msg);
-    abort();
-}
-
 void mfInit(void) {
     if(ctx == mfnull) {
         printf("[MeltedForge]: The current context shouldn't be null!");
@@ -27,12 +22,11 @@ void mfInit(void) {
     }
     
     if(ctx->init) {
-        slogLogConsole(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!");
+        slogLogMsg(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!");
         return;
     }
     
-    slogLoggerReset(&ctx->logger);
-    slogLoggerSetName(&ctx->logger, "MeltedForge");
+    slogLoggerCreate(&ctx->logger, "MeltedForge", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE); // TODOD: Make the features configurable!!
     
     ctx->init = true;
 }
@@ -47,6 +41,8 @@ void mfShutdown(void) {
         printf("[MeltedForge]: The current context is not yet initialized!");
         abort();
     }
+
+    slogLoggerDestroy(&ctx->logger);
 
     ctx->init = false;
     glfwTerminate();

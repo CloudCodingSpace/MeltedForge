@@ -5,7 +5,7 @@
 #include "slog/slog.h"
 #include "util.h"
 
-#define INFO(logger, msg, ...) slogLogConsole(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
+#define INFO(logger, msg, ...) slogLogMsg(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
 
 static void CreatePipeline(MFTState* state) {
     u32 attribCount = 0, bindingCount = 1;
@@ -90,7 +90,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
    
-    slogLoggerReset(&state->logger);
+    slogLoggerCreate(&state->logger, "MFTest", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE);
     slogLoggerSetName(&state->logger, "MFTest");
     INFO(&state->logger, "MFTest init");
 
@@ -198,7 +198,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     
     INFO(&state->logger, "MFTest deinit");
-    slogLoggerReset(&state->logger);
+    slogLoggerDestroy(&state->logger);
 
     mfSceneSerialize(&state->scene, "./mftscene.bin");
 

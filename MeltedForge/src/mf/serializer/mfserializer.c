@@ -86,7 +86,7 @@ void mfSerializeI8(MFSerializer* serializer, i8 value) {
     MF_PANIC_IF((serializer->offset + sizeof(i8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -100,7 +100,7 @@ void mfSerializeU8(MFSerializer* serializer, u8 value) {
     MF_PANIC_IF((serializer->offset + sizeof(u8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
     
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -114,7 +114,7 @@ void mfSerializeI16(MFSerializer* serializer, i16 value) {
     MF_PANIC_IF((serializer->offset + sizeof(i16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((mfSerializerIfValid(serializer) && mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -128,7 +128,7 @@ void mfSerializeU16(MFSerializer* serializer, u16 value) {
     MF_PANIC_IF((serializer->offset + sizeof(u16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -151,7 +151,7 @@ void mfSerializeU32(MFSerializer* serializer, u32 value) {
     MF_PANIC_IF((serializer->offset + sizeof(u32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -165,7 +165,7 @@ void mfSerializeI64(MFSerializer* serializer, i64 value) {
     MF_PANIC_IF((serializer->offset + sizeof(i64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -179,7 +179,7 @@ void mfSerializeU64(MFSerializer* serializer, u64 value) {
     MF_PANIC_IF((serializer->offset + sizeof(u64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
 
@@ -193,7 +193,7 @@ void mfSerializeF32(MFSerializer* serializer, f32 value) {
     MF_PANIC_IF((serializer->offset + sizeof(f32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
  
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
    
@@ -207,7 +207,7 @@ void mfSerializeF64(MFSerializer* serializer, f64 value) {
     MF_PANIC_IF((serializer->offset + sizeof(f64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
  
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
   
@@ -225,7 +225,7 @@ void mfSerializeChar(MFSerializer* serializer, char value) {
     MF_PANIC_IF((serializer->offset + sizeof(char)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });
     
@@ -238,7 +238,7 @@ void mfSerializeString(MFSerializer* serializer, const char* value) {
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't serialize data since the output buffer isn't supported by the current serializing api! (Maybe the version is different, or any other issue!)\n");
         return;
     });   
 
@@ -258,7 +258,7 @@ i8 mfDeserializeI8(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(i8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
     
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the output buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the output buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -274,7 +274,7 @@ u8 mfDeserializeU8(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(u8)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
      
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
    
@@ -290,7 +290,7 @@ i16 mfDeserializeI16(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(i16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
     
@@ -306,7 +306,7 @@ u16 mfDeserializeU16(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(u16)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
 
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -322,7 +322,7 @@ i32 mfDeserializeI32(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(i32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
  
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -338,7 +338,7 @@ u32 mfDeserializeU32(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(u32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     }); 
 
@@ -354,7 +354,7 @@ i64 mfDeserializeI64(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(i64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -370,7 +370,7 @@ u64 mfDeserializeU64(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(u64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -386,7 +386,7 @@ f32 mfDeserializeF32(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(f32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -402,7 +402,7 @@ f64 mfDeserializeF64(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(f64)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return 0;
     });
 
@@ -422,7 +422,7 @@ char mfDeserializeChar(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(char)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return '\0';
     });
 
@@ -439,7 +439,7 @@ char* mfDeserializeString(MFSerializer* serializer) {
     MF_PANIC_IF((serializer->offset + sizeof(u32)) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
    
     MF_DO_IF((!mfSerializerIfValid(serializer)) && (!mfSerializerIfSameVersion(serializer)), {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't deserialize data since the input buffer isn't supported by the current deserializing api! (Maybe the version is different, or any other issue!)\n");
         return "\0";
     });
 

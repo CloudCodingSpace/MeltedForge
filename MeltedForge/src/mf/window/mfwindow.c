@@ -180,7 +180,7 @@ void mfSetWindowTitle(MFWindow* window, const char* title) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle should be initialized!");
     }
     if(title == mfnull) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The title that is to be set shouldn't be null!");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The title that is to be set shouldn't be null!");
         return;
     }
 

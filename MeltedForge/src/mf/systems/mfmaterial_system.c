@@ -11,8 +11,8 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
     u8* pixels = stbi_load(path, &width, &height, &channels, 4);
     if (!pixels) {
         const char* msg = mfStringConcatenate(mfGetLogger(), stbi_failure_reason(), "\n");
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_ERROR, msg);
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- \n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, msg);
         MF_FREEMEM(msg);
 
         pixels = blackColor;

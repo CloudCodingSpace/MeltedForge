@@ -89,7 +89,7 @@ void mfSceneDeleteEntity(MFScene* scene, u32 id) {
     MFEntity* e = &mfArrayGet(scene->entities, MFEntity, id);
     MF_PANIC_IF((e->id != id), mfGetLogger(), "The entity id should be valid!"); 
     if(e->ownerScene != scene) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
     }
 
@@ -134,7 +134,7 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u32 id, MFMeshComponent comp)
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
     
     if(entity->ownerScene != scene) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
     }
     
@@ -161,7 +161,7 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u32 id, MFTransformCompo
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
     }
 
@@ -184,7 +184,7 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u32 id) {
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return mfnull;
     }
 
@@ -204,7 +204,7 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u32 id)
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
-        slogLogConsole(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return mfnull;
     }
 
