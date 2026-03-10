@@ -9,7 +9,6 @@
 #include "vk/renderpass.h"
 #include "vk/cmd.h"
 
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
@@ -386,6 +385,6 @@ void* mfRenderTargetGetHandle(MFRenderTarget* rt) {
     return rt->descs[rt->backend->crntFrmIdx];
 }
 
-size_t mfGetRenderTargetSizeInBytes() {
+size_t mfGetRenderTargetSizeInBytes(void) {
     return sizeof(MFRenderTarget);
 }

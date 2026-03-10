@@ -75,7 +75,7 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
     return &buffer->config;
 }
 
-size_t mfGpuBufferGetSizeInBytes() {
+size_t mfGpuBufferGetSizeInBytes(void) {
     return sizeof(MFGpuBuffer);
 }
 

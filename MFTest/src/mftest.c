@@ -1,5 +1,4 @@
 #include "mftest.h"
-#include "cimgui.h"
 #include "core/mfmaths.h"
 #include "ecs/mfscene.h"
 #include "renderer/mfrenderer.h"
@@ -7,8 +6,6 @@
 #include "util.h"
 
 #define INFO(logger, msg, ...) slogLogConsole(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
-
-#pragma region PipelineFuncs
 
 static void CreatePipeline(MFTState* state) {
     u32 attribCount = 0, bindingCount = 1;
@@ -48,8 +45,6 @@ static void ResizeCallback(void* pstate) {
     // Updating the viewport size but not really necessary! This callback is only for demonstration!
     mfPipelineBind(state->pipeline, mfRendererGetViewport(state->renderer), mfRendererGetScissor(state->renderer));
 }
-
-#pragma endregion
 
 static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     MFTState* state = (MFTState*)pstate;

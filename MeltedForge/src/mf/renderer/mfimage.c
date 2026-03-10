@@ -83,7 +83,7 @@ const MFGpuImageConfig* mfGetGpuImageConfig(MFGpuImage* image) {
     return &image->config;
 }
 
-size_t mfGetGpuImageSizeInBytes() {
+size_t mfGetGpuImageSizeInBytes(void) {
     return sizeof(MFGpuImage);
 }
 

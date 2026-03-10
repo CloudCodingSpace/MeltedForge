@@ -233,6 +233,6 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     VulkanPipelineBind(&pipeline->pipeline, v, s, buff);
 }
 
-size_t mfPipelineGetSizeInBytes() {
+size_t mfPipelineGetSizeInBytes(void) {
     return sizeof(MFPipeline);
 }

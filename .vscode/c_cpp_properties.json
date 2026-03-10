@@ -3,14 +3,18 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/MeltedForge/libs",
                 "${workspaceFolder}/MeltedForge/libs/GLFW/include",
                 "${workspaceFolder}/MeltedForge/libs/slog",
+                "${workspaceFolder}/MeltedForge/libs/stb/include",
+                "${workspaceFolder}/MeltedForge/libs/assimp/include",
+                "${workspaceFolder}/MeltedForge/libs/cimgui",
                 "${workspaceFolder}/MeltedForge/src",
-                "${VULKAN_SDK}/Include",
-                "${workspaceFolder}/MeltedForge/src/mf"
+                "${workspaceFolder}/MeltedForge/src/mf",
+                "${VULKAN_SDK}/Include"
             ],
             "defines": [
+                "MF_DEBUG",
+                "MF_PLATFORM_WINDOWS",
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"

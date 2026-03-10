@@ -14,6 +14,8 @@ endif()
 file(GLOB_RECURSE SHADERS_VERT CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert")
 file(GLOB_RECURSE SHADERS_FRAG CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag")
 
+
+set(SPIRV_SHADERS "")
 foreach(SHADER ${SHADERS_VERT})
     CompileShader(${SHADER} -I${CMAKE_CURRENT_SOURCE_DIR}/../MeltedForge/mfassets/shaders)
 endforeach()

@@ -61,7 +61,7 @@ void mfSetCurrentContext(MFContext* ctx_) {
     ctx = ctx_;
 }
 
-MFContext* mfCheckCurrentContext(void) {
+MFContext* mfGetCurrentContext(void) {
     if(ctx == mfnull) {
         printf("[MeltedForge]: The current context is null as it is not set!");
         abort();

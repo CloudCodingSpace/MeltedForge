@@ -13,4 +13,4 @@ void mfTimerStart(MFTimer* timer);
 void mfTimerEnd(MFTimer* timer);
 void mfTimerReset(MFTimer* timer);
 
-f64 mfGetCurrentTime();
+f64 mfGetCurrentTime(void);

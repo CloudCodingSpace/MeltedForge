@@ -46,6 +46,6 @@ void mfTimerReset(MFTimer* timer) {
     timer->started = false;
 }
 
-f64 mfGetCurrentTime() {
+f64 mfGetCurrentTime(void) {
     return glfwGetTime();
 }

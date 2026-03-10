@@ -25,11 +25,10 @@
     #include "mf/core/mfentry.h"
 #endif
 
-#include "mf/systems/material_system.h"
+#include "mf/systems/mfmaterial_system.h"
 
 #include "mf/serializer/mfserializerutils.h"
 #include "mf/serializer/mfserializer.h"
 
 // UI
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>

@@ -56,6 +56,7 @@ target_compile_definitions(cimgui PUBLIC "IMGUI_IMPL_API=extern \"C\"")
 target_link_libraries(cimgui PRIVATE glfw Vulkan::Vulkan)
 
 add_library(mf ${SRCS})
+target_compile_definitions(mf PUBLIC "CIMGUI_DEFINE_ENUMS_AND_STRUCTS")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
 target_link_libraries(mf PUBLIC stb slog cimgui assimp)

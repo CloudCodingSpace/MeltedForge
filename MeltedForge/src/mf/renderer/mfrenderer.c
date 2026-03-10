@@ -146,10 +146,10 @@ f64 mfGetRendererGetFrameTime(MFRenderer* renderer) {
     return renderer->frameTimer.delta;
 }
 
-u8 mfGetRendererFramesInFlight() {
+u8 mfGetRendererFramesInFlight(void) {
     return FRAMES_IN_FLIGHT;
 }
 
-size_t mfGetRendererSizeInBytes() {
+size_t mfGetRendererSizeInBytes(void) {
     return sizeof(MFRenderer);
 }

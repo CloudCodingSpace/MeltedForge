@@ -9,7 +9,7 @@ void mfInit(void);
 void mfShutdown(void);
 
 void mfSetCurrentContext(MFContext* ctx);
-MFContext* mfCheckCurrentContext(void);
+MFContext* mfGetCurrentContext(void);
 
 size_t mfGetContextSizeInBytes(void);
 SLogger* mfGetLogger(void);
