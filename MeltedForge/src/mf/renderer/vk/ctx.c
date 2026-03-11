@@ -319,9 +319,17 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     // Physical Device 
     {
         u32 deviceCount = 0;
-        VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &deviceCount, mfnull));
+        VkResult result = vkEnumeratePhysicalDevices(ctx->instance, &deviceCount, mfnull);
+        if(result != VK_SUCCESS && result != VK_INCOMPLETE) {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_FATAL, "(From vulkan renderer backend) VkResult is %s (line: %d, function: %s, fileName: %s)", string_VkResult(result), __LINE__, __func__, __FILE__);
+            abort();
+        }
         VkPhysicalDevice* devices = MF_ALLOCMEM(VkPhysicalDevice, sizeof(VkPhysicalDevice) * deviceCount);
-        VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &deviceCount, devices));
+        result = vkEnumeratePhysicalDevices(ctx->instance, &deviceCount, devices);
+        if(result != VK_SUCCESS && result != VK_INCOMPLETE) {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_FATAL, "(From vulkan renderer backend) VkResult is %s (line: %d, function: %s, fileName: %s)", string_VkResult(result), __LINE__, __func__, __FILE__);
+            abort();
+        }
 
         // TODO: Select the most capable physical device if there are more than one
         for(u32 i = 0; i < deviceCount; i++) {
