@@ -8,6 +8,8 @@
 
 #include <slog/slog.h>
 
+#pragma region defines
+
 #define mfnull 0
 
 #ifndef true
@@ -58,6 +60,10 @@ typedef int16_t i16;
 typedef uint16_t u16;
 typedef uint8_t b8;
 
+#pragma endregion
+
+#pragma region file_funcs
+
 // @note The returned const char* must be freed since it is allocated on the heap
 MF_INLINE char* mfReadFile(SLogger* logger, u64* size, const char* path, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
@@ -93,6 +99,10 @@ MF_INLINE void mfWriteFile(SLogger* logger, u64 size, const char* path, const ch
 
     fclose(file);
 }
+
+#pragma endregion
+
+#pragma region string_funcs
 
 MF_INLINE u32 mfStringLen(SLogger* logger, const char* a) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided to find the length shouldn't be null!");
@@ -130,10 +140,10 @@ MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const 
 MF_INLINE const char* mfStringDuplicate(SLogger* logger, const char* a) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
 
-    i32 len = mfStringLen(logger, a);
+    i32 len = mfStringLen(logger, a) + 1;
     char* str = MF_ALLOCMEM(char, sizeof(char) * len);
     memcpy(str, a, sizeof(char) * len);
-    str[len] = '\0';
+    str[len-1] = '\0';
 
     return str;
 }
@@ -169,17 +179,23 @@ MF_INLINE b8 mfStringEndsWith(SLogger* logger, const char* a, const char* b) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
     MF_PANIC_IF(b == mfnull, logger, "The string provided shouldn't be null!");
 
-    if(mfStringLen(logger, a) < mfStringLen(logger, b))
+    u32 lena = mfStringLen(logger, a);
+    u32 lenb = mfStringLen(logger, b);
+    if(lena < lenb)
         return false;
 
-    for(int i = 0; i < strlen(b); i++) {
-        int j = mfStringLen(logger, a) - mfStringLen(logger, b) + i;
+    for(int i = 0; i < lenb; i++) {
+        int j = lena - lenb + i;
         if(a[j] != b[i])
             return false;
     }
 
     return true;
 }
+
+#pragma endregion
+
+#pragma region mfarray
 
 typedef struct MFArray_s {
     u64 len;
@@ -214,21 +230,21 @@ MF_INLINE void mfArrayDestroy(MFArray* array, SLogger* logger) {
 
 MF_INLINE void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger) {
     MF_PANIC_IF(array == mfnull, logger, "The array provided shouldn't be 0!");
-
+    
     if (newCapacity == 0) {
         MF_FATAL_ABORT(logger, "New capacity cannot be zero!");
     }
-
+    
     if (newCapacity <= array->capacity)
         return;
-
+    
     void* newData = realloc(array->data, array->elementSize * newCapacity);
     if (!newData) {
-        MF_FATAL_ABORT(logger, "Failed to allocate memory for array resize!");
+        MF_FATAL_ABORT(logger, "Failed to reallocate memory for array resize!");
     }
-
+    
     memset((u8*)newData + (array->elementSize * array->capacity), 0, (newCapacity - array->capacity) * array->elementSize);
-
+    
     array->data = newData;
     array->capacity = newCapacity;
 }
@@ -244,3 +260,6 @@ MF_INLINE void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger) {
         memcpy(&mfArrayGet((arr), type, (arr).len), &tmp, sizeof(type)); \
         (arr).len++; \
     } while(0)
+
+
+#pragma endregion
