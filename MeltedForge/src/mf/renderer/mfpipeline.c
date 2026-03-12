@@ -162,28 +162,46 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
                 .pImageInfo = &imgInfos[i]
             };
         }
-        for(u32 i = info->imgCount; i < count; i++) {
-            u32 j = i - info->imgCount;
-            buffInfos[j] = (VkDescriptorBufferInfo){
-                .buffer = mfGetGpuBufferBackend(info->buffers[j])->handle,
-                .offset = 0,
-                .range = mfGetGpuBufferBackend(info->buffers[j])->size
-            };
-            writes[i] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .dstBinding = resourceDescs[i].binding,
-                .dstArrayElement = 0,
-                .pBufferInfo = &buffInfos[j]
-            };
-        }
+        
+        for (u32 frame = 0; frame < FRAMES_IN_FLIGHT; frame++) {
+            u32 writeIdx = 0;
 
-        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            for(u32 j = 0; j < count; j++) {
-                writes[j].dstSet = pipeline->descSet[i];
+            // Images
+            for (u32 i = 0; i < info->imgCount; i++) {
+                writes[writeIdx] = (VkWriteDescriptorSet){
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .dstSet = pipeline->descSet[frame],
+                    .dstBinding = resourceDescs[i].binding,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    .descriptorCount = 1,
+                    .pImageInfo = &imgInfos[i]
+                };
+                writeIdx++;
             }
-            vkUpdateDescriptorSets(pipeline->ctx->device, count, writes, 0, NULL);
+
+            // Buffers
+            for (u32 i = 0; i < info->buffCount; i++) {
+                VulkanBuffer* backend = mfGetGpuBufferBackend(info->buffers[i]);
+
+                buffInfos[i] = (VkDescriptorBufferInfo){
+                    .buffer = backend[frame].handle,
+                    .offset = 0,
+                    .range = backend[frame].size
+                };
+
+                writes[writeIdx] = (VkWriteDescriptorSet){
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .dstSet = pipeline->descSet[frame],
+                    .dstBinding = resourceDescs[info->imgCount + i].binding,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .descriptorCount = 1,
+                    .pBufferInfo = &buffInfos[i]
+                };
+
+                writeIdx++;
+            }
+
+            vkUpdateDescriptorSets(pipeline->ctx->device, writeIdx, writes, 0, NULL);
         }
 
         MF_FREEMEM(writes);

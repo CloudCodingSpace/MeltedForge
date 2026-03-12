@@ -8,7 +8,7 @@
 struct MFGpuBuffer_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
-    VulkanBuffer buffer;
+    VulkanBuffer buffer[FRAMES_IN_FLIGHT];
     MFGpuBufferConfig config;
 };
 
@@ -24,14 +24,17 @@ void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRender
     if(config.size == 0)
         return;
     else {
-        VulkanBufferAllocate(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
+        for(u32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+            VulkanBufferAllocate(&buffer->buffer[i], buffer->ctx, buffer->ctx->cmdPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
     }
 }
 
 void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     
-    VulkanBufferFree(&buffer->buffer, buffer->ctx);
+    
+    for(u32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanBufferFree(&buffer->buffer[i], buffer->ctx);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
 }
@@ -40,19 +43,24 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
 
-    VulkanBufferUploadData(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, data);
+    u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? buffer->backend->crntFrmIdx : 0;
+    VulkanBufferUploadData(&buffer->buffer[idx], buffer->ctx, buffer->ctx->cmdPool, data);
 }
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
     buffer->config.size = size;
-    
-    VulkanBufferResize(&buffer->buffer, buffer->ctx, buffer->ctx->cmdPool, size, data);
+
+    for(u32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanBufferResize(&buffer->buffer[i], buffer->ctx, buffer->ctx->cmdPool, size, data);
 }
 
 void mfGpuBufferBind(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+
+    if(buffer->config.type == MF_GPU_BUFFER_TYPE_UBO)
+        return;
 
     VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->crntFrmIdx];
     if(buffer->backend->rt != mfnull) {
@@ -62,10 +70,10 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {
         VkDeviceSize offsets[] = { 0 }; // NOTE: Make it configurable if necessary
 
-        vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer.handle, offsets);
+        vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer[0].handle, offsets);
     }
     else if (buffer->config.type == MF_GPU_BUFFER_TYPE_INDEX) {
-        vkCmdBindIndexBuffer(buff, buffer->buffer.handle, 0, VK_INDEX_TYPE_UINT32); // NOTE: Make the offset configurable if necessary
+        vkCmdBindIndexBuffer(buff, buffer->buffer[0].handle, 0, VK_INDEX_TYPE_UINT32); // NOTE: Make the offset configurable if necessary
     }
 }
 
@@ -75,7 +83,7 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
     return &buffer->config;
 }
 
-size_t mfGpuBufferGetSizeInBytes(void) {
+size_t mfGetGpuBufferSizeInBytes(void) {
     return sizeof(MFGpuBuffer);
 }
 
@@ -93,5 +101,5 @@ MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer) {
 struct VulkanBuffer_s* mfGetGpuBufferBackend(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
 
-    return &buffer->buffer;
+    return buffer->buffer;
 }

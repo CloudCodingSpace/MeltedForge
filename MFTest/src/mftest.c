@@ -17,6 +17,11 @@ static void CreatePipeline(MFTState* state) {
         mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE)
     };
 
+    MFGpuBuffer* ubos[] = {
+        state->cameraUbo,
+        state->lightUbo
+    };
+
     MFPipelineConfig info = {
         .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
         .hasDepth = true,
@@ -30,8 +35,8 @@ static void CreatePipeline(MFTState* state) {
         .bindingDescs = &bindingDesc,
         .imgCount = imageCount,
         .images = images,
-        .buffCount = mfGetRendererFramesInFlight() * 2,
-        .buffers = state->ubos,
+        .buffCount = 2,
+        .buffers = ubos,
         .pass = mfRenderTargetGetPass(state->rt)
     };
     mfPipelineInit(state->pipeline, state->renderer, &info);
@@ -68,8 +73,8 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
 
         uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
         uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
-        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer)], &uboData);
-        mfGpuBufferUploadData(state->ubos[mfGetRendererCurrentFrameIdx(scene->renderer) + mfGetRendererFramesInFlight()], &state->lightData);
+        mfGpuBufferUploadData(state->cameraUbo, &uboData);
+        mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     }
     
     for(u64 i = 0; i < mcomp->model.meshCount; i++) {
@@ -155,14 +160,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // UBO
     {
-        state->ubos = MF_ALLOCMEM(MFGpuBuffer*, sizeof(MFGpuBuffer*) * mfGetRendererFramesInFlight() * 2);
-        for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
-            state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-        }
-        for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
-            state->ubos[i] = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-        }
-
         MFGpuBufferConfig config = {
             .type = MF_GPU_BUFFER_TYPE_UBO,
             .size = sizeof(UBOData),
@@ -177,15 +174,14 @@ void MFTOnInit(void* pstate, void* pappState) {
             .normalMat = mfMat4Identity()
         };
 
-        for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
-            mfGpuBufferAllocate(state->ubos[i], config, appState->renderer);
-            mfGpuBufferUploadData(state->ubos[i], &uboData);
-        }
-
+        state->cameraUbo = MF_ALLOCMEM(MFGpuBuffer, mfGetGpuBufferSizeInBytes());
+        mfGpuBufferAllocate(state->cameraUbo, config, appState->renderer);
+        mfGpuBufferUploadData(state->cameraUbo, &uboData);
+        
         config.size = sizeof(LightUBOData);
         config.binding = 1;
         config.stage = MF_SHADER_STAGE_FRAGMENT;
-
+        
         state->lightData = (LightUBOData) {
             .ambientFactor = 0.01f,
             .camPos = state->camera.pos,
@@ -194,11 +190,10 @@ void MFTOnInit(void* pstate, void* pappState) {
             .specularFactor = 32,
             .lightIntensity = 100
         };
-
-        for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
-            mfGpuBufferAllocate(state->ubos[i], config, appState->renderer);
-            mfGpuBufferUploadData(state->ubos[i], &state->lightData);
-        }
+        
+        state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGetGpuBufferSizeInBytes());
+        mfGpuBufferAllocate(state->lightUbo, config, appState->renderer);
+        mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     }
     // Model Images
     {
@@ -224,14 +219,8 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     mfMaterialSystemDeleteModelMatImages(&state->modelMatImgs);
     
-    for(u8 i = 0; i < mfGetRendererFramesInFlight(); i++) {
-        mfGpuBufferFree(state->ubos[i]);
-        MF_FREEMEM(state->ubos[i]);
-    }
-    for(u8 i = mfGetRendererFramesInFlight(); i < mfGetRendererFramesInFlight() * 2; i++) {
-        mfGpuBufferFree(state->ubos[i]);
-        MF_FREEMEM(state->ubos[i]);
-    }
+    mfGpuBufferFree(state->cameraUbo);
+    mfGpuBufferFree(state->lightUbo);
 
     mfSceneDeleteEntity(&state->scene, state->entity->id);
     mfSceneDestroy(&state->scene);
@@ -241,8 +230,9 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfCameraDestroy(&state->camera);
     mfPipelineDestroy(state->pipeline);
 
+    MF_FREEMEM(state->cameraUbo);
+    MF_FREEMEM(state->lightUbo);
     MF_FREEMEM(state->rt);
-    MF_FREEMEM(state->ubos);
     MF_FREEMEM(state->pipeline);
 }
 

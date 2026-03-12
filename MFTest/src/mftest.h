@@ -24,7 +24,8 @@ typedef struct MFTState_s {
     SLogger logger;
 
     MFPipeline* pipeline;
-    MFGpuBuffer** ubos;
+    MFGpuBuffer* cameraUbo;
+    MFGpuBuffer* lightUbo;
 
     MFScene scene;
     const MFEntity* entity;
