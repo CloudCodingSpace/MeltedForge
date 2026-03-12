@@ -60,7 +60,7 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     MFTransformComponent* tcomp = mfSceneEntityGetTransformComponent(scene, e->id);
 
     {
-        f64 time = mfGetCurrentTime();
+        f64 time = mfGetTimeElapsed();
         MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
         MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
         MFMat4 scale = mfMat4Identity();

@@ -6,8 +6,8 @@ typedef struct MFPipeline_s MFPipeline;
 #include "core/mfutils.h"
 
 #include "mfutil_types.h"
-#include "mfimage.h"
-#include "mfbuffer.h"
+#include "mfgpuimage.h"
+#include "mfgpubuffer.h"
 
 #include "mfrenderer.h"
 

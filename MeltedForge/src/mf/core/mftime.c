@@ -1,7 +1,8 @@
-#include "mftimer.h"
+#include "mftime.h"
 
 #include "mfcore.h"
 #include <GLFW/glfw3.h>
+#include <time.h>
 
 void mfTimerStart(MFTimer* timer) {
     if(timer == mfnull) {
@@ -46,6 +47,43 @@ void mfTimerReset(MFTimer* timer) {
     timer->started = false;
 }
 
-f64 mfGetCurrentTime(void) {
+f64 mfGetTimeElapsed(void) {
     return glfwGetTime();
+}
+
+f64 mfGetCurrentTimeSecs(void) {
+    time_t now = time(mfnull);
+    struct tm* t = localtime(&now);
+    return t->tm_sec;
+}
+
+u64 mfGetCurrentTimeMins(void) {
+    time_t now = time(mfnull);
+    struct tm* t = localtime(&now);
+    return t->tm_min;
+    
+}
+
+u64 mfGetCurrentTimeHours(void) {
+    time_t now = time(mfnull);
+    struct tm* t = localtime(&now);
+    return t->tm_hour;
+}
+
+u64 mfGetCurrentTimeDays(void) {
+    time_t now = time(mfnull);
+    struct tm* t = localtime(&now);
+    return t->tm_mday;
+}
+
+u32 mfGetCurrentTimeMonths(void) {
+    time_t now = time(mfnull);
+    struct tm* t = localtime(&now);
+    return t->tm_mon + 1;
+}
+
+u64 mfGetCurrentTimeYears(void) {
+    time_t now = time(mfnull);
+    struct tm* t = localtime(&now);
+    return t->tm_year + 1900;
 }

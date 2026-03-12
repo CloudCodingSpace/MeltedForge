@@ -1,4 +1,4 @@
-#include "mfimage.h"
+#include "mfgpuimage.h"
 
 #include "vk/image.h"
 #include "vk/ctx.h"

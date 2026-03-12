@@ -13,4 +13,10 @@ void mfTimerStart(MFTimer* timer);
 void mfTimerEnd(MFTimer* timer);
 void mfTimerReset(MFTimer* timer);
 
-f64 mfGetCurrentTime(void);
+f64 mfGetTimeElapsed(void);
+f64 mfGetCurrentTimeSecs(void);
+u64 mfGetCurrentTimeMins(void);
+u64 mfGetCurrentTimeHours(void);
+u64 mfGetCurrentTimeDays(void);
+u32 mfGetCurrentTimeMonths(void);
+u64 mfGetCurrentTimeYears(void);

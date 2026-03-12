@@ -1,5 +1,5 @@
 #include "mfrenderer.h"
-#include "core/mftimer.h"
+#include "core/mftime.h"
 
 #include "vk/backend.h"
 #include "vk/render_target.h"
@@ -31,7 +31,7 @@ void mfRendererShutdown(MFRenderer* renderer) {
 void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    f64 crntTime = mfGetCurrentTime() * 1000; // s -> ms
+    f64 crntTime = mfGetTimeElapsed() * 1000; // s -> ms
     renderer->deltaTime = crntTime - renderer->lastTime;
     renderer->lastTime = crntTime;
 

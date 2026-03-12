@@ -1,6 +1,6 @@
 #include "mfmaterial_system.h"
 
-#include "renderer/mfimage.h"
+#include "renderer/mfgpuimage.h"
 #include <stb/stb_image.h>
 
 MFGpuImage* loadImage(const char* path, void* renderer) {

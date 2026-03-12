@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mfrenderer.h"
-#include "mfbuffer.h"
+#include "mfgpubuffer.h"
 
 #include "core/mfutils.h"
 
