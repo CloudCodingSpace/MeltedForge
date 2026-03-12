@@ -1,7 +1,6 @@
 # For devs
 Stuff to do next (Only next tiny steps to do!) :-
 
- - change MFArray to delete or insert a element at any idx
  - remove any unnecessary vulkan code from the renderer frontend
  - plan on removing stuffs like mfmesh, mfmodel from the renderer, cuz the renderer should only render.
  - refactor the ecs (needs a separate branch)
