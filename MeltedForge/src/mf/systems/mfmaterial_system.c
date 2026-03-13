@@ -4,7 +4,28 @@
 #include <stb/stb_image.h>
 
 MFGpuImage* loadImage(const char* path, void* renderer) {
-    u8 blackColor[4] = {0x00, 0x00, 0x00, 0xff};
+    u8 invColor[4 * 16 * 16] = {0};
+    for(u32 w = 0; w < 16; w++) {
+        for(u32 h = 0; h < 16; h++) {
+            u32 idx = (h * 16 + w) * 4;
+            u8 color[3];
+            if((w % 4) && (h % 4)) {
+                color[0] = 0xff;
+                color[1] = 0x00;
+                color[2] = 0xff;
+            } else {
+                color[0] = 0x55;
+                color[1] = 0x55;
+                color[2] = 0x55;
+            }
+
+            invColor[idx + 0] = color[0];
+            invColor[idx + 1] = color[1];
+            invColor[idx + 2] = color[2];
+            invColor[idx + 3] = 0xff;
+        }
+    }
+
     i32 width, height, channels;
     stbi_set_flip_vertically_on_load(true);
 
@@ -12,9 +33,9 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
     if (!pixels) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s", stbi_failure_reason());
 
-        pixels = blackColor;
-        width = 1;
-        height = 1;
+        pixels = invColor;
+        width = 16;
+        height = 16;
     }
 
     MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
@@ -27,7 +48,7 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
     };
     mfGpuImageCreate(tex, renderer, config);
 
-    if(pixels != blackColor)
+    if(pixels != invColor)
         stbi_image_free(pixels);
 
     return tex;
