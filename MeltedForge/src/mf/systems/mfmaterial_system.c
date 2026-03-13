@@ -70,6 +70,8 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
 
             mfArrayGet(arr, MFGpuImage*, i) = loadImage(path, renderer);
             MF_FREEMEM(path);
+        } else {
+            mfArrayGet(arr, MFGpuImage*, i) = loadImage(mfnull, renderer); // mfnull, to load the default black image
         }
     }
 

@@ -1,6 +1,8 @@
 # For devs
 Stuff to do next (Only next tiny steps to do!) :-
 
+ - in the material system, instead of creating a black texture with res 1x1, make only one and let the backend own it,
+	and if a file path isn't there, just point it to backend's global invalid fallback texture
  - plan on removing stuffs like mfmesh, mfmodel from the renderer, cuz the renderer should only render.
  - refactor the ecs (needs a separate branch)
     - use uuids instead of ids across builds
