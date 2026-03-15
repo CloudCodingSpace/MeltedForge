@@ -29,3 +29,5 @@ void mfGpuImageSetBinding(MFGpuImage* image, u32 binding);
 
 MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image);
 struct VulkanImage_s mfGetGpuImageBackend(MFGpuImage* image);
+
+MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer);

@@ -14,7 +14,7 @@ static void CreatePipeline(MFTState* state) {
 
     u32 imageCount = 1;
     MFGpuImage* images[] = {
-        mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE)
+        mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_METALNESS)
     };
 
     MFGpuBuffer* ubos[] = {
@@ -99,26 +99,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     slogLoggerSetName(&state->logger, "MFTest");
     INFO(&state->logger, "MFTest init");
 
-    // insert and delete test
-    {
-        MFArray arr = mfArrayCreate(&state->logger, 2, sizeof(i32));
-        mfArrayAddElement(arr, i32, &state->logger, 4);
-        mfArrayAddElement(arr, i32, &state->logger, 8);
-        i32 e = 100;
-        mfArrayInsertAt(&arr, 1, &e, &state->logger);
-        mfArrayInsertAt(&arr, 1, &e, &state->logger);
-        mfArrayInsertAt(&arr, 1, &e, &state->logger);
-        mfArrayDeleteAt(&arr, 1, &state->logger);
-        mfArrayDeleteAt(&arr, 1, &state->logger);
-        mfArrayDeleteAt(&arr, 1, &state->logger);
-
-        for(u32 i = 0; i < arr.len; i++) {
-            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Element #%d: %d", i, mfArrayGet(arr, i32, i));
-        }
-        
-        mfArrayDestroy(&arr, &state->logger);
-    }
-
     state->renderer = appState->renderer;
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
 
@@ -199,7 +179,8 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         state->modelMatImgs = mfMaterialSystemGetModelMatImages(&comp->model, "meshes", state->renderer);
-        mfGpuImageSetBinding(mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE), 2);
+        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->modelMatImgs, appState->renderer);
+        mfGpuImageSetBinding(image, 2);
     }
     
     state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());

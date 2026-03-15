@@ -1,41 +1,15 @@
 #include "mfmaterial_system.h"
 
-#include "renderer/mfgpuimage.h"
 #include <stb/stb_image.h>
 
 MFGpuImage* loadImage(const char* path, void* renderer) {
-    u8 invColor[4 * 16 * 16] = {0};
-    for(u32 w = 0; w < 16; w++) {
-        for(u32 h = 0; h < 16; h++) {
-            u32 idx = (h * 16 + w) * 4;
-            u8 color[3];
-            if((w % 4) && (h % 4)) {
-                color[0] = 0xff;
-                color[1] = 0x00;
-                color[2] = 0xff;
-            } else {
-                color[0] = 0x55;
-                color[1] = 0x55;
-                color[2] = 0x55;
-            }
-
-            invColor[idx + 0] = color[0];
-            invColor[idx + 1] = color[1];
-            invColor[idx + 2] = color[2];
-            invColor[idx + 3] = 0xff;
-        }
-    }
-
     i32 width, height, channels;
     stbi_set_flip_vertically_on_load(true);
 
     u8* pixels = stbi_load(path, &width, &height, &channels, 4);
     if (!pixels) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s", stbi_failure_reason());
-
-        pixels = invColor;
-        width = 16;
-        height = 16;
+        return mfCreateErrorGpuImage(renderer);
     }
 
     MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
@@ -48,13 +22,10 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
     };
     mfGpuImageCreate(tex, renderer, config);
 
-    if(pixels != invColor)
-        stbi_image_free(pixels);
-
     return tex;
 }
 
-MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, void* renderer) {
+MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
@@ -91,8 +62,6 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
 
             mfArrayGet(arr, MFGpuImage*, i) = loadImage(path, renderer);
             MF_FREEMEM(path);
-        } else {
-            mfArrayGet(arr, MFGpuImage*, i) = loadImage(mfnull, renderer); // mfnull, to load the default black image
         }
     }
 
@@ -112,4 +81,25 @@ void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
     }
 
     mfArrayDestroy(array, mfGetLogger());
+}
+
+MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFRenderer* renderer) {
+    MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be null!");
+    MF_DO_IF((array->len == 0) || (array->elementSize != sizeof(MFGpuImage*)), {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided material texture array is invalid!!");
+        return mfnull;
+    });
+    MF_DO_IF((type < 0) || (type >= MF_MODEL_MAT_TEXTURE_MAX), {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The queried material texture's type is invalid!");
+        return mfnull;
+    });
+    
+    MFGpuImage* image = mfArrayGet(*array, MFGpuImage*, type);
+    if(image == mfnull) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The queried material texture doesn't exists! Instead, using a error textured image!");
+        mfArrayGet(*array, MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
+        image = mfArrayGet(*array, MFGpuImage*, type);
+    }
+
+    return image;
 }

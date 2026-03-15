@@ -110,3 +110,42 @@ struct VulkanImage_s mfGetGpuImageBackend(MFGpuImage* image) {
     
     return image->image;
 }
+
+MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    
+    u8 invColor[4 * 16 * 16] = {0};
+    u32 cellSize = 4;
+    for(u32 h = 0; h < 16; h++) {
+        for(u32 w = 0; w < 16; w++) {
+            u32 idx = (h * 16 + w) * 4;
+            u32 x = w / cellSize;
+            u32 y = h / cellSize;
+
+            if(((x + y) % 2) == 0) {
+                invColor[idx + 0] = 0xff;
+                invColor[idx + 1] = 0x00;
+                invColor[idx + 2] = 0xff;
+                invColor[idx + 3] = 0xff;
+            } else {
+                invColor[idx + 0] = 0x00;
+                invColor[idx + 1] = 0x00;
+                invColor[idx + 2] = 0x00;
+                invColor[idx + 3] = 0xff;
+            }
+        }
+    }
+
+    MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
+    
+    MFGpuImageConfig config = {
+        .width = 16,
+        .height = 16,
+        .pixels = invColor,
+        .binding = MF_INFINITY
+    };
+
+    mfGpuImageCreate(tex, renderer, config);
+
+    return tex;
+}

@@ -3,6 +3,8 @@
 #include "core/mfutils.h"
 #include "renderer/mfmodel.h"
 
+#include "renderer/mfgpuimage.h"
+
 typedef enum MFModelMatTextures_e {
     MF_MODEL_MAT_TEXTURE_AMBIENT = 0,
     MF_MODEL_MAT_TEXTURE_DIFFUSE,
@@ -17,5 +19,7 @@ typedef enum MFModelMatTextures_e {
     MF_MODEL_MAT_TEXTURE_MAX
 } MFModelMatTextures;
 
-MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, void* renderer);
+MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer);
 void mfMaterialSystemDeleteModelMatImages(MFArray* array);
+
+MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFRenderer* renderer);
