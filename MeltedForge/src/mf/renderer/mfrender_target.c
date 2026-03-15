@@ -28,7 +28,7 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
     rt->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
     rt->descs = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
-    {
+    if(hasDepth) {
         VulkanImageInfo info = {
             .ctx = &rt->backend->ctx,
             .width = rt->backend->ctx.scExtent.width,
@@ -121,7 +121,8 @@ void mfRenderTargetDestroy(MFRenderTarget* rt) {
         VulkanImageDestroy(&rt->images[i]);
     }
 
-    VulkanImageDestroy(&rt->depthImage);
+    if(rt->hasDepth)
+        VulkanImageDestroy(&rt->depthImage);
     
     VulkanRenderPassDestroy(&rt->backend->ctx, rt->pass);
     
@@ -150,7 +151,8 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             VulkanImageDestroy(&rt->images[i]);
         }
         
-        VulkanImageDestroy(&rt->depthImage);
+        if(rt->hasDepth)
+            VulkanImageDestroy(&rt->depthImage);
         
         MF_SETMEM(rt->descs, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
         MF_SETMEM(rt->fbs, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
@@ -159,7 +161,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
     }
     // Re-creating
     {
-        {
+        if(rt->hasDepth) {
             VulkanImageInfo info = {
                 .ctx = &rt->backend->ctx,
                 .width = extent.x,

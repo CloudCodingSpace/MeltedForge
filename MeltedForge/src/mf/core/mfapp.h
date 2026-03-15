@@ -13,9 +13,9 @@ typedef struct MFLayer_s {
 } MFLayer;
 
 typedef struct MFAppConfig_s {
-    const char* name;
+    const char* appName;
     void* state;
-    b8 vsync, enableUI;
+    b8 vsync, enableUI, enableDepth;
     MFWindowConfig winConfig;
     MFArray layers;
 

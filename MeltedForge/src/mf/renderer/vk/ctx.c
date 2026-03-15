@@ -277,8 +277,10 @@ void GetDepthFormat(VulkanBackendCtx* ctx) {
     MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
 }
 
-void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* window) {
+void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
+    ctx->vsync = vsync;
+    ctx->enableDepth = enableDepth;
 
     // Checking supported vulkan version
     {
@@ -417,7 +419,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, MFWindow* wi
     // Swapchain
     CreateSwapchain(ctx, mfGetWindowHandle(window));
     // Depth
-    {
+    if(enableDepth) {
         GetDepthFormat(ctx);
 
         VulkanImageInfo info = {
@@ -474,7 +476,8 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     VulkanCommandPoolDestroy(ctx, ctx->cmdPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescPool, ctx->allocator);
 
-    VulkanImageDestroy(&ctx->depthImage);
+    if(ctx->enableDepth)
+        VulkanImageDestroy(&ctx->depthImage);
 
     for(u32 i = 0; i < ctx->scImgCount; i++)
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
@@ -492,8 +495,9 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
 
 void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
-
-    VulkanImageDestroy(&ctx->depthImage);
+    
+    if(ctx->enableDepth)
+        VulkanImageDestroy(&ctx->depthImage);
 
     for(u32 i = 0; i < ctx->scImgCount; i++)
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
@@ -501,7 +505,7 @@ void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow
 
     CreateSwapchain(ctx, mfGetWindowHandle(window));
 
-    {
+    if(ctx->enableDepth) {
         VulkanImageInfo info = {
             .ctx = ctx,
             .width = ctx->scExtent.width,

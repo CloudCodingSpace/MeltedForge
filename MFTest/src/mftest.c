@@ -14,7 +14,7 @@ static void CreatePipeline(MFTState* state) {
 
     u32 imageCount = 1;
     MFGpuImage* images[] = {
-        mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_METALNESS)
+        mfArrayGet(state->modelMatImgs, MFGpuImage*, MF_MODEL_MAT_TEXTURE_DIFFUSE)
     };
 
     MFGpuBuffer* ubos[] = {
@@ -179,7 +179,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         state->modelMatImgs = mfMaterialSystemGetModelMatImages(&comp->model, "meshes", state->renderer);
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->modelMatImgs, appState->renderer);
+        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, appState->renderer);
         mfGpuImageSetBinding(image, 2);
     }
     

@@ -51,10 +51,10 @@
 
 ---
 
-## Roadmap
+## TODO list
 
-There is a public read-only roadmap of this engine.
-It is hosted on trello. It can be found [here](https://trello.com/b/Zt1Azhtg/meltedforge)
+There is a public read-only todo list of this engine.
+It is hosted on trello. It can be found [here](https://trello.com/b/Zt1Azhtg/meltedforge) 
 
 ---
 

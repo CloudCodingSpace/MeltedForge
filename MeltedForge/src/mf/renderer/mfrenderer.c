@@ -10,13 +10,21 @@ struct MFRenderer_s {
     MFTimer frameTimer;
 };
 
-void mfRendererInit(MFRenderer* renderer, const char* appName, b8 vsync, b8 enableUI, MFWindow* window) {
+void mfRendererInit(MFRenderer* renderer, const char* appName, b8 enableDepth, b8 vsync, b8 enableUI, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     MF_INFO(mfGetLogger(), "Creating the renderer");
 
-    VulkanBckndInit(&renderer->backend, appName, vsync, enableUI, window);
+    VulkanBackendConfig config = {
+        .appName = appName,
+        .vsync = vsync,
+        .enableDepth = enableDepth,
+        .enableUI = enableUI,
+        .window = window
+    };
+
+    VulkanBckndInit(&renderer->backend, &config);
 }
 
 void mfRendererShutdown(MFRenderer* renderer) {

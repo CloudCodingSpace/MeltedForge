@@ -2,13 +2,14 @@
 
 static void initApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
+
     state->window = MF_ALLOCMEM(MFWindow, mfWindowGetSizeInBytes());
     mfWindowInit(state->window, config->winConfig);
 
     mfWindowSetIcon(state->window, MF_WINDOW_DEFAULT_ICON_PATH);
 
     state->renderer = MF_ALLOCMEM(MFRenderer, mfGetRendererSizeInBytes());
-    mfRendererInit(state->renderer, config->name, config->vsync, config->enableUI, state->window);
+    mfRendererInit(state->renderer, config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
 
     for(u32 i = 0; i < config->layers.len; i++) {
         MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
@@ -73,7 +74,7 @@ MFAppConfig mfCreateDefaultApp(const char* name) {
             .centered = true,
             .fullscreen = false,
             .resizable = false,
-            .title = name,
+            .title = (name) ? name : "MeltedForge application",
             .width = 800,
             .height = 600
         },
@@ -81,6 +82,6 @@ MFAppConfig mfCreateDefaultApp(const char* name) {
         .shutdownApp = &deinitApp,
         .runApp = &runApp,
         .getWindowHandle = &getWindow,
-        .name = name
+        .appName = (name) ? name : "MeltedForge application"
     };
 }

@@ -29,19 +29,24 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     VulkanBckndCtxResize(&backend->ctx, width, height, window);
 
     for(u32 i = 0; i < backend->fbCount; i++) {
-        VkImageView views[] = {
-            backend->ctx.scImgViews[i],
-            backend->ctx.depthImage.view
+        u32 len = 1;
+        VkImageView views[2] = {
+            backend->ctx.scImgViews[i]
         };
+        if(backend->enableDepth) {
+            len++;
+            views[1] = backend->ctx.depthImage.view;
+        }
 
-        backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, MF_ARRAYLEN(views, VkImageView), views, backend->ctx.scExtent); 
+        backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
     }
 }
 
-void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 enableUI, MFWindow* window) {
-    backend->ctx.vsync = vsync;
-    backend->enableUI = enableUI;
-    VulkanBckndCtxInit(&backend->ctx, appName, window);
+void VulkanBckndInit(VulkanBackend* backend, VulkanBackendConfig* config) {
+    backend->enableUI = config->enableUI;
+    backend->enableDepth = config->enableDepth;
+
+    VulkanBckndCtxInit(&backend->ctx, config->appName, config->vsync, config->enableDepth, config->window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.cmdPool, true);
@@ -52,7 +57,7 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
             .format = backend->ctx.scFormat.format,
             .initiaLay = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLay = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            .hasDepth = true,
+            .hasDepth = config->enableDepth,
             .renderTarget = false
         };
 
@@ -63,12 +68,16 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
     backend->fbCount = backend->ctx.scImgCount;
     backend->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->fbCount);
     for(u32 i = 0; i < backend->fbCount; i++) {
-        VkImageView views[] = {
-            backend->ctx.scImgViews[i],
-            backend->ctx.depthImage.view
+        u32 len = 1;
+        VkImageView views[2] = {
+            backend->ctx.scImgViews[i]
         };
+        if(config->enableDepth) {
+            len++;
+            views[1] = backend->ctx.depthImage.view;
+        }
 
-        backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, MF_ARRAYLEN(views, VkImageView), views, backend->ctx.scExtent); 
+        backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
     }
     
     // Sync objs
@@ -91,7 +100,7 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
 
     backend->crntFrmIdx = 0;
 
-    if(!enableUI)
+    if(!config->enableUI)
         return;
 
     // UI
@@ -108,11 +117,11 @@ void VulkanBckndInit(VulkanBackend* backend, const char* appName, b8 vsync, b8 e
 
         ImFontAtlas_AddFontFromFileTTF(io->Fonts, "mfassets/fonts/consolas.ttf", 18.0f, mfnull, mfnull);
 
-        ImGui_ImplGlfw_InitForVulkan(mfGetWindowHandle(window), true);
+        ImGui_ImplGlfw_InitForVulkan(mfGetWindowHandle(config->window), true);
 
         ImGui_ImplVulkan_InitInfo info = {
             .Allocator = backend->ctx.allocator,
-            .ApiVersion = VK_API_VERSION_1_0,
+            .ApiVersion = VK_API_VERSION_1_2,
             .DescriptorPool = backend->ctx.uiDescPool,
             .ImageCount = FRAMES_IN_FLIGHT,
             .MinImageCount = FRAMES_IN_FLIGHT,

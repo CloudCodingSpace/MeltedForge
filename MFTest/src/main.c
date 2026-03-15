@@ -22,6 +22,7 @@ MFAppConfig mfClientCreateAppConfig() {
     config.winConfig.resizable = true;
     config.vsync = false;
     config.enableUI = true;
+    config.enableDepth = true;
 
     return config;
 }
