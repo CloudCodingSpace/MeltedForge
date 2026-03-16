@@ -12,6 +12,7 @@ typedef struct MFCamera_s {
     b8 firstMouse;
     MFWindow* window;
 
+    void (*constructMatrices)(struct MFCamera_s* camera);
     void (*update)(struct MFCamera_s* camera, f64 deltaTime, void* userData);
 } MFCamera;
 

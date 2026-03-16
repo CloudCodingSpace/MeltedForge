@@ -90,9 +90,14 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
         if(camera->height == 0 && camera->width == 0)
             return;
 
-        camera->proj = mfMat4Perspective(camera->fov * MF_DEG2RAD_MULTIPLIER, (f32)camera->width/(f32)camera->height, camera->nearPlane, camera->farPlane);
-        camera->view = mfMat4LookAt(camera->pos, mfVec3Add(camera->pos, camera->front), camera->up);
+        if(camera->constructMatrices)
+            camera->constructMatrices(camera);
     }
+}
+
+void default_contruct_matrices(MFCamera* camera) {
+    camera->proj = mfMat4Perspective(camera->fov * MF_DEG2RAD_MULTIPLIER, (f32)camera->width/(f32)camera->height, camera->nearPlane, camera->farPlane);
+    camera->view = mfMat4LookAt(camera->pos, mfVec3Add(camera->pos, camera->front), camera->up);
 }
 
 void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f32 fov, f32 nearPlane, f32 farPlane, f32 speed, f32 sensitivity, MFVec3 pos) {
@@ -118,13 +123,13 @@ void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f
     camera->pitch = 0.0f;
 
     camera->update = &default_update;
+    camera->constructMatrices = &default_contruct_matrices;
 
     const MFWindowConfig* config = mfGetWindowConfig(window);
     camera->lastX = config->width/2;
     camera->lastY = config->height/2;
 
-    camera->proj = mfMat4Perspective(fov * MF_DEG2RAD_MULTIPLIER, (f32)config->width/(f32)config->height, nearPlane, farPlane);
-    camera->view = mfMat4LookAt(pos, mfVec3Add(pos, camera->front), camera->up);
+    default_contruct_matrices(camera);
 }
 
 void mfCameraDestroy(MFCamera* camera) {
