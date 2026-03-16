@@ -27,6 +27,7 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
 
 MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(model->meshCount <= 0, mfGetLogger(), "The model must have atleast 1 mesh!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
     
@@ -41,7 +42,8 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
     MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
     arr.len = MF_MODEL_MAT_TEXTURE_MAX;
 
-    MFModelMaterial mat = model->mat;
+    //! FIXME: REMOVE THIS ASAP!! LOAD THE MATERIAL IMAGES OF ALL INDIVIDUAL MESHES
+    MFMeshMaterial mat = model->meshes[0].mat;
 
     const char* paths[] = {
         mat.ambient_texpath,
