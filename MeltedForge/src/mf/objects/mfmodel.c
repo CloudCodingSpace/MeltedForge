@@ -48,8 +48,6 @@ char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
 
-    MF_SETMEM(&model->mat, 0, sizeof(MFModelMaterial));
-
     // Loading the model
     const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_OptimizeMeshes);
     MF_PANIC_IF((!scene) || (!scene->mRootNode), mfGetLogger(), aiGetErrorString());
@@ -60,6 +58,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
     //! NOTE: CHANGE THIS WAY OF DIRECTLY GETTING THE MESHES FROM THE SCENE, INSTEAD GET THE MESHES BASED ON THE HIERARCHY OF THE SCENE ALONG WITH THE TRANSFORMS!!
     for(int i = 0; i < scene->mNumMeshes; i++) {
         struct aiMesh* mesh = scene->mMeshes[i];
+        MFMeshMaterial matData = {0};
 
         u8* vertices = MF_ALLOCMEM(u8, perVertSize * mesh->mNumVertices);
         u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * mesh->mNumFaces * 3);
@@ -93,59 +92,57 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
         }
         
         // Material
-        {
-            //! FIXME: FIX THIS WAY CUZ IT SETS THE MAT TO THE MODEL ITSELF, NOT TO THE MESHES & IT ALSO USES THE MAT OF THE LAST MESH. FIX THIS ASAP
-            if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
-                struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-                int c = 1;
+        if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
+            struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+            int c = 1;
 
-                model->mat.ambient_texpath = get_materialtex(mat, aiTextureType_AMBIENT);
-                model->mat.diffuse_texpath = get_materialtex(mat, aiTextureType_DIFFUSE);
-                model->mat.displacement_texpath = get_materialtex(mat, aiTextureType_DISPLACEMENT);
-                model->mat.specular_texpath = get_materialtex(mat, aiTextureType_SPECULAR);
-                model->mat.bump_texpath = get_materialtex(mat, aiTextureType_HEIGHT);
-                model->mat.shininess_texpath = get_materialtex(mat, aiTextureType_SHININESS);
-                model->mat.emission_texpath = get_materialtex(mat, aiTextureType_EMISSIVE);
-                model->mat.metalness_texpath = get_materialtex(mat, aiTextureType_METALNESS);
-                model->mat.lightmap_texpath = get_materialtex(mat, aiTextureType_LIGHTMAP);
+            matData.ambient_texpath = get_materialtex(mat, aiTextureType_AMBIENT);
+            matData.diffuse_texpath = get_materialtex(mat, aiTextureType_DIFFUSE);
+            matData.displacement_texpath = get_materialtex(mat, aiTextureType_DISPLACEMENT);
+            matData.specular_texpath = get_materialtex(mat, aiTextureType_SPECULAR);
+            matData.bump_texpath = get_materialtex(mat, aiTextureType_HEIGHT);
+            matData.shininess_texpath = get_materialtex(mat, aiTextureType_SHININESS);
+            matData.emission_texpath = get_materialtex(mat, aiTextureType_EMISSIVE);
+            matData.metalness_texpath = get_materialtex(mat, aiTextureType_METALNESS);
+            matData.lightmap_texpath = get_materialtex(mat, aiTextureType_LIGHTMAP);
 
-                struct aiColor4D color;
-                if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
-                    model->mat.specular[0] = color.r;
-                    model->mat.specular[1] = color.g;
-                    model->mat.specular[2] = color.b;
-                }
-                if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
-                    model->mat.emission[0] = color.r;
-                    model->mat.emission[1] = color.g;
-                    model->mat.emission[2] = color.b;
-                }
-                if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
-                    model->mat.diffuse[0] = color.r;
-                    model->mat.diffuse[1] = color.g;
-                    model->mat.diffuse[2] = color.b;
-                }
-                if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
-                    model->mat.ambient[0] = color.r;
-                    model->mat.ambient[1] = color.g;
-                    model->mat.ambient[2] = color.b;
-                }
+            struct aiColor4D color;
+            if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
+                matData.specular[0] = color.r;
+                matData.specular[1] = color.g;
+                matData.specular[2] = color.b;
+            }
+            if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
+                matData.emission[0] = color.r;
+                matData.emission[1] = color.g;
+                matData.emission[2] = color.b;
+            }
+            if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
+                matData.diffuse[0] = color.r;
+                matData.diffuse[1] = color.g;
+                matData.diffuse[2] = color.b;
+            }
+            if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
+                matData.ambient[0] = color.r;
+                matData.ambient[1] = color.g;
+                matData.ambient[2] = color.b;
+            }
 
-                float f = 0.0f;
-                if(aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &f) == AI_SUCCESS) {
-                    model->mat.shininess = f;
-                }
-                f = 1.0f;
-                if(aiGetMaterialFloat(mat, AI_MATKEY_REFRACTI, &f) == AI_SUCCESS) {
-                    model->mat.ior = f;
-                }
-                f = 1.0f;
-                if(aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f) == AI_SUCCESS) {
-                    model->mat.opaque = (f >= 1.0f);
-                }
+            float f = 0.0f;
+            if(aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &f) == AI_SUCCESS) {
+                matData.shininess = f;
+            }
+            f = 1.0f;
+            if(aiGetMaterialFloat(mat, AI_MATKEY_REFRACTI, &f) == AI_SUCCESS) {
+                matData.ior = f;
+            }
+            f = 1.0f;
+            if(aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f) == AI_SUCCESS) {
+                matData.opaque = (f >= 1.0f);
             }
         }
 
+        model->meshes[i].mat = matData;
         mfMeshCreate(&model->meshes[i], renderer, perVertSize * mesh->mNumVertices, vertices, mesh->mNumFaces * 3, indices);
         
         MF_FREEMEM(vertices);
@@ -161,16 +158,8 @@ void mfModelDestroy(MFModel* model) {
         mfMeshDestroy(&model->meshes[i]);        
     }
 
-    MF_FREEMEM(model->mat.bump_texpath);
-    MF_FREEMEM(model->mat.alpha_texpath);
-    MF_FREEMEM(model->mat.ambient_texpath);
-    MF_FREEMEM(model->mat.diffuse_texpath);
-    MF_FREEMEM(model->mat.emission_texpath);
-    MF_FREEMEM(model->mat.lightmap_texpath);
-    MF_FREEMEM(model->mat.specular_texpath);
-    MF_FREEMEM(model->mat.metalness_texpath);
-    MF_FREEMEM(model->mat.shininess_texpath);
-    MF_FREEMEM(model->mat.displacement_texpath);
+    for(u64 i = 0; i < model->meshCount; i++) {
+    }
 
     if(model->meshes)
         MF_FREEMEM(model->meshes);
