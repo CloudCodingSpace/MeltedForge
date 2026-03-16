@@ -69,12 +69,12 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                 MF_FREEMEM(path);
             }
         }
-
-        if(allocated)
-            MF_FREEMEM(bPath);
         
         mfArrayGet(list, MFArray, i) = arr;
     }
+    
+    if(allocated)
+        MF_FREEMEM(bPath);
 
     return list;
 }
@@ -112,7 +112,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     MFGpuImage* image = mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type);
     if(image == mfnull) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The queried material texture doesn't exists! Instead, using a error textured image!");
-        mfArrayGet(*array, MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
+        mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
         image = mfArrayGet(*array, MFGpuImage*, type);
     }
 
