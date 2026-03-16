@@ -2,7 +2,7 @@
 
 #include "core/mfmaths.h"
 
-#include "renderer/mfmodel.h"
+#include "objects/mfmodel.h"
 
 // TODO: Add more components when necessary
 typedef enum MFComponentsType_e {

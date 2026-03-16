@@ -2,12 +2,16 @@
 
 #include "core/mfcore.h"
 #include "core/mfutils.h"
+
 #include "ecs/mfcomponents.h"
 #include "ecs/mfentity.h"
-#include "renderer/mfmodel.h"
+
+#include "objects/mfmodel.h"
+
 #include "serializer/mfserializer.h"
 #include "serializer/mfserializerutils.h"
-#include "slog/slog.h"
+
+#include <slog/slog.h>
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");

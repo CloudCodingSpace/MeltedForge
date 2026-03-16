@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/mfutils.h"
-#include "renderer/mfmodel.h"
+#include "objects/mfmodel.h"
 
 #include "renderer/mfgpuimage.h"
 

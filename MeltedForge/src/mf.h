@@ -7,9 +7,10 @@
 #include "mf/renderer/mfpipeline.h"
 #include "mf/renderer/mfgpubuffer.h"
 #include "mf/renderer/mfgpuimage.h"
-#include "mf/renderer/mfcamera.h"
-#include "mf/renderer/mfmesh.h"
-#include "mf/renderer/mfmodel.h"
+
+#include "mf/objects/mfcamera.h"
+#include "mf/objects/mfmesh.h"
+#include "mf/objects/mfmodel.h"
 
 #include "mf/ecs/mfcomponents.h"
 #include "mf/ecs/mfentity.h"
