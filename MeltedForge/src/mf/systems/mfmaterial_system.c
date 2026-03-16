@@ -46,8 +46,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
         MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
         arr.len = MF_MODEL_MAT_TEXTURE_MAX;
 
-        //! FIXME: REMOVE THIS ASAP!! LOAD THE MATERIAL IMAGES OF ALL INDIVIDUAL MESHES
-        MFMeshMaterial mat = model->meshes[0].mat;
+        MFMeshMaterial mat = model->meshes[i].mat;
 
         const char* paths[] = {
             mat.ambient_texpath,
