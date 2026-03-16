@@ -19,7 +19,7 @@ typedef enum MFModelMatTextures_e {
     MF_MODEL_MAT_TEXTURE_MAX
 } MFModelMatTextures;
 
-MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer);
+MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer);
 void mfMaterialSystemDeleteModelMatImages(MFArray* array);
 
-MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFRenderer* renderer);
+MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, u64 meshIdx, MFRenderer* renderer);

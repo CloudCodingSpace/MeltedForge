@@ -25,7 +25,7 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
     return tex;
 }
 
-MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer) {
+MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     MF_PANIC_IF(model->meshCount <= 0, mfGetLogger(), "The model must have atleast 1 mesh!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
@@ -39,64 +39,78 @@ MFArray mfMaterialSystemGetModelMatImages(MFModel* model, const char* basePath, 
         allocated = true;
     }
 
-    MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
-    arr.len = MF_MODEL_MAT_TEXTURE_MAX;
+    MFArray list = mfArrayCreate(mfGetLogger(), model->meshCount, sizeof(MFArray));
+    list.len = model->meshCount;
 
-    //! FIXME: REMOVE THIS ASAP!! LOAD THE MATERIAL IMAGES OF ALL INDIVIDUAL MESHES
-    MFMeshMaterial mat = model->meshes[0].mat;
+    for(u64 i = 0; i < model->meshCount; i++) {
+        MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
+        arr.len = MF_MODEL_MAT_TEXTURE_MAX;
 
-    const char* paths[] = {
-        mat.ambient_texpath,
-        mat.diffuse_texpath,
-        mat.specular_texpath,
-        mat.bump_texpath,
-        mat.displacement_texpath,
-        mat.lightmap_texpath,
-        mat.metalness_texpath,
-        mat.shininess_texpath,
-        mat.emission_texpath,
-        mat.alpha_texpath
-    };
+        //! FIXME: REMOVE THIS ASAP!! LOAD THE MATERIAL IMAGES OF ALL INDIVIDUAL MESHES
+        MFMeshMaterial mat = model->meshes[0].mat;
 
-    for(int i = 0; i < MF_MODEL_MAT_TEXTURE_MAX; i++) {
-        if(paths[i]) {
-            const char* path = mfStringConcatenate(mfGetLogger(), bPath, paths[i]);
+        const char* paths[] = {
+            mat.ambient_texpath,
+            mat.diffuse_texpath,
+            mat.specular_texpath,
+            mat.bump_texpath,
+            mat.displacement_texpath,
+            mat.lightmap_texpath,
+            mat.metalness_texpath,
+            mat.shininess_texpath,
+            mat.emission_texpath,
+            mat.alpha_texpath
+        };
 
-            mfArrayGet(arr, MFGpuImage*, i) = loadImage(path, renderer);
-            MF_FREEMEM(path);
+        for(int j = 0; j < MF_MODEL_MAT_TEXTURE_MAX; j++) {
+            if(paths[j]) {
+                const char* path = mfStringConcatenate(mfGetLogger(), bPath, paths[j]);
+
+                mfArrayGet(arr, MFGpuImage*, j) = loadImage(path, renderer);
+                MF_FREEMEM(path);
+            }
         }
+
+        if(allocated)
+            MF_FREEMEM(bPath);
+        
+        mfArrayGet(list, MFArray, i) = arr;
     }
 
-    if(allocated)
-        MF_FREEMEM(bPath);
-
-    return arr;
+    return list;
 }
 
 void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The provided MFArray handle shouldn't be null!");
 
-    for(int i = 0; i < array->len; i++) {
-        MFGpuImage* image = mfArrayGet(*array, MFGpuImage*, i);
-        if(image != mfnull)
-            mfGpuImageDestroy(image);
+    for(u64 i = 0; i < array->len; i++) {
+        MFArray arr = mfArrayGet(*array, MFArray, i);
+        for(u64 j = 0; j < arr.len; j++) {
+            MFGpuImage* image = mfArrayGet(arr, MFGpuImage*, j);
+            if(image != mfnull)
+                mfGpuImageDestroy(image);
+        }
     }
 
     mfArrayDestroy(array, mfGetLogger());
 }
 
-MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFRenderer* renderer) {
+MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, u64 meshIdx, MFRenderer* renderer) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be null!");
-    MF_DO_IF((array->len == 0) || (array->elementSize != sizeof(MFGpuImage*)), {
-        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided material texture array is invalid!!");
+    MF_DO_IF((array->len == 0) || (array->elementSize != sizeof(MFArray)), {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided material texture array is invalid!");
         return mfnull;
     });
     MF_DO_IF((type < 0) || (type >= MF_MODEL_MAT_TEXTURE_MAX), {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The queried material texture's type is invalid!");
         return mfnull;
     });
+    MF_DO_IF((meshIdx < 0) || (meshIdx >= array->len), {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided mesh index is an invalid index!");
+        return mfnull;
+    });
     
-    MFGpuImage* image = mfArrayGet(*array, MFGpuImage*, type);
+    MFGpuImage* image = mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type);
     if(image == mfnull) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The queried material texture doesn't exists! Instead, using a error textured image!");
         mfArrayGet(*array, MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
