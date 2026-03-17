@@ -1,4 +1,4 @@
-#include "mfgpures.h"
+#include "mfgpu_res.h"
 
 #include <vulkan/vulkan.h>
 
@@ -9,6 +9,7 @@ struct MFResourceSetLayout_s {
     VkDescriptorPool pool;
     MFRenderer* renderer;
     MFArray resDescs;
+    u64 imageCount, bufferCount;
 };
 
 struct MFResourceSet_s {
@@ -41,6 +42,9 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 resDescLen, MFRe
             bufferCount++;;
         }
     }
+
+    layout->imageCount = imageCount;
+    layout->bufferCount = bufferCount;
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
@@ -121,19 +125,51 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
 }
 
 void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRenderer* renderer) {
+    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The resource set layout handle provided shoudln't be null!");
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
+    set->layout = layout;
+    set->renderer = renderer;
+
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
+    VkDescriptorSetAllocateInfo info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = layout->pool,
+        .descriptorSetCount = FRAMES_IN_FLIGHT,
+        .pSetLayouts = &layout->layout
+    };
+
+    VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, set->sets));
 }
 
 void mfResourceSetDestroy(MFResourceSet* set) {
+    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
 
+    VK_CHECK(vkFreeDescriptorSets(ctx->device, set->layout->pool, FRAMES_IN_FLIGHT, set->sets));
+
+    MF_SETMEM(set, 0, sizeof(MFResourceSet));
 }
 
-void mfResourceSetUpdate(MFResourceSet* set) {
+void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {
+    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(images == mfnull, mfGetLogger(), "The images array provided shouldn't be null!");
+    MF_PANIC_IF(buffers == mfnull, mfGetLogger(), "The buffer array provided shouldn't be null!");
+    MF_PANIC_IF(images->len != set->layout->imageCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
+    MF_PANIC_IF(buffers->len != set->layout->bufferCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
 
+    // TODO: Implement this function
 }
 
 void* mfGetResourceSetLayoutBackend(MFResourceSetLayout* layout) {
-
+    MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
+    
+    return layout->layout;
 }
 
 size_t mfGetResourceSetLayoutSizeInBytes(void) {

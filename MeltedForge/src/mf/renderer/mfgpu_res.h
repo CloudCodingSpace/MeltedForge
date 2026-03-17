@@ -15,7 +15,7 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout);
 void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRenderer* renderer);
 void mfResourceSetDestroy(MFResourceSet* set);
 
-void mfResourceSetUpdate(MFResourceSet* set);
+void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers);
 
 void* mfGetResourceSetLayoutBackend(MFResourceSetLayout* layout);
 
