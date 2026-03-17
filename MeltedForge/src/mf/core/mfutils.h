@@ -204,16 +204,16 @@ typedef struct MFArray_s {
     void* data;
 } MFArray;
 
-MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 len, u64 elementSize) {
-    MF_PANIC_IF(len == 0, logger, "The length of the new array can't be allocated and set as 0!");
+MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 capacity, u64 elementSize) {
+    MF_PANIC_IF(capacity == 0, logger, "The length of the new array can't be allocated and set as 0!");
     MF_PANIC_IF(elementSize == 0, logger, "The element size of the new array can't be allocated and set as 0!");
 
     MFArray array = {0};
     array.elementSize = elementSize;
-    array.capacity = len;
+    array.capacity = capacity;
 
-    array.data = malloc(elementSize * len);
-    memset(array.data, 0, elementSize * len);
+    array.data = malloc(elementSize * capacity);
+    memset(array.data, 0, elementSize * capacity);
 
     return array;
 }
