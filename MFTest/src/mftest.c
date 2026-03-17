@@ -33,10 +33,8 @@ static void CreatePipeline(MFTState* state) {
         .attribDescs = attribDescs,
         .bindingDescsCount = bindingCount,
         .bindingDescs = &bindingDesc,
-        .imgCount = imageCount,
-        .images = images,
-        .buffCount = 2,
-        .buffers = ubos,
+        .resLayCount = 1,
+        .resLayouts = &state->layout,
         .pass = mfRenderTargetGetPass(state->rt)
     };
     mfPipelineInit(state->pipeline, state->renderer, &info);
@@ -83,6 +81,7 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         MFViewport vp = mfRendererGetViewport(scene->renderer);
         MFRect2D scissor = mfRendererGetScissor(scene->renderer);
 
+        mfResourceSetBind(state->sets[i], state->pipeline);
         mfPipelineBind(state->pipeline, vp, scissor);
         mfMeshRender(&mcomp->model.meshes[i]);
     }
@@ -179,11 +178,56 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         state->modelMatImgs = mfMaterialSystemLoadModelMatImages(&comp->model, "meshes", state->renderer);
-        // meshIdx = 0, for now!
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, 0, appState->renderer);
-        mfGpuImageSetBinding(image, 2);
+        for(u64 i = 0; i < comp->model.meshCount; i++) {
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, i, appState->renderer);
+            mfGpuImageSetBinding(image, 2);
+        }
     }
-    
+    // Resource layouts
+    {
+        state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfGetResourceSetLayoutSizeInBytes());
+        
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        u64 count = 3;
+        
+        MFResourceDesc* descs = MF_ALLOCMEM(MFResourceDesc, count);
+        
+        u64 i = 0;
+        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, 0, appState->renderer); // anyone image is fine since same binding
+        descs[i++] = mfGetGpuImageDescription(image);
+        descs[i++] = mfGetGpuBufferDescription(state->cameraUbo);
+        descs[i++] = mfGetGpuBufferDescription(state->lightUbo);
+        
+        mfResourceSetLayoutCreate(state->layout, count, descs, appState->renderer);
+        
+        MF_FREEMEM(descs);
+    }
+    // Resource sets
+    {
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        state->setCount = comp->model.meshCount;
+
+        state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*));
+        MFArray buffers = mfArrayCreate(&state->logger, 2, sizeof(MFGpuBuffer*));
+        mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->cameraUbo);
+        mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
+
+        for(u64 i = 0; i < state->setCount; i++) {
+            state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfGetResourceSetSizeInBytes());
+            mfResourceSetCreate(state->sets[i], state->layout, appState->renderer);
+
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, i, appState->renderer);
+            MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
+            mfArrayAddElement(images, MFGpuImage*, &state->logger, image);
+
+            mfResourceSetUpdate(state->sets[i], &images, &buffers);
+            
+            mfArrayDestroy(&images, &state->logger);
+        }
+        
+        mfArrayDestroy(&buffers, &state->logger);
+    }
+
     state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
     CreatePipeline(state);
 
@@ -196,6 +240,11 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     
     INFO(&state->logger, "MFTest deinit");
     slogLoggerDestroy(&state->logger);
+
+    for(u64 i = 0; i < state->setCount; i++) {
+        mfResourceSetDestroy(state->sets[i]);
+    }
+    mfResourceSetLayoutDestroy(state->layout);
 
     mfSceneSerialize(&state->scene, "./mftscene.bin");
 
@@ -212,6 +261,11 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfCameraDestroy(&state->camera);
     mfPipelineDestroy(state->pipeline);
 
+    for(u64 i = 0; i < state->setCount; i++) {
+        MF_FREEMEM(state->sets[i]);
+    }
+    MF_FREEMEM(state->sets);
+    MF_FREEMEM(state->layout);
     MF_FREEMEM(state->cameraUbo);
     MF_FREEMEM(state->lightUbo);
     MF_FREEMEM(state->rt);

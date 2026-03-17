@@ -71,7 +71,7 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 resDescLen, MFRe
 
         VkDescriptorPoolCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            .maxSets = 1000 * FRAMES_IN_FLIGHT, //! FIXME: INSTEAD OF ASSUMING 1000 * FRAMES_IN_FLIGHT, CREATE A DYNAMIC DESCRIPTOR POOL ALLOCATOR
+            .maxSets = 1000, //! FIXME: INSTEAD OF ASSUMING 1000, CREATE A DYNAMIC DESCRIPTOR POOL ALLOCATOR
             .poolSizeCount = count,
             .pPoolSizes = sizes,
             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
@@ -146,11 +146,12 @@ void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRend
     VkDescriptorSetAllocateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = layout->pool,
-        .descriptorSetCount = FRAMES_IN_FLIGHT,
+        .descriptorSetCount = 1,
         .pSetLayouts = &layout->layout
     };
 
-    VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, set->sets));
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, &set->sets[i]));
 }
 
 void mfResourceSetDestroy(MFResourceSet* set) {

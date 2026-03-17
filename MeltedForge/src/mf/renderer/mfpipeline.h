@@ -8,16 +8,16 @@ typedef struct MFPipeline_s MFPipeline;
 #include "mfutil_types.h"
 #include "mfgpuimage.h"
 #include "mfgpubuffer.h"
+#include "mfgpu_res.h"
 
 #include "mfrenderer.h"
 
 typedef struct MFPipelineConfig_s {
     MFVec2 extent;
-    u32 bindingDescsCount, attribDescsCount, imgCount, buffCount;
+    u32 bindingDescsCount, attribDescsCount, resLayCount;
     MFVertexInputBindingDescription* bindingDescs;
     MFVertexInputAttributeDescription* attribDescs;
-    MFGpuImage** images;
-    MFGpuBuffer** buffers;
+    MFResourceSetLayout** resLayouts;
     MFCompareOp depthCompareOp;
     b8 hasDepth, transparent;
     const char* vertPath;

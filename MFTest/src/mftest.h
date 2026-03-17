@@ -23,6 +23,10 @@ typedef struct LightUBOData_s {
 typedef struct MFTState_s {
     SLogger logger;
 
+    MFResourceSetLayout* layout;
+    u64 setCount;
+    MFResourceSet** sets;
+
     MFPipeline* pipeline;
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
