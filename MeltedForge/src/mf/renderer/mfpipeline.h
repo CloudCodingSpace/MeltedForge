@@ -30,4 +30,6 @@ void mfPipelineDestroy(MFPipeline* pipeline);
 
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor);
 
+void* mfPipelineGetLayoutBackend(MFPipeline* pipeline);
+void* mfPipelineGetBackend(MFPipeline* pipeline);
 size_t mfPipelineGetSizeInBytes(void);

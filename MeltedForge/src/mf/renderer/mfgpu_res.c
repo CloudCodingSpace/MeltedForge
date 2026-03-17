@@ -2,7 +2,15 @@
 
 #include <vulkan/vulkan.h>
 
+#include "mfgpubuffer.h"
+#include "mfgpuimage.h"
+#include "mfpipeline.h"
+
 #include "vk/backend.h"
+#include "vk/buffer.h"
+#include "vk/image.h"
+#include "vk/render_target.h"
+#include "vk/pipeline.h"
 
 struct MFResourceSetLayout_s {
     VkDescriptorSetLayout layout;
@@ -156,6 +164,24 @@ void mfResourceSetDestroy(MFResourceSet* set) {
     MF_SETMEM(set, 0, sizeof(MFResourceSet));
 }
 
+void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
+    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
+    VkCommandBuffer buff = backend->cmdBuffers[backend->crntFrmIdx];
+    if(backend->rt != mfnull) {
+        buff = backend->rt->buffs[backend->crntFrmIdx];
+    }
+
+    //! FIXME: ASSUMING THE BIND POINT TO BE GRAPHICS, CHANGE THIS IF MORE TYPE OF PIPELINES ARE INTRODUCED
+    vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, mfPipelineGetLayoutBackend(pipeline), 
+                                    0, 1, &set->sets[backend->crntFrmIdx], 
+                                    0, mfnull);
+}
+
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
     MF_PANIC_IF(images == mfnull, mfGetLogger(), "The images array provided shouldn't be null!");
@@ -163,7 +189,66 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     MF_PANIC_IF(images->len != set->layout->imageCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
     MF_PANIC_IF(buffers->len != set->layout->bufferCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
 
-    // TODO: Implement this function
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
+    u64 count = set->layout->imageCount + set->layout->bufferCount;
+    VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
+    VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * set->layout->imageCount);
+    VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * set->layout->bufferCount);
+
+    for(u64 i = 0; i < set->layout->imageCount; i++) {
+        imgInfos[i] = (VkDescriptorImageInfo){
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .imageView = mfGetGpuImageBackend(mfArrayGet(*images, MFGpuImage*, i)).view,
+            .sampler = mfGetGpuImageBackend(mfArrayGet(*images, MFGpuImage*, i)).sampler
+        };
+    }
+    
+    for (u32 frame = 0; frame < FRAMES_IN_FLIGHT; frame++) {
+        u64 writeIdx = 0;
+
+        // Images
+        for (u64 i = 0; i < set->layout->imageCount; i++) {
+            writes[writeIdx] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = set->sets[frame],
+                .dstBinding = mfArrayGet(set->layout->resDescs, MFResourceDesc, i).binding,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .descriptorCount = 1,
+                .pImageInfo = &imgInfos[i]
+            };
+            writeIdx++;
+        }
+
+        // Buffers
+        for (u64 i = 0; i < set->layout->bufferCount; i++) {
+            VulkanBuffer* backend = mfGetGpuBufferBackend(mfArrayGet(*buffers, MFGpuBuffer*, i));
+
+            buffInfos[i] = (VkDescriptorBufferInfo){
+                .buffer = backend[frame].handle,
+                .offset = 0,
+                .range = backend[frame].size
+            };
+
+            writes[writeIdx] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = set->sets[frame],
+                .dstBinding = mfArrayGet(set->layout->resDescs, MFResourceDesc, set->layout->imageCount + i).binding,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1,
+                .pBufferInfo = &buffInfos[i]
+            };
+
+            writeIdx++;
+        }
+
+        vkUpdateDescriptorSets(ctx->device, writeIdx, writes, 0, NULL);
+    }
+
+    MF_FREEMEM(writes);
+    MF_FREEMEM(buffInfos);
+    MF_FREEMEM(imgInfos);
 }
 
 void* mfGetResourceSetLayoutBackend(MFResourceSetLayout* layout) {

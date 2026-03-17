@@ -219,7 +219,7 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     vp.y = vp.height;
     vp.height *= -1.0f;
-
+    
     VkViewport v = {
         .x = vp.x,
         .y = vp.y,
@@ -228,19 +228,31 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
         .maxDepth = vp.maxDepth,
         .minDepth = vp.minDepth
     };
-
+    
     VkRect2D s = {
         .extent = (VkExtent2D){scissor.extentX, scissor.extentY},
         .offset = (VkOffset2D){scissor.offsetX, scissor.offsetY}
     };
-
+    
     VkCommandBuffer buff = pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx];
     if(pipeline->backend->rt != mfnull) {
         buff = pipeline->backend->rt->buffs[pipeline->backend->crntFrmIdx];
     }
-
+    
     vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline.layout, 0, 1, &pipeline->descSet[pipeline->backend->crntFrmIdx], 0, mfnull);
     VulkanPipelineBind(&pipeline->pipeline, v, s, buff);
+}
+
+void* mfPipelineGetLayoutBackend(MFPipeline* pipeline) {
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    
+    return pipeline->pipeline.layout;
+}
+
+void* mfPipelineGetBackend(MFPipeline* pipeline) {
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+
+    return pipeline->pipeline.pipeline;
 }
 
 size_t mfPipelineGetSizeInBytes(void) {
