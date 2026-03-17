@@ -153,14 +153,6 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
                 .imageView = mfGetGpuImageBackend(info->images[i]).view,
                 .sampler = mfGetGpuImageBackend(info->images[i]).sampler
             };
-            writes[i] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .dstBinding = resourceDescs[i].binding,
-                .dstArrayElement = 0,
-                .pImageInfo = &imgInfos[i]
-            };
         }
         
         for (u32 frame = 0; frame < FRAMES_IN_FLIGHT; frame++) {
