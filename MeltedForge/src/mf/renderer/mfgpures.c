@@ -54,7 +54,7 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 resDescLen, MFRe
             sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount * FRAMES_IN_FLIGHT };
         }
         if(imageCount != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, imageCount * FRAMES_IN_FLIGHT };
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bufferCount * FRAMES_IN_FLIGHT };
         }
 
         VkDescriptorPoolCreateInfo info = {
