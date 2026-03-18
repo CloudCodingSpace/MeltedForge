@@ -207,7 +207,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         state->setCount = comp->model.meshCount;
 
-        state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*));
+        state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*) * state->setCount);
         MFArray buffers = mfArrayCreate(&state->logger, 2, sizeof(MFGpuBuffer*));
         mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->cameraUbo);
         mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
