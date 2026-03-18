@@ -10,8 +10,8 @@ void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertic
     mesh->vertCount = indCount;
     mesh->renderer = renderer;
 
-    mesh->vertBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGetGpuBufferSizeInBytes());
-    mesh->indBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGetGpuBufferSizeInBytes());
+    mesh->vertBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
+    mesh->indBuffer = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
 
     MFGpuBufferConfig config = {
         .data = vertices,

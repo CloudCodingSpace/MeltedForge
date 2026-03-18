@@ -161,7 +161,7 @@ b8 mfIsWindowOpen(MFWindow* window) {
     return !glfwWindowShouldClose(window->handle);
 }
 
-const char* mfGetWindowTitle(MFWindow* window) {
+const char* mfWindowGetTitle(MFWindow* window) {
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
@@ -172,7 +172,7 @@ const char* mfGetWindowTitle(MFWindow* window) {
     return glfwGetWindowTitle(window->handle);
 }
 
-void mfSetWindowTitle(MFWindow* window, const char* title) {
+void mfWindowSetTitle(MFWindow* window, const char* title) {
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
@@ -187,7 +187,7 @@ void mfSetWindowTitle(MFWindow* window, const char* title) {
     glfwSetWindowTitle(window->handle, title);
 }
 
-GLFWwindow* mfGetWindowHandle(MFWindow* window) {
+GLFWwindow* mfWindowGetHandle(MFWindow* window) {
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }
@@ -197,7 +197,7 @@ GLFWwindow* mfGetWindowHandle(MFWindow* window) {
     return window->handle;
 }
 
-const MFWindowConfig* mfGetWindowConfig(MFWindow* window) {
+const MFWindowConfig* mfWindowGetConfig(MFWindow* window) {
     if(window == mfnull) {
         MF_FATAL_ABORT(mfGetLogger(), "The window handle provided shouldn't be null!");
     }

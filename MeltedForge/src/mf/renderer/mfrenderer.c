@@ -136,28 +136,28 @@ void* mfRendererGetPass(MFRenderer* renderer) {
     return (void*)renderer->backend.pass;
 }
 
-u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer) {
+u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
     return renderer->backend.crntFrmIdx;
 }
 
-f64 mfGetRendererGetDeltaTime(MFRenderer* renderer) {
+f64 mfRendererGetDeltaTime(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
     return renderer->deltaTime;
 }
 
-f64 mfGetRendererGetFrameTime(MFRenderer* renderer) {
+f64 mfRendererGetFrameTime(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     return renderer->frameTimer.delta;
 }
 
-u8 mfGetRendererFramesInFlight(void) {
+u8 mfRendererGetFramesInFlight(void) {
     return FRAMES_IN_FLIGHT;
 }
 
-size_t mfGetRendererSizeInBytes(void) {
+size_t mRendererGetSizeInBytes(void) {
     return sizeof(MFRenderer);
 }

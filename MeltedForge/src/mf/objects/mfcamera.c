@@ -125,7 +125,7 @@ void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f
     camera->update = &default_update;
     camera->constructMatrices = &default_contruct_matrices;
 
-    const MFWindowConfig* config = mfGetWindowConfig(window);
+    const MFWindowConfig* config = mfWindowGetConfig(window);
     camera->lastX = config->width/2;
     camera->lastY = config->height/2;
 

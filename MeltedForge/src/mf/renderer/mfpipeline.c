@@ -39,7 +39,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     VkDescriptorSetLayout* setLayouts = MF_ALLOCMEM(VkDescriptorSetLayout, sizeof(VkDescriptorSetLayout) * info->resLayCount);
     for(u32 i = 0; i < info->resLayCount; i++) {
-        setLayouts[i] = mfGetResourceSetLayoutBackend(info->resLayouts[i]);
+        setLayouts[i] = mfResourceSetLayoutGetBackend(info->resLayouts[i]);
     }
 
     VulkanPipelineInfo binfo = {

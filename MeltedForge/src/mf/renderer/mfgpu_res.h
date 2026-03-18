@@ -19,7 +19,7 @@ void mfResourceSetDestroy(MFResourceSet* set);
 void mfResourceSetBind(MFResourceSet* set, struct MFPipeline_s* pipeline);
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers);
 
-void* mfGetResourceSetLayoutBackend(MFResourceSetLayout* layout);
+void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout);
 
-size_t mfGetResourceSetLayoutSizeInBytes(void);
-size_t mfGetResourceSetSizeInBytes(void);
+size_t mfResourceSetLayoutGetSizeInBytes(void);
+size_t mfResourceSetGetSizeInBytes(void);

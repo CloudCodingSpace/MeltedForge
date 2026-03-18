@@ -201,8 +201,8 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     for(u64 i = 0; i < set->layout->imageCount; i++) {
         imgInfos[i] = (VkDescriptorImageInfo){
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .imageView = mfGetGpuImageBackend(mfArrayGet(*images, MFGpuImage*, i)).view,
-            .sampler = mfGetGpuImageBackend(mfArrayGet(*images, MFGpuImage*, i)).sampler
+            .imageView = mfGpuImageGetBackend(mfArrayGet(*images, MFGpuImage*, i)).view,
+            .sampler = mfGpuImageGetBackend(mfArrayGet(*images, MFGpuImage*, i)).sampler
         };
     }
     
@@ -214,7 +214,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfGetGpuImageDescription(mfArrayGet(*images, MFGpuImage*, i)).binding,
+                .dstBinding = mGpuImageGetDescription(mfArrayGet(*images, MFGpuImage*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
@@ -224,7 +224,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
         // Buffers
         for (u64 i = 0; i < set->layout->bufferCount; i++) {
-            VulkanBuffer* backend = mfGetGpuBufferBackend(mfArrayGet(*buffers, MFGpuBuffer*, i));
+            VulkanBuffer* backend = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i));
 
             buffInfos[i] = (VkDescriptorBufferInfo){
                 .buffer = backend[frame].handle,
@@ -235,7 +235,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfGetGpuBufferDescription(mfArrayGet(*buffers, MFGpuBuffer*, i)).binding,
+                .dstBinding = mfGpuBufferGetDescription(mfArrayGet(*buffers, MFGpuBuffer*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1,
                 .pBufferInfo = &buffInfos[i]
@@ -252,15 +252,15 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     MF_FREEMEM(imgInfos);
 }
 
-void* mfGetResourceSetLayoutBackend(MFResourceSetLayout* layout) {
+void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout) {
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
     
     return layout->layout;
 }
 
-size_t mfGetResourceSetLayoutSizeInBytes(void) {
+size_t mfResourceSetLayoutGetSizeInBytes(void) {
     return sizeof(MFResourceSetLayout);
 }
-size_t mfGetResourceSetSizeInBytes(void) {
+size_t mfResourceSetGetSizeInBytes(void) {
     return sizeof(MFResourceSet);
 }

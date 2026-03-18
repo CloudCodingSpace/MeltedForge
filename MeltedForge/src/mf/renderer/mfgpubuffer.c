@@ -83,11 +83,11 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
     return &buffer->config;
 }
 
-size_t mfGetGpuBufferSizeInBytes(void) {
+size_t mfGpuBufferGetSizeInBytes(void) {
     return sizeof(MFGpuBuffer);
 }
 
-MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer) {
+MFResourceDesc mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     
     return (MFResourceDesc) {
@@ -98,7 +98,7 @@ MFResourceDesc mfGetGpuBufferDescription(MFGpuBuffer* buffer) {
     };
 }
 
-struct VulkanBuffer_s* mfGetGpuBufferBackend(MFGpuBuffer* buffer) {
+struct VulkanBuffer_s* mfGpuBufferGetBackend(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
 
     return buffer->buffer;

@@ -32,9 +32,9 @@ MFRect2D mfRendererGetScissor(MFRenderer* renderer);
 void* mfRendererGetBackend(MFRenderer* renderer);
 void* mfRendererGetPass(MFRenderer* renderer);
 
-u8 mfGetRendererCurrentFrameIdx(MFRenderer* renderer);
-f64 mfGetRendererGetDeltaTime(MFRenderer* renderer);
-f64 mfGetRendererGetFrameTime(MFRenderer* renderer);
+u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
+f64 mfRendererGetDeltaTime(MFRenderer* renderer);
+f64 mfRendererGetFrameTime(MFRenderer* renderer);
 
-size_t mfGetRendererSizeInBytes(void);
-u8 mfGetRendererFramesInFlight(void);
+size_t mRendererGetSizeInBytes(void);
+u8 mfRendererGetFramesInFlight(void);

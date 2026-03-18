@@ -22,4 +22,4 @@ u32 mfRenderTargetGetWidth(MFRenderTarget* rt);
 u32 mfRenderTargetGetHeight(MFRenderTarget* rt);
 
 void* mfRenderTargetGetHandle(MFRenderTarget* rt);
-size_t mfGetRenderTargetSizeInBytes(void);
+size_t mfRenderTargetGetSizeInBytes(void);

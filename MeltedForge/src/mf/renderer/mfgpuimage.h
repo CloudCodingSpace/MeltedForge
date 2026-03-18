@@ -22,12 +22,12 @@ void mfGpuImageDestroy(MFGpuImage* image);
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels);
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height);
 
-const MFGpuImageConfig* mfGetGpuImageConfig(MFGpuImage* image);
-size_t mfGetGpuImageSizeInBytes(void);
+const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image);
+size_t mfGpuImageGetSizeInBytes(void);
 
 void mfGpuImageSetBinding(MFGpuImage* image, u32 binding);
 
-MFResourceDesc mfGetGpuImageDescription(MFGpuImage* image);
-struct VulkanImage_s mfGetGpuImageBackend(MFGpuImage* image);
+MFResourceDesc mGpuImageGetDescription(MFGpuImage* image);
+struct VulkanImage_s mfGpuImageGetBackend(MFGpuImage* image);
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer);

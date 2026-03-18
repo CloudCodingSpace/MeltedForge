@@ -387,6 +387,6 @@ void* mfRenderTargetGetHandle(MFRenderTarget* rt) {
     return rt->descs[rt->backend->crntFrmIdx];
 }
 
-size_t mfGetRenderTargetSizeInBytes(void) {
+size_t mfRenderTargetGetSizeInBytes(void) {
     return sizeof(MFRenderTarget);
 }

@@ -316,7 +316,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8
     }
     // Surface
     {
-        VK_CHECK(glfwCreateWindowSurface(ctx->instance, mfGetWindowHandle(window), ctx->allocator, &ctx->surface));
+        VK_CHECK(glfwCreateWindowSurface(ctx->instance, mfWindowGetHandle(window), ctx->allocator, &ctx->surface));
     }
     // Physical Device 
     {
@@ -417,7 +417,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8
         vkGetDeviceQueue(ctx->device, (u32)ctx->qData.gQueueIdx, 0, &ctx->qData.gQueue);
     }
     // Swapchain
-    CreateSwapchain(ctx, mfGetWindowHandle(window));
+    CreateSwapchain(ctx, mfWindowGetHandle(window));
     // Depth
     if(enableDepth) {
         GetDepthFormat(ctx);
@@ -503,7 +503,7 @@ void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow
         vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
-    CreateSwapchain(ctx, mfGetWindowHandle(window));
+    CreateSwapchain(ctx, mfWindowGetHandle(window));
 
     if(ctx->enableDepth) {
         VulkanImageInfo info = {

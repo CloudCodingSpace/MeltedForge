@@ -12,7 +12,7 @@ MFGpuImage* loadImage(const char* path, void* renderer) {
         return mfCreateErrorGpuImage(renderer);
     }
 
-    MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGetGpuImageSizeInBytes());
+    MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
     
     MFGpuImageConfig config = {
         .width = width,

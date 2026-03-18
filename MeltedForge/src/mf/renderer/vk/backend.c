@@ -117,7 +117,7 @@ void VulkanBckndInit(VulkanBackend* backend, VulkanBackendConfig* config) {
 
         ImFontAtlas_AddFontFromFileTTF(io->Fonts, "mfassets/fonts/consolas.ttf", 18.0f, mfnull, mfnull);
 
-        ImGui_ImplGlfw_InitForVulkan(mfGetWindowHandle(config->window), true);
+        ImGui_ImplGlfw_InitForVulkan(mfWindowGetHandle(config->window), true);
 
         ImGui_ImplVulkan_InitInfo info = {
             .Allocator = backend->ctx.allocator,
@@ -175,7 +175,7 @@ void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window) {
 
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imgAvailableSemas[backend->crntFrmIdx], VK_NULL_HANDLE, &backend->scImgIdx);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        OnResize(backend, (u32)mfGetWindowConfig(window)->width, (u32)mfGetWindowConfig(window)->height, window);
+        OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
         if(backend->rt != mfnull) {
             mfRenderTargetResize(backend->rt, (MFVec2){mfRenderTargetGetWidth(backend->rt), mfRenderTargetGetHeight(backend->rt)});
         }
@@ -265,7 +265,7 @@ void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window) {
 
     VkResult result = vkQueuePresentKHR(backend->ctx.qData.pQueue, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        OnResize(backend, (u32)mfGetWindowConfig(window)->width, (u32)mfGetWindowConfig(window)->height, window);
+        OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
         if(backend->rt != mfnull) {
             mfRenderTargetResize(backend->rt, (MFVec2){mfRenderTargetGetWidth(backend->rt), mfRenderTargetGetHeight(backend->rt)});
         }

@@ -91,7 +91,7 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
 
 void MFTOnInit(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
-    const MFWindowConfig* winConfig = mfGetWindowConfig(appState->window);
+    const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
    
     slogLoggerCreate(&state->logger, "MFTest", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE);
@@ -105,7 +105,7 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     // Viewport and render target
     {
-        state->rt = MF_ALLOCMEM(MFRenderTarget, mfGetRenderTargetSizeInBytes());
+        state->rt = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->rt, appState->renderer, true);
         mfRenderTargetSetResizeCallback(state->rt, &ResizeCallback, state);
         mfRendererSetRenderTarget(appState->renderer, state->rt);
@@ -153,7 +153,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .normalMat = mfMat4Identity()
         };
 
-        state->cameraUbo = MF_ALLOCMEM(MFGpuBuffer, mfGetGpuBufferSizeInBytes());
+        state->cameraUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         mfGpuBufferAllocate(state->cameraUbo, config, appState->renderer);
         mfGpuBufferUploadData(state->cameraUbo, &uboData);
         
@@ -170,7 +170,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .lightIntensity = 100
         };
         
-        state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGetGpuBufferSizeInBytes());
+        state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         mfGpuBufferAllocate(state->lightUbo, config, appState->renderer);
         mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     }
@@ -185,7 +185,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Resource layouts
     {
-        state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfGetResourceSetLayoutSizeInBytes());
+        state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfResourceSetLayoutGetSizeInBytes());
         
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         u64 count = 3;
@@ -194,9 +194,9 @@ void MFTOnInit(void* pstate, void* pappState) {
         
         u64 i = 0;
         MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, 0, appState->renderer); // anyone image is fine since same binding
-        descs[i++] = mfGetGpuImageDescription(image);
-        descs[i++] = mfGetGpuBufferDescription(state->cameraUbo);
-        descs[i++] = mfGetGpuBufferDescription(state->lightUbo);
+        descs[i++] = mGpuImageGetDescription(image);
+        descs[i++] = mfGpuBufferGetDescription(state->cameraUbo);
+        descs[i++] = mfGpuBufferGetDescription(state->lightUbo);
         
         mfResourceSetLayoutCreate(state->layout, count, descs, appState->renderer);
         
@@ -213,7 +213,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
 
         for(u64 i = 0; i < state->setCount; i++) {
-            state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfGetResourceSetSizeInBytes());
+            state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfResourceSetGetSizeInBytes());
             mfResourceSetCreate(state->sets[i], state->layout, appState->renderer);
 
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, i, appState->renderer);
@@ -302,9 +302,9 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     {
         igBegin("Performance", mfnull, ImGuiWindowFlags_None);
         
-        igText("Frame time :- %.3f", mfGetRendererGetFrameTime(appState->renderer));
-        igText("Delta time :- %.3f", mfGetRendererGetDeltaTime(appState->renderer));
-        igText("FPS :- %.3f", (f64)(1000.0/mfGetRendererGetDeltaTime(appState->renderer)));
+        igText("Frame time :- %.3f", mfRendererGetFrameTime(appState->renderer));
+        igText("Delta time :- %.3f", mfRendererGetDeltaTime(appState->renderer));
+        igText("FPS :- %.3f", (f64)(1000.0/mfRendererGetDeltaTime(appState->renderer)));
 
         igEnd();
     }
@@ -335,11 +335,11 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 void MFTOnUpdate(void* pstate, void* pappState) {
     MFDefaultAppState* aState = (MFDefaultAppState*)pappState;
     MFTState* state = (MFTState*)pstate;
-    const MFWindowConfig* winConfig = mfGetWindowConfig(aState->window);
+    const MFWindowConfig* winConfig = mfWindowGetConfig(aState->window);
 
     state->camera.width = state->sceneViewport.x;
     state->camera.height = state->sceneViewport.y;
-    state->camera.update(&state->camera, mfGetRendererGetDeltaTime(aState->renderer), mfnull);
+    state->camera.update(&state->camera, mfRendererGetDeltaTime(aState->renderer), mfnull);
 
     if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(aState->window);
