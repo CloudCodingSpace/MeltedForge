@@ -214,7 +214,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfArrayGet(set->layout->resDescs, MFResourceDesc, i).binding,
+                .dstBinding = mfGetGpuImageDescription(mfArrayGet(*images, MFGpuImage*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
@@ -235,7 +235,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfArrayGet(set->layout->resDescs, MFResourceDesc, set->layout->imageCount + i).binding,
+                .dstBinding = mfGetGpuBufferDescription(mfArrayGet(*buffers, MFGpuBuffer*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1,
                 .pBufferInfo = &buffInfos[i]
