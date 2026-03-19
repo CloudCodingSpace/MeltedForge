@@ -231,6 +231,9 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
         // Buffers
         for (u64 i = 0; i < set->layout->bufferCount; i++) {
+            MF_PANIC_IF(mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))->type != VULKAN_BUFFER_TYPE_UBO, mfGetLogger(), 
+                                        "The given buffer for resource set isn't of an uniform buffer!");
+
             buffInfos[i] = (VkDescriptorBufferInfo){
                 .buffer = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))[frame].handle,
                 .offset = 0,
