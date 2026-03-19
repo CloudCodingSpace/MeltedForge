@@ -252,7 +252,8 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writeIdx++;
         }
 
-        vkUpdateDescriptorSets(ctx->device, writeIdx, writes, 0, NULL);
+        if(count > 0)
+            vkUpdateDescriptorSets(ctx->device, writeIdx, writes, 0, NULL);
     }
 
     MF_FREEMEM(writes);
