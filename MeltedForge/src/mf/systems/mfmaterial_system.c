@@ -195,7 +195,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
             .pixels = color
         });
         mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = img;
-        return image;
+        return img;
 
 g_error:
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Creating error texture!");

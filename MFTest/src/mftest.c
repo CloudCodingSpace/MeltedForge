@@ -110,7 +110,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/moon_rock.obj",
+                .path = "meshes/Mickey Mouse.obj",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -118,7 +118,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             MFTransformComponent tComp = {
                 .position = (MFVec3){0, 0, 0},
                 .rotationXYZ = (MFVec3){45, 0, 0},
-                .scale = (MFVec3){15, 15, 15}
+                .scale = (MFVec3){1, 1, 1}
             };
 
             mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
