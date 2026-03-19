@@ -12,16 +12,6 @@ static void CreatePipeline(MFTState* state) {
     MFVertexInputAttributeDescription* attribDescs = getVertAttribDescs(&attribCount);
     MFVertexInputBindingDescription bindingDesc = getVertBindingDesc();
 
-    u32 imageCount = 1;
-    MFGpuImage* images[] = {
-        mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, 0, state->renderer) // meshIdx = 0 for now!
-    };
-
-    MFGpuBuffer* ubos[] = {
-        state->cameraUbo,
-        state->lightUbo
-    };
-
     MFPipelineConfig info = {
         .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
         .hasDepth = true,
@@ -179,7 +169,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         state->modelMatImgs = mfMaterialSystemLoadModelMatImages(&comp->model, "meshes", state->renderer);
         for(u64 i = 0; i < comp->model.meshCount; i++) {
-            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, i, appState->renderer);
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, &comp->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
         }
     }
@@ -193,7 +183,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFResourceDesc* descs = MF_ALLOCMEM(MFResourceDesc, count);
         
         u64 i = 0;
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, 0, appState->renderer); // anyone image is fine since same binding
+        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, &comp->model, 0, appState->renderer); // anyone image is fine since every image has same binding
         descs[i++] = mGpuImageGetDescription(image);
         descs[i++] = mfGpuBufferGetDescription(state->cameraUbo);
         descs[i++] = mfGpuBufferGetDescription(state->lightUbo);
@@ -216,7 +206,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfResourceSetGetSizeInBytes());
             mfResourceSetCreate(state->sets[i], state->layout, appState->renderer);
 
-            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, i, appState->renderer);
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, &comp->model, i, appState->renderer);
             MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
             mfArrayAddElement(images, MFGpuImage*, &state->logger, image);
 

@@ -22,4 +22,4 @@ typedef enum MFModelMatTextures_e {
 MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer);
 void mfMaterialSystemDeleteModelMatImages(MFArray* array);
 
-MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, u64 meshIdx, MFRenderer* renderer);
+MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer);

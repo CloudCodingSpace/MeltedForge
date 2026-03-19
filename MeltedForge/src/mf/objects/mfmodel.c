@@ -59,6 +59,10 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
     for(int i = 0; i < scene->mNumMeshes; i++) {
         struct aiMesh* mesh = scene->mMeshes[i];
         MFMeshMaterial matData = {0};
+        MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
+        MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
+        MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
+        MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
 
         u8* vertices = MF_ALLOCMEM(u8, perVertSize * mesh->mNumVertices);
         u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * mesh->mNumFaces * 3);
@@ -156,9 +160,6 @@ void mfModelDestroy(MFModel* model) {
     
     for(u64 i = 0; i < model->meshCount; i++) {
         mfMeshDestroy(&model->meshes[i]);        
-    }
-
-    for(u64 i = 0; i < model->meshCount; i++) {
     }
 
     if(model->meshes)

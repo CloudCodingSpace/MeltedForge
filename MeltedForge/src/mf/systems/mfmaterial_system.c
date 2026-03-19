@@ -2,14 +2,52 @@
 
 #include <stb/stb_image.h>
 
-MFGpuImage* loadImage(const char* path, void* renderer) {
+MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer) {
     i32 width, height, channels;
     stbi_set_flip_vertically_on_load(true);
 
-    u8* pixels = stbi_load(path, &width, &height, &channels, 4);
-    if (!pixels) {
+    u8 buff[4] = {0x00, 0x00, 0x00, 0xff};
+    u8* pixels;
+    u8* img_pixels = stbi_load(path, &width, &height, &channels, 4);
+    if (!img_pixels) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s", stbi_failure_reason());
-        return mfCreateErrorGpuImage(renderer);
+        switch(type) {
+            case MF_MODEL_MAT_TEXTURE_DIFFUSE:
+                if(mat->diffuse[0] == -1)
+                    goto error_return;
+                buff[0] = mat->diffuse[0] * 255;
+                buff[1] = mat->diffuse[1] * 255;
+                buff[2] = mat->diffuse[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_AMBIENT:
+                if(mat->ambient[0] == -1)
+                    goto error_return;
+                buff[0] = mat->ambient[0] * 255;
+                buff[1] = mat->ambient[1] * 255;
+                buff[2] = mat->ambient[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_SPECULAR:
+                if(mat->specular[0] == -1)
+                    goto error_return;
+                buff[0] = mat->specular[0] * 255;
+                buff[1] = mat->specular[1] * 255;
+                buff[2] = mat->specular[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_EMISSIVE:
+                if(mat->emission[0] == -1)
+                    goto error_return;
+                buff[0] = mat->emission[0] * 255;
+                buff[1] = mat->emission[1] * 255;
+                buff[2] = mat->emission[2] * 255;
+                break;
+error_return:
+                return mfCreateErrorGpuImage(renderer);
+        };
+        pixels = buff;
+        width = 1;
+        height = 1;
+    } else {
+        pixels = img_pixels;
     }
 
     MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
@@ -65,7 +103,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
             if(paths[j]) {
                 const char* path = mfStringConcatenate(mfGetLogger(), bPath, paths[j]);
 
-                mfArrayGet(arr, MFGpuImage*, j) = loadImage(path, renderer);
+                mfArrayGet(arr, MFGpuImage*, j) = loadImage(path, j, &mat, renderer);
                 MF_FREEMEM(path);
             }
         }
@@ -94,8 +132,9 @@ void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
     mfArrayDestroy(array, mfGetLogger());
 }
 
-MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, u64 meshIdx, MFRenderer* renderer) {
+MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be null!");
+    MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model provided shouldn't be null!");
     MF_DO_IF((array->len == 0) || (array->elementSize != sizeof(MFArray)), {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided material texture array is invalid!");
         return mfnull;
@@ -104,14 +143,62 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The queried material texture's type is invalid!");
         return mfnull;
     });
-    MF_DO_IF((meshIdx < 0) || (meshIdx >= array->len), {
+    MF_DO_IF((meshIdx < 0) || (meshIdx >= model->meshCount), {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided mesh index is an invalid index!");
         return mfnull;
     });
     
     MFGpuImage* image = mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type);
     if(image == mfnull) {
-        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The queried material texture doesn't exists! Instead, using a error textured image!");
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The queried material texture doesn't exists!");
+        MFMeshMaterial* mat = &model->meshes[meshIdx].mat;
+        u8 color[4] = {0x00, 0x00, 0x00, 0xff};
+        
+        switch(type) {
+            case MF_MODEL_MAT_TEXTURE_DIFFUSE:
+                if(mat->diffuse[0] == -1)
+                    goto g_error;
+                color[0] = mat->diffuse[0] * 255;
+                color[1] = mat->diffuse[1] * 255;
+                color[2] = mat->diffuse[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_AMBIENT:
+                if(mat->ambient[0] == -1)
+                    goto g_error;
+                color[0] = mat->ambient[0] * 255;
+                color[1] = mat->ambient[1] * 255;
+                color[2] = mat->ambient[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_SPECULAR:
+                if(mat->specular[0] == -1)
+                    goto g_error;
+                color[0] = mat->specular[0] * 255;
+                color[1] = mat->specular[1] * 255;
+                color[2] = mat->specular[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_EMISSIVE:
+                if(mat->emission[0] == -1)
+                    goto g_error;
+                color[0] = mat->emission[0] * 255;
+                color[1] = mat->emission[1] * 255;
+                color[2] = mat->emission[2] * 255;
+                break;
+            default:
+                goto g_error;
+        };
+
+        MFGpuImage* img = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
+        mfGpuImageCreate(img, renderer, (MFGpuImageConfig){
+            .binding = MF_INFINITY,
+            .width = 1,
+            .height = 1,
+            .pixels = color
+        });
+        mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = img;
+        return image;
+
+g_error:
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Creating error texture!");
         mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
         image = mfArrayGet(*array, MFGpuImage*, type);
     }
