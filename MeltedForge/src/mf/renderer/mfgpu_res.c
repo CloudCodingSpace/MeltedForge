@@ -185,10 +185,17 @@ void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
 
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
-    MF_PANIC_IF(images == mfnull, mfGetLogger(), "The images array provided shouldn't be null!");
-    MF_PANIC_IF(buffers == mfnull, mfGetLogger(), "The buffer array provided shouldn't be null!");
-    MF_PANIC_IF(images->len != set->layout->imageCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
-    MF_PANIC_IF(buffers->len != set->layout->bufferCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
+
+    u64 imgCount = 0, buffCount = 0;
+    if(images != mfnull) {
+        imgCount = images->len;
+    }
+    if(buffers != mfnull) {
+        buffCount = buffers->len;
+    }
+
+    MF_PANIC_IF(imgCount != set->layout->imageCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
+    MF_PANIC_IF(buffCount != set->layout->bufferCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
@@ -214,7 +221,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mGpuImageGetDescription(mfArrayGet(*images, MFGpuImage*, i)).binding,
+                .dstBinding = mfGpuImageGetDescription(mfArrayGet(*images, MFGpuImage*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
@@ -224,12 +231,10 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
         // Buffers
         for (u64 i = 0; i < set->layout->bufferCount; i++) {
-            VulkanBuffer* backend = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i));
-
             buffInfos[i] = (VkDescriptorBufferInfo){
-                .buffer = backend[frame].handle,
+                .buffer = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))[frame].handle,
                 .offset = 0,
-                .range = backend[frame].size
+                .range = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))[frame].size
             };
 
             writes[writeIdx] = (VkWriteDescriptorSet){

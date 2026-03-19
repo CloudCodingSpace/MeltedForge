@@ -184,7 +184,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         
         u64 i = 0;
         MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->modelMatImgs, &comp->model, 0, appState->renderer); // anyone image is fine since every image has same binding
-        descs[i++] = mGpuImageGetDescription(image);
+        descs[i++] = mfGpuImageGetDescription(image);
         descs[i++] = mfGpuBufferGetDescription(state->cameraUbo);
         descs[i++] = mfGpuBufferGetDescription(state->lightUbo);
         

@@ -94,7 +94,7 @@ void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
     image->config.binding = binding;
 }
 
-MFResourceDesc mGpuImageGetDescription(MFGpuImage* image) {
+MFResourceDesc mfGpuImageGetDescription(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
 
     return (MFResourceDesc) {
