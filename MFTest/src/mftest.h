@@ -38,7 +38,7 @@ typedef struct MFTState_s {
     MFCamera camera;
     LightUBOData lightData;
     
-    MFRenderTarget* rt;
+    MFRenderTarget* renderTarget;
     ImVec2 sceneViewport;
     
     void* renderer;

@@ -5,8 +5,8 @@
 VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo pinfo) {
     VkAttachmentDescription colorAttachment = {
         .format = pinfo.format,
-        .initialLayout = pinfo.initiaLay,
-        .finalLayout = pinfo.finalLay,
+        .initialLayout = pinfo.initialLayout,
+        .finalLayout = pinfo.finalLayout,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,

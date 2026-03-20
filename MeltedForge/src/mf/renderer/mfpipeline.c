@@ -91,12 +91,12 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
         .offset = (VkOffset2D){scissor.offsetX, scissor.offsetY}
     };
     
-    VkCommandBuffer buff = pipeline->backend->cmdBuffers[pipeline->backend->frameIndex];
-    if(pipeline->backend->rt != mfnull) {
-        buff = pipeline->backend->rt->commandBuffers[pipeline->backend->frameIndex];
+    VkCommandBuffer commandBuffer = pipeline->backend->cmdBuffers[pipeline->backend->frameIndex];
+    if(pipeline->backend->renderTarget != mfnull) {
+        commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
     }
     
-    VulkanPipelineBind(&pipeline->pipeline, v, s, buff);
+    VulkanPipelineBind(&pipeline->pipeline, v, s, commandBuffer);
 }
 
 void* mfPipelineGetLayoutBackend(MFPipeline* pipeline) {

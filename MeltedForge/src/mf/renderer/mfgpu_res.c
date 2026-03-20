@@ -173,8 +173,8 @@ void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
     VulkanBackendCtx* ctx = &backend->ctx;
 
     VkCommandBuffer buff = backend->cmdBuffers[backend->frameIndex];
-    if(backend->rt != mfnull) {
-        buff = backend->rt->commandBuffers[backend->frameIndex];
+    if(backend->renderTarget != mfnull) {
+        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }
 
     //! FIXME: ASSUMING THE BIND POINT TO BE GRAPHICS, CHANGE THIS IF MORE TYPE OF PIPELINES ARE INTRODUCED

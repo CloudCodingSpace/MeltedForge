@@ -7,19 +7,19 @@ struct MFRenderer_s;
 
 typedef struct MFRenderTarget_s MFRenderTarget;
 
-void mfRenderTargetCreate(MFRenderTarget* rt, struct MFRenderer_s* renderer, b8 hasDepth);
-void mfRenderTargetDestroy(MFRenderTarget* rt);
+void mfRenderTargetCreate(MFRenderTarget* renderTarget, struct MFRenderer_s* renderer, b8 hasDepth);
+void mfRenderTargetDestroy(MFRenderTarget* renderTarget);
 
-void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent);
+void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent);
 
-void mfRenderTargetBegin(MFRenderTarget* rt);
-void mfRenderTargetEnd(MFRenderTarget* rt);
+void mfRenderTargetBegin(MFRenderTarget* renderTarget);
+void mfRenderTargetEnd(MFRenderTarget* renderTarget);
 
-void mfRenderTargetSetResizeCallback(MFRenderTarget* rt, void (*callback)(void* userData), void* userData);
-void* mfRenderTargetGetPass(MFRenderTarget* rt);
+void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData);
+void* mfRenderTargetGetPass(MFRenderTarget* renderTarget);
 
-u32 mfRenderTargetGetWidth(MFRenderTarget* rt);
-u32 mfRenderTargetGetHeight(MFRenderTarget* rt);
+u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget);
+u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget);
 
-void* mfRenderTargetGetHandle(MFRenderTarget* rt);
+void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget);
 size_t mfRenderTargetGetSizeInBytes(void);

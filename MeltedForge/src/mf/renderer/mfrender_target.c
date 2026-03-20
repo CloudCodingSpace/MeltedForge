@@ -8,34 +8,33 @@
 #include "vk/fb.h"
 #include "vk/renderpass.h"
 #include "vk/command_buffer.h"
+#include "vk/render_target.h"
 
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-#include "vk/render_target.h"
-
-void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8 hasDepth) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
-    rt->hasDepth = hasDepth;
-    rt->resizeCallback = mfnull;
+    renderTarget->hasDepth = hasDepth;
+    renderTarget->resizeCallback = mfnull;
 
-    rt->renderer = renderer;
-    rt->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+    renderTarget->renderer = renderer;
+    renderTarget->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
-    rt->images = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
-    rt->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
-    rt->descs = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
+    renderTarget->images = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
+    renderTarget->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
+    renderTarget->sets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
     if(hasDepth) {
         VulkanImageInfo info = {
-            .ctx = &rt->backend->ctx,
-            .width = rt->backend->ctx.scExtent.width,
-            .height = rt->backend->ctx.scExtent.height,
+            .ctx = &renderTarget->backend->ctx,
+            .width = renderTarget->backend->ctx.scExtent.width,
+            .height = renderTarget->backend->ctx.scExtent.height,
             .gpuResource = false,
             .pixels = mfnull,
-            .format = rt->backend->ctx.depthFormat,
+            .format = renderTarget->backend->ctx.depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -45,29 +44,30 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
             .viewType = VK_IMAGE_VIEW_TYPE_2D
         };
 
-        VulkanImageCreate(&rt->depthImage, info);
+        VulkanImageCreate(&renderTarget->depthImage, info);
     }
+
     {
         VulkanRenderPassInfo info = {
-            .format = rt->backend->ctx.scFormat.format,
-            .initiaLay = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLay = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .format = renderTarget->backend->ctx.scFormat.format,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             .hasDepth = hasDepth,
             .renderTarget = true
         };
 
-        rt->pass = VulkanRenderPassCreate(&rt->backend->ctx, info);
+        renderTarget->renderPass = VulkanRenderPassCreate(&renderTarget->backend->ctx, info);
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         {
             VulkanImageInfo info = {
-                .ctx = &rt->backend->ctx,
-                .width = rt->backend->ctx.scExtent.width,
-                .height = rt->backend->ctx.scExtent.height,
+                .ctx = &renderTarget->backend->ctx,
+                .width = renderTarget->backend->ctx.scExtent.width,
+                .height = renderTarget->backend->ctx.scExtent.height,
                 .gpuResource = true,
                 .pixels = mfnull,
-                .format = rt->backend->ctx.scFormat.format,
+                .format = renderTarget->backend->ctx.scFormat.format,
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
                 .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -77,98 +77,98 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
                 .viewType = VK_IMAGE_VIEW_TYPE_2D
             };
 
-            VulkanImageCreate(&rt->images[i], info);
+            VulkanImageCreate(&renderTarget->images[i], info);
         }
 
         u32 count = 1;
         VkImageView views[2] = {
-            rt->images[i].view
+            renderTarget->images[i].view
         };
 
         if(hasDepth) {
-            views[1] = rt->depthImage.view;
+            views[1] = renderTarget->depthImage.view;
             count++;
         }
 
-        rt->fbs[i] = VulkanFbCreate(&rt->backend->ctx, rt->pass, count, views, rt->backend->ctx.scExtent);
+        renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.scExtent);
 
-        rt->descs[i] = ImGui_ImplVulkan_AddTexture(rt->images[i].sampler, rt->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        renderTarget->sets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        rt->commandBuffers[i] = VulkanCommandBufferAllocate(&rt->backend->ctx, rt->backend->ctx.cmdPool, true);
+        renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.cmdPool, true);
         
         VkFenceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .flags = VK_FENCE_CREATE_SIGNALED_BIT
         };
-        VK_CHECK(vkCreateFence(rt->backend->ctx.device, &info, rt->backend->ctx.allocator, &rt->fences[i]));
+        VK_CHECK(vkCreateFence(renderTarget->backend->ctx.device, &info, renderTarget->backend->ctx.allocator, &renderTarget->fences[i]));
     }
 }
 
-void mfRenderTargetDestroy(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VulkanCommandBufferFree(&rt->backend->ctx, rt->commandBuffers[i], rt->backend->ctx.cmdPool);
-        vkDestroyFence(rt->backend->ctx.device, rt->fences[i], rt->backend->ctx.allocator);
+        VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.cmdPool);
+        vkDestroyFence(renderTarget->backend->ctx.device, renderTarget->fences[i], renderTarget->backend->ctx.allocator);
     }
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        ImGui_ImplVulkan_RemoveTexture(rt->descs[i]);
+        ImGui_ImplVulkan_RemoveTexture(renderTarget->sets[i]);
         
-        VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
-        VulkanImageDestroy(&rt->images[i]);
+        VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
+        VulkanImageDestroy(&renderTarget->images[i]);
     }
 
-    if(rt->hasDepth)
-        VulkanImageDestroy(&rt->depthImage);
+    if(renderTarget->hasDepth)
+        VulkanImageDestroy(&renderTarget->depthImage);
     
-    VulkanRenderPassDestroy(&rt->backend->ctx, rt->pass);
+    VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
     
-    MF_FREEMEM(rt->images);
-    MF_FREEMEM(rt->fbs);
-    MF_FREEMEM(rt->descs);
+    MF_FREEMEM(renderTarget->images);
+    MF_FREEMEM(renderTarget->frameBuffers);
+    MF_FREEMEM(renderTarget->sets);
     
-    MF_SETMEM(rt, 0, sizeof(MFRenderTarget));
+    MF_SETMEM(renderTarget, 0, sizeof(MFRenderTarget));
 }
 
-void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
     if(extent.x == 0 || extent.y == 0) {
         return;
     }
 
-    VK_CHECK(vkDeviceWaitIdle(rt->backend->ctx.device));
+    VK_CHECK(vkDeviceWaitIdle(renderTarget->backend->ctx.device));
     
     // Deleting
     {
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            ImGui_ImplVulkan_RemoveTexture(rt->descs[i]);
+            ImGui_ImplVulkan_RemoveTexture(renderTarget->sets[i]);
             
-            VulkanFbDestroy(&rt->backend->ctx, rt->fbs[i]);
-            VulkanImageDestroy(&rt->images[i]);
+            VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
+            VulkanImageDestroy(&renderTarget->images[i]);
         }
         
-        if(rt->hasDepth)
-            VulkanImageDestroy(&rt->depthImage);
+        if(renderTarget->hasDepth)
+            VulkanImageDestroy(&renderTarget->depthImage);
         
-        MF_SETMEM(rt->descs, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
-        MF_SETMEM(rt->fbs, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
-        MF_SETMEM(rt->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
-        MF_SETMEM(&rt->depthImage, 0, sizeof(VulkanImage));
+        MF_SETMEM(renderTarget->sets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
+        MF_SETMEM(renderTarget->frameBuffers, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
+        MF_SETMEM(renderTarget->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
+        MF_SETMEM(&renderTarget->depthImage, 0, sizeof(VulkanImage));
     }
     // Re-creating
     {
-        if(rt->hasDepth) {
+        if(renderTarget->hasDepth) {
             VulkanImageInfo info = {
-                .ctx = &rt->backend->ctx,
+                .ctx = &renderTarget->backend->ctx,
                 .width = extent.x,
                 .height = extent.y,
                 .gpuResource = false,
                 .pixels = mfnull,
-                .format = rt->backend->ctx.depthFormat,
+                .format = renderTarget->backend->ctx.depthFormat,
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
                 .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -178,19 +178,19 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
                 .viewType = VK_IMAGE_VIEW_TYPE_2D
             };
 
-            VulkanImageCreate(&rt->depthImage, info);
+            VulkanImageCreate(&renderTarget->depthImage, info);
         }
 
 
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             {
                 VulkanImageInfo info = {
-                    .ctx = &rt->backend->ctx,
+                    .ctx = &renderTarget->backend->ctx,
                     .width = extent.x,
                     .height = extent.y,
                     .gpuResource = true,
                     .pixels = mfnull,
-                    .format = rt->backend->ctx.scFormat.format,
+                    .format = renderTarget->backend->ctx.scFormat.format,
                     .tiling = VK_IMAGE_TILING_OPTIMAL,
                     .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -200,28 +200,28 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
                     .viewType = VK_IMAGE_VIEW_TYPE_2D
                 };
 
-                VulkanImageCreate(&rt->images[i], info);
+                VulkanImageCreate(&renderTarget->images[i], info);
             }
 
             u32 count = 1;
             VkImageView views[2] = {
-                rt->images[i].view
+                renderTarget->images[i].view
             };
 
-            if(rt->hasDepth) {
-                views[1] = rt->depthImage.view;
+            if(renderTarget->hasDepth) {
+                views[1] = renderTarget->depthImage.view;
                 count++;
             }
 
-            rt->fbs[i] = VulkanFbCreate(&rt->backend->ctx, rt->pass, count, views, (VkExtent2D){extent.x, extent.y});
+            renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, (VkExtent2D){extent.x, extent.y});
 
-            rt->descs[i] = ImGui_ImplVulkan_AddTexture(rt->images[i].sampler, rt->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            renderTarget->sets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
     }
 
     // Transitioning the images explicitly
     {
-        VkCommandBuffer cmd = rt->commandBuffers[0];
+        VkCommandBuffer cmd = renderTarget->commandBuffers[0];
         VK_CHECK(vkResetCommandBuffer(cmd, 0));
         VulkanCommandBufferBegin(cmd);
 
@@ -234,7 +234,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
                 .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                 .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = rt->images[i].image,
+                .image = renderTarget->images[i].image,
                 .subresourceRange = {
                     .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                     .baseMipLevel = 0,
@@ -258,23 +258,23 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             .commandBufferCount = 1,
             .pCommandBuffers = &cmd
         };
-        VK_CHECK(vkQueueSubmit(rt->backend->ctx.qData.gQueue, 1, &submitInfo, VK_NULL_HANDLE));
-        VK_CHECK(vkQueueWaitIdle(rt->backend->ctx.qData.gQueue));
+        VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.qData.gQueue, 1, &submitInfo, VK_NULL_HANDLE));
+        VK_CHECK(vkQueueWaitIdle(renderTarget->backend->ctx.qData.gQueue));
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VK_CHECK(vkResetCommandBuffer(rt->commandBuffers[i], 0));
-        VulkanCommandBufferBegin(rt->commandBuffers[i]);
+        VK_CHECK(vkResetCommandBuffer(renderTarget->commandBuffers[i], 0));
+        VulkanCommandBufferBegin(renderTarget->commandBuffers[i]);
     }
 
-    // Begin the pass
+    // Begin the renderPass
     {
         u32 count = 1;
         VkClearValue values[2] = {
-            rt->backend->clearColor
+            renderTarget->backend->clearColor
         };
         
-        if(rt->hasDepth) {
+        if(renderTarget->hasDepth) {
             count++;
             values[1].depthStencil.depth = 1.0f;
             values[1].depthStencil.stencil = 0;
@@ -284,33 +284,33 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             .clearValueCount = count,
             .pClearValues = values,
-            .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].info.width, rt->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
-            .renderPass = rt->pass,
-            .framebuffer = rt->fbs[rt->backend->frameIndex]
+            .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
+            .renderPass = renderTarget->renderPass,
+            .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex]
         }; 
 
-        vkCmdBeginRenderPass(rt->commandBuffers[rt->backend->frameIndex], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(renderTarget->commandBuffers[renderTarget->backend->frameIndex], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    if(rt->resizeCallback != mfnull) {
-        rt->resizeCallback(rt->userData);
+    if(renderTarget->resizeCallback != mfnull) {
+        renderTarget->resizeCallback(renderTarget->userData);
     }
 }
 
-void mfRenderTargetBegin(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    VkCommandBuffer buff = rt->commandBuffers[rt->backend->frameIndex];
+    VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
-    VK_CHECK(vkResetCommandBuffer(buff, 0));
-    VulkanCommandBufferBegin(buff);
+    VK_CHECK(vkResetCommandBuffer(commandBuffer, 0));
+    VulkanCommandBufferBegin(commandBuffer);
 
     u32 count = 1;
     VkClearValue values[2] = {
-        rt->backend->clearColor
+        renderTarget->backend->clearColor
     };
     
-    if(rt->hasDepth) {
+    if(renderTarget->hasDepth) {
         count++;
         values[1].depthStencil.depth = 1.0f;
         values[1].depthStencil.stencil = 0;
@@ -320,21 +320,21 @@ void mfRenderTargetBegin(MFRenderTarget* rt) {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = count,
         .pClearValues = values,
-        .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].info.width, rt->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
-        .renderPass = rt->pass,
-        .framebuffer = rt->fbs[rt->backend->frameIndex]
+        .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
+        .renderPass = renderTarget->renderPass,
+        .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex]
     }; 
 
-    vkCmdBeginRenderPass(buff, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void mfRenderTargetEnd(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    VkCommandBuffer buff = rt->commandBuffers[rt->backend->frameIndex];
+    VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
-    vkCmdEndRenderPass(buff);
-    VulkanCommandBufferEnd(buff);
+    vkCmdEndRenderPass(commandBuffer);
+    VulkanCommandBufferEnd(commandBuffer);
 
     VkPipelineStageFlags waitDstFlags[] = {
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
@@ -343,48 +343,48 @@ void mfRenderTargetEnd(MFRenderTarget* rt) {
     VkSubmitInfo info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,
-        .pCommandBuffers = &buff,
+        .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &rt->backend->rndrFinishedSemas[rt->backend->frameIndex],
+        .pSignalSemaphores = &renderTarget->backend->rndrFinishedSemas[renderTarget->backend->frameIndex],
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &rt->backend->imgAvailableSemas[rt->backend->frameIndex],
+        .pWaitSemaphores = &renderTarget->backend->imgAvailableSemas[renderTarget->backend->frameIndex],
         .pWaitDstStageMask = waitDstFlags
     };
 
-    VK_CHECK(vkQueueSubmit(rt->backend->ctx.qData.gQueue, 1, &info, rt->fences[rt->backend->frameIndex]));
+    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.qData.gQueue, 1, &info, renderTarget->fences[renderTarget->backend->frameIndex]));
 }
 
-void mfRenderTargetSetResizeCallback(MFRenderTarget* rt, void (*callback)(void* userData), void* userData) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(userData == mfnull, mfGetLogger(), "The user data provided shouldn't be null!");
     MF_PANIC_IF(callback == mfnull, mfGetLogger(), "The resize callback func ptr provided shouldn't be null!");
 
-    rt->userData = userData;
-    rt->resizeCallback = callback;
+    renderTarget->userData = userData;
+    renderTarget->resizeCallback = callback;
 }
 
-void* mfRenderTargetGetPass(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void* mfRenderTargetGetPass(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
 
-    return (void*)rt->pass;
+    return (void*)renderTarget->renderPass;
 }
 
-u32 mfRenderTargetGetWidth(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    return rt->images[0].info.width;
+    return renderTarget->images[0].info.width;
 }
 
-u32 mfRenderTargetGetHeight(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    return rt->images[0].info.height;
+    return renderTarget->images[0].info.height;
 }
 
-void* mfRenderTargetGetHandle(MFRenderTarget* rt) {
-    MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
 
-    return rt->descs[rt->backend->frameIndex];
+    return renderTarget->sets[renderTarget->backend->frameIndex];
 }
 
 size_t mfRenderTargetGetSizeInBytes(void) {

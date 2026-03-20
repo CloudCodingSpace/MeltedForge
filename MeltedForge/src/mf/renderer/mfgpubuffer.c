@@ -63,8 +63,8 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
         return;
 
     VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->frameIndex];
-    if(buffer->backend->rt != mfnull) {
-        buff = buffer->backend->rt->commandBuffers[buffer->backend->frameIndex];
+    if(buffer->backend->renderTarget != mfnull) {
+        buff = buffer->backend->renderTarget->commandBuffers[buffer->backend->frameIndex];
     }
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {

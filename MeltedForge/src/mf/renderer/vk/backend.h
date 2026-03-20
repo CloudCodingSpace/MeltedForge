@@ -26,13 +26,13 @@ typedef struct VulkanBackend_s {
 
     VkRenderPass pass;
     u32 fbCount;
-    VkFramebuffer* fbs;
+    VkFramebuffer* frameBuffers;
 
     VkSemaphore imgAvailableSemas[FRAMES_IN_FLIGHT];
     VkSemaphore rndrFinishedSemas[FRAMES_IN_FLIGHT];
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
 
-    struct MFRenderTarget_s* rt;
+    struct MFRenderTarget_s* renderTarget;
 } VulkanBackend;
 
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config);

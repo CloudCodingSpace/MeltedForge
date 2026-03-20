@@ -25,7 +25,7 @@ static void CreatePipeline(MFTState* state) {
         .bindings = &bindings,
         .resourceLayoutCount = 1,
         .resourceLayouts = &state->layout,
-        .renderpass = mfRenderTargetGetPass(state->rt)
+        .renderpass = mfRenderTargetGetPass(state->renderTarget)
     };
     mfPipelineInit(state->pipeline, state->renderer, &info);
 
@@ -50,15 +50,15 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         .model = mfMat4Identity()
     };
     
-    MFMeshComponent* mcomp = mfSceneEntityGetMeshComponent(scene, e->id);
-    MFTransformComponent* tcomp = mfSceneEntityGetTransformComponent(scene, e->id);
+    MFMeshComponent* mcomponent = mfSceneEntityGetMeshComponent(scene, e->id);
+    MFTransformComponent* tcomponent = mfSceneEntityGetTransformComponent(scene, e->id);
 
     {
         f64 time = mfGetTimeElapsed();
-        MFMat4 transformMat = mfMat4Translate(tcomp->position.x, tcomp->position.y, tcomp->position.z);
-        MFMat4 rot = mfMat4RotateXYZ(tcomp->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomp->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+        MFMat4 transformMat = mfMat4Translate(tcomponent->position.x, tcomponent->position.y, tcomponent->position.z);
+        MFMat4 rot = mfMat4RotateXYZ(tcomponent->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
         MFMat4 scale = mfMat4Identity();
-        mfMat4Scale(&scale, tcomp->scale.x, tcomp->scale.y, tcomp->scale.z);
+        mfMat4Scale(&scale, tcomponent->scale.x, tcomponent->scale.y, tcomponent->scale.z);
 
         uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
         uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
@@ -66,7 +66,7 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     }
     
-    for(u64 i = 0; i < mcomp->model.meshCount; i++) {
+    for(u64 i = 0; i < mcomponent->model.meshCount; i++) {
         state->lightData.camPos = state->camera.pos;
 
         MFViewport vp = mfRendererGetViewport(scene->renderer);
@@ -74,7 +74,7 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
 
         mfResourceSetBind(state->sets[i], state->pipeline);
         mfPipelineBind(state->pipeline, vp, scissor);
-        mfMeshRender(&mcomp->model.meshes[i]);
+        mfMeshRender(&mcomponent->model.meshes[i]);
     }
 }
 
@@ -96,13 +96,13 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     // Viewport and render target
     {
-        state->rt = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
-        mfRenderTargetCreate(state->rt, appState->renderer, true);
-        mfRenderTargetSetResizeCallback(state->rt, &ResizeCallback, state);
-        mfRendererSetRenderTarget(appState->renderer, state->rt);
+        state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
+        mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
+        mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
+        mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
 
-        state->sceneViewport.x = mfRenderTargetGetWidth(state->rt);
-        state->sceneViewport.y = mfRenderTargetGetHeight(state->rt);
+        state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);
+        state->sceneViewport.y = mfRenderTargetGetHeight(state->renderTarget);
     }
     // Scene & entities
     {
@@ -167,10 +167,10 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Model Images
     {
-        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        state->materialImages = mfMaterialSystemLoadModelMatImages(&comp->model, "meshes", state->renderer);
-        for(u64 i = 0; i < comp->model.meshCount; i++) {
-            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &comp->model, i, appState->renderer);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes", state->renderer);
+        for(u64 i = 0; i < component->model.meshCount; i++) {
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
         }
     }
@@ -178,13 +178,13 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfResourceSetLayoutGetSizeInBytes());
         
-        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         u64 count = 3;
         
         MFResourceDesc* descs = MF_ALLOCMEM(MFResourceDesc, sizeof(MFResourceDesc) * count);
         
         u64 i = 0;
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &comp->model, 0, appState->renderer); // anyone image is fine since every image has same binding
+        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer); // anyone image is fine since every image has same binding
         descs[i++] = mfGpuImageGetDescription(image);
         descs[i++] = mfGpuBufferGetDescription(state->cameraUbo);
         descs[i++] = mfGpuBufferGetDescription(state->lightUbo);
@@ -195,8 +195,8 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Resource sets
     {
-        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        state->setCount = comp->model.meshCount;
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        state->setCount = component->model.meshCount;
 
         state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*) * state->setCount);
         MFArray buffers = mfArrayCreate(&state->logger, 2, sizeof(MFGpuBuffer*));
@@ -207,7 +207,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfResourceSetGetSizeInBytes());
             mfResourceSetCreate(state->sets[i], state->layout, appState->renderer);
 
-            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &comp->model, i, appState->renderer);
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
             mfArrayAddElement(images, MFGpuImage*, &state->logger, image);
 
@@ -247,7 +247,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfSceneDeleteEntity(&state->scene, state->entity->id);
     mfSceneDestroy(&state->scene);
 
-    mfRenderTargetDestroy(state->rt);
+    mfRenderTargetDestroy(state->renderTarget);
 
     mfCameraDestroy(&state->camera);
     mfPipelineDestroy(state->pipeline);
@@ -259,7 +259,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     MF_FREEMEM(state->layout);
     MF_FREEMEM(state->cameraUbo);
     MF_FREEMEM(state->lightUbo);
-    MF_FREEMEM(state->rt);
+    MF_FREEMEM(state->renderTarget);
     MF_FREEMEM(state->pipeline);
 }
 
@@ -267,8 +267,8 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
-    if((state->sceneViewport.x != mfRenderTargetGetWidth(state->rt)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->rt))) {
-        mfRenderTargetResize(state->rt, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
+    if((state->sceneViewport.x != mfRenderTargetGetWidth(state->renderTarget)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->renderTarget))) {
+        mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
     }
 
     mfSceneRender(&state->scene, renderEntity, pstate);
@@ -285,7 +285,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     {
         igBegin("Scene", mfnull, ImGuiWindowFlags_None);
         igGetContentRegionAvail(&state->sceneViewport);
-        igImage((ImTextureID)mfRenderTargetGetHandle(state->rt), (ImVec2){mfRenderTargetGetWidth(state->rt), mfRenderTargetGetHeight(state->rt)}, (ImVec2){0, 0}, (ImVec2){1, 1});
+        igImage((ImTextureID)mfRenderTargetGetHandle(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
         igEnd();
     }
 

@@ -4,8 +4,8 @@
 
 typedef struct VulkanRenderPassInfo_s {
     VkFormat format; 
-    VkImageLayout initiaLay; 
-    VkImageLayout finalLay; 
+    VkImageLayout initialLayout; 
+    VkImageLayout finalLayout; 
     b8 hasDepth; 
     b8 renderTarget;
 } VulkanRenderPassInfo;

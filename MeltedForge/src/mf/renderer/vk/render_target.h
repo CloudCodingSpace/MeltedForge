@@ -12,9 +12,9 @@ struct MFRenderTarget_s {
     void (*resizeCallback)(void* userData);
     VulkanImage depthImage;
     VulkanImage* images;
-    VkFramebuffer* fbs;
-    VkRenderPass pass;
-    VkDescriptorSet* descs;
+    VkFramebuffer* frameBuffers;
+    VkRenderPass renderPass;
+    VkDescriptorSet* sets;
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkFence fences[FRAMES_IN_FLIGHT];

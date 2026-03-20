@@ -65,7 +65,7 @@ void mfRendererWait(MFRenderer* renderer) {
 void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
-    renderer->backend.rt = rt;
+    renderer->backend.renderTarget = rt;
 }
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
@@ -98,9 +98,9 @@ MFViewport mfRendererGetViewport(MFRenderer* renderer) {
         .minDepth = 0.0f
     };
 
-    if(renderer->backend.rt != mfnull) {
-        vp.width = renderer->backend.rt->images[0].info.width;
-        vp.height = renderer->backend.rt->images[0].info.height;
+    if(renderer->backend.renderTarget != mfnull) {
+        vp.width = renderer->backend.renderTarget->images[0].info.width;
+        vp.height = renderer->backend.renderTarget->images[0].info.height;
     }
     
     return vp;
@@ -116,9 +116,9 @@ MFRect2D mfRendererGetScissor(MFRenderer* renderer) {
         .extentY = renderer->backend.ctx.scExtent.height
     };
 
-    if(renderer->backend.rt != mfnull) {
-        scissor.extentX = renderer->backend.rt->images[0].info.width;
-        scissor.extentY = renderer->backend.rt->images[0].info.height;
+    if(renderer->backend.renderTarget != mfnull) {
+        scissor.extentX = renderer->backend.renderTarget->images[0].info.width;
+        scissor.extentY = renderer->backend.renderTarget->images[0].info.height;
     }
 
     return scissor;

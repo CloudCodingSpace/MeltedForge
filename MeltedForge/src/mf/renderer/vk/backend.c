@@ -23,7 +23,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(backend->ctx.device));
 
     for(u32 i = 0; i < backend->fbCount; i++) {
-        VulkanFbDestroy(&backend->ctx, backend->fbs[i]);
+        VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
 
     VulkanBackendCtxResize(&backend->ctx, width, height, window);
@@ -38,7 +38,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
             views[1] = backend->ctx.depthImage.view;
         }
 
-        backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
+        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
     }
 }
 
@@ -55,8 +55,8 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     {
         VulkanRenderPassInfo info = {
             .format = backend->ctx.scFormat.format,
-            .initiaLay = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLay = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             .hasDepth = config->enableDepth,
             .renderTarget = false
         };
@@ -66,7 +66,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     
     // Framebuffers
     backend->fbCount = backend->ctx.scImgCount;
-    backend->fbs = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->fbCount);
+    backend->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->fbCount);
     for(u32 i = 0; i < backend->fbCount; i++) {
         u32 len = 1;
         VkImageView views[2] = {
@@ -77,7 +77,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             views[1] = backend->ctx.depthImage.view;
         }
 
-        backend->fbs[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
+        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
     }
     
     // Sync objs
@@ -154,20 +154,20 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     }
 
     for(u32 i = 0; i < backend->fbCount; i++) {
-        VulkanFbDestroy(&backend->ctx, backend->fbs[i]);
+        VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
     
     VulkanRenderPassDestroy(&backend->ctx, backend->pass);
     VulkanBackendCtxDestroy(&backend->ctx);
 
-    MF_FREEMEM(backend->fbs);
+    MF_FREEMEM(backend->frameBuffers);
     MF_SETMEM(backend, 0, sizeof(VulkanBackend));
 }
 
 void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
-    if(backend->rt != mfnull) {
-        VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->rt->fences[backend->frameIndex], VK_TRUE, UINT64_MAX));
-        VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->rt->fences[backend->frameIndex]));
+    if(backend->renderTarget != mfnull) {
+        VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->renderTarget->fences[backend->frameIndex], VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->renderTarget->fences[backend->frameIndex]));
     }
 
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
@@ -176,8 +176,8 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imgAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->scImgIdx);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        if(backend->rt != mfnull) {
-            mfRenderTargetResize(backend->rt, (MFVec2){mfRenderTargetGetWidth(backend->rt), mfRenderTargetGetHeight(backend->rt)});
+        if(backend->renderTarget != mfnull) {
+            mfRenderTargetResize(backend->renderTarget, (MFVec2){mfRenderTargetGetWidth(backend->renderTarget), mfRenderTargetGetHeight(backend->renderTarget)});
         }
         return;
     }
@@ -185,8 +185,8 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
         VK_CHECK(result);
     }
 
-    if(backend->rt != mfnull) {
-        mfRenderTargetBegin(backend->rt);
+    if(backend->renderTarget != mfnull) {
+        mfRenderTargetBegin(backend->renderTarget);
     }
     VK_CHECK(vkResetCommandBuffer(backend->cmdBuffers[backend->frameIndex], 0));
     VulkanCommandBufferBegin(backend->cmdBuffers[backend->frameIndex]);
@@ -201,7 +201,7 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = MF_ARRAYLEN(values, VkClearColorValue),
         .pClearValues = values,
-        .framebuffer = backend->fbs[backend->scImgIdx],
+        .framebuffer = backend->frameBuffers[backend->scImgIdx],
         .renderArea = (VkRect2D){.extent = backend->ctx.scExtent, .offset = (VkOffset2D){ 0, 0 }},
         .renderPass = backend->pass
     };
@@ -217,8 +217,8 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
 }
 
 void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
-    if(backend->rt != mfnull) {
-        mfRenderTargetEnd(backend->rt);
+    if(backend->renderTarget != mfnull) {
+        mfRenderTargetEnd(backend->renderTarget);
     }
 
     if(backend->enableUI) {
@@ -248,7 +248,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         .pWaitSemaphores = &backend->imgAvailableSemas[backend->frameIndex]
     };
 
-    if(backend->rt != mfnull) {
+    if(backend->renderTarget != mfnull) {
         submitInfo.pWaitSemaphores = &backend->rndrFinishedSemas[backend->frameIndex];
     }
 
@@ -266,8 +266,8 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VkResult result = vkQueuePresentKHR(backend->ctx.qData.pQueue, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        if(backend->rt != mfnull) {
-            mfRenderTargetResize(backend->rt, (MFVec2){mfRenderTargetGetWidth(backend->rt), mfRenderTargetGetHeight(backend->rt)});
+        if(backend->renderTarget != mfnull) {
+            mfRenderTargetResize(backend->renderTarget, (MFVec2){mfRenderTargetGetWidth(backend->renderTarget), mfRenderTargetGetHeight(backend->renderTarget)});
         }
         return;
     }
@@ -278,8 +278,8 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
     VkCommandBuffer buff = backend->cmdBuffers[backend->frameIndex];
-    if(backend->rt != mfnull) {
-        buff = backend->rt->commandBuffers[backend->frameIndex];
+    if(backend->renderTarget != mfnull) {
+        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }
 
     vkCmdDraw(buff, vertexCount, instances, firstVertex, firstInstance);
@@ -287,8 +287,8 @@ void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 inst
 
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
     VkCommandBuffer buff = backend->cmdBuffers[backend->frameIndex];
-    if(backend->rt != mfnull) {
-        buff = backend->rt->commandBuffers[backend->frameIndex];
+    if(backend->renderTarget != mfnull) {
+        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }
 
     vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // NOTE: Make the offset configurable if necessary
