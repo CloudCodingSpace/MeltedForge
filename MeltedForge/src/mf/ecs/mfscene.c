@@ -244,16 +244,18 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     u64 validTransforms = 0;
     for(u64 i = 0; i < scene->transformCompPool.len; i++) {
         MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
-        if(t->valid) validTransforms++;
+        if(t->valid) 
+            validTransforms++;
     }
-    size += sizeof(MFTransformComponent) * sizeof(f32) * validTransforms;
+    size += 9 * sizeof(f32) * validTransforms; // since 9 f32s per transform component
 
     u64 validGroups = 0;
     for(u64 i = 0; i < scene->compGrpTable.len; i++) {
         MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
-        if(g->valid) validGroups++;
+        if(g->valid) 
+            validGroups++;
     }
-    size += sizeof(MFComponentGroup) * sizeof(u64) * validGroups;
+    size += 2 * sizeof(u64) * validGroups; // since 2 u64s per group
 
     for(int i = 0; i < scene->meshCompPool.len; i++) {
         MFMeshComponent* comp = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
@@ -293,7 +295,8 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         u64 validTransforms = 0;
         for(u64 i = 0; i < scene->transformCompPool.len; i++) {
             MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
-            if(t->valid) validTransforms++;
+            if(t->valid) 
+                validTransforms++;
         }
         mfSerializeU64(&s, validTransforms);
         for(u64 i = 0; i < scene->transformCompPool.len; i++) {
@@ -316,7 +319,8 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         u64 validGroups = 0;
         for(u64 i = 0; i < scene->compGrpTable.len; i++) {
             MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
-            if(g->valid) validGroups++;
+            if(g->valid) 
+                validGroups++;
         }
         mfSerializeU64(&s, validGroups);
         for(u64 i = 0; i < scene->compGrpTable.len; i++) {
