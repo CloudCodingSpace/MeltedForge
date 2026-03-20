@@ -35,6 +35,7 @@ typedef struct MFMesh_s {
     u32 vertCount;
 
     MFMeshMaterial mat;
+    b8 init;
 } MFMesh;
 
 void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indCount, u32* indices);

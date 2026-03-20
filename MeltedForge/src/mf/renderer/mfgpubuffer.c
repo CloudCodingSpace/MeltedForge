@@ -10,10 +10,12 @@ struct MFGpuBuffer_s {
     VulkanBackendCtx* ctx;
     VulkanBuffer buffer[FRAMES_IN_FLIGHT];
     MFGpuBufferConfig config;
+    b8 init;
 };
 
 void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(buffer->init, mfGetLogger(), "The gpu buffer is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(config.type == MF_GPU_BUFFER_TYPE_NONE, mfGetLogger(), "The gpu buffer type can't be none!");
 
@@ -27,11 +29,13 @@ void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRender
         for(u32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
             VulkanBufferAllocate(&buffer->buffer[i], buffer->ctx, buffer->ctx->commandPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
     }
+
+    buffer->init = true;
 }
 
 void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     for(u32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanBufferFree(&buffer->buffer[i], buffer->ctx);
@@ -41,6 +45,8 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
 
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
+
     buffer->config.data = data;
 
     u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? buffer->backend->frameIndex : 0;
@@ -49,6 +55,8 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
+
     buffer->config.data = data;
     buffer->config.size = size;
 
@@ -58,6 +66,7 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
 
 void mfGpuBufferBind(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_UBO)
         return;
@@ -79,6 +88,7 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
 
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
 
     return &buffer->config;
 }
@@ -89,6 +99,7 @@ size_t mfGpuBufferGetSizeInBytes(void) {
 
 MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     return (MFResourceDescription) {
         .binding = buffer->config.binding,
@@ -100,6 +111,7 @@ MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
 
 struct VulkanBuffer_s* mfGpuBufferGetBackend(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
 
     return buffer->buffer;
 }

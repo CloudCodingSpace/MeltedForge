@@ -15,6 +15,7 @@
 
 void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8 hasDepth) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(renderTarget->init, mfGetLogger(), "The render target is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     renderTarget->hasDepth = hasDepth;
@@ -104,11 +105,14 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
         };
         VK_CHECK(vkCreateFence(renderTarget->backend->ctx.device, &info, renderTarget->backend->ctx.allocator, &renderTarget->fences[i]));
     }
+
+    renderTarget->init = true;
 }
 
 void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
         vkDestroyFence(renderTarget->backend->ctx.device, renderTarget->fences[i], renderTarget->backend->ctx.allocator);
@@ -135,7 +139,8 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
     if(extent.x == 0 || extent.y == 0) {
         return;
     }
@@ -299,7 +304,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 
 void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
     VK_CHECK(vkResetCommandBuffer(commandBuffer, 0));
@@ -330,7 +336,8 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
 
 void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
     vkCmdEndRenderPass(commandBuffer);
@@ -356,6 +363,7 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
     MF_PANIC_IF(userData == mfnull, mfGetLogger(), "The user data provided shouldn't be null!");
     MF_PANIC_IF(callback == mfnull, mfGetLogger(), "The resize callback func ptr provided shouldn't be null!");
 
@@ -365,24 +373,28 @@ void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callba
 
 void* mfRenderTargetGetPass(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
     return (void*)renderTarget->renderPass;
 }
 
 u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
     return renderTarget->images[0].info.width;
 }
 
 u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
     return renderTarget->images[0].info.height;
 }
 
 void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
     return renderTarget->sets[renderTarget->backend->frameIndex];
 }

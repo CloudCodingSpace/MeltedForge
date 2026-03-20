@@ -1,9 +1,9 @@
 #include "mfcamera.h"
 
 void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
-    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");
+    MF_PANIC_IF(!camera->init, mfGetLogger(), "The camera handle provided isn't initialised!");
     b8 moved = false;
-
+    
     // Key input
     {
         if(mfInputIsKeyPressed(camera->window, MF_KEY_W)) {
@@ -37,39 +37,39 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
         if(mfInputIsMBPressed(camera->window, MF_MOUSE_BUTTON_RIGHT)) {
             f64 xpos, ypos;
             mfInputGetMousePos(camera->window, &xpos, &ypos);
-
+            
             if(camera->firstMouse) {
                 mfInputDisableMouse(camera->window);
                 camera->lastX = xpos;
                 camera->lastY = ypos;
                 camera->firstMouse = false;
             }
-
+            
             f32 xDelta = (xpos - camera->lastX);
             f32 yDelta = (camera->lastY - ypos);
-
+            
             camera->lastX = xpos;
             camera->lastY = ypos;
-
+            
             if(xDelta != 0 || yDelta != 0) {
                 xDelta *= camera->sensitivity;
                 yDelta *= camera->sensitivity;
-
+                
                 camera->yaw += xDelta;
                 camera->pitch += yDelta;
                 
                 if(camera->pitch > 89.9f)
-                    camera->pitch = 89.9f;
+                camera->pitch = 89.9f;
                 if(camera->pitch < -89.9f)
-                    camera->pitch = -89.9f;
-
+                camera->pitch = -89.9f;
+                
                 MFVec3 front;
                 front.x = cos(camera->yaw * MF_DEG2RAD_MULTIPLIER) * cos(camera->pitch * MF_DEG2RAD_MULTIPLIER);
                 front.y = sin(camera->pitch * MF_DEG2RAD_MULTIPLIER);
                 front.z = sin(camera->yaw * MF_DEG2RAD_MULTIPLIER) * cos(camera->pitch * MF_DEG2RAD_MULTIPLIER);
                 
                 camera->front = mfVec3Normalize(front);
-
+                
                 moved = true;
             }
         }
@@ -78,31 +78,34 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
             camera->firstMouse = true;
         }
     }
-
+    
     // Update to the matrices & vectors
     {
         camera->right = mfVec3Normalize(mfVec3Cross((MFVec3){0, 1, 0}, camera->front));
         camera->up = mfVec3Normalize(mfVec3Cross(camera->front, camera->right));
         
         if(!moved)
-            return;
-
+        return;
+        
         if(camera->height == 0 && camera->width == 0)
-            return;
-
+        return;
+        
         if(camera->constructMatrices)
-            camera->constructMatrices(camera);
+        camera->constructMatrices(camera);
     }
 }
 
 void default_contruct_matrices(MFCamera* camera) {
+    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");
+    MF_PANIC_IF(!camera->init, mfGetLogger(), "The camera handle provided isn't initialised!");
     camera->proj = mfMat4Perspective(camera->fov * MF_DEG2RAD_MULTIPLIER, (f32)camera->width/(f32)camera->height, camera->nearPlane, camera->farPlane);
     camera->view = mfMat4LookAt(camera->pos, mfVec3Add(camera->pos, camera->front), camera->up);
 }
 
 void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f32 fov, f32 nearPlane, f32 farPlane, f32 speed, f32 sensitivity, MFVec3 pos) {
-    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
-    MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");    
+    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");
+    MF_PANIC_IF(camera->init, mfGetLogger(), "The camera handle provided is already initialised!");
+    MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     
     camera->pos = pos;
     camera->window = window;
@@ -129,11 +132,13 @@ void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f
     camera->lastX = config->width/2;
     camera->lastY = config->height/2;
 
+    camera->init = true;
     default_contruct_matrices(camera);
 }
 
 void mfCameraDestroy(MFCamera* camera) {
-    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!");    
+    MF_PANIC_IF(camera == mfnull, mfGetLogger(), "The camera handle provided shouldn't be null!"); 
+    MF_PANIC_IF(!camera->init, mfGetLogger(), "The camera handle provided isn't initialised!");
 
     MF_SETMEM(camera, 0, sizeof(MFCamera));
 }

@@ -11,6 +11,7 @@ typedef struct MFCamera_s {
     f32 width, height, yaw, pitch, fov, nearPlane, farPlane, speed, sensitivity, lastX, lastY;
     b8 firstMouse;
     MFWindow* window;
+    b8 init;
 
     void (*constructMatrices)(struct MFCamera_s* camera);
     void (*update)(struct MFCamera_s* camera, f64 deltaTime, void* userData);

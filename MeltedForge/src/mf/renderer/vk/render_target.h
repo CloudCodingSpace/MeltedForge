@@ -19,5 +19,5 @@ struct MFRenderTarget_s {
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkFence fences[FRAMES_IN_FLIGHT];
 
-    b8 hasDepth;
+    b8 hasDepth, init;
 };

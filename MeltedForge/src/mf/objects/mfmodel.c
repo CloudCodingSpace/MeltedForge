@@ -47,6 +47,7 @@ char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(model->init, mfGetLogger(), "The model handle provided is already initialised!");
 
     // Loading the model
     const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_OptimizeMeshes);
@@ -153,13 +154,15 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
         MF_FREEMEM(indices);
     }
     aiReleaseImport(scene);
+    model->init = true;
 }
 
 void mfModelDestroy(MFModel* model) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(!model->init, mfGetLogger(), "The model handle provided isn't initialised!");
     
     for(u64 i = 0; i < model->meshCount; i++) {
-        mfMeshDestroy(&model->meshes[i]);        
+        mfMeshDestroy(&model->meshes[i]);
     }
 
     if(model->meshes)

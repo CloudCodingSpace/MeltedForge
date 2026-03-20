@@ -65,6 +65,7 @@ error_return:
 
 MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
+    MF_PANIC_IF(!model->init, mfGetLogger(), "The model handle provided isn't initialised!");
     MF_PANIC_IF(model->meshCount <= 0, mfGetLogger(), "The model must have atleast 1 mesh!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
@@ -135,6 +136,7 @@ void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
 MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be null!");
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model provided shouldn't be null!");
+    MF_PANIC_IF(!model->init, mfGetLogger(), "The model handle provided isn't initialised!");
     MF_DO_IF((array->len == 0) || (array->elementSize != sizeof(MFArray)), {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided material texture array is invalid!");
         return mfnull;

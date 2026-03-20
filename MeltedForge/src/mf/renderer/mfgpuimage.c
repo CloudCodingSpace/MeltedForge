@@ -8,10 +8,12 @@ struct MFGpuImage_s {
     VulkanImage image;
     VulkanBackendCtx* ctx;
     MFGpuImageConfig config;
+    b8 init;
 };
 
 void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig config) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(image->init, mfGetLogger(), "The gpu image is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
     image->config = config;
@@ -34,10 +36,13 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
     };
     
     VulkanImageCreate(&image->image, info);
+
+    image->init = true;
 }
 
 void mfGpuImageDestroy(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
  
     VulkanImageDestroy(&image->image);
 
@@ -46,6 +51,7 @@ void mfGpuImageDestroy(MFGpuImage* image) {
 
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
     
     memcpy(image->config.pixels, pixels, sizeof(u8) * image->config.width * image->config.height * 4);
@@ -55,6 +61,7 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
 
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     
     image->config.width = width;
     image->config.height = height;
@@ -79,6 +86,7 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
 
 const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     
     return &image->config;
 }
@@ -90,12 +98,14 @@ size_t mfGpuImageGetSizeInBytes(void) {
 void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(binding < 0 || binding > 100, mfGetLogger(), "The binding slot provided should be valid!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
 
     image->config.binding = binding;
 }
 
 MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
 
     return (MFResourceDescription) {
         .binding = image->config.binding,
@@ -107,6 +117,7 @@ MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image) {
 
 struct VulkanImage_s mfGpuImageGetBackend(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     
     return image->image;
 }
@@ -114,11 +125,11 @@ struct VulkanImage_s mfGpuImageGetBackend(MFGpuImage* image) {
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    u8 invColor[4 * 16 * 16] = {0};
-    u32 cellSize = 4;
-    for(u32 h = 0; h < 16; h++) {
-        for(u32 w = 0; w < 16; w++) {
-            u32 idx = (h * 16 + w) * 4;
+    u8 invColor[4 * 4 * 4] = {0};
+    u32 cellSize = 1;
+    for(u32 h = 0; h < 4; h++) {
+        for(u32 w = 0; w < 4; w++) {
+            u32 idx = (h * 4 + w) * 4;
             u32 x = w / cellSize;
             u32 y = h / cellSize;
 
@@ -139,8 +150,8 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
     MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
     
     MFGpuImageConfig config = {
-        .width = 16,
-        .height = 16,
+        .width = 4,
+        .height = 4,
         .pixels = invColor,
         .binding = MF_INFINITY
     };

@@ -11,10 +11,12 @@ struct MFPipeline_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
+    b8 init;
 };
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(pipeline->init, mfGetLogger(), "The pipeline is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(info == mfnull, mfGetLogger(), "The pipeline info handle provided shouldn't be null!");
 
@@ -62,10 +64,13 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     MF_FREEMEM(setLayouts);
     MF_FREEMEM(bindings);
     MF_FREEMEM(attribs);
+
+    pipeline->init = true;
 }
 
 void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
 
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
 
@@ -74,6 +79,8 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
 
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
+
     vp.y = vp.height;
     vp.height *= -1.0f;
     
@@ -101,12 +108,14 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
 
 void* mfPipelineGetLayoutBackend(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
     
     return pipeline->pipeline.layout;
 }
 
 void* mfPipelineGetBackend(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
 
     return pipeline->pipeline.pipeline;
 }

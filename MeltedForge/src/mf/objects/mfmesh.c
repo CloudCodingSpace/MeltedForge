@@ -2,6 +2,7 @@
 
 void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indCount, u32* indices) {
     MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
+    MF_PANIC_IF(mesh->init, mfGetLogger(), "The mesh handle provided is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(vertices == mfnull, mfGetLogger(), "The vertices provided shouldn't be null!");
     MF_PANIC_IF(indices == mfnull, mfGetLogger(), "The indices provided shouldn't be null!");
@@ -26,14 +27,17 @@ void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertic
     config.type = MF_GPU_BUFFER_TYPE_INDEX;
     
     mfGpuBufferAllocate(mesh->indBuffer, config, renderer);
+
+    mesh->init = true;
 }
 
 void mfMeshDestroy(MFMesh* mesh) {
     MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
+    MF_PANIC_IF(!mesh->init, mfGetLogger(), "The mesh handle provided isn't initialised!");
     
     mfGpuBufferFree(mesh->indBuffer);
     mfGpuBufferFree(mesh->vertBuffer);
- 
+    
     MF_FREEMEM(mesh->mat.bump_texpath);
     MF_FREEMEM(mesh->mat.alpha_texpath);
     MF_FREEMEM(mesh->mat.ambient_texpath);
@@ -44,15 +48,16 @@ void mfMeshDestroy(MFMesh* mesh) {
     MF_FREEMEM(mesh->mat.metalness_texpath);
     MF_FREEMEM(mesh->mat.shininess_texpath);
     MF_FREEMEM(mesh->mat.displacement_texpath);
-
+    
     MF_FREEMEM(mesh->vertBuffer);
     MF_FREEMEM(mesh->indBuffer);
-
+    
     MF_SETMEM(mesh, 0, sizeof(MFMesh));
 }
 
 void mfMeshRender(MFMesh* mesh) {
     MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
+    MF_PANIC_IF(!mesh->init, mfGetLogger(), "The mesh handle provided isn't initialised!");
 
     mfGpuBufferBind(mesh->vertBuffer);
     mfGpuBufferBind(mesh->indBuffer);

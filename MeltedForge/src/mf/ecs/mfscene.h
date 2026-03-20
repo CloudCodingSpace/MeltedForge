@@ -16,6 +16,7 @@ typedef struct MFScene_s {
 
     MFCamera camera;
     MFRenderer* renderer;
+    b8 init;
 } MFScene;
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer);
