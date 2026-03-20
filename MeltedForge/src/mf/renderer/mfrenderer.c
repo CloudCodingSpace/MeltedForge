@@ -24,14 +24,14 @@ void mfRendererInit(MFRenderer* renderer, const char* appName, b8 enableDepth, b
         .window = window
     };
 
-    VulkanBckndInit(&renderer->backend, &config);
+    VulkanBackendInit(&renderer->backend, &config);
 }
 
 void mfRendererShutdown(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_INFO(mfGetLogger(), "Shutting down the renderer");
     
-    VulkanBckndShutdown(&renderer->backend);
+    VulkanBackendShutdown(&renderer->backend);
 
     MF_SETMEM(renderer, 0, sizeof(MFRenderer));
 }
@@ -45,7 +45,7 @@ void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
 
     mfTimerStart(&renderer->frameTimer);
 
-    VulkanBckndBeginframe(&renderer->backend, window);
+    VulkanBackendBeginframe(&renderer->backend, window);
 }
 
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
@@ -53,7 +53,7 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
     
     mfTimerEnd(&renderer->frameTimer);
 
-    VulkanBckndEndframe(&renderer->backend, window);
+    VulkanBackendEndframe(&renderer->backend, window);
 }
 
 void mfRendererWait(MFRenderer* renderer) {
@@ -139,7 +139,7 @@ void* mfRendererGetPass(MFRenderer* renderer) {
 u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     
-    return renderer->backend.crntFrmIdx;
+    return renderer->backend.frameIndex;
 }
 
 f64 mfRendererGetDeltaTime(MFRenderer* renderer) {

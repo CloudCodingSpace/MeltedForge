@@ -17,7 +17,7 @@ typedef struct VulkanBackendConfig_s {
 
 typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
-    u32 scImgIdx, crntFrmIdx;
+    u32 scImgIdx, frameIndex;
     VkClearValue clearColor;
     b8 enableUI;
     b8 enableDepth;
@@ -35,11 +35,11 @@ typedef struct VulkanBackend_s {
     struct MFRenderTarget_s* rt;
 } VulkanBackend;
 
-void VulkanBckndInit(VulkanBackend* backend, VulkanBackendConfig* config);
-void VulkanBckndShutdown(VulkanBackend* backend);
+void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config);
+void VulkanBackendShutdown(VulkanBackend* backend);
 
-void VulkanBckndBeginframe(VulkanBackend* backend, MFWindow* window);
-void VulkanBckndEndframe(VulkanBackend* backend, MFWindow* window);
+void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window);
+void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window);
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance);

@@ -7,7 +7,7 @@
 #include "vk/image.h"
 #include "vk/fb.h"
 #include "vk/renderpass.h"
-#include "vk/cmd.h"
+#include "vk/command_buffer.h"
 
 #include <cimgui.h>
 #include <cimgui_impl.h>
@@ -96,7 +96,7 @@ void mfRenderTargetCreate(MFRenderTarget* rt, MFRenderer* renderer, b8 hasDepth)
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        rt->buffs[i] = VulkanCommandBufferAllocate(&rt->backend->ctx, rt->backend->ctx.cmdPool, true);
+        rt->commandBuffers[i] = VulkanCommandBufferAllocate(&rt->backend->ctx, rt->backend->ctx.cmdPool, true);
         
         VkFenceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -110,7 +110,7 @@ void mfRenderTargetDestroy(MFRenderTarget* rt) {
     MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VulkanCommandBufferFree(&rt->backend->ctx, rt->buffs[i], rt->backend->ctx.cmdPool);
+        VulkanCommandBufferFree(&rt->backend->ctx, rt->commandBuffers[i], rt->backend->ctx.cmdPool);
         vkDestroyFence(rt->backend->ctx.device, rt->fences[i], rt->backend->ctx.allocator);
     }
     
@@ -221,7 +221,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
 
     // Transitioning the images explicitly
     {
-        VkCommandBuffer cmd = rt->buffs[0];
+        VkCommandBuffer cmd = rt->commandBuffers[0];
         VK_CHECK(vkResetCommandBuffer(cmd, 0));
         VulkanCommandBufferBegin(cmd);
 
@@ -263,8 +263,8 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VK_CHECK(vkResetCommandBuffer(rt->buffs[i], 0));
-        VulkanCommandBufferBegin(rt->buffs[i]);
+        VK_CHECK(vkResetCommandBuffer(rt->commandBuffers[i], 0));
+        VulkanCommandBufferBegin(rt->commandBuffers[i]);
     }
 
     // Begin the pass
@@ -286,10 +286,10 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
             .pClearValues = values,
             .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].info.width, rt->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
             .renderPass = rt->pass,
-            .framebuffer = rt->fbs[rt->backend->crntFrmIdx]
+            .framebuffer = rt->fbs[rt->backend->frameIndex]
         }; 
 
-        vkCmdBeginRenderPass(rt->buffs[rt->backend->crntFrmIdx], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(rt->commandBuffers[rt->backend->frameIndex], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
 
     if(rt->resizeCallback != mfnull) {
@@ -300,7 +300,7 @@ void mfRenderTargetResize(MFRenderTarget* rt, MFVec2 extent) {
 void mfRenderTargetBegin(MFRenderTarget* rt) {
     MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    VkCommandBuffer buff = rt->buffs[rt->backend->crntFrmIdx];
+    VkCommandBuffer buff = rt->commandBuffers[rt->backend->frameIndex];
 
     VK_CHECK(vkResetCommandBuffer(buff, 0));
     VulkanCommandBufferBegin(buff);
@@ -322,7 +322,7 @@ void mfRenderTargetBegin(MFRenderTarget* rt) {
         .pClearValues = values,
         .renderArea = (VkRect2D){.extent = (VkExtent2D){rt->images[0].info.width, rt->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
         .renderPass = rt->pass,
-        .framebuffer = rt->fbs[rt->backend->crntFrmIdx]
+        .framebuffer = rt->fbs[rt->backend->frameIndex]
     }; 
 
     vkCmdBeginRenderPass(buff, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -331,7 +331,7 @@ void mfRenderTargetBegin(MFRenderTarget* rt) {
 void mfRenderTargetEnd(MFRenderTarget* rt) {
     MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
-    VkCommandBuffer buff = rt->buffs[rt->backend->crntFrmIdx];
+    VkCommandBuffer buff = rt->commandBuffers[rt->backend->frameIndex];
 
     vkCmdEndRenderPass(buff);
     VulkanCommandBufferEnd(buff);
@@ -345,13 +345,13 @@ void mfRenderTargetEnd(MFRenderTarget* rt) {
         .commandBufferCount = 1,
         .pCommandBuffers = &buff,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &rt->backend->rndrFinishedSemas[rt->backend->crntFrmIdx],
+        .pSignalSemaphores = &rt->backend->rndrFinishedSemas[rt->backend->frameIndex],
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &rt->backend->imgAvailableSemas[rt->backend->crntFrmIdx],
+        .pWaitSemaphores = &rt->backend->imgAvailableSemas[rt->backend->frameIndex],
         .pWaitDstStageMask = waitDstFlags
     };
 
-    VK_CHECK(vkQueueSubmit(rt->backend->ctx.qData.gQueue, 1, &info, rt->fences[rt->backend->crntFrmIdx]));
+    VK_CHECK(vkQueueSubmit(rt->backend->ctx.qData.gQueue, 1, &info, rt->fences[rt->backend->frameIndex]));
 }
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* rt, void (*callback)(void* userData), void* userData) {
@@ -384,7 +384,7 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* rt) {
 void* mfRenderTargetGetHandle(MFRenderTarget* rt) {
     MF_PANIC_IF(rt == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
 
-    return rt->descs[rt->backend->crntFrmIdx];
+    return rt->descs[rt->backend->frameIndex];
 }
 
 size_t mfRenderTargetGetSizeInBytes(void) {

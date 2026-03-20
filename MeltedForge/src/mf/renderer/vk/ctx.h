@@ -45,7 +45,7 @@ typedef struct VulkanBackendCtx_s {
     VkCommandPool cmdPool;
 } VulkanBackendCtx;
 
-void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window);
-void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window);
+void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
-void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window);
+void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window);

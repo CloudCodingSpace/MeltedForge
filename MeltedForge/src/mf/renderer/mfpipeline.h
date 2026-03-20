@@ -14,15 +14,15 @@ typedef struct MFPipeline_s MFPipeline;
 
 typedef struct MFPipelineConfig_s {
     MFVec2 extent;
-    u32 bindingDescsCount, attribDescsCount, resLayCount;
-    MFVertexInputBindingDescription* bindingDescs;
-    MFVertexInputAttributeDescription* attribDescs;
-    MFResourceSetLayout** resLayouts;
+    u32 bindingsCount, attributesCount, resourceLayoutCount;
+    MFVertexInputBindingDescription* bindings;
+    MFVertexInputAttributeDescription* attributes;
+    MFResourceSetLayout** resourceLayouts;
     MFCompareOp depthCompareOp;
     b8 hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
-    void* pass;
+    void* renderpass;
 } MFPipelineConfig;
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info);

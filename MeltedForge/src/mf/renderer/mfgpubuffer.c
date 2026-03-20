@@ -43,7 +43,7 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     buffer->config.data = data;
 
-    u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? buffer->backend->crntFrmIdx : 0;
+    u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? buffer->backend->frameIndex : 0;
     VulkanBufferUploadData(&buffer->buffer[idx], buffer->ctx, buffer->ctx->cmdPool, data);
 }
 
@@ -62,9 +62,9 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_UBO)
         return;
 
-    VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->crntFrmIdx];
+    VkCommandBuffer buff = buffer->backend->cmdBuffers[buffer->backend->frameIndex];
     if(buffer->backend->rt != mfnull) {
-        buff = buffer->backend->rt->buffs[buffer->backend->crntFrmIdx];
+        buff = buffer->backend->rt->commandBuffers[buffer->backend->frameIndex];
     }
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {

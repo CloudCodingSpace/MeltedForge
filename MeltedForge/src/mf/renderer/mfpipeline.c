@@ -21,39 +21,39 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
-    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingDescsCount);
-    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attribDescsCount);
+    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingsCount);
+    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attributesCount);
 
-    for (u32 i = 0; i < info->bindingDescsCount; i++) {
-        bindings[i].binding = info->bindingDescs[i].binding;
-        bindings[i].inputRate = (VkVertexInputRate)((int)info->bindingDescs[i].rate);
-        bindings[i].stride = info->bindingDescs[i].stride;
+    for (u32 i = 0; i < info->bindingsCount; i++) {
+        bindings[i].binding = info->bindings[i].binding;
+        bindings[i].inputRate = (VkVertexInputRate)((int)info->bindings[i].rate);
+        bindings[i].stride = info->bindings[i].stride;
     }
 
-    for (u32 i = 0; i < info->attribDescsCount; i++) {
-        attribs[i].binding = info->attribDescs[i].binding;
-        attribs[i].format = (VkFormat)((int)info->attribDescs[i].format);
-        attribs[i].location = info->attribDescs[i].location;
-        attribs[i].offset = info->attribDescs[i].offset;
+    for (u32 i = 0; i < info->attributesCount; i++) {
+        attribs[i].binding = info->attributes[i].binding;
+        attribs[i].format = (VkFormat)((int)info->attributes[i].format);
+        attribs[i].location = info->attributes[i].location;
+        attribs[i].offset = info->attributes[i].offset;
     }
 
-    VkDescriptorSetLayout* setLayouts = MF_ALLOCMEM(VkDescriptorSetLayout, sizeof(VkDescriptorSetLayout) * info->resLayCount);
-    for(u32 i = 0; i < info->resLayCount; i++) {
-        setLayouts[i] = mfResourceSetLayoutGetBackend(info->resLayouts[i]);
+    VkDescriptorSetLayout* setLayouts = MF_ALLOCMEM(VkDescriptorSetLayout, sizeof(VkDescriptorSetLayout) * info->resourceLayoutCount);
+    for(u32 i = 0; i < info->resourceLayoutCount; i++) {
+        setLayouts[i] = mfResourceSetLayoutGetBackend(info->resourceLayouts[i]);
     }
 
     VulkanPipelineInfo binfo = {
         .vertPath = info->vertPath,
         .fragPath = info->fragPath,
-        .pass = info->pass,
+        .renderpass = info->renderpass,
         .depthCompareOp = (VkCompareOp)(int)info->depthCompareOp,
         .hasDepth = info->hasDepth,
         .extent = (VkExtent2D) { info->extent.x, info->extent.y },
-        .attribDescsCount = info->attribDescsCount,
-        .attribDescs = attribs,
-        .bindingDescsCount = info->bindingDescsCount,
-        .bindingDescs = bindings,
-        .setLayoutCount = info->resLayCount,
+        .attributesCount = info->attributesCount,
+        .attributes = attribs,
+        .bindingsCount = info->bindingsCount,
+        .bindings = bindings,
+        .setLayoutCount = info->resourceLayoutCount,
         .setLayouts = setLayouts
     };
 
@@ -91,9 +91,9 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
         .offset = (VkOffset2D){scissor.offsetX, scissor.offsetY}
     };
     
-    VkCommandBuffer buff = pipeline->backend->cmdBuffers[pipeline->backend->crntFrmIdx];
+    VkCommandBuffer buff = pipeline->backend->cmdBuffers[pipeline->backend->frameIndex];
     if(pipeline->backend->rt != mfnull) {
-        buff = pipeline->backend->rt->buffs[pipeline->backend->crntFrmIdx];
+        buff = pipeline->backend->rt->commandBuffers[pipeline->backend->frameIndex];
     }
     
     VulkanPipelineBind(&pipeline->pipeline, v, s, buff);

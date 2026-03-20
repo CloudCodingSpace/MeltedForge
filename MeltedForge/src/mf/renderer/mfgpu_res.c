@@ -172,14 +172,14 @@ void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
-    VkCommandBuffer buff = backend->cmdBuffers[backend->crntFrmIdx];
+    VkCommandBuffer buff = backend->cmdBuffers[backend->frameIndex];
     if(backend->rt != mfnull) {
-        buff = backend->rt->buffs[backend->crntFrmIdx];
+        buff = backend->rt->commandBuffers[backend->frameIndex];
     }
 
     //! FIXME: ASSUMING THE BIND POINT TO BE GRAPHICS, CHANGE THIS IF MORE TYPE OF PIPELINES ARE INTRODUCED
     vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, mfPipelineGetLayoutBackend(pipeline), 
-                                    0, 1, &set->sets[backend->crntFrmIdx], 
+                                    0, 1, &set->sets[backend->frameIndex], 
                                     0, mfnull);
 }
 

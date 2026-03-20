@@ -5,11 +5,11 @@
 #include "ctx.h"
 
 typedef struct VulkanPipelineInfo_s {
-    VkRenderPass pass;
+    VkRenderPass renderpass;
     VkExtent2D extent;
-    u32 bindingDescsCount, attribDescsCount, setLayoutCount;
-    VkVertexInputBindingDescription* bindingDescs;
-    VkVertexInputAttributeDescription* attribDescs;
+    u32 bindingsCount, attributesCount, setLayoutCount;
+    VkVertexInputBindingDescription* bindings;
+    VkVertexInputAttributeDescription* attributes;
     VkDescriptorSetLayout* setLayouts;
     VkCompareOp depthCompareOp;
     b8 hasDepth, transparent;

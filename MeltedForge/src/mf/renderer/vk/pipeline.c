@@ -49,10 +49,10 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineVertexInputStateCreateInfo vertState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexAttributeDescriptionCount = info->attribDescsCount,
-        .pVertexAttributeDescriptions = info->attribDescs,
-        .vertexBindingDescriptionCount = info->bindingDescsCount,
-        .pVertexBindingDescriptions = info->bindingDescs
+        .vertexAttributeDescriptionCount = info->attributesCount,
+        .pVertexAttributeDescriptions = info->attributes,
+        .vertexBindingDescriptionCount = info->bindingsCount,
+        .pVertexBindingDescriptions = info->bindings
     };
 
     VkPipelineInputAssemblyStateCreateInfo inputState = {
@@ -157,7 +157,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
         .basePipelineHandle = mfnull,
         .basePipelineIndex = -1,
         .layout = pipeline->layout,
-        .renderPass = info->pass,
+        .renderPass = info->renderpass,
         .subpass = 0,
         .pColorBlendState = &blendInfo,
         .pDynamicState = &dInfo,

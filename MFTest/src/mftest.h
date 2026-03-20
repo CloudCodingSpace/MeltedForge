@@ -33,7 +33,7 @@ typedef struct MFTState_s {
 
     MFScene scene;
     const MFEntity* entity;
-    MFArray modelMatImgs;
+    MFArray materialImages;
     
     MFCamera camera;
     LightUBOData lightData;

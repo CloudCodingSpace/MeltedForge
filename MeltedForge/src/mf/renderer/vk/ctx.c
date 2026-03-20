@@ -6,7 +6,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "common.h"
-#include "cmd.h"
+#include "command_buffer.h"
 
 static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
     VulkanBackendQueueData data = {-1};
@@ -277,7 +277,7 @@ void GetDepthFormat(VulkanBackendCtx* ctx) {
     MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
 }
 
-void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->vsync = vsync;
     ctx->enableDepth = enableDepth;
@@ -472,7 +472,7 @@ void VulkanBckndCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8
     }
 }
 
-void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
+void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     VulkanCommandPoolDestroy(ctx, ctx->cmdPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescPool, ctx->allocator);
 
@@ -493,7 +493,7 @@ void VulkanBckndCtxDestroy(VulkanBackendCtx* ctx) {
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
 
-void VulkanBckndCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window) {
+void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
     
     if(ctx->enableDepth)

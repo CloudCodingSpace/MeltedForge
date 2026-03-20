@@ -16,7 +16,7 @@ struct MFRenderTarget_s {
     VkRenderPass pass;
     VkDescriptorSet* descs;
 
-    VkCommandBuffer buffs[FRAMES_IN_FLIGHT];
+    VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkFence fences[FRAMES_IN_FLIGHT];
 
     b8 hasDepth;
