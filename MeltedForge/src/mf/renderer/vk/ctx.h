@@ -7,8 +7,8 @@
 #include "image.h"
 
 typedef struct VulkanBackendQueueData_s {
-    i32 gQueueIdx, tQueueIdx, pQueueIdx, cQueueIdx;
-    VkQueue gQueue, tQueue, pQueue, cQueue;
+    i32 graphicsQueueIdx, transferQueueIdx, presentQueueIdx, computeQueueIdx;
+    VkQueue graphicsQueue, transferQueue, presentQueue, computeQueue;
 } VulkanBackendQueueData;
 
 typedef struct VulkanScCaps_s {
@@ -23,7 +23,7 @@ typedef struct VulkanBackendCtx_s {
     VkInstance instance;
     VkSurfaceKHR surface;
 
-    VulkanBackendQueueData qData;
+    VulkanBackendQueueData queueData;
     VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;
     VkDevice device;

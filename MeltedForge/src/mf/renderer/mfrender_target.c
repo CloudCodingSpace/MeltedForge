@@ -258,8 +258,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             .commandBufferCount = 1,
             .pCommandBuffers = &cmd
         };
-        VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.qData.gQueue, 1, &submitInfo, VK_NULL_HANDLE));
-        VK_CHECK(vkQueueWaitIdle(renderTarget->backend->ctx.qData.gQueue));
+        VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+        VK_CHECK(vkQueueWaitIdle(renderTarget->backend->ctx.queueData.graphicsQueue));
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -351,7 +351,7 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
         .pWaitDstStageMask = waitDstFlags
     };
 
-    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.qData.gQueue, 1, &info, renderTarget->fences[renderTarget->backend->frameIndex]));
+    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, renderTarget->fences[renderTarget->backend->frameIndex]));
 }
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {

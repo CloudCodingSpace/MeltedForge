@@ -18,17 +18,17 @@ static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysica
 
     for(u32 i = 0; i < count; i++) {
         if(props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            data.gQueueIdx = i;
+            data.graphicsQueueIdx = i;
         if(props[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
-            data.tQueueIdx = i;
+            data.transferQueueIdx = i;
         if(props[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
-            data.cQueueIdx = i;
+            data.computeQueueIdx = i;
             
         VkBool32 presentSupport = VK_FALSE;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
         if(presentSupport)
-                data.pQueueIdx = i;
+                data.presentQueueIdx = i;
     }
 
     MF_FREEMEM(props);
@@ -36,7 +36,7 @@ static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysica
 }
 
 static b8 IsQueueDataComplete(VulkanBackendQueueData data) {
-    return data.cQueueIdx != -1 && data.gQueueIdx != -1 && data.pQueueIdx != -1 && data.tQueueIdx != -1;
+    return data.computeQueueIdx != -1 && data.graphicsQueueIdx != -1 && data.presentQueueIdx != -1 && data.transferQueueIdx != -1;
 }
 
 static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
@@ -175,10 +175,10 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
         MF_SETMEM(queues, 0, sizeof(u32) * 4);
 
         u32 qs[] = {
-            ctx->qData.cQueueIdx,
-            ctx->qData.pQueueIdx,
-            ctx->qData.gQueueIdx,
-            ctx->qData.tQueueIdx
+            ctx->queueData.computeQueueIdx,
+            ctx->queueData.presentQueueIdx,
+            ctx->queueData.graphicsQueueIdx,
+            ctx->queueData.transferQueueIdx
         };
         
         // Checking for duplicate queues
@@ -344,7 +344,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
         MF_FREEMEM(devices);
         MF_PANIC_IF(ctx->physicalDevice == mfnull, mfGetLogger(), "(From the vulkan backend) Failed to select a suitable GPU in the current PC!");
 
-        ctx->qData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
+        ctx->queueData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
     }
     // Device 
     {
@@ -359,10 +359,10 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
         // Checking for duplicate queues
         {
             u32 qs[] = {
-                ctx->qData.cQueueIdx,
-                ctx->qData.pQueueIdx,
-                ctx->qData.gQueueIdx,
-                ctx->qData.tQueueIdx
+                ctx->queueData.computeQueueIdx,
+                ctx->queueData.presentQueueIdx,
+                ctx->queueData.graphicsQueueIdx,
+                ctx->queueData.transferQueueIdx
             };
 
             for(u32 i = 0; i < 4; i++) {
@@ -411,10 +411,10 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
     }
     // Queues 
     {
-        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.cQueueIdx, 0, &ctx->qData.cQueue);
-        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.tQueueIdx, 0, &ctx->qData.tQueue);
-        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.pQueueIdx, 0, &ctx->qData.pQueue);
-        vkGetDeviceQueue(ctx->device, (u32)ctx->qData.gQueueIdx, 0, &ctx->qData.gQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->queueData.computeQueueIdx, 0, &ctx->queueData.computeQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->queueData.transferQueueIdx, 0, &ctx->queueData.transferQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->queueData.presentQueueIdx, 0, &ctx->queueData.presentQueue);
+        vkGetDeviceQueue(ctx->device, (u32)ctx->queueData.graphicsQueueIdx, 0, &ctx->queueData.graphicsQueue);
     }
     // Swapchain
     CreateSwapchain(ctx, mfWindowGetHandle(window));
@@ -468,7 +468,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
     }
     // Command Pool
     {
-        ctx->cmdPool = VulkanCommandPoolCreate(ctx, ctx->qData.gQueueIdx);
+        ctx->cmdPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
     }
 }
 

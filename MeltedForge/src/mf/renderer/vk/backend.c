@@ -131,8 +131,8 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
             .Subpass = 0,
             .RenderPass = backend->pass,
-            .Queue = backend->ctx.qData.gQueue,
-            .QueueFamily = backend->ctx.qData.gQueueIdx
+            .Queue = backend->ctx.queueData.graphicsQueue,
+            .QueueFamily = backend->ctx.queueData.graphicsQueueIdx
         };
 
         ImGui_ImplVulkan_Init(&info);
@@ -252,7 +252,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         submitInfo.pWaitSemaphores = &backend->rndrFinishedSemas[backend->frameIndex];
     }
 
-    VK_CHECK(vkQueueSubmit(backend->ctx.qData.gQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
+    VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
 
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -263,7 +263,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         .pWaitSemaphores = &backend->rndrFinishedSemas[backend->frameIndex]
     };
 
-    VkResult result = vkQueuePresentKHR(backend->ctx.qData.pQueue, &presentInfo);
+    VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
         if(backend->renderTarget != mfnull) {

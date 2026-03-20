@@ -202,7 +202,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
             .pCommandBuffers = &buff
         };
 
-        VK_CHECK(vkQueueSubmit(image->info.ctx->qData.tQueue, 1, &sinfo, mfnull));
+        VK_CHECK(vkQueueSubmit(image->info.ctx->queueData.transferQueue, 1, &sinfo, mfnull));
         vkDeviceWaitIdle(image->info.ctx->device);
 
         VulkanCommandBufferFree(image->info.ctx, buff, image->info.ctx->cmdPool);

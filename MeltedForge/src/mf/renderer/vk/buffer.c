@@ -195,7 +195,7 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
             .pCommandBuffers = &buff
         };
 
-        VK_CHECK(vkQueueSubmit(ctx->qData.tQueue, 1, &info, fence));
+        VK_CHECK(vkQueueSubmit(ctx->queueData.transferQueue, 1, &info, fence));
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
 
         vkDestroyFence(ctx->device, fence, ctx->allocator);
