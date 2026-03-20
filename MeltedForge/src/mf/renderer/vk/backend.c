@@ -15,30 +15,30 @@
 #include "render_target.h"
 
 void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
-    if(backend->ctx.scExtent.width == width && backend->ctx.scExtent.height == height)
+    if(backend->ctx.swapchainExtent.width == width && backend->ctx.swapchainExtent.height == height)
         return;
     if(width == 0 && height == 0)
         return;
 
     VK_CHECK(vkDeviceWaitIdle(backend->ctx.device));
 
-    for(u32 i = 0; i < backend->fbCount; i++) {
+    for(u32 i = 0; i < backend->frameBufferCount; i++) {
         VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
 
     VulkanBackendCtxResize(&backend->ctx, width, height, window);
 
-    for(u32 i = 0; i < backend->fbCount; i++) {
+    for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
         VkImageView views[2] = {
-            backend->ctx.scImgViews[i]
+            backend->ctx.swapchainImageViews[i]
         };
         if(backend->enableDepth) {
             len++;
             views[1] = backend->ctx.depthImage.view;
         }
 
-        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
+        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
 }
 
@@ -49,12 +49,12 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     VulkanBackendCtxInit(&backend->ctx, config->appName, config->vsync, config->enableDepth, config->window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        backend->cmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.cmdPool, true);
+        backend->commandBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true);
     }
 
     {
         VulkanRenderPassInfo info = {
-            .format = backend->ctx.scFormat.format,
+            .format = backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             .hasDepth = config->enableDepth,
@@ -65,19 +65,19 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     }
     
     // Framebuffers
-    backend->fbCount = backend->ctx.scImgCount;
-    backend->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->fbCount);
-    for(u32 i = 0; i < backend->fbCount; i++) {
+    backend->frameBufferCount = backend->ctx.swapchainImageCount;
+    backend->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->frameBufferCount);
+    for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
         VkImageView views[2] = {
-            backend->ctx.scImgViews[i]
+            backend->ctx.swapchainImageViews[i]
         };
         if(config->enableDepth) {
             len++;
             views[1] = backend->ctx.depthImage.view;
         }
 
-        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.scExtent); 
+        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
     
     // Sync objs
@@ -92,8 +92,8 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
                 .flags = VK_FENCE_CREATE_SIGNALED_BIT
             };
 
-            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->imgAvailableSemas[i]));
-            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->rndrFinishedSemas[i]));
+            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->imageAvailableSemas[i]));
+            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->renderFinishedSemas[i]));
             VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &backend->inFlightFences[i]));
         }
     }
@@ -122,7 +122,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
         ImGui_ImplVulkan_InitInfo info = {
             .Allocator = backend->ctx.allocator,
             .ApiVersion = VK_API_VERSION_1_2,
-            .DescriptorPool = backend->ctx.uiDescPool,
+            .DescriptorPool = backend->ctx.uiDescriptorPool,
             .ImageCount = FRAMES_IN_FLIGHT,
             .MinImageCount = FRAMES_IN_FLIGHT,
             .Instance = backend->ctx.instance,
@@ -148,12 +148,12 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(backend->ctx.device, backend->imgAvailableSemas[i], backend->ctx.allocator);
-        vkDestroySemaphore(backend->ctx.device, backend->rndrFinishedSemas[i], backend->ctx.allocator);
+        vkDestroySemaphore(backend->ctx.device, backend->imageAvailableSemas[i], backend->ctx.allocator);
+        vkDestroySemaphore(backend->ctx.device, backend->renderFinishedSemas[i], backend->ctx.allocator);
         vkDestroyFence(backend->ctx.device, backend->inFlightFences[i], backend->ctx.allocator);
     }
 
-    for(u32 i = 0; i < backend->fbCount; i++) {
+    for(u32 i = 0; i < backend->frameBufferCount; i++) {
         VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
     
@@ -173,7 +173,7 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
 
-    VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imgAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->scImgIdx);
+    VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
         if(backend->renderTarget != mfnull) {
@@ -188,8 +188,8 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     if(backend->renderTarget != mfnull) {
         mfRenderTargetBegin(backend->renderTarget);
     }
-    VK_CHECK(vkResetCommandBuffer(backend->cmdBuffers[backend->frameIndex], 0));
-    VulkanCommandBufferBegin(backend->cmdBuffers[backend->frameIndex]);
+    VK_CHECK(vkResetCommandBuffer(backend->commandBuffers[backend->frameIndex], 0));
+    VulkanCommandBufferBegin(backend->commandBuffers[backend->frameIndex]);
 
     VkClearValue values[2] = {
         backend->clearColor
@@ -201,12 +201,12 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = MF_ARRAYLEN(values, VkClearColorValue),
         .pClearValues = values,
-        .framebuffer = backend->frameBuffers[backend->scImgIdx],
-        .renderArea = (VkRect2D){.extent = backend->ctx.scExtent, .offset = (VkOffset2D){ 0, 0 }},
+        .framebuffer = backend->frameBuffers[backend->swapchainImageIndex],
+        .renderArea = (VkRect2D){.extent = backend->ctx.swapchainExtent, .offset = (VkOffset2D){ 0, 0 }},
         .renderPass = backend->pass
     };
 
-    vkCmdBeginRenderPass(backend->cmdBuffers[backend->frameIndex], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(backend->commandBuffers[backend->frameIndex], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     if(!backend->enableUI)
         return;
@@ -224,14 +224,14 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     if(backend->enableUI) {
         igEndFrame();
         igRender();
-        ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), backend->cmdBuffers[backend->frameIndex], mfnull);
+        ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), backend->commandBuffers[backend->frameIndex], mfnull);
 
         igUpdatePlatformWindows();
         igRenderPlatformWindowsDefault(mfnull, mfnull);
     }
 
-    vkCmdEndRenderPass(backend->cmdBuffers[backend->frameIndex]);
-    VulkanCommandBufferEnd(backend->cmdBuffers[backend->frameIndex]);
+    vkCmdEndRenderPass(backend->commandBuffers[backend->frameIndex]);
+    VulkanCommandBufferEnd(backend->commandBuffers[backend->frameIndex]);
 
     VkPipelineStageFlags waitDstMask[] = {
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
@@ -240,27 +240,27 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,
-        .pCommandBuffers = &backend->cmdBuffers[backend->frameIndex],
+        .pCommandBuffers = &backend->commandBuffers[backend->frameIndex],
         .pWaitDstStageMask = waitDstMask,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &backend->rndrFinishedSemas[backend->frameIndex],
+        .pSignalSemaphores = &backend->renderFinishedSemas[backend->frameIndex],
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &backend->imgAvailableSemas[backend->frameIndex]
+        .pWaitSemaphores = &backend->imageAvailableSemas[backend->frameIndex]
     };
 
     if(backend->renderTarget != mfnull) {
-        submitInfo.pWaitSemaphores = &backend->rndrFinishedSemas[backend->frameIndex];
+        submitInfo.pWaitSemaphores = &backend->renderFinishedSemas[backend->frameIndex];
     }
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
 
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pImageIndices = &backend->scImgIdx,
+        .pImageIndices = &backend->swapchainImageIndex,
         .swapchainCount = 1,
         .pSwapchains = &backend->ctx.swapchain,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &backend->rndrFinishedSemas[backend->frameIndex]
+        .pWaitSemaphores = &backend->renderFinishedSemas[backend->frameIndex]
     };
 
     VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
@@ -277,7 +277,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 }
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
-    VkCommandBuffer buff = backend->cmdBuffers[backend->frameIndex];
+    VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
     if(backend->renderTarget != mfnull) {
         buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }
@@ -286,7 +286,7 @@ void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 inst
 }
 
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
-    VkCommandBuffer buff = backend->cmdBuffers[backend->frameIndex];
+    VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
     if(backend->renderTarget != mfnull) {
         buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }

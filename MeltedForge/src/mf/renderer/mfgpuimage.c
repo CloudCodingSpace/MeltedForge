@@ -94,10 +94,10 @@ void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
     image->config.binding = binding;
 }
 
-MFResourceDesc mfGpuImageGetDescription(MFGpuImage* image) {
+MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
 
-    return (MFResourceDesc) {
+    return (MFResourceDescription) {
         .binding = image->config.binding,
         .descriptorCount = 1, // NOTE: Make it configurable if required
         .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,

@@ -17,19 +17,19 @@ typedef struct VulkanBackendConfig_s {
 
 typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
-    u32 scImgIdx, frameIndex;
+    u32 swapchainImageIndex, frameIndex;
     VkClearValue clearColor;
     b8 enableUI;
     b8 enableDepth;
 
-    VkCommandBuffer cmdBuffers[FRAMES_IN_FLIGHT];
+    VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
 
     VkRenderPass pass;
-    u32 fbCount;
+    u32 frameBufferCount;
     VkFramebuffer* frameBuffers;
 
-    VkSemaphore imgAvailableSemas[FRAMES_IN_FLIGHT];
-    VkSemaphore rndrFinishedSemas[FRAMES_IN_FLIGHT];
+    VkSemaphore imageAvailableSemas[FRAMES_IN_FLIGHT];
+    VkSemaphore renderFinishedSemas[FRAMES_IN_FLIGHT];
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
 
     struct MFRenderTarget_s* renderTarget;

@@ -35,5 +35,5 @@ void mfGpuBufferBind(MFGpuBuffer* buffer);
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer);
 
 size_t mfGpuBufferGetSizeInBytes(void);
-MFResourceDesc mfGpuBufferGetDescription(MFGpuBuffer* buffer);
+MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer);
 struct VulkanBuffer_s* mfGpuBufferGetBackend(MFGpuBuffer* buffer);

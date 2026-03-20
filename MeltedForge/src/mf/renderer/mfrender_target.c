@@ -30,8 +30,8 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
     if(hasDepth) {
         VulkanImageInfo info = {
             .ctx = &renderTarget->backend->ctx,
-            .width = renderTarget->backend->ctx.scExtent.width,
-            .height = renderTarget->backend->ctx.scExtent.height,
+            .width = renderTarget->backend->ctx.swapchainExtent.width,
+            .height = renderTarget->backend->ctx.swapchainExtent.height,
             .gpuResource = false,
             .pixels = mfnull,
             .format = renderTarget->backend->ctx.depthFormat,
@@ -49,7 +49,7 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
 
     {
         VulkanRenderPassInfo info = {
-            .format = renderTarget->backend->ctx.scFormat.format,
+            .format = renderTarget->backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             .hasDepth = hasDepth,
@@ -63,11 +63,11 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
         {
             VulkanImageInfo info = {
                 .ctx = &renderTarget->backend->ctx,
-                .width = renderTarget->backend->ctx.scExtent.width,
-                .height = renderTarget->backend->ctx.scExtent.height,
+                .width = renderTarget->backend->ctx.swapchainExtent.width,
+                .height = renderTarget->backend->ctx.swapchainExtent.height,
                 .gpuResource = true,
                 .pixels = mfnull,
-                .format = renderTarget->backend->ctx.scFormat.format,
+                .format = renderTarget->backend->ctx.swapchainFormat.format,
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
                 .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -90,13 +90,13 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
             count++;
         }
 
-        renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.scExtent);
+        renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.swapchainExtent);
 
         renderTarget->sets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.cmdPool, true);
+        renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.commandPool, true);
         
         VkFenceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -110,7 +110,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.cmdPool);
+        VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
         vkDestroyFence(renderTarget->backend->ctx.device, renderTarget->fences[i], renderTarget->backend->ctx.allocator);
     }
     
@@ -190,7 +190,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                     .height = extent.y,
                     .gpuResource = true,
                     .pixels = mfnull,
-                    .format = renderTarget->backend->ctx.scFormat.format,
+                    .format = renderTarget->backend->ctx.swapchainFormat.format,
                     .tiling = VK_IMAGE_TILING_OPTIMAL,
                     .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -345,9 +345,9 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
         .commandBufferCount = 1,
         .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &renderTarget->backend->rndrFinishedSemas[renderTarget->backend->frameIndex],
+        .pSignalSemaphores = &renderTarget->backend->renderFinishedSemas[renderTarget->backend->frameIndex],
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &renderTarget->backend->imgAvailableSemas[renderTarget->backend->frameIndex],
+        .pWaitSemaphores = &renderTarget->backend->imageAvailableSemas[renderTarget->backend->frameIndex],
         .pWaitDstStageMask = waitDstFlags
     };
 

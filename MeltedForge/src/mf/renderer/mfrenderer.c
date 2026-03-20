@@ -92,8 +92,8 @@ MFViewport mfRendererGetViewport(MFRenderer* renderer) {
     MFViewport vp = {
         .x = 0,
         .y = 0,
-        .width = renderer->backend.ctx.scExtent.width,
-        .height = renderer->backend.ctx.scExtent.height,
+        .width = renderer->backend.ctx.swapchainExtent.width,
+        .height = renderer->backend.ctx.swapchainExtent.height,
         .maxDepth = 1.0f,
         .minDepth = 0.0f
     };
@@ -112,8 +112,8 @@ MFRect2D mfRendererGetScissor(MFRenderer* renderer) {
     MFRect2D scissor = {
         .offsetX = 0,
         .offsetY = 0,
-        .extentX = renderer->backend.ctx.scExtent.width,
-        .extentY = renderer->backend.ctx.scExtent.height
+        .extentX = renderer->backend.ctx.swapchainExtent.width,
+        .extentY = renderer->backend.ctx.swapchainExtent.height
     };
 
     if(renderer->backend.renderTarget != mfnull) {

@@ -181,7 +181,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
         u64 count = 3;
         
-        MFResourceDesc* descs = MF_ALLOCMEM(MFResourceDesc, sizeof(MFResourceDesc) * count);
+        MFResourceDescription* descs = MF_ALLOCMEM(MFResourceDescription, sizeof(MFResourceDescription) * count);
         
         u64 i = 0;
         MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer); // anyone image is fine since every image has same binding

@@ -406,7 +406,7 @@ typedef struct MFVertexInputAttributeDescription_s {
     MFFormat format;
 } MFVertexInputAttributeDescription;
 
-typedef enum MFResourceDescriptionType_e {
+typedef enum MFResourceDescriptionriptionType_e {
     MF_RES_DESCRIPTION_TYPE_SAMPLER = 0,
     MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER = 1,
     MF_RES_DESCRIPTION_TYPE_SAMPLED_IMAGE = 2,
@@ -427,7 +427,7 @@ typedef enum MFResourceDescriptionType_e {
     MF_RES_DESCRIPTION_TYPE_INLINE_UNIFORM_BLOCK_EXT = MF_RES_DESCRIPTION_TYPE_INLINE_UNIFORM_BLOCK,
     MF_RES_DESCRIPTION_TYPE_MUTABLE_VALVE = MF_RES_DESCRIPTION_TYPE_MUTABLE_EXT,
     MF_RES_DESCRIPTION_TYPE_MAX_ENUM = 0x7FFFFFFF
-} MFResourceDescriptionType;
+} MFResourceDescriptionriptionType;
 
 typedef enum MFCompareOp_e {
     MF_COMPARE_OP_NEVER = 0,
@@ -441,9 +441,9 @@ typedef enum MFCompareOp_e {
     MF_COMPARE_OP_MAX_ENUM = 0x7FFFFFFF
 } MFCompareOp;
 
-typedef struct MFResourceDesc_s {
+typedef struct MFResourceDescription_s {
     u32 binding;
-    MFResourceDescriptionType descriptorType;
+    MFResourceDescriptionriptionType descriptorType;
     u32 descriptorCount;
     MFShaderStage stageFlags;
-} MFResourceDesc;
+} MFResourceDescription;

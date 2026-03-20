@@ -10,7 +10,7 @@ typedef struct MFResourceSetLayout_s MFResourceSetLayout;
 typedef struct MFResourceSet_s MFResourceSet;
 struct MFPipeline_s;
 
-void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 resDescLen, MFResourceDesc* resDescs, MFRenderer* renderer);
+void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 resDescLen, MFResourceDescription* resDescs, MFRenderer* renderer);
 void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout);
 
 void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRenderer* renderer);

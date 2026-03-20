@@ -135,7 +135,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     image->info.pixels = pixels;
 
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, image->info.ctx, image->info.ctx->cmdPool, image->info.width * image->info.height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, image->info.ctx, image->info.ctx->commandPool, image->info.width * image->info.height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
     void* mem;
@@ -145,7 +145,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
     // Copy staging buffer to image and transitioning to the appropriate layout
     {
-        VkCommandBuffer buff = VulkanCommandBufferAllocate(image->info.ctx, image->info.ctx->cmdPool, true);
+        VkCommandBuffer buff = VulkanCommandBufferAllocate(image->info.ctx, image->info.ctx->commandPool, true);
         VulkanCommandBufferBegin(buff);
 
         {
@@ -205,7 +205,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         VK_CHECK(vkQueueSubmit(image->info.ctx->queueData.transferQueue, 1, &sinfo, mfnull));
         vkDeviceWaitIdle(image->info.ctx->device);
 
-        VulkanCommandBufferFree(image->info.ctx, buff, image->info.ctx->cmdPool);
+        VulkanCommandBufferFree(image->info.ctx, buff, image->info.ctx->commandPool);
     }
 
     VulkanBufferFree(&staging, image->info.ctx);

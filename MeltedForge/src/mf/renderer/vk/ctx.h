@@ -28,21 +28,21 @@ typedef struct VulkanBackendCtx_s {
     VkPhysicalDevice physicalDevice;
     VkDevice device;
 
-    VkExtent2D scExtent;
-    VkPresentModeKHR scMode;
-    VkSurfaceFormatKHR scFormat;
+    VkExtent2D swapchainExtent;
+    VkPresentModeKHR swapchainMode;
+    VkSurfaceFormatKHR swapchainFormat;
     VkSwapchainKHR swapchain;
-    u32 scImgCount;
-    VkImage* scImgs;
-    VkImageView* scImgViews;
+    u32 swapchainImageCount;
+    VkImage* swapchainImages;
+    VkImageView* swapchainImageViews;
     
     b8 vsync, enableDepth;
 
     VkFormat depthFormat;
     VulkanImage depthImage;
 
-    VkDescriptorPool uiDescPool;
-    VkCommandPool cmdPool;
+    VkDescriptorPool uiDescriptorPool;
+    VkCommandPool commandPool;
 } VulkanBackendCtx;
 
 void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window);

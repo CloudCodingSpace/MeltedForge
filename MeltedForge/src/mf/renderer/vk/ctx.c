@@ -94,7 +94,7 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 		bool set = false;
 		for (u32 i = 0; i < caps.modeCount; i++) {
 			if (caps.modes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-				ctx->scMode = caps.modes[i];
+				ctx->swapchainMode = caps.modes[i];
 				set = true;
 				break;
 			}
@@ -102,10 +102,10 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 
 		if (!set) {
             if(ctx->vsync) {
-			    ctx->scMode = VK_PRESENT_MODE_FIFO_KHR;
+			    ctx->swapchainMode = VK_PRESENT_MODE_FIFO_KHR;
             }
             else {
-			    ctx->scMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+			    ctx->swapchainMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
             }
         }
     }
@@ -114,29 +114,29 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 		bool set = false;
 		for (u32 i = 0; i < caps.formatCount; i++) {
 			if (caps.formats[i].format == VK_FORMAT_B8G8R8A8_UNORM && caps.formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
-				ctx->scFormat = caps.formats[i];
+				ctx->swapchainFormat = caps.formats[i];
 				set = true;
 				break;
 			}
 		}
 		if (!set)
-			ctx->scFormat = caps.formats[0];
+			ctx->swapchainFormat = caps.formats[0];
 	}
 	// Selecting the extent
 	{
 		if (caps.caps.currentExtent.width != UINT32_MAX)
-			ctx->scExtent = caps.caps.currentExtent;
+			ctx->swapchainExtent = caps.caps.currentExtent;
 		else {
 			int width, height;
 			glfwGetFramebufferSize(window, &width, &height);
 
-			ctx->scExtent = (VkExtent2D) {
+			ctx->swapchainExtent = (VkExtent2D) {
 				(u32)width,
 				(u32)height
 			};
 
-			ctx->scExtent.width = MF_CLAMP(ctx->scExtent.width, caps.caps.minImageExtent.width, caps.caps.maxImageExtent.width);
-			ctx->scExtent.height = MF_CLAMP(ctx->scExtent.height, caps.caps.minImageExtent.height, caps.caps.maxImageExtent.height);
+			ctx->swapchainExtent.width = MF_CLAMP(ctx->swapchainExtent.width, caps.caps.minImageExtent.width, caps.caps.maxImageExtent.width);
+			ctx->swapchainExtent.height = MF_CLAMP(ctx->swapchainExtent.height, caps.caps.minImageExtent.height, caps.caps.maxImageExtent.height);
 		}
 	}
 }
@@ -159,12 +159,12 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     		.surface = ctx->surface,
     		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
     		.minImageCount = imgCount,
-    		.imageFormat = ctx->scFormat.format,
-    		.imageColorSpace = ctx->scFormat.colorSpace,
+    		.imageFormat = ctx->swapchainFormat.format,
+    		.imageColorSpace = ctx->swapchainFormat.colorSpace,
     		.preTransform = surfaceCaps.currentTransform,
-    		.presentMode = ctx->scMode,
+    		.presentMode = ctx->swapchainMode,
     		.imageArrayLayers = 1,
-    		.imageExtent = ctx->scExtent,
+    		.imageExtent = ctx->swapchainExtent,
     		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
     		.clipped = VK_TRUE,
     		.oldSwapchain = mfnull
@@ -214,15 +214,15 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     }
     // Getting the swapchain images
     {
-        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->scImgCount, mfnull));
-        ctx->scImgs = MF_ALLOCMEM(VkImage, sizeof(VkImage) * ctx->scImgCount);
-        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->scImgCount, ctx->scImgs));
+        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->swapchainImageCount, mfnull));
+        ctx->swapchainImages = MF_ALLOCMEM(VkImage, sizeof(VkImage) * ctx->swapchainImageCount);
+        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->swapchainImageCount, ctx->swapchainImages));
     }
     // Creating the image views
     {
         VkImageViewCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .format = ctx->scFormat.format,
+            .format = ctx->swapchainFormat.format,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
             .components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -237,11 +237,11 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
             },
         };
 
-        ctx->scImgViews = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * ctx->scImgCount);
-        for(u32 i = 0; i < ctx->scImgCount; i++) {
-            info.image = ctx->scImgs[i];
+        ctx->swapchainImageViews = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * ctx->swapchainImageCount);
+        for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
+            info.image = ctx->swapchainImages[i];
 
-            VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &ctx->scImgViews[i]));
+            VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &ctx->swapchainImageViews[i]));
         }
     }
 
@@ -424,8 +424,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
 
         VulkanImageInfo info = {
             .ctx = ctx,
-            .width = ctx->scExtent.width,
-            .height = ctx->scExtent.height,
+            .width = ctx->swapchainExtent.width,
+            .height = ctx->swapchainExtent.height,
             .gpuResource = false,
             .pixels = mfnull,
             .format = ctx->depthFormat,
@@ -464,23 +464,23 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
         };
 
-        VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->uiDescPool));
+        VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->uiDescriptorPool));
     }
     // Command Pool
     {
-        ctx->cmdPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
+        ctx->commandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
     }
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
-    VulkanCommandPoolDestroy(ctx, ctx->cmdPool);
-    vkDestroyDescriptorPool(ctx->device, ctx->uiDescPool, ctx->allocator);
+    VulkanCommandPoolDestroy(ctx, ctx->commandPool);
+    vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);
 
     if(ctx->enableDepth)
         VulkanImageDestroy(&ctx->depthImage);
 
-    for(u32 i = 0; i < ctx->scImgCount; i++)
-        vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
+    for(u32 i = 0; i < ctx->swapchainImageCount; i++)
+        vkDestroyImageView(ctx->device, ctx->swapchainImageViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     vkDestroyDevice(ctx->device, ctx->allocator);
@@ -488,8 +488,8 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
 
-    MF_FREEMEM(ctx->scImgViews);
-    MF_FREEMEM(ctx->scImgs);
+    MF_FREEMEM(ctx->swapchainImageViews);
+    MF_FREEMEM(ctx->swapchainImages);
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
 
@@ -499,8 +499,8 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWind
     if(ctx->enableDepth)
         VulkanImageDestroy(&ctx->depthImage);
 
-    for(u32 i = 0; i < ctx->scImgCount; i++)
-        vkDestroyImageView(ctx->device, ctx->scImgViews[i], ctx->allocator);
+    for(u32 i = 0; i < ctx->swapchainImageCount; i++)
+        vkDestroyImageView(ctx->device, ctx->swapchainImageViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     CreateSwapchain(ctx, mfWindowGetHandle(window));
@@ -508,8 +508,8 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWind
     if(ctx->enableDepth) {
         VulkanImageInfo info = {
             .ctx = ctx,
-            .width = ctx->scExtent.width,
-            .height = ctx->scExtent.height,
+            .width = ctx->swapchainExtent.width,
+            .height = ctx->swapchainExtent.height,
             .gpuResource = false,
             .pixels = mfnull,
             .format = ctx->depthFormat,

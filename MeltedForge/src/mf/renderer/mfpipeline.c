@@ -91,7 +91,7 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
         .offset = (VkOffset2D){scissor.offsetX, scissor.offsetY}
     };
     
-    VkCommandBuffer commandBuffer = pipeline->backend->cmdBuffers[pipeline->backend->frameIndex];
+    VkCommandBuffer commandBuffer = pipeline->backend->commandBuffers[pipeline->backend->frameIndex];
     if(pipeline->backend->renderTarget != mfnull) {
         commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
     }
