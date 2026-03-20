@@ -246,14 +246,14 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
         if(t->valid) validTransforms++;
     }
-    size += 9 * sizeof(f32) * validTransforms;
+    size += sizeof(MFTransformComponent) * sizeof(f32) * validTransforms;
 
     u64 validGroups = 0;
     for(u64 i = 0; i < scene->compGrpTable.len; i++) {
         MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
         if(g->valid) validGroups++;
     }
-    size += 2 * sizeof(u64) * validGroups;
+    size += sizeof(MFComponentGroup) * sizeof(u64) * validGroups;
 
     for(int i = 0; i < scene->meshCompPool.len; i++) {
         MFMeshComponent* comp = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
