@@ -240,8 +240,20 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     size += sizeof(u64) * 4; // For the sizes of the 4 mfarrays
     size += sizeof(MFEntity) * scene->entities.len;
     size += sizeof(MFMeshComponent) * scene->meshCompPool.len;
-    size += sizeof(MFTransformComponent) * scene->transformCompPool.len;
-    size += sizeof(MFComponentGroup) * scene->compGrpTable.len;
+
+    u64 validTransforms = 0;
+    for(u64 i = 0; i < scene->transformCompPool.len; i++) {
+        MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+        if(t->valid) validTransforms++;
+    }
+    size += 9 * sizeof(f32) * validTransforms;
+
+    u64 validGroups = 0;
+    for(u64 i = 0; i < scene->compGrpTable.len; i++) {
+        MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+        if(g->valid) validGroups++;
+    }
+    size += 2 * sizeof(u64) * validGroups;
 
     for(int i = 0; i < scene->meshCompPool.len; i++) {
         MFMeshComponent* comp = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
@@ -278,7 +290,12 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     }
     // Transform comp array 
     {
-        mfSerializeU64(&s, scene->transformCompPool.len);
+        u64 validTransforms = 0;
+        for(u64 i = 0; i < scene->transformCompPool.len; i++) {
+            MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+            if(t->valid) validTransforms++;
+        }
+        mfSerializeU64(&s, validTransforms);
         for(u64 i = 0; i < scene->transformCompPool.len; i++) {
             MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
             if(!t->valid)
@@ -296,7 +313,12 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     }
     // Component group array 
     {
-        mfSerializeU64(&s, scene->compGrpTable.len);
+        u64 validGroups = 0;
+        for(u64 i = 0; i < scene->compGrpTable.len; i++) {
+            MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+            if(g->valid) validGroups++;
+        }
+        mfSerializeU64(&s, validGroups);
         for(u64 i = 0; i < scene->compGrpTable.len; i++) {
             MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
             if(!g->valid)
@@ -313,7 +335,6 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
 
 b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
 
     u64 fileSize = 0;
@@ -370,6 +391,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
         c.path = mfDeserializeString(&s);
         c.perVertSize = mfDeserializeU64(&s);
         c.vertBuilder = vertexBuilder;
+        c.valid = true;
         mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, c.vertBuilder);
         mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), c);
     }
@@ -377,7 +399,8 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     u64 tLen = mfDeserializeU64(&s);
     scene->transformCompPool = mfArrayCreate(mfGetLogger(), tLen, sizeof(MFTransformComponent));
     for(u64 i = 0; i < tLen; i++) {
-        MFTransformComponent t;
+        MFTransformComponent t = {0};
+        t.valid = true;
         t.position.x = mfDeserializeF32(&s);
         t.position.y = mfDeserializeF32(&s);
         t.position.z = mfDeserializeF32(&s);
@@ -393,13 +416,16 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     u64 gLen = mfDeserializeU64(&s);
     scene->compGrpTable = mfArrayCreate(mfGetLogger(), gLen, sizeof(MFComponentGroup));
     for(u64 i = 0; i < gLen; i++) {
-        MFComponentGroup g;
+        MFComponentGroup g = {0};
+        g.valid = true;
         g.meshIdx = mfDeserializeU64(&s);
         g.transformIdx = mfDeserializeU64(&s);
         mfArrayAddElement(scene->compGrpTable, MFComponentGroup, mfGetLogger(), g);
     }
 
     mfSerializerDestroy(&s);
+
+    scene->init = true;
 
     return true;
 }

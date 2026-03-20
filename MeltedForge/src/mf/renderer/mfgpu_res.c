@@ -18,16 +18,19 @@ struct MFResourceSetLayout_s {
     MFRenderer* renderer;
     MFArray resourceDescriptions;
     u64 imageCount, bufferCount;
+    b8 init;
 };
 
 struct MFResourceSet_s {
     VkDescriptorSet sets[FRAMES_IN_FLIGHT];
     MFResourceSetLayout* layout;
     MFRenderer* renderer;
+    b8 init;
 };
 
 void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, MFRenderer* renderer) {
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
+    MF_PANIC_IF(layout->init, mfGetLogger(), "The resource set layout is already initialised");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The provided renderer handle shouldn't be null!");
     MF_PANIC_IF(reourceDescriptionLen == 0, mfGetLogger(), "The provided resource description count shouldn't be 0!");
     MF_PANIC_IF(resourceDescriptions == mfnull, mfGetLogger(), "The provided resource descriptions shouldn't be null!");
@@ -116,10 +119,13 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescripti
         VK_CHECK(vkCreateDescriptorSetLayout(ctx->device, &layInfo, ctx->allocator, &layout->layout));
         MF_FREEMEM(layBindings);
     }
+
+    layout->init = true;
 }
 
 void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
+    MF_PANIC_IF(!layout->init, mfGetLogger(), "The resource set layout isn't initialised!");
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(layout->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
@@ -134,7 +140,9 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
 
 void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRenderer* renderer) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(set->init, mfGetLogger(), "The resource set is already initialised!");
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The resource set layout handle provided shoudln't be null!");
+    MF_PANIC_IF(!layout->init, mfGetLogger(), "The resource set layout isn't initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
 
     set->layout = layout;
@@ -152,10 +160,13 @@ void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRend
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
         VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, &set->sets[i]));
+    
+    set->init = true;
 }
 
 void mfResourceSetDestroy(MFResourceSet* set) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
     
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
@@ -167,6 +178,7 @@ void mfResourceSetDestroy(MFResourceSet* set) {
 
 void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
@@ -185,6 +197,7 @@ void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
 
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
 
     u64 imgCount = 0, buffCount = 0;
     if(images != mfnull) {
@@ -263,6 +276,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
 void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout) {
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
+    MF_PANIC_IF(!layout->init, mfGetLogger(), "The resource set layout isn't initialised!");
     
     return layout->layout;
 }
