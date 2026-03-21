@@ -202,7 +202,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
 g_error:
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Creating error texture!");
         mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
-        image = mfArrayGet(*array, MFGpuImage*, type);
+        image = mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type);
     }
 
     return image;
