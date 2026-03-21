@@ -202,6 +202,7 @@ typedef struct MFArray_s {
     u64 capacity;
     u64 elementSize;
     void* data;
+    b8 init;
 } MFArray;
 
 MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 capacity, u64 elementSize) {
@@ -215,21 +216,24 @@ MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 capacity, u64 elementSize) 
     array.data = malloc(elementSize * capacity);
     memset(array.data, 0, elementSize * capacity);
 
+    array.init = true;
     return array;
 }
 
 MF_INLINE void mfArrayDestroy(MFArray* array, SLogger* logger) {
     MF_PANIC_IF(array == mfnull, logger, "The array provided shouldn't be 0!");
+    MF_PANIC_IF(!array->init, logger, "The array provided isn't initialised!");
 
     if (array->capacity == 0)
         return;
 
-    free(array->data);
-    memset(array, 0, sizeof(MFArray));
+    MF_FREEMEM(array->data);
+    MF_SETMEM(array, 0, sizeof(MFArray));
 }
 
 MF_INLINE void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger) {
     MF_PANIC_IF(array == mfnull, logger, "The array provided shouldn't be 0!");
+    MF_PANIC_IF(!array->init, logger, "The array provided isn't initialised!");
     
     if (newCapacity == 0) {
         MF_FATAL_ABORT(logger, "New capacity cannot be zero!");
@@ -238,12 +242,12 @@ MF_INLINE void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger) {
     if (newCapacity <= array->capacity)
         return;
         
-        void* newData = realloc(array->data, array->elementSize * newCapacity);
-        if (!newData) {
+    void* newData = realloc(array->data, array->elementSize * newCapacity);
+    if (!newData) {
         MF_FATAL_ABORT(logger, "Failed to reallocate memory for array resize!");
     }
     
-    memset((u8*)newData + (array->elementSize * array->capacity), 0, (newCapacity - array->capacity) * array->elementSize);
+    MF_SETMEM((u8*)newData + (array->elementSize * array->capacity), 0, (newCapacity - array->capacity) * array->elementSize);
     
     array->data = newData;
     array->capacity = newCapacity;
@@ -251,6 +255,7 @@ MF_INLINE void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger) {
 
 MF_INLINE void mfArrayInsertAt(MFArray* array, u64 index, void* element, SLogger* logger) {
     MF_PANIC_IF(array == mfnull, logger, "The array provided shouldn't be 0!");
+    MF_PANIC_IF(!array->init, logger, "The array provided isn't initialised!");
     MF_DO_IF(index >= array->len, {
         slogLogMsg(logger, SLOG_SEVERITY_WARN, "The index provided to MFArray is invalid!");
         return;
@@ -264,7 +269,7 @@ MF_INLINE void mfArrayInsertAt(MFArray* array, u64 index, void* element, SLogger
     void* leftData = MF_ALLOCMEM(void, array->elementSize * left);
     u8* data = (u8*)array->data;
     memcpy(leftData, data + (array->elementSize * index), left * array->elementSize);
-    memset(data + (array->elementSize * index), 0, left * array->elementSize);
+    MF_SETMEM(data + (array->elementSize * index), 0, left * array->elementSize);
     memcpy(data + (array->elementSize * index), element, array->elementSize);
     memcpy(data + (array->elementSize * (index + 1)), leftData, left * array->elementSize);
 
@@ -274,6 +279,7 @@ MF_INLINE void mfArrayInsertAt(MFArray* array, u64 index, void* element, SLogger
 
 MF_INLINE void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger) {
     MF_PANIC_IF(array == mfnull, logger, "The array provided shouldn't be 0!");
+    MF_PANIC_IF(!array->init, logger, "The array provided isn't initialised!");
     MF_DO_IF(index >= array->len, {
         slogLogMsg(logger, SLOG_SEVERITY_WARN, "The index provided to MFArray is invalid!");
         return;
@@ -283,7 +289,7 @@ MF_INLINE void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger) {
     void* leftData = MF_ALLOCMEM(void, array->elementSize * left);
     u8* data = (u8*)array->data;
     memcpy(leftData, data + (array->elementSize * (index + 1)), left * array->elementSize);
-    memset(data + (array->elementSize * index), 0, array->elementSize);
+    MF_SETMEM(data + (array->elementSize * index), 0, array->elementSize);
     memcpy(data + (array->elementSize * index), leftData, left * array->elementSize);
 
     MF_FREEMEM(leftData);

@@ -29,7 +29,7 @@ void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
 
 void mfSceneDestroy(MFScene* scene) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
 
     for(u32 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
@@ -49,7 +49,7 @@ void mfSceneDestroy(MFScene* scene) {
 
 void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scene, void* state), void* state) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(entityDraw == mfnull, mfGetLogger(), "The entity draw function ptr handle shouldn't be null!");
     
     for(u64 i = 0; i < scene->entities.len; i++) {
@@ -70,7 +70,7 @@ void mfSceneUpdate(MFScene* scene) {
 
 const MFEntity* mfSceneCreateEntity(MFScene* scene) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     
     MFComponentGroup grp = {};
     grp.valid = true;
@@ -93,7 +93,7 @@ const MFEntity* mfSceneCreateEntity(MFScene* scene) {
 
 void mfSceneDeleteEntity(MFScene* scene, u64 id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF((id < 0) || (id >= scene->entities.len), mfGetLogger(), "The entity id should be valid!"); 
 
     MFEntity* e = &mfArrayGet(scene->entities, MFEntity, id);
@@ -135,7 +135,7 @@ void mfSceneDeleteEntity(MFScene* scene, u64 id) {
 
 void mfSceneEntityAddMeshComponent(MFScene* scene, u64 id, MFMeshComponent comp) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(comp.path == mfnull, mfGetLogger(), "The path for the mesh component shouldn't be null!");
     MF_PANIC_IF(comp.perVertSize == 0, mfGetLogger(), "The perVertSize for the mesh component shouldn't be 0!");
     MF_PANIC_IF(comp.vertBuilder == mfnull, mfGetLogger(), "The vertBuilder for the mesh component shouldn't be null!");
@@ -166,7 +166,7 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64 id, MFMeshComponent comp)
 
 void mfSceneEntityAddTransformComponent(MFScene* scene, u64 id, MFTransformComponent comp) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
 
     MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
@@ -190,7 +190,7 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u64 id, MFTransformCompo
 
 MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64 id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
 
     MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
@@ -211,7 +211,7 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64 id) {
 
 MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64 id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
 
     MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, id);
@@ -233,7 +233,7 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64 id)
 
 void mfSceneSerialize(MFScene* scene, const char* fileName) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
-    MF_PANIC_IF(!scene->init, mfGetLogger(), "The camera handle provided isn't initialised!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
 
     u64 size = sizeof(u32); // For the scene signature
@@ -321,6 +321,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
 
 b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
 
     u64 fileSize = 0;
