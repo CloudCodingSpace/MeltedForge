@@ -55,12 +55,13 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
 
     {
         f64 time = mfGetTimeElapsed();
-        MFMat4 transformMat = mfMat4Translate(tcomponent->position.x, tcomponent->position.y, tcomponent->position.z);
-        MFMat4 rot = mfMat4RotateXYZ(tcomponent->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+        // MFMat4 transformMat = mfMat4Translate(tcomponent->position.x, tcomponent->position.y, tcomponent->position.z);
+        // MFMat4 rot = mfMat4RotateXYZ(tcomponent->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
         MFMat4 scale = mfMat4Identity();
         mfMat4Scale(&scale, tcomponent->scale.x, tcomponent->scale.y, tcomponent->scale.z);
 
-        uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
+        // uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
+        uboData.model = scale;
         uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
         mfGpuBufferUploadData(state->cameraUbo, &uboData);
         mfGpuBufferUploadData(state->lightUbo, &state->lightData);
@@ -111,7 +112,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/Mickey Mouse.obj",
+                .path = "meshes/sofa_1k.gltf",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -119,7 +120,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             MFTransformComponent tComp = {
                 .position = (MFVec3){0, 0, 0},
                 .rotationXYZ = (MFVec3){45, 0, 0},
-                .scale = (MFVec3){1, 1, 1}
+                .scale = (MFVec3){5, 5, 5}
             };
 
             mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
@@ -184,12 +185,12 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFResourceDescription* descs = MF_ALLOCMEM(MFResourceDescription, sizeof(MFResourceDescription) * count);
         
         u64 i = 0;
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer); // anyone image is fine since every image has same binding
+        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
         descs[i++] = mfGpuImageGetDescription(image);
         descs[i++] = mfGpuBufferGetDescription(state->cameraUbo);
         descs[i++] = mfGpuBufferGetDescription(state->lightUbo);
         
-        mfResourceSetLayoutCreate(state->layout, count, descs, appState->renderer);
+        mfResourceSetLayoutCreate(state->layout, count, descs, component->model.meshCount, appState->renderer);
         
         MF_FREEMEM(descs);
     }

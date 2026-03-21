@@ -28,9 +28,10 @@ struct MFResourceSet_s {
     b8 init;
 };
 
-void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, MFRenderer* renderer) {
+void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, u64 maxSets, MFRenderer* renderer) {
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
     MF_PANIC_IF(layout->init, mfGetLogger(), "The resource set layout is already initialised");
+    MF_PANIC_IF(maxSets == 0, mfGetLogger(), "The provided maxSet count shouldn't be 0!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The provided renderer handle shouldn't be null!");
     MF_PANIC_IF(reourceDescriptionLen == 0, mfGetLogger(), "The provided resource description count shouldn't be 0!");
     MF_PANIC_IF(resourceDescriptions == mfnull, mfGetLogger(), "The provided resource descriptions shouldn't be null!");
@@ -66,15 +67,15 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescripti
         VkDescriptorPoolSize sizes[2] = {0};
 
         if(imageCount != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ((u32)imageCount) * FRAMES_IN_FLIGHT };
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ((u32)imageCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
         }
         if(bufferCount != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ((u32)bufferCount) * FRAMES_IN_FLIGHT };
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ((u32)bufferCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
         }
 
         VkDescriptorPoolCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            .maxSets = 1000, //! FIXME: INSTEAD OF ASSUMING 1000, CREATE A DYNAMIC DESCRIPTOR POOL ALLOCATOR
+            .maxSets = maxSets * FRAMES_IN_FLIGHT,
             .poolSizeCount = count,
             .pPoolSizes = sizes,
             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
