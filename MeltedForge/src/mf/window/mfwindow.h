@@ -18,7 +18,7 @@ typedef struct MFWindow_s MFWindow;
 void mfWindowInit(MFWindow* window, MFWindowConfig config);
 void mfWindowDestroy(MFWindow* window);
 
-void mfWindowSetIcon(MFWindow* window, const char* path);
+void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels);
 
 void mfWindowUpdate(MFWindow* window);
 void mfWindowClose(MFWindow* window);

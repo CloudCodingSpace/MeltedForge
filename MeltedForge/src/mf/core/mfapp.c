@@ -1,12 +1,20 @@
 #include "mfapp.h"
 
+#include <stb/stb_image.h>
+
 static void initApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
 
     state->window = MF_ALLOCMEM(MFWindow, mfWindowGetSizeInBytes());
     mfWindowInit(state->window, config->winConfig);
 
-    mfWindowSetIcon(state->window, MF_WINDOW_DEFAULT_ICON_PATH);
+    // Setting icon
+    {
+        u32 width, height, channels;
+        u8* data = stbi_load(MF_WINDOW_DEFAULT_ICON_PATH, &width, &height, &channels, 4);
+        mfWindowSetIcon(state->window, width, height, data);
+        stbi_image_free(data);
+    }
 
     state->renderer = MF_ALLOCMEM(MFRenderer, mRendererGetSizeInBytes());
     mfRendererInit(state->renderer, config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
@@ -47,6 +55,12 @@ static void runApp(void* st, MFAppConfig* config) {
         mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layers.len; i++) {
             MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+            if(layer->onUpdate)
+            layer->onUpdate(layer->state, st);
+        }
+
+        for(u32 i = 0; i < config->layers.len; i++) {
+            MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
             if(layer->onRender)
                 layer->onRender(layer->state, st);
             if(config->enableUI && layer->onUIRender)
@@ -54,11 +68,6 @@ static void runApp(void* st, MFAppConfig* config) {
         }
         mfRendererEndframe(state->renderer, state->window);
 
-        for(u32 i = 0; i < config->layers.len; i++) {
-            MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
-            if(layer->onUpdate)
-                layer->onUpdate(layer->state, st);
-        }
         mfWindowUpdate(state->window);
     }
 }

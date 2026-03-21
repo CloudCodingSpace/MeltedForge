@@ -80,17 +80,20 @@ void mfWindowDestroy(MFWindow* window) {
     MF_INFO(mfGetLogger(), "Destroying MFWindow");
 }
 
-void mfWindowSetIcon(MFWindow* window, const char* path) {
+void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     MF_PANIC_IF(!window->init, mfGetLogger(), "The window handle should be initialized!");
+    MF_PANIC_IF(width == 0, mfGetLogger(), "The provided icon width shouldn't be 0!");
+    MF_PANIC_IF(height == 0, mfGetLogger(), "The provided icon height shouldn't be 0!");
+    MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The provided icon pixels shouldn't be 0!");
 
     i32 channels;
     GLFWimage img[1];
     MF_SETMEM(img, 0, sizeof(GLFWimage));
-    u8* data = stbi_load(path, &img->width, &img->height, &channels, 4);
-    img->pixels = data;
+    img->pixels = pixels;
+    img->width = width;
+    img->height = height;
     glfwSetWindowIcon(window->handle, 1, img);
-    stbi_image_free(data);
 
     MF_INFO(mfGetLogger(), "Set an icon to MFWindow");
 }

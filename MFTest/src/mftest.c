@@ -272,7 +272,6 @@ void MFTOnRender(void* pstate, void* pappState) {
     }
 
     mfSceneRender(&state->scene, renderEntity, pstate);
-    mfSceneUpdate(&state->scene);
 }
 
 void MFTOnUIRender(void* pstate, void* pappState) {
