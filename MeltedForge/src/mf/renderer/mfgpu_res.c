@@ -66,10 +66,10 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescripti
         VkDescriptorPoolSize sizes[2] = {0};
 
         if(imageCount != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount * FRAMES_IN_FLIGHT };
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ((u32)imageCount) * FRAMES_IN_FLIGHT };
         }
         if(bufferCount != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bufferCount * FRAMES_IN_FLIGHT };
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ((u32)bufferCount) * FRAMES_IN_FLIGHT };
         }
 
         VkDescriptorPoolCreateInfo info = {
@@ -227,7 +227,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     }
     
     for (u32 frame = 0; frame < FRAMES_IN_FLIGHT; frame++) {
-        u64 writeIdx = 0;
+        u32 writeIdx = 0;
 
         // Images
         for (u64 i = 0; i < set->layout->imageCount; i++) {

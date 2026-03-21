@@ -16,7 +16,8 @@ typedef enum MFGpuBufferTypes_s {
 } MFGpuBufferTypes;
 
 typedef struct MFGpuBufferConfig_s {
-    u64 size, binding;
+    u64 size;
+    u32 binding;
     MFShaderStage stage;
     void* data;
     MFGpuBufferTypes type;

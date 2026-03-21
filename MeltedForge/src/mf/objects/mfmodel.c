@@ -34,7 +34,7 @@ char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
         //! NOTE: SUS CUZ THE HEADER SAYS PATH.LENGTH IS THE BINARY LENGTH AND NOT THE LENGTH OF THE UTF-8 MULTI-BYTE SEQUENCE
         u64 size = path.length + 1;
         char* str = MF_ALLOCMEM(char, sizeof(char) * size);
-        for(int i = 0; i < path.length; i++) {
+        for(u32 i = 0; i < path.length; i++) {
             str[i] = path.data[i];
         }
         str[path.length] = '\0';
@@ -57,7 +57,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
     model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * scene->mNumMeshes);
 
     //! NOTE: CHANGE THIS WAY OF DIRECTLY GETTING THE MESHES FROM THE SCENE, INSTEAD GET THE MESHES BASED ON THE HIERARCHY OF THE SCENE ALONG WITH THE TRANSFORMS!!
-    for(int i = 0; i < scene->mNumMeshes; i++) {
+    for(u32 i = 0; i < scene->mNumMeshes; i++) {
         struct aiMesh* mesh = scene->mMeshes[i];
         MFMeshMaterial matData = {0};
         MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
@@ -68,7 +68,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
         u8* vertices = MF_ALLOCMEM(u8, perVertSize * mesh->mNumVertices);
         u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * mesh->mNumFaces * 3);
 
-        for(int j = 0; j < mesh->mNumVertices; j++) {
+        for(u32 j = 0; j < mesh->mNumVertices; j++) {
             struct aiVector3D pos = mesh->mVertices[j];
             struct aiVector3D normals = mesh->mNormals[j];
             struct aiVector3D tangents = mesh->mTangents[j];
@@ -88,7 +88,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
             
             builder(vertices + j * perVertSize, data);
         }
-        for(int j = 0; j < mesh->mNumFaces; j++) {
+        for(u32 j = 0; j < mesh->mNumFaces; j++) {
             struct aiFace face = mesh->mFaces[j];
             // Process these info ...
             for(u32  k = 0; k < face.mNumIndices; k++) {

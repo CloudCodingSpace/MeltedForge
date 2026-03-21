@@ -6,9 +6,9 @@
 typedef struct MFEntity_s {
     void* ownerScene;
     u64 uuid;
-    u32 id;
-    u32 compGrpId;
-    u32 components;
+    u64 id;
+    u64 compGrpId;
+    u64 components;
     b8 valid;
 } MFEntity;
 

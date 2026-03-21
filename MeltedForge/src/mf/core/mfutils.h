@@ -184,8 +184,8 @@ MF_INLINE b8 mfStringEndsWith(SLogger* logger, const char* a, const char* b) {
     if(lena < lenb)
         return false;
 
-    for(int i = 0; i < lenb; i++) {
-        int j = lena - lenb + i;
+    for(u32 i = 0; i < lenb; i++) {
+        u32 j = lena - lenb + i;
         if(a[j] != b[i])
             return false;
     }

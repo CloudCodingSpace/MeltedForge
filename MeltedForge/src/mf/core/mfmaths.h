@@ -27,9 +27,9 @@
 #define MF_MS_TO_SEC_MULTIPLIER 0.001f
 
 #define MF_INFINITY (1e30f * 1e30f)
-#define MF_FLOAT_EPSILON 1.192092896e-07f
-#define MF_FLOAT_MIN -3.40282e+38F
-#define MF_FLOAT_MAX 3.40282e+38F
+#define MF_f32_EPSILON 1.192092896e-07f
+#define MF_f32_MIN -3.40282e+38F
+#define MF_f32_MAX 3.40282e+38F
 
 typedef union {
     struct { f32 x, y; };
@@ -81,7 +81,7 @@ MF_INLINE MFVec2 mfVec2Mul(MFVec2 a, MFVec2 b) {
     return (MFVec2){a.x * b.x, a.y * b.y};
 }
 
-MF_INLINE MFVec2 mfVec2MulScalar(MFVec2 a, float x) {
+MF_INLINE MFVec2 mfVec2MulScalar(MFVec2 a, f32 x) {
     return (MFVec2){a.x * x, a.y * x};
 }
 
@@ -89,15 +89,15 @@ MF_INLINE MFVec2 mfVec2Div(MFVec2 a, MFVec2 b) {
     return (MFVec2){a.x / b.x, a.y / b.y};
 }
 
-MF_INLINE float mfVec2LengthSqr(MFVec2 vec) {
+MF_INLINE f32 mfVec2LengthSqr(MFVec2 vec) {
     return vec.x * vec.x + vec.y * vec.y;
 }
 
-MF_INLINE float mfVec2Length(MFVec2 vec) {
+MF_INLINE f32 mfVec2Length(MFVec2 vec) {
     return sqrtf(mfVec2LengthSqr(vec));
 }
 
-MF_INLINE float mfVec2Dot(MFVec2 a, MFVec2 b) {
+MF_INLINE f32 mfVec2Dot(MFVec2 a, MFVec2 b) {
     return a.x * b.x + a.y * b.y;
 }
 
@@ -126,7 +126,7 @@ MF_INLINE MFVec3 mfVec3Mul(MFVec3 a, MFVec3 b) {
     return (MFVec3){a.x * b.x, a.y * b.y, a.z * b.z};
 }
 
-MF_INLINE MFVec3 mfVec3MulScalar(MFVec3 a, float x) {
+MF_INLINE MFVec3 mfVec3MulScalar(MFVec3 a, f32 x) {
     return (MFVec3){a.x * x, a.y * x, a.z * x};
 }
 
@@ -134,15 +134,15 @@ MF_INLINE MFVec3 mfVec3Div(MFVec3 a, MFVec3 b) {
     return (MFVec3){a.x / b.x, a.y / b.y, a.z / b.z};
 }
 
-MF_INLINE float mfVec3LengthSqr(MFVec3 vec) {
+MF_INLINE f32 mfVec3LengthSqr(MFVec3 vec) {
     return vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
 }
 
-MF_INLINE float mfVec3Length(MFVec3 vec) {
+MF_INLINE f32 mfVec3Length(MFVec3 vec) {
     return sqrtf(mfVec3LengthSqr(vec));
 }
 
-MF_INLINE float mfVec3Dot(MFVec3 a, MFVec3 b) {
+MF_INLINE f32 mfVec3Dot(MFVec3 a, MFVec3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
@@ -183,7 +183,7 @@ MF_INLINE MFVec4 mfVec4Mul(MFVec4 a, MFVec4 b) {
     return (MFVec4){a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w};
 }
 
-MF_INLINE MFVec4 mfVec4MulScalar(MFVec4 a, float x) {
+MF_INLINE MFVec4 mfVec4MulScalar(MFVec4 a, f32 x) {
     return (MFVec4){a.x * x, a.y * x, a.z * x, a.w * x};
 }
 
@@ -191,15 +191,15 @@ MF_INLINE MFVec4 mfVec4Div(MFVec4 a, MFVec4 b) {
     return (MFVec4){a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w};
 }
 
-MF_INLINE float mfVec4LengthSqr(MFVec4 vec) {
+MF_INLINE f32 mfVec4LengthSqr(MFVec4 vec) {
     return vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + vec.w * vec.w;
 }
 
-MF_INLINE float mfVec4Length(MFVec4 vec) {
+MF_INLINE f32 mfVec4Length(MFVec4 vec) {
     return sqrtf(mfVec4LengthSqr(vec));
 }
 
-MF_INLINE float mfVec4Dot(MFVec4 a, MFVec4 b) {
+MF_INLINE f32 mfVec4Dot(MFVec4 a, MFVec4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
@@ -253,7 +253,7 @@ MF_INLINE MFMat2 mfMat2Mul(MFMat2 a, MFMat2 b) {
     return result;
 }
 
-MF_INLINE MFMat2 mfMat2MulScalar(MFMat2 a, float x) {
+MF_INLINE MFMat2 mfMat2MulScalar(MFMat2 a, f32 x) {
     MFMat2 result;
 
     for (int i = 0; i < 4; i++) {
@@ -272,9 +272,9 @@ MF_INLINE MFVec2 mfMat2MulVec2(MFMat2 a, MFVec2 x) {
     return result;
 }
 
-MF_INLINE void mfMat2Rotate(MFMat2* mat, float theta_rad) {
-    float c = cosf(theta_rad);
-    float s = sinf(theta_rad);
+MF_INLINE void mfMat2Rotate(MFMat2* mat, f32 theta_rad) {
+    f32 c = cosf(theta_rad);
+    f32 s = sinf(theta_rad);
     
     MFMat2 rotation = {
         .data = {
@@ -286,7 +286,7 @@ MF_INLINE void mfMat2Rotate(MFMat2* mat, float theta_rad) {
     *mat = mfMat2Mul(rotation, *mat);
 }
 
-MF_INLINE void mfMat2Scale(MFMat2* mat, float x, float y) {
+MF_INLINE void mfMat2Scale(MFMat2* mat, f32 x, f32 y) {
     mat->data[0] *= x;
     mat->data[3] *= y;
 }
@@ -311,7 +311,7 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
     result.data[2] = -mat.data[2];
     result.data[3] = mat.data[0];
 
-    float d = mat.data[0] * mat.data[3] - mat.data[1] * mat.data[2];
+    f32 d = mat.data[0] * mat.data[3] - mat.data[1] * mat.data[2];
 
     if(fabsf(d) < 1e-6f) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
@@ -373,7 +373,7 @@ MF_INLINE MFMat3 mfMat3Mul(MFMat3 a, MFMat3 b) {
     return result;
 }
 
-MF_INLINE MFMat3 mfMat3MulScalar(MFMat3 a, float x) {
+MF_INLINE MFMat3 mfMat3MulScalar(MFMat3 a, f32 x) {
     MFMat3 result;
 
     for (int i = 0; i < 9; i++) {
@@ -393,9 +393,9 @@ MF_INLINE MFVec3 mfMat3MulVec3(MFMat3 a, MFVec3 x) {
     return result;
 }
 
-MF_INLINE void mfMat3Rotate(MFMat3* mat, float theta_rad) {
-    float c = cosf(theta_rad);
-    float s = sinf(theta_rad);
+MF_INLINE void mfMat3Rotate(MFMat3* mat, f32 theta_rad) {
+    f32 c = cosf(theta_rad);
+    f32 s = sinf(theta_rad);
 
     MFMat3 rotation = {
         .data = {
@@ -408,7 +408,7 @@ MF_INLINE void mfMat3Rotate(MFMat3* mat, float theta_rad) {
     *mat = mfMat3Mul(rotation, *mat);
 }
 
-MF_INLINE void mfMat3Scale(MFMat3* mat, float x, float y, float z) {
+MF_INLINE void mfMat3Scale(MFMat3* mat, f32 x, f32 y, f32 z) {
     mat->data[0] *= x;
     mat->data[4] *= y;
     mat->data[8] *= z;
@@ -433,23 +433,23 @@ MF_INLINE MFMat3 mfMat3Transpose(MFMat3 mat) {
 }
 
 MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
-    float a = m.data[0], b = m.data[1], tx = m.data[2];
-    float c = m.data[3], d = m.data[4], ty = m.data[5];
+    f32 a = m.data[0], b = m.data[1], tx = m.data[2];
+    f32 c = m.data[3], d = m.data[4], ty = m.data[5];
 
-    float det = a * d - b * c;
+    f32 det = a * d - b * c;
     if (fabsf(det) < 1e-6f) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
-    float invDet = 1.0f / det;
+    f32 invDet = 1.0f / det;
 
-    float ia =  d * invDet;
-    float ib = -b * invDet;
-    float ic = -c * invDet;
-    float id =  a * invDet;
+    f32 ia =  d * invDet;
+    f32 ib = -b * invDet;
+    f32 ic = -c * invDet;
+    f32 id =  a * invDet;
 
-    float itx = -(ia * tx + ib * ty);
-    float ity = -(ic * tx + id * ty);
+    f32 itx = -(ia * tx + ib * ty);
+    f32 ity = -(ic * tx + id * ty);
 
     MFMat3 inv = {
         .data = {
@@ -679,30 +679,30 @@ MF_INLINE MFMat4 mfMat4Transpose(MFMat4 mat) {
 
 /*   Utils   */
 MF_INLINE void mfCopyVec2ToFloatArr(f32* out, MFVec2 v) {
-    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     out[0] = v.x;
     out[1] = v.y;
 }
 
 MF_INLINE MFVec2 mfCopyFloatArrToVec2(f32* in) {
-    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     return mfVec2Create(in[0], in[1]);
 }
 
 MF_INLINE void mfCopyVec3ToFloatArr(f32* out, MFVec3 v) {
-    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     out[0] = v.x;
     out[1] = v.y;
     out[2] = v.z;
 }
 
 MF_INLINE MFVec3 mfCopyFloatArrToVec3(f32* in) {
-    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     return mfVec3Create(in[0], in[1], in[2]);
 }
 
 MF_INLINE void mfCopyVec4ToFloatArr(f32* out, MFVec4 v) {
-    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     out[0] = v.x;
     out[1] = v.y;
     out[2] = v.z;
@@ -710,6 +710,6 @@ MF_INLINE void mfCopyVec4ToFloatArr(f32* out, MFVec4 v) {
 }
 
 MF_INLINE MFVec4 mfCopyFloatArrToVec4(f32* in) {
-    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided float* shouldn't be null!");
+    MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     return mfVec4Create(in[0], in[1], in[2], in[3]);
 }

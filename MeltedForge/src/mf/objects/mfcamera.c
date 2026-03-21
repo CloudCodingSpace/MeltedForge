@@ -7,27 +7,27 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
     // Key input
     {
         if(mfInputIsKeyPressed(camera->window, MF_KEY_W)) {
-            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->front, camera->speed * deltaTime));
+            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->front, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_S)) {
-            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->front, camera->speed * deltaTime));
+            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->front, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_A)) {
-            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->right, camera->speed * deltaTime));
+            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->right, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_D)) {
-            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->right, camera->speed * deltaTime));
+            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->right, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_SPACE)) {
-            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->up, camera->speed * deltaTime));
+            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->up, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_LEFT_SHIFT)) {
-            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->up, camera->speed * deltaTime));
+            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->up, camera->speed * (f32)deltaTime));
             moved = true;
         }
     }
@@ -40,16 +40,16 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
             
             if(camera->firstMouse) {
                 mfInputDisableMouse(camera->window);
-                camera->lastX = xpos;
-                camera->lastY = ypos;
+                camera->lastX = (f32)xpos;
+                camera->lastY = (f32)ypos;
                 camera->firstMouse = false;
             }
             
             f32 xDelta = (xpos - camera->lastX);
             f32 yDelta = (camera->lastY - ypos);
             
-            camera->lastX = xpos;
-            camera->lastY = ypos;
+            camera->lastX = (f32)xpos;
+            camera->lastY = (f32)ypos;
             
             if(xDelta != 0 || yDelta != 0) {
                 xDelta *= camera->sensitivity;
@@ -59,14 +59,14 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
                 camera->pitch += yDelta;
                 
                 if(camera->pitch > 89.9f)
-                camera->pitch = 89.9f;
+                    camera->pitch = 89.9f;
                 if(camera->pitch < -89.9f)
-                camera->pitch = -89.9f;
+                    camera->pitch = -89.9f;
                 
                 MFVec3 front;
-                front.x = cos(camera->yaw * MF_DEG2RAD_MULTIPLIER) * cos(camera->pitch * MF_DEG2RAD_MULTIPLIER);
-                front.y = sin(camera->pitch * MF_DEG2RAD_MULTIPLIER);
-                front.z = sin(camera->yaw * MF_DEG2RAD_MULTIPLIER) * cos(camera->pitch * MF_DEG2RAD_MULTIPLIER);
+                front.x = (f32)cos(camera->yaw * MF_DEG2RAD_MULTIPLIER) * cos(camera->pitch * MF_DEG2RAD_MULTIPLIER);
+                front.y = (f32)sin(camera->pitch * MF_DEG2RAD_MULTIPLIER);
+                front.z = (f32)sin(camera->yaw * MF_DEG2RAD_MULTIPLIER) * cos(camera->pitch * MF_DEG2RAD_MULTIPLIER);
                 
                 camera->front = mfVec3Normalize(front);
                 
@@ -85,13 +85,13 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
         camera->up = mfVec3Normalize(mfVec3Cross(camera->front, camera->right));
         
         if(!moved)
-        return;
+            return;
         
         if(camera->height == 0 && camera->width == 0)
-        return;
+            return;
         
         if(camera->constructMatrices)
-        camera->constructMatrices(camera);
+            camera->constructMatrices(camera);
     }
 }
 
@@ -129,8 +129,8 @@ void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f
     camera->constructMatrices = &default_contruct_matrices;
 
     const MFWindowConfig* config = mfWindowGetConfig(window);
-    camera->lastX = config->width/2;
-    camera->lastY = config->height/2;
+    camera->lastX = config->width/2.0f;
+    camera->lastY = config->height/2.0f;
 
     camera->init = true;
     default_contruct_matrices(camera);

@@ -26,7 +26,7 @@ void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRender
     if(config.size == 0)
         return;
     else {
-        for(u32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+        for(i32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
             VulkanBufferAllocate(&buffer->buffer[i], buffer->ctx, buffer->ctx->commandPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
     }
 
@@ -37,7 +37,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
-    for(u32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanBufferFree(&buffer->buffer[i], buffer->ctx);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
@@ -60,7 +60,7 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     buffer->config.data = data;
     buffer->config.size = size;
 
-    for(u32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanBufferResize(&buffer->buffer[i], buffer->ctx, buffer->ctx->commandPool, size, data);
 }
 
