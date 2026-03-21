@@ -13,8 +13,10 @@
 - Model loading along with the material data
 - Engine & editor level UI
 - UI customization
-- Render targets (Ability to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport)
+- Render targets
+    * Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
 - A binary serialization/deserialization api
+- Explicit shader resource management control for resources like UBOs and image samplers.
 
 ---
 
@@ -24,30 +26,38 @@
 - Entity Component System (ECS)
 - Loading complex model scenes
 - Documentation
-- Shader resource management like UBOs and textures
 
 ---
 
 ## Reasons for starting
 
-- Partly curiosity.
-- To showcase what **C** can really do in game dev
-- Beginner-friendly setup and usage
-- Low-end devices friendly (hopefully)
+- Partly to satisfy my curiosity.
+- To showcase what **C** can really do in modern day
 - To serve as a helpful learning resource for both me (@CloudCodingSpace) and other devs
-- To gain experience in low-level game related systems 
+- To gain experience in this field
 
 ---
 
 ## Goals
 
+- Beginner-friendly setup and usage
+- Low-end devices friendly
 - Cross-platform (Only on desktop platforms)
 - Realistic graphics
 - Sound system support
 - Animation system
-- Flexible and modular
 - Multithreading
-- Async model loading
+- Async resource handling
+
+ ---
+
+## Documentation
+
+> **Note:** The documentation is currently a work in progress. The github repo is [here](https://github.com/CloudCodingSpace/MFDocs).
+
+The deployed url for the docs is [here](https://cloudcodingspace.github.io/MFDocs).
+It would be great if it would be pointed out for any grammartical errors or any suggestions spotted. If so, then
+it would be much appreciated if a pull request is opened in the documentation's repo.
 
 ---
 
@@ -93,17 +103,36 @@ cmake --build <path-to-build-dir> --parallel
 - This engine is mostly using C. But there *is* some usage of other languages like C++ since
     3rd party vendors like Dear ImGui and Assimp use it.
 - Currently supports compilers like GCC, G++ and MSVC.
-- Aims at having support for Clang & Clang++, but currently it is not tested and 
-    does not have support.
+- Aims at having support for Clang & Clang++, but currently it is not tested and does not have official support for it.
 - Currently tested in and developed on Windows with MSVC and GCC/G++
 - Linux isn't tested yet.
 
- ---
+---
 
-## Documentation
+## Third party libraries
 
-> **Note:** The documentation is currently a work in progress. The github repo is [here](https://github.com/CloudCodingSpace/MFDocs).
+The third party libraries used in this engine are :-
 
-The deployed url for the docs is [here](https://cloudcodingspace.github.io/MFDocs).
-It would be great if it would be pointed out for any grammartical errors or any suggestions spotted. If so, then
-it would be much appreciated if a pull request is opened in the documentation's repo.
+ - [Stb image](http://github.com/nothings/stb)
+ - [Assimp](https://github.com/assimp/assimp/)
+ - [Glfw](https://github.com/glfw/glfw)
+ - [Slog](https://github.com/CloudCodingSpace/slog)
+
+Licenses for these libraries are included. (In MeltedForge/libs, in their own respective folders)
+
+---
+
+## Acknowledgement
+
+This project may not have been possible if not for some of these sources and communities :-
+
+ - [LearnOpenGL](https://learnopengl.com/) for foundation of graphics
+ - [Vulkan tutorial](https://vulkan-tutorial.com/) for basics of vulkan
+ - Graphics programming discord server's community. [Link](https://discord.gg/graphicsprogramming)
+ - [Polyhaven](https://polyhaven.com/) for free, 3D assets
+
+---
+
+## License
+
+This project is licensed under Zlib license. More details in [LICENSE.txt](./LICENSE.txt).
