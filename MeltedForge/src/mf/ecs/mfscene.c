@@ -377,7 +377,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     u64 eLen = mfDeserializeU64(&s);
     scene->entities = mfArrayCreate(mfGetLogger(), eLen, sizeof(MFEntity));
     for(u64 i = 0; i < eLen; i++) {
-        MFEntity e;
+        MFEntity e = {0};
         e.ownerScene = scene;
         e.valid = true;
         e.uuid = mfDeserializeU64(&s);
@@ -391,7 +391,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
     scene->meshCompPool = mfArrayCreate(mfGetLogger(), mLen, sizeof(MFMeshComponent));
 
     for(u64 i = 0; i < mLen; i++) {
-        MFMeshComponent c;
+        MFMeshComponent c = {0};
         c.path = mfDeserializeString(&s);
         c.perVertSize = mfDeserializeU64(&s);
         c.vertBuilder = vertexBuilder;

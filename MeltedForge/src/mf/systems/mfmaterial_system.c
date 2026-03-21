@@ -15,30 +15,30 @@ MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial*
             case MF_MODEL_MAT_TEXTURE_DIFFUSE:
                 if(mat->diffuse[0] == -1)
                     goto error_return;
-                buff[0] = mat->diffuse[0] * 255;
-                buff[1] = mat->diffuse[1] * 255;
-                buff[2] = mat->diffuse[2] * 255;
+                buff[0] = (u8)mat->diffuse[0] * 255;
+                buff[1] = (u8)mat->diffuse[1] * 255;
+                buff[2] = (u8)mat->diffuse[2] * 255;
                 break;
             case MF_MODEL_MAT_TEXTURE_AMBIENT:
                 if(mat->ambient[0] == -1)
                     goto error_return;
-                buff[0] = mat->ambient[0] * 255;
-                buff[1] = mat->ambient[1] * 255;
-                buff[2] = mat->ambient[2] * 255;
+                buff[0] = (u8)mat->ambient[0] * 255;
+                buff[1] = (u8)mat->ambient[1] * 255;
+                buff[2] = (u8)mat->ambient[2] * 255;
                 break;
             case MF_MODEL_MAT_TEXTURE_SPECULAR:
                 if(mat->specular[0] == -1)
                     goto error_return;
-                buff[0] = mat->specular[0] * 255;
-                buff[1] = mat->specular[1] * 255;
-                buff[2] = mat->specular[2] * 255;
+                buff[0] = (u8)mat->specular[0] * 255;
+                buff[1] = (u8)mat->specular[1] * 255;
+                buff[2] = (u8)mat->specular[2] * 255;
                 break;
             case MF_MODEL_MAT_TEXTURE_EMISSIVE:
                 if(mat->emission[0] == -1)
                     goto error_return;
-                buff[0] = mat->emission[0] * 255;
-                buff[1] = mat->emission[1] * 255;
-                buff[2] = mat->emission[2] * 255;
+                buff[0] = (u8)mat->emission[0] * 255;
+                buff[1] = (u8)mat->emission[1] * 255;
+                buff[2] = (u8)mat->emission[2] * 255;
                 break;
 error_return:
                 return mfCreateErrorGpuImage(renderer);
@@ -160,30 +160,30 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
             case MF_MODEL_MAT_TEXTURE_DIFFUSE:
                 if(mat->diffuse[0] == -1)
                     goto g_error;
-                color[0] = mat->diffuse[0] * 255;
-                color[1] = mat->diffuse[1] * 255;
-                color[2] = mat->diffuse[2] * 255;
+                color[0] = (u8)mat->diffuse[0] * 255;
+                color[1] = (u8)mat->diffuse[1] * 255;
+                color[2] = (u8)mat->diffuse[2] * 255;
                 break;
             case MF_MODEL_MAT_TEXTURE_AMBIENT:
                 if(mat->ambient[0] == -1)
                     goto g_error;
-                color[0] = mat->ambient[0] * 255;
-                color[1] = mat->ambient[1] * 255;
-                color[2] = mat->ambient[2] * 255;
+                color[0] = (u8)mat->ambient[0] * 255;
+                color[1] = (u8)mat->ambient[1] * 255;
+                color[2] = (u8)mat->ambient[2] * 255;
                 break;
             case MF_MODEL_MAT_TEXTURE_SPECULAR:
                 if(mat->specular[0] == -1)
                     goto g_error;
-                color[0] = mat->specular[0] * 255;
-                color[1] = mat->specular[1] * 255;
-                color[2] = mat->specular[2] * 255;
+                color[0] = (u8)mat->specular[0] * 255;
+                color[1] = (u8)mat->specular[1] * 255;
+                color[2] = (u8)mat->specular[2] * 255;
                 break;
             case MF_MODEL_MAT_TEXTURE_EMISSIVE:
                 if(mat->emission[0] == -1)
                     goto g_error;
-                color[0] = mat->emission[0] * 255;
-                color[1] = mat->emission[1] * 255;
-                color[2] = mat->emission[2] * 255;
+                color[0] = (u8)mat->emission[0] * 255;
+                color[1] = (u8)mat->emission[1] * 255;
+                color[2] = (u8)mat->emission[2] * 255;
                 break;
             default:
                 goto g_error;
