@@ -4,10 +4,6 @@
 #include "core/mfutils.h"
 #include "core/mfcore.h"
 
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 typedef struct MFModelVertexBuilderData_s {
     MFVec3 pos;
     MFVec3 normal;
@@ -18,8 +14,12 @@ typedef struct MFModelVertexBuilderData_s {
 typedef void (*MFModelVertexBuilder)(void* dst, MFModelVertexBuilderData data);
 
 typedef struct MFModel_s {
-    u64 meshCount;
+    u64 meshCount, perVertexSize, meshIdx;
     MFMesh* meshes;
+
+    MFModelVertexBuilder builder;
+    MFRenderer* renderer;
+    
     b8 init;
 } MFModel;
 
