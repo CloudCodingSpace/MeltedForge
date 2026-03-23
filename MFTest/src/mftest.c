@@ -180,19 +180,15 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfResourceSetLayoutGetSizeInBytes());
         
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        u64 count = 3;
-        
-        MFResourceDescription* descs = MF_ALLOCMEM(MFResourceDescription, sizeof(MFResourceDescription) * count);
-        
-        u64 i = 0;
         MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
-        descs[i++] = mfGpuImageGetDescription(image);
-        descs[i++] = mfGpuBufferGetDescription(state->cameraUbo);
-        descs[i++] = mfGpuBufferGetDescription(state->lightUbo);
         
-        mfResourceSetLayoutCreate(state->layout, count, descs, component->model.meshCount, appState->renderer);
+        MFResourceDescription descs[] = {
+            mfGpuImageGetDescription(image), // NOTE: Description for one image is enough since they have the same bindings 
+            mfGpuBufferGetDescription(state->cameraUbo),
+            mfGpuBufferGetDescription(state->lightUbo)
+        };
         
-        MF_FREEMEM(descs);
+        mfResourceSetLayoutCreate(state->layout, MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
     }
     // Resource sets
     {
