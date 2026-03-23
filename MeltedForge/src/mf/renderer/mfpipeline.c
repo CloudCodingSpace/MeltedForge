@@ -47,7 +47,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     VulkanPipelineInfo binfo = {
         .vertPath = info->vertPath,
         .fragPath = info->fragPath,
-        .renderpass = info->renderpass,
+        .renderpass = mfRendererGetRenderPass(renderer),
         .depthCompareOp = (VkCompareOp)(int)info->depthCompareOp,
         .hasDepth = info->hasDepth,
         .extent = (VkExtent2D) { info->extent.x, info->extent.y },
@@ -58,6 +58,10 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         .setLayoutCount = info->resourceLayoutCount,
         .setLayouts = setLayouts
     };
+
+    if(info->renderTarget != mfnull) {
+        binfo.renderpass = info->renderTarget->renderPass;
+    }
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);
 

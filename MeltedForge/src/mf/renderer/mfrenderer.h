@@ -30,7 +30,7 @@ MFViewport mfRendererGetViewport(MFRenderer* renderer);
 MFRect2D mfRendererGetScissor(MFRenderer* renderer);
 
 void* mfRendererGetBackend(MFRenderer* renderer);
-void* mfRendererGetPass(MFRenderer* renderer);
+void* mfRendererGetRenderPass(MFRenderer* renderer);
 
 u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
 f64 mfRendererGetDeltaTime(MFRenderer* renderer);

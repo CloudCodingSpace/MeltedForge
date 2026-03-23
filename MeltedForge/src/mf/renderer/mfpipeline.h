@@ -6,6 +6,7 @@ typedef struct MFPipeline_s MFPipeline;
 #include "core/mfutils.h"
 
 #include "mfutil_types.h"
+#include "mfrender_target.h"
 #include "mfgpuimage.h"
 #include "mfgpubuffer.h"
 #include "mfgpu_res.h"
@@ -22,7 +23,7 @@ typedef struct MFPipelineConfig_s {
     b8 hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
-    void* renderpass;
+    MFRenderTarget* renderTarget;
 } MFPipelineConfig;
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info);

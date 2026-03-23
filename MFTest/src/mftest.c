@@ -25,7 +25,7 @@ static void CreatePipeline(MFTState* state) {
         .bindings = &bindings,
         .resourceLayoutCount = 1,
         .resourceLayouts = &state->layout,
-        .renderpass = mfRenderTargetGetPass(state->renderTarget)
+        .renderTarget = state->renderTarget
     };
     mfPipelineInit(state->pipeline, state->renderer, &info);
 
