@@ -62,7 +62,7 @@ char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
     return mfnull;
 }
 
-void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mesh) {
+void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mesh, MFMat4 transform) {
     MFMeshMaterial matData = {0};
     MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
     MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
@@ -149,6 +149,7 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
     }
 
     model->meshes[model->meshIdx].mat = matData;
+    model->meshes[model->meshIdx].transform = transform;
     mfMeshCreate(&model->meshes[model->meshIdx], model->renderer, model->perVertexSize * mesh->mNumVertices, vertices, mesh->mNumFaces * 3, indices);
     model->meshIdx++;
 
@@ -156,12 +157,13 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
     MF_FREEMEM(indices);
 }
 
-void processNode(MFModel* model, const struct aiScene* scene, struct aiNode* node) {
+void processNode(MFModel* model, const struct aiScene* scene, struct aiNode* node, MFMat4 transform) {
+    MFMat4 mat = mfMat4Mul(transform, ToMat4(node->mTransformation));
     for(u32 i = 0; i < node->mNumMeshes; i++) {
-        processMesh(model, scene, scene->mMeshes[node->mMeshes[i]]);
+        processMesh(model, scene, scene->mMeshes[node->mMeshes[i]], mat);
     }
     for(u32 i = 0; i < node->mNumChildren; i++) {
-        processNode(model, scene, node->mChildren[i]);
+        processNode(model, scene, node->mChildren[i], mat);
     }
 }
 
@@ -179,101 +181,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
     model->builder = builder;
     model->perVertexSize = perVertSize;
 
-    processNode(model, scene, scene->mRootNode);
-
-    // for(u32 i = 0; i < scene->mNumMeshes; i++) {
-    //     struct aiMesh* mesh = scene->mMeshes[i];
-    //     MFMeshMaterial matData = {0};
-    //     MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
-    //     MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
-    //     MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
-    //     MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
-
-    //     u8* vertices = MF_ALLOCMEM(u8, perVertSize * mesh->mNumVertices);
-    //     u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * mesh->mNumFaces * 3);
-
-    //     for(u32 j = 0; j < mesh->mNumVertices; j++) {
-    //         struct aiVector3D pos = mesh->mVertices[j];
-    //         struct aiVector3D normals = mesh->mNormals[j];
-    //         struct aiVector3D tangents = mesh->mTangents[j];
-
-    //         struct aiVector3D texCoords = {0};
-    //         if (mesh->mTextureCoords[0]) {
-    //             texCoords = mesh->mTextureCoords[0][j];
-    //         }
-
-    //         MFModelVertexBuilderData data = {
-    //             .pos = (MFVec3){pos.x, pos.y, pos.z},
-    //             .normal = (MFVec3){normals.x, normals.y, normals.z},
-    //             .tangent = (MFVec3){tangents.x, tangents.y, tangents.z},
-    //             .texCoord = (MFVec2){texCoords.x, texCoords.y}
-    //         };
-            
-    //         builder(vertices + j * perVertSize, data);
-    //     }
-    //     for(u32 j = 0; j < mesh->mNumFaces; j++) {
-    //         struct aiFace face = mesh->mFaces[j];
-    //         for(u32  k = 0; k < face.mNumIndices; k++) {
-    //             indices[j * 3 + k] = face.mIndices[k];
-    //         }
-    //     }
-        
-    //     if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
-    //         struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-    //         int c = 1;
-
-    //         matData.ambient_texpath = get_materialtex(mat, aiTextureType_AMBIENT);
-    //         matData.diffuse_texpath = get_materialtex(mat, aiTextureType_DIFFUSE);
-    //         matData.displacement_texpath = get_materialtex(mat, aiTextureType_DISPLACEMENT);
-    //         matData.specular_texpath = get_materialtex(mat, aiTextureType_SPECULAR);
-    //         matData.bump_texpath = get_materialtex(mat, aiTextureType_HEIGHT);
-    //         matData.shininess_texpath = get_materialtex(mat, aiTextureType_SHININESS);
-    //         matData.emission_texpath = get_materialtex(mat, aiTextureType_EMISSIVE);
-    //         matData.metalness_texpath = get_materialtex(mat, aiTextureType_METALNESS);
-    //         matData.lightmap_texpath = get_materialtex(mat, aiTextureType_LIGHTMAP);
-
-    //         struct aiColor4D color;
-    //         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
-    //             matData.specular[0] = color.r;
-    //             matData.specular[1] = color.g;
-    //             matData.specular[2] = color.b;
-    //         }
-    //         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
-    //             matData.emission[0] = color.r;
-    //             matData.emission[1] = color.g;
-    //             matData.emission[2] = color.b;
-    //         }
-    //         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
-    //             matData.diffuse[0] = color.r;
-    //             matData.diffuse[1] = color.g;
-    //             matData.diffuse[2] = color.b;
-    //         }
-    //         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
-    //             matData.ambient[0] = color.r;
-    //             matData.ambient[1] = color.g;
-    //             matData.ambient[2] = color.b;
-    //         }
-
-    //         float f = 0.0f;
-    //         if(aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &f) == AI_SUCCESS) {
-    //             matData.shininess = f;
-    //         }
-    //         f = 1.0f;
-    //         if(aiGetMaterialFloat(mat, AI_MATKEY_REFRACTI, &f) == AI_SUCCESS) {
-    //             matData.ior = f;
-    //         }
-    //         f = 1.0f;
-    //         if(aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f) == AI_SUCCESS) {
-    //             matData.opaque = (f >= 1.0f);
-    //         }
-    //     }
-
-    //     model->meshes[i].mat = matData;
-    //     mfMeshCreate(&model->meshes[i], renderer, perVertSize * mesh->mNumVertices, vertices, mesh->mNumFaces * 3, indices);
-        
-    //     MF_FREEMEM(vertices);
-    //     MF_FREEMEM(indices);
-    // }
+    processNode(model, scene, scene->mRootNode, mfMat4Identity());
 
     aiReleaseImport(scene);
     model->init = true;

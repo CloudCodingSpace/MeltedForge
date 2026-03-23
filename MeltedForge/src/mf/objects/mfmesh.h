@@ -34,6 +34,7 @@ typedef struct MFMesh_s {
     u64 vertSize;
     u32 vertCount;
 
+    MFMat4 transform;
     MFMeshMaterial mat;
     b8 init;
 } MFMesh;

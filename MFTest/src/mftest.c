@@ -32,7 +32,7 @@ static void CreatePipeline(MFTState* state) {
     MF_FREEMEM(attributes);
 }
 
-static void ResizeCallback(void* pstate) {
+static void RenderTargetResizeCallback(void* pstate) {
     MFTState* state = (MFTState*)pstate;
     
     // Updating the viewport size but not really necessary for pipelines! This callback is only for demonstration!
@@ -63,12 +63,13 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         // uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
         uboData.model = scale;
         uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
-        mfGpuBufferUploadData(state->cameraUbo, &uboData);
         mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     }
     
     for(u64 i = 0; i < mcomponent->model.meshCount; i++) {
-        state->lightData.camPos = state->camera.pos;
+        // state->lightData.camPos = state->camera.pos;
+        uboData.model = mfMat4Mul(uboData.model, mcomponent->model.meshes[i].transform);
+        mfGpuBufferUploadData(state->cameraUbo, &uboData);
 
         MFViewport vp = mfRendererGetViewport(scene->renderer);
         MFRect2D scissor = mfRendererGetScissor(scene->renderer);
@@ -99,7 +100,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
-        mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
+        mfRenderTargetSetResizeCallback(state->renderTarget, &RenderTargetResizeCallback, state);
         mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
 
         state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);
@@ -112,7 +113,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/sofa_1k.gltf",
+                .path = "meshes/moon_rock/moon_rock.obj",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -169,7 +170,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Model Images
     {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes", state->renderer);
+        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/moon_rock", state->renderer);
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
