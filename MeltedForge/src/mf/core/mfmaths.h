@@ -242,15 +242,15 @@ MF_INLINE MFMat2 mfMat2Sub(MFMat2 a, MFMat2 b) {
 }
 
 MF_INLINE MFMat2 mfMat2Mul(MFMat2 a, MFMat2 b) {
-    MFMat2 result;
+    MFMat2 r;
 
-    result.data[0] = a.data[0] * b.data[0] + a.data[2] * b.data[1];
-    result.data[1] = a.data[1] * b.data[0] + a.data[3] * b.data[1];
+    r.data[0] = a.data[0] * b.data[0] + a.data[2] * b.data[1];
+    r.data[1] = a.data[1] * b.data[0] + a.data[3] * b.data[1];
 
-    result.data[2] = a.data[0] * b.data[2] + a.data[2] * b.data[3];
-    result.data[3] = a.data[1] * b.data[2] + a.data[3] * b.data[3];
+    r.data[2] = a.data[0] * b.data[2] + a.data[2] * b.data[3];
+    r.data[3] = a.data[1] * b.data[2] + a.data[3] * b.data[3];
 
-    return result;
+    return r;
 }
 
 MF_INLINE MFMat2 mfMat2MulScalar(MFMat2 a, f32 x) {
@@ -263,13 +263,13 @@ MF_INLINE MFMat2 mfMat2MulScalar(MFMat2 a, f32 x) {
     return result;
 }
 
-MF_INLINE MFVec2 mfMat2MulVec2(MFMat2 a, MFVec2 x) {
-    MFVec2 result;
+MF_INLINE MFVec2 mfMat2MulVec2(MFMat2 m, MFVec2 v) {
+    MFVec2 r;
 
-    result.x = a.data[0] * x.x + a.data[1] * x.y;
-    result.y = a.data[2] * x.x + a.data[3] * x.y;
+    r.x = m.data[0] * v.x + m.data[2] * v.y;
+    r.y = m.data[1] * v.x + m.data[3] * v.y;
 
-    return result;
+    return r;
 }
 
 MF_INLINE void mfMat2Rotate(MFMat2* mat, f32 theta_rad) {
@@ -383,14 +383,14 @@ MF_INLINE MFMat3 mfMat3MulScalar(MFMat3 a, f32 x) {
     return result;
 }
 
-MF_INLINE MFVec3 mfMat3MulVec3(MFMat3 a, MFVec3 x) {
-    MFVec3 result;
+MF_INLINE MFVec3 mfMat3MulVec3(MFMat3 m, MFVec3 v) {
+    MFVec3 r;
 
-    result.x = a.data[0] * x.x + a.data[1] * x.y + a.data[2] * x.z;
-    result.y = a.data[3] * x.x + a.data[4] * x.y + a.data[5] * x.z;
-    result.z = a.data[6] * x.x + a.data[7] * x.y + a.data[8] * x.z;
+    r.x = m.data[0] * v.x + m.data[3] * v.y + m.data[6] * v.z;
+    r.y = m.data[1] * v.x + m.data[4] * v.y + m.data[7] * v.z;
+    r.z = m.data[2] * v.x + m.data[5] * v.y + m.data[8] * v.z;
 
-    return result;
+    return r;
 }
 
 MF_INLINE void mfMat3Rotate(MFMat3* mat, f32 theta_rad) {
@@ -493,6 +493,17 @@ MF_INLINE MFMat4 mfMat4MulScalar(MFMat4 mat, f32 scalar) {
         mat.data[i] *= scalar;
     }
     return mat;
+}
+
+MF_INLINE MFVec4 mfMat4MulVec4(MFMat4 m, MFVec4 v) {
+    MFVec4 r;
+
+    r.x = m.data[0] * v.x + m.data[4] * v.y + m.data[8]  * v.z + m.data[12] * v.w;
+    r.y = m.data[1] * v.x + m.data[5] * v.y + m.data[9]  * v.z + m.data[13] * v.w;
+    r.z = m.data[2] * v.x + m.data[6] * v.y + m.data[10] * v.z + m.data[14] * v.w;
+    r.w = m.data[3] * v.x + m.data[7] * v.y + m.data[11] * v.z + m.data[15] * v.w;
+
+    return r;
 }
 
 MF_INLINE MFMat4 mfMat4Translate(f32 x, f32 y, f32 z) {

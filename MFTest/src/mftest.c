@@ -49,26 +49,27 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         .normalMat = mfMat4Identity(),
         .model = mfMat4Identity()
     };
+    MFMat4 model;
     
     MFMeshComponent* mcomponent = mfSceneEntityGetMeshComponent(scene, e->id);
     MFTransformComponent* tcomponent = mfSceneEntityGetTransformComponent(scene, e->id);
 
     {
         f64 time = mfGetTimeElapsed();
-        // MFMat4 transformMat = mfMat4Translate(tcomponent->position.x, tcomponent->position.y, tcomponent->position.z);
+        MFMat4 transformMat = mfMat4Translate(tcomponent->position.x, tcomponent->position.y, tcomponent->position.z);
         // MFMat4 rot = mfMat4RotateXYZ(tcomponent->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
         MFMat4 scale = mfMat4Identity();
         mfMat4Scale(&scale, tcomponent->scale.x, tcomponent->scale.y, tcomponent->scale.z);
 
-        // uboData.model = mfMat4Mul(transformMat, mfMat4Mul(rot, scale));
-        uboData.model = scale;
-        uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
+        model = mfMat4Mul(transformMat, scale);
+
+        state->lightData.camPos = state->camera.pos;
         mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     }
     
     for(u64 i = 0; i < mcomponent->model.meshCount; i++) {
-        // state->lightData.camPos = state->camera.pos;
-        uboData.model = mfMat4Mul(uboData.model, mcomponent->model.meshes[i].transform);
+        uboData.model = mfMat4Mul(model, mcomponent->model.meshes[i].transform);
+        uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
         mfGpuBufferUploadData(state->cameraUbo, &uboData);
 
         MFViewport vp = mfRendererGetViewport(scene->renderer);
@@ -113,7 +114,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/moon_rock/moon_rock.obj",
+                .path = "meshes/pistol/service_pistol.gltf",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -121,7 +122,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             MFTransformComponent tComp = {
                 .position = (MFVec3){0, 0, 0},
                 .rotationXYZ = (MFVec3){45, 0, 0},
-                .scale = (MFVec3){5, 5, 5}
+                .scale = (MFVec3){1, 1, 1}
             };
 
             mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
@@ -170,7 +171,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Model Images
     {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/moon_rock", state->renderer);
+        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/pistol", state->renderer);
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
