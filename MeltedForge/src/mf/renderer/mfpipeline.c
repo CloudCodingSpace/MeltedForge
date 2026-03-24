@@ -97,10 +97,22 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
-
+    
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
-
+    
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));
+}
+
+void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data) {
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
+
+    VkCommandBuffer commandBuffer = pipeline->backend->commandBuffers[pipeline->backend->frameIndex];
+    if(pipeline->backend->renderTarget != mfnull) {
+        commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
+    }
+
+    vkCmdPushConstants(commandBuffer, pipeline->pipeline.layout, (VkShaderStageFlags)((int)shaderStage), offset, size, data);
 }
 
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {

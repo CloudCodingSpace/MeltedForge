@@ -7,9 +7,12 @@
 typedef struct UBOData_s {
     MFMat4 proj;
     MFMat4 view;
+} UBOData;
+
+typedef struct PushConstantData_s {
     MFMat4 model;
     MFMat4 normalMat;
-} UBOData;
+} PushConstantData;
 
 typedef struct LightUBOData_s {
     MFVec3 lightPos;
@@ -37,6 +40,7 @@ typedef struct MFTState_s {
     
     MFCamera camera;
     LightUBOData lightData;
+    UBOData cameraUboData;
     
     MFRenderTarget* renderTarget;
     ImVec2 sceneViewport;

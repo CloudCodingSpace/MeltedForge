@@ -30,6 +30,7 @@ typedef struct MFPipelineConfig_s {
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info);
 void mfPipelineDestroy(MFPipeline* pipeline);
 
+void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data);
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor);
 
 void* mfPipelineGetLayoutBackend(MFPipeline* pipeline);

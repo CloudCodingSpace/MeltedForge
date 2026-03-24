@@ -12,6 +12,12 @@ static void CreatePipeline(MFTState* state) {
     MFVertexInputAttributeDescription* attributes = getVertAttribDescs(&attributeCount);
     MFVertexInputBindingDescription bindings = getVertBindingDesc();
 
+    MFPushConstantRange range = {
+        .offset = 0,
+        .size = sizeof(PushConstantData),
+        .stage = MF_SHADER_STAGE_VERTEX
+    };
+
     MFPipelineConfig info = {
         .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
         .hasDepth = true,
@@ -25,7 +31,9 @@ static void CreatePipeline(MFTState* state) {
         .bindings = &bindings,
         .resourceLayoutCount = 1,
         .resourceLayouts = &state->layout,
-        .renderTarget = state->renderTarget
+        .renderTarget = state->renderTarget,
+        .pushConstRangeCount = 1,
+        .pushConstRanges = &range
     };
     mfPipelineInit(state->pipeline, state->renderer, &info);
 
@@ -43,13 +51,11 @@ static void RenderTargetResizeCallback(void* pstate) {
 static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     MFTState* state = (MFTState*)pstate;
 
-    UBOData uboData = {
-        .proj = state->camera.proj,
-        .view = state->camera.view,
-        .normalMat = mfMat4Identity(),
-        .model = mfMat4Identity()
+    PushConstantData modelData = {
+        .model = mfMat4Identity(),
+        .normalMat = mfMat4Identity()
     };
-    MFMat4 model;
+    MFMat4 tranformMat;
     
     MFMeshComponent* mcomponent = mfSceneEntityGetMeshComponent(scene, e->id);
     MFTransformComponent* tcomponent = mfSceneEntityGetTransformComponent(scene, e->id);
@@ -61,21 +67,18 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         MFMat4 scale = mfMat4Identity();
         mfMat4Scale(&scale, tcomponent->scale.x, tcomponent->scale.y, tcomponent->scale.z);
 
-        model = mfMat4Mul(transformMat, scale);
-
-        state->lightData.camPos = state->camera.pos;
-        mfGpuBufferUploadData(state->lightUbo, &state->lightData);
+        tranformMat = mfMat4Mul(transformMat, scale);
     }
     
     for(u64 i = 0; i < mcomponent->model.meshCount; i++) {
-        uboData.model = mfMat4Mul(model, mcomponent->model.meshes[i].transform);
-        uboData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(uboData.view, uboData.model)));
-        mfGpuBufferUploadData(state->cameraUbo, &uboData);
+        modelData.model = mfMat4Mul(tranformMat, mcomponent->model.meshes[i].transform);
+        modelData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(state->cameraUboData.view, modelData.model)));
 
         MFViewport vp = mfRendererGetViewport(scene->renderer);
         MFRect2D scissor = mfRendererGetScissor(scene->renderer);
 
         mfResourceSetBind(state->sets[i], state->pipeline);
+        mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
         mfPipelineBind(state->pipeline, vp, scissor);
         mfMeshRender(&mcomponent->model.meshes[i]);
     }
@@ -140,16 +143,12 @@ void MFTOnInit(void* pstate, void* pappState) {
             .stage = MF_SHADER_STAGE_VERTEX
         };
 
-        UBOData uboData = {
-            .proj = state->camera.proj,
-            .view = state->camera.view,
-            .model = mfMat4Identity(),
-            .normalMat = mfMat4Identity()
-        };
+        state->cameraUboData.proj = state->camera.proj;
+        state->cameraUboData.view = state->camera.view;
 
         state->cameraUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
         mfGpuBufferAllocate(state->cameraUbo, config, appState->renderer);
-        mfGpuBufferUploadData(state->cameraUbo, &uboData);
+        mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
         
         config.size = sizeof(LightUBOData);
         config.binding = 1;
@@ -329,6 +328,12 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     state->camera.width = state->sceneViewport.x;
     state->camera.height = state->sceneViewport.y;
     state->camera.update(&state->camera, mfRendererGetDeltaTime(aState->renderer), mfnull);
+
+    state->cameraUboData.proj = state->camera.proj;
+    state->cameraUboData.view = state->camera.view;
+    state->lightData.camPos = state->camera.pos;
+    mfGpuBufferUploadData(state->lightUbo, &state->lightData);
+    mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
 
     if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(aState->window);

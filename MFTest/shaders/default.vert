@@ -11,13 +11,16 @@ layout (location = 3) out vec3 oFragPos;
 layout (binding = 0) uniform UBO {
     mat4 proj;
     mat4 view;
-    mat4 model;
-    mat4 normalMat;
 } ubo;
 
+layout (push_constant) uniform ModelData {
+    mat4 model;
+    mat4 normalMat;
+} md;
+
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
-    oFragPos = (ubo.model * vec4(pos, 1.0)).xyz;
-    oNormal = mat3(ubo.normalMat) * normal;
+    gl_Position = ubo.proj * ubo.view * md.model * vec4(pos, 1.0);
+    oFragPos = (md.model * vec4(pos, 1.0)).xyz;
+    oNormal = mat3(md.normalMat) * normal;
     oUv = uv;
 }
