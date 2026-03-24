@@ -15,9 +15,10 @@ typedef struct MFPipeline_s MFPipeline;
 
 typedef struct MFPipelineConfig_s {
     MFVec2 extent;
-    u32 bindingsCount, attributesCount, resourceLayoutCount;
+    u32 bindingsCount, attributesCount, resourceLayoutCount, pushConstRangeCount;
     MFVertexInputBindingDescription* bindings;
     MFVertexInputAttributeDescription* attributes;
+    MFPushConstantRange* pushConstRanges;
     MFResourceSetLayout** resourceLayouts;
     MFCompareOp depthCompareOp;
     b8 hasDepth, transparent;

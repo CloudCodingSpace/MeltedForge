@@ -9,7 +9,9 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     VkPipelineLayoutCreateInfo layInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = info->setLayoutCount,
-        .pSetLayouts = info->setLayouts
+        .pSetLayouts = info->setLayouts,
+        .pushConstantRangeCount = info->pushConstRangesCount,
+        .pPushConstantRanges = info->pushConstRanges
     };
 
     VK_CHECK(vkCreatePipelineLayout(ctx->device, &layInfo, ctx->allocator, &pipeline->layout));

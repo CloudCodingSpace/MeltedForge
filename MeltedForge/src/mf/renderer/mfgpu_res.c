@@ -190,8 +190,9 @@ void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
         buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }
 
-    //! FIXME: ASSUMING THE BIND POINT TO BE GRAPHICS, CHANGE THIS IF MORE TYPE OF PIPELINES ARE INTRODUCED
-    vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, mfPipelineGetLayoutBackend(pipeline), 
+    VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
+
+    vkCmdBindDescriptorSets(buff, pipelineBackend->bindPoint, pipelineBackend->layout, 
                                     0, 1, &set->sets[backend->frameIndex], 
                                     0, mfnull);
 }

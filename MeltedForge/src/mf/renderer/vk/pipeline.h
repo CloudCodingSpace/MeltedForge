@@ -7,9 +7,10 @@
 typedef struct VulkanPipelineInfo_s {
     VkRenderPass renderpass;
     VkExtent2D extent;
-    u32 bindingsCount, attributesCount, setLayoutCount;
+    u32 bindingsCount, attributesCount, setLayoutCount, pushConstRangesCount;
     VkVertexInputBindingDescription* bindings;
     VkVertexInputAttributeDescription* attributes;
+    VkPushConstantRange* pushConstRanges;
     VkDescriptorSetLayout* setLayouts;
     VkCompareOp depthCompareOp;
     b8 hasDepth, transparent;

@@ -44,6 +44,25 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         setLayouts[i] = mfResourceSetLayoutGetBackend(info->resourceLayouts[i]);
     }
 
+    // Push constant size check
+    {
+        u32 totalSize = 0;
+        for(u64 i = 0; i < info->pushConstRangeCount; i++) {
+            totalSize += info->pushConstRanges[i].size;
+        }
+        VkPhysicalDeviceProperties properties = {};
+        vkGetPhysicalDeviceProperties(pipeline->backend->ctx.physicalDevice, &properties);
+
+        MF_PANIC_IF(properties.limits.maxPushConstantsSize < totalSize, mfGetLogger(), "The total push constant size of the pipeline is greater than the GPU's limits!");
+    }
+
+    VkPushConstantRange* ranges = MF_ALLOCMEM(VkPushConstantRange, sizeof(VkPushConstantRange) * info->pushConstRangeCount);
+    for(u64 i = 0; i < info->pushConstRangeCount; i++) {
+        ranges[i].offset = info->pushConstRanges[i].offset;
+        ranges[i].size = info->pushConstRanges[i].size;
+        ranges[i].stageFlags = (VkShaderStageFlags)((int)info->pushConstRanges[i].stage);
+    }
+
     VulkanPipelineInfo binfo = {
         .vertPath = info->vertPath,
         .fragPath = info->fragPath,
@@ -56,7 +75,9 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         .bindingsCount = info->bindingsCount,
         .bindings = bindings,
         .setLayoutCount = info->resourceLayoutCount,
-        .setLayouts = setLayouts
+        .setLayouts = setLayouts,
+        .pushConstRangesCount = info->pushConstRangeCount,
+        .pushConstRanges = ranges
     };
 
     if(info->renderTarget != mfnull) {
@@ -65,6 +86,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);
 
+    MF_FREEMEM(ranges);
     MF_FREEMEM(setLayouts);
     MF_FREEMEM(bindings);
     MF_FREEMEM(attribs);
@@ -121,7 +143,7 @@ void* mfPipelineGetBackend(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
 
-    return pipeline->pipeline.pipeline;
+    return &pipeline->pipeline;
 }
 
 size_t mfPipelineGetSizeInBytes(void) {

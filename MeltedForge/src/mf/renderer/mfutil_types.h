@@ -447,3 +447,8 @@ typedef struct MFResourceDescription_s {
     u32 descriptorCount;
     MFShaderStage stageFlags;
 } MFResourceDescription;
+
+typedef struct MFPipelinePushConstant_s {
+    MFShaderStage stageFlags;
+    u32 offset, size;
+} MFPipelinePushConstant;
