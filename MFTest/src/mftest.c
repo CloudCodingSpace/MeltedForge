@@ -113,7 +113,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Scene & entities
     {
         mfSceneCreate(&state->scene, state->camera, appState->renderer);
-        // if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
+        if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
@@ -130,9 +130,9 @@ void MFTOnInit(void* pstate, void* pappState) {
 
             mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
             mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
-        // } else {
-        //     state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
-        // }
+        } else {
+            state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
+        }
     }
     // UBO
     {
