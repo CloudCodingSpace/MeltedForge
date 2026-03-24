@@ -117,7 +117,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/pistol/service_pistol.gltf",
+                .path = "meshes/deccer-cubes/SM_Deccer_Cubes_Textured.gltf",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -170,7 +170,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Model Images
     {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
-        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/pistol", state->renderer);
+        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/deccer-cubes", state->renderer);
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
