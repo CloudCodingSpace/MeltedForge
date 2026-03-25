@@ -74,7 +74,7 @@ const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat,
             }
 
             char* str = MF_ALLOCMEM(char, sizeof(char) * size);
-            for(u32 i = 0; i < texLen + 1; i++) {
+            for(u32 i = 0; i < texLen; i++) {
                 str[i] = texPath[i];
             }
 
@@ -87,8 +87,6 @@ const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat,
 
             str[size - 1] = '\0';
 
-            printf("%s %zu\n", str, strlen(str));
-            printf("%s\n", scene->mTextures[idx]->achFormatHint);
             MF_FREEMEM(texPath);
             return str;
         } else {
