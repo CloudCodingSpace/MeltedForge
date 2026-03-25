@@ -113,11 +113,11 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Scene & entities
     {
         mfSceneCreate(&state->scene, state->camera, appState->renderer);
-        if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
+        // if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/deccer-cubes/SM_Deccer_Cubes_Textured_Complex.fbx",
+                .path = "meshes/deccer-cubes/SM_Deccer_Cubes_Textured_Complex.gltf",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -125,14 +125,14 @@ void MFTOnInit(void* pstate, void* pappState) {
             MFTransformComponent tComp = {
                 .position = (MFVec3){0, 0, 0},
                 .rotationXYZ = (MFVec3){45, 0, 0},
-                .scale = (MFVec3){0.01f, 0.01f, 0.01f}
+                .scale = (MFVec3){1, 1, 1}
             };
 
             mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
             mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
-        } else {
-            state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
-        }
+        // } else {
+        //     state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
+        // }
     }
     // UBO
     {

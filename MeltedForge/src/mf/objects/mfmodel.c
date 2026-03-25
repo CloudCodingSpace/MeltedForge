@@ -22,6 +22,17 @@ MFMat4 ToMat4(C_STRUCT aiMatrix4x4 m) {
     };
 }
 
+const char* ToString(struct aiString string) {
+    u64 size = string.length + 1;
+    char* str = MF_ALLOCMEM(char, sizeof(char) * size);
+    for(u32 i = 0; i < string.length; i++) {
+        str[i] = string.data[i];
+    }
+    str[string.length] = '\0';
+
+    return str;
+}
+
 void file_reader(void* ctx, const char* filename, int is_mtl, const char* base_dir, char** out_buf, uint64_t* out_len) {
     FILE* f = fopen(filename, "rb");
     if (!f) {
@@ -41,22 +52,48 @@ void file_reader(void* ctx, const char* filename, int is_mtl, const char* base_d
     fclose(f);
 }
 
-char* get_materialtex(struct aiMaterial* mat, enum aiTextureType type) {
+const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat, enum aiTextureType type) {
     //! FIXME: MAKE USE OF ALL THE TEXTURE TYPES AVAILABLE!
     int count = aiGetMaterialTextureCount(mat, type);
     if(count >= 1) {
         struct aiString path;
         MF_PANIC_IF(aiGetMaterialTexture(mat, type, 0, &path, mfnull, mfnull, mfnull, mfnull, mfnull, mfnull) != AI_SUCCESS,
                                             mfGetLogger(), "Couldn't retrieve the material's texture path from the model!");
-        //! NOTE: SUS CUZ THE HEADER SAYS PATH.LENGTH IS THE BINARY LENGTH AND NOT THE LENGTH OF THE UTF-8 MULTI-BYTE SEQUENCE
-        u64 size = path.length + 1;
-        char* str = MF_ALLOCMEM(char, sizeof(char) * size);
-        for(u32 i = 0; i < path.length; i++) {
-            str[i] = path.data[i];
-        }
-        str[path.length] = '\0';
+        //! NOTE: SUS CUZ THE HEADER SAYS PATH.LENGTH IS THE BINARY LENGTH AND NOT THE LENGTH OF THE UTF-8 MULTI-BYTE SEQUENCE, ASSUMING EACH ELEMENT OF CHAR IS 1BYTE
+        if(path.data[0] == '*') {
+            u64 idx = ((u64)path.data[1]) - ((u64)'0');
+            const char* texPath = ToString(scene->mTextures[idx]->mFilename);
+            u64 texLen = strlen(texPath);
+            b8 hasFormat = false;
 
-        return str;
+            u64 size = strlen(texPath) + 1;
+            if(strchr(texPath, '.') != 0) {
+                hasFormat = true;
+            } else {
+                size += strlen(scene->mTextures[idx]->achFormatHint) + 1; // 1 for '.'
+            }
+
+            char* str = MF_ALLOCMEM(char, sizeof(char) * size);
+            for(u32 i = 0; i < texLen + 1; i++) {
+                str[i] = texPath[i];
+            }
+
+            if(!hasFormat) {
+                u64 formatLen = strlen(scene->mTextures[idx]->achFormatHint);
+                u64 j = texLen;
+                str[j++] = '.';
+                memcpy(&str[j], scene->mTextures[idx]->achFormatHint, sizeof(char) * formatLen);
+            }
+
+            str[size - 1] = '\0';
+
+            printf("%s %zu\n", str, strlen(str));
+            printf("%s\n", scene->mTextures[idx]->achFormatHint);
+            MF_FREEMEM(texPath);
+            return str;
+        } else {
+            return ToString(path);
+        }
     }
 
     return mfnull;
@@ -102,15 +139,15 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
         struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
         int c = 1;
 
-        matData.ambient_texpath = get_materialtex(mat, aiTextureType_AMBIENT);
-        matData.diffuse_texpath = get_materialtex(mat, aiTextureType_DIFFUSE);
-        matData.displacement_texpath = get_materialtex(mat, aiTextureType_DISPLACEMENT);
-        matData.specular_texpath = get_materialtex(mat, aiTextureType_SPECULAR);
-        matData.bump_texpath = get_materialtex(mat, aiTextureType_HEIGHT);
-        matData.shininess_texpath = get_materialtex(mat, aiTextureType_SHININESS);
-        matData.emission_texpath = get_materialtex(mat, aiTextureType_EMISSIVE);
-        matData.metalness_texpath = get_materialtex(mat, aiTextureType_METALNESS);
-        matData.lightmap_texpath = get_materialtex(mat, aiTextureType_LIGHTMAP);
+        matData.ambient_texpath = get_materialtex(scene, mat, aiTextureType_AMBIENT);
+        matData.diffuse_texpath = get_materialtex(scene, mat, aiTextureType_DIFFUSE);
+        matData.displacement_texpath = get_materialtex(scene, mat, aiTextureType_DISPLACEMENT);
+        matData.specular_texpath = get_materialtex(scene, mat, aiTextureType_SPECULAR);
+        matData.bump_texpath = get_materialtex(scene, mat, aiTextureType_HEIGHT);
+        matData.shininess_texpath = get_materialtex(scene, mat, aiTextureType_SHININESS);
+        matData.emission_texpath = get_materialtex(scene, mat, aiTextureType_EMISSIVE);
+        matData.metalness_texpath = get_materialtex(scene, mat, aiTextureType_METALNESS);
+        matData.lightmap_texpath = get_materialtex(scene, mat, aiTextureType_LIGHTMAP);
 
         struct aiColor4D color;
         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
