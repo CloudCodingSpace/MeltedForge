@@ -61,7 +61,7 @@ const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat,
                                             mfGetLogger(), "Couldn't retrieve the material's texture path from the model!");
         //! NOTE: SUS CUZ THE HEADER SAYS PATH.LENGTH IS THE BINARY LENGTH AND NOT THE LENGTH OF THE UTF-8 MULTI-BYTE SEQUENCE, ASSUMING EACH ELEMENT OF CHAR IS 1BYTE
         if(path.data[0] == '*') {
-            u64 idx = ((u64)path.data[1]) - ((u64)'0');
+            u64 idx = strtoull(path.data + 1, mfnull, 10);
             const char* texPath = ToString(scene->mTextures[idx]->mFilename);
             u64 texLen = strlen(texPath);
             b8 hasFormat = false;
