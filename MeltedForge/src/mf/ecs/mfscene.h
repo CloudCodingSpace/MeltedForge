@@ -25,13 +25,13 @@ void mfSceneDestroy(MFScene* scene);
 void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scene, void* state), void* state);
 void mfSceneUpdate(MFScene* scene);
 
-const MFEntity* mfSceneCreateEntity(MFScene* scene);
-void mfSceneDeleteEntity(MFScene* scene, u64 id);
-void mfSceneEntityAddMeshComponent(MFScene* scene, u64 id, MFMeshComponent comp);
-void mfSceneEntityAddTransformComponent(MFScene* scene, u64 id, MFTransformComponent comp);
+MFEntity* mfSceneCreateEntity(MFScene* scene);
+void mfSceneDeleteEntity(MFScene* scene, MFEntity* entity);
+void mfSceneEntityAddMeshComponent(MFScene* scene, MFEntity* entity, MFMeshComponent comp);
+void mfSceneEntityAddTransformComponent(MFScene* scene, MFEntity* entity, MFTransformComponent comp);
 
-MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64 id);
-MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64 id);
+MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, MFEntity* entity);
+MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, MFEntity* entity);
 
 void mfSceneSerialize(MFScene* scene, const char* fileName);
 // @note Returns false if the scene file doesnt exists or if the file isn't a scene file!

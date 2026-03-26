@@ -57,8 +57,8 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
     };
     MFMat4 tranformMat;
     
-    MFMeshComponent* mcomponent = mfSceneEntityGetMeshComponent(scene, e->id);
-    MFTransformComponent* tcomponent = mfSceneEntityGetTransformComponent(scene, e->id);
+    MFMeshComponent* mcomponent = mfSceneEntityGetMeshComponent(scene, e);
+    MFTransformComponent* tcomponent = mfSceneEntityGetTransformComponent(scene, e);
 
     {
         f64 time = mfGetTimeElapsed();
@@ -128,8 +128,8 @@ void MFTOnInit(void* pstate, void* pappState) {
                 .scale = (MFVec3){1, 1, 1}
             };
 
-            mfSceneEntityAddMeshComponent(&state->scene, state->entity->id, mComp);
-            mfSceneEntityAddTransformComponent(&state->scene, state->entity->id, tComp);
+            mfSceneEntityAddMeshComponent(&state->scene, state->entity, mComp);
+            mfSceneEntityAddTransformComponent(&state->scene, state->entity, tComp);
         // } else {
         //     state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
         // }
@@ -169,7 +169,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Model Images
     {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity);
         state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/deccer-cubes", state->renderer);
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
@@ -180,7 +180,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfResourceSetLayoutGetSizeInBytes());
         
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity);
         MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
         
         MFResourceDescription descs[] = {
@@ -193,7 +193,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     }
     // Resource sets
     {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity->id);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, state->entity);
         state->setCount = component->model.meshCount;
 
         state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*) * state->setCount);
@@ -242,7 +242,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfGpuBufferFree(state->cameraUbo);
     mfGpuBufferFree(state->lightUbo);
 
-    mfSceneDeleteEntity(&state->scene, state->entity->id);
+    mfSceneDeleteEntity(&state->scene, state->entity);
     mfSceneDestroy(&state->scene);
 
     mfRenderTargetDestroy(state->renderTarget);
