@@ -168,9 +168,9 @@ MF_INLINE i32 mfStringFindLast(SLogger* logger, const char* s, const char a) {
     i32 idx = -1;
     while (true) {
         if (s[i] == '\0')
-        return idx;
+            return idx;
         if (s[i] == a)
-        idx = i;
+            idx = i;
         i++;
     }
 }
