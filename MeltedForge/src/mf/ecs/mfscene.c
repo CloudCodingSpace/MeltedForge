@@ -37,7 +37,7 @@ void mfSceneDestroy(MFScene* scene) {
         if(!mfEntityHasMeshComponent(e))
             continue;
 
-        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, e);
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, &e->id);
         mfModelDestroy(&comp->model);
     }
     
@@ -68,7 +68,7 @@ void mfSceneUpdate(MFScene* scene) {
     
 }
 
-MFEntity* mfSceneCreateEntity(MFScene* scene) {
+u64 mfSceneCreateEntity(MFScene* scene) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     
@@ -86,46 +86,45 @@ MFEntity* mfSceneCreateEntity(MFScene* scene) {
     mfArrayAddElement(scene->compGrpTable, MFComponentGroup, mfGetLogger(), grp);
     mfArrayAddElement(scene->entities, MFEntity, mfGetLogger(), entity);
 
-    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, scene->entities.len - 1);
-
-    return e;
+    return scene->entities.len - 1;
 }
 
-void mfSceneDeleteEntity(MFScene* scene, MFEntity* entity) {
+void mfSceneDeleteEntity(MFScene* scene, u64* id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
-    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
-    MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity should be valid!"); 
-    MF_PANIC_IF(entity->id >= scene->entities.len, mfGetLogger(), "The entity id should be valid!"); 
-    
-    if(entity->ownerScene != scene) {
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id >= scene->entities.len,  mfGetLogger(), "The entity id should be valid!"); 
+
+    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, *id);
+    if(e->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
         return;
     }
 
-    if(mfEntityHasMeshComponent(entity)) {
-        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, entity);
+    if(mfEntityHasMeshComponent(e)) {
+        MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, id);
         mfModelDestroy(&comp->model);
         
-        MF_SETMEM(comp, 0, sizeof(MFMeshComponent));
+        MF_SETMEM(comp, 0, sizeof(*comp));
     }
-    if(mfEntityHasTransformComponent(entity)) {
-        MFTransformComponent* trans = mfSceneEntityGetTransformComponent(scene, entity);
-        MF_SETMEM(trans, 0, sizeof(MFTransformComponent));
+    if(mfEntityHasTransformComponent(e)) {
+        MFTransformComponent* trans = mfSceneEntityGetTransformComponent(scene, id);
+        MF_SETMEM(trans, 0, sizeof(*trans));
     }
     
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, e->compGrpId);
     
-    MF_SETMEM(grp, 0, sizeof(MFComponentGroup));
-    MF_SETMEM(entity, 0, sizeof(MFEntity));
+    MF_SETMEM(grp, 0, sizeof(*grp));
+    MF_SETMEM(e, 0, sizeof(*e));
+    *id = 0;
     
-    if(entity->id == scene->entities.len-1) {
+    if(*id == scene->entities.len-1) {
         return;
     }
 
     MFEntity* laste = &mfArrayGet(scene->entities, MFEntity, scene->entities.len - 1);
 
-    memcpy(entity, laste, sizeof(MFEntity));
+    memcpy(e, laste, sizeof(MFEntity));
     MF_SETMEM(laste, 0, sizeof(MFEntity));
 
     MFComponentGroup* lastg = &mfArrayGet(scene->entities, MFComponentGroup, scene->compGrpTable.len - 1);
@@ -133,17 +132,17 @@ void mfSceneDeleteEntity(MFScene* scene, MFEntity* entity) {
     MF_SETMEM(lastg, 0, sizeof(MFComponentGroup));
 }
 
-void mfSceneEntityAddMeshComponent(MFScene* scene, MFEntity* entity, MFMeshComponent comp) {
+void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
-    
-    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
-    MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
-    MF_PANIC_IF(entity->id > scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
-
     MF_PANIC_IF(comp.path == mfnull, mfGetLogger(), "The path for the mesh component shouldn't be null!");
     MF_PANIC_IF(comp.perVertSize == 0, mfGetLogger(), "The perVertSize for the mesh component shouldn't be 0!");
     MF_PANIC_IF(comp.vertBuilder == mfnull, mfGetLogger(), "The vertBuilder for the mesh component shouldn't be null!");
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id > scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+    
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
     
     if(entity->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
@@ -165,12 +164,14 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, MFEntity* entity, MFMeshCompo
     entity->components |= MF_COMPONENT_TYPE_MESH;
 }
 
-void mfSceneEntityAddTransformComponent(MFScene* scene, MFEntity* entity, MFTransformComponent comp) {
+void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComponent comp) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
-    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
-    MF_PANIC_IF(entity->id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
 
     if(entity->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
@@ -188,12 +189,14 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, MFEntity* entity, MFTran
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;
 }
 
-MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, MFEntity* entity) {
+MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
-    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
-    MF_PANIC_IF(entity->id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
 
     if(entity->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");
@@ -208,12 +211,14 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, MFEntity* entity)
     return c;
 }
 
-MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, MFEntity* entity) {
+MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64* id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
-    MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity handle shouldn't be null!");
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
-    MF_PANIC_IF(entity->id >= scene->entities.len, mfGetLogger(), "The entity's id provided, isn't valid!");
 
     if(entity->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!\n");

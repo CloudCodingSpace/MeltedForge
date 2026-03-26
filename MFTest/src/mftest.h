@@ -35,7 +35,7 @@ typedef struct MFTState_s {
     MFGpuBuffer* lightUbo;
 
     MFScene scene;
-    MFEntity* entity;
+    u64 entity;
     MFArray materialImages;
     
     MFCamera camera;
