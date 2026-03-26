@@ -118,12 +118,13 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
 }
 
 void VulkanImageDestroy(VulkanImage* image) {
-    vkFreeMemory(image->info.ctx->device, image->mem, image->info.ctx->allocator);
-    vkDestroyImageView(image->info.ctx->device, image->view, image->info.ctx->allocator);
-    vkDestroyImage(image->info.ctx->device, image->image, image->info.ctx->allocator);
+    VulkanBackendCtx* ctx = image->info.ctx;
+    vkFreeMemory(ctx->device, image->mem, ctx->allocator);
+    vkDestroyImageView(ctx->device, image->view, ctx->allocator);
+    vkDestroyImage(ctx->device, image->image, ctx->allocator);
 
     if(image->info.gpuResource)
-        vkDestroySampler(image->info.ctx->device, image->sampler, image->info.ctx->allocator);
+        vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
 
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Destroyed an image of  resolution: %dx%d",
                         image->info.width, image->info.height);
@@ -133,20 +134,31 @@ void VulkanImageDestroy(VulkanImage* image) {
 
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     image->info.pixels = pixels;
+    VulkanBackendCtx* ctx = image->info.ctx;
 
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, image->info.ctx, image->info.ctx->commandPool, image->info.width * image->info.height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, image->info.width * image->info.height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
     void* mem;
-    vkMapMemory(image->info.ctx->device, staging.mem, 0, image->info.width * image->info.height * 4, 0, &mem);
+    vkMapMemory(ctx->device, staging.mem, 0, image->info.width * image->info.height * 4, 0, &mem);
     memcpy(mem, pixels, image->info.width * image->info.height * 4);
-    vkUnmapMemory(image->info.ctx->device, staging.mem);
+    vkUnmapMemory(ctx->device, staging.mem);
 
     // Copy staging buffer to image and transitioning to the appropriate layout
     {
-        VkCommandBuffer buff = VulkanCommandBufferAllocate(image->info.ctx, image->info.ctx->commandPool, true);
+        b8 explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
+        VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
         VulkanCommandBufferBegin(buff);
+        
+        VkFence fence = VK_NULL_HANDLE;
+        VkSemaphore semaphore = VK_NULL_HANDLE;
+        {
+            VkFenceCreateInfo fenceInfo = {
+                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+            };
+            VK_CHECK(vkCreateFence(ctx->device, &fenceInfo, ctx->allocator, &fence));
+        }
 
         {
             VkImageMemoryBarrier copy_barrier[1] = {};
@@ -191,7 +203,32 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 			use_barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			use_barrier[0].subresourceRange.levelCount = 1;
 			use_barrier[0].subresourceRange.layerCount = 1;
-			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, use_barrier);
+			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, 0, 0, 0, 1, use_barrier);
+        }
+        
+        if (explicitOwnership) {
+            VkImageMemoryBarrier barrier = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+                .dstAccessMask = 0,
+                .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .srcQueueFamilyIndex = ctx->queueData.transferQueueIdx,
+                .dstQueueFamilyIndex = ctx->queueData.graphicsQueueIdx,
+                .image = image->image,
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .levelCount = 1,
+                    .layerCount = 1
+                }
+            };
+
+            vkCmdPipelineBarrier(
+                buff,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                0, 0, NULL, 0, NULL, 1, &barrier
+            );
         }
 
         VulkanCommandBufferEnd(buff);
@@ -202,11 +239,64 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
             .pCommandBuffers = &buff
         };
 
-        VK_CHECK(vkQueueSubmit(image->info.ctx->queueData.transferQueue, 1, &sinfo, mfnull));
-        vkDeviceWaitIdle(image->info.ctx->device);
+        if(explicitOwnership) {
+            VkSemaphoreCreateInfo createInfo = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+            };
+            VK_CHECK(vkCreateSemaphore(ctx->device, &createInfo, ctx->allocator, &semaphore));
 
-        VulkanCommandBufferFree(image->info.ctx, buff, image->info.ctx->commandPool);
+            sinfo.signalSemaphoreCount = 1;
+            sinfo.pSignalSemaphores = &semaphore;
+        }
+
+        VK_CHECK(vkQueueSubmit(ctx->queueData.transferQueue, 1, &sinfo, fence));
+        VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(ctx->device, 1, &fence));
+
+        if(explicitOwnership) {
+            VulkanCommandBufferBegin(buff);
+            
+            VkImageMemoryBarrier barrier = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .srcAccessMask = 0,
+                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .srcQueueFamilyIndex = ctx->queueData.transferQueueIdx,
+                .dstQueueFamilyIndex = ctx->queueData.graphicsQueueIdx,
+                .image = image->image,
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .levelCount = 1,
+                    .layerCount = 1
+                }
+            };
+
+            vkCmdPipelineBarrier(
+                buff,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                0, 0, NULL, 0, NULL, 1, &barrier
+            );
+
+            VulkanCommandBufferEnd(buff);
+
+            VkPipelineStageFlags flags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+            sinfo.signalSemaphoreCount = 0;
+            sinfo.pSignalSemaphores = mfnull;
+            sinfo.pWaitDstStageMask = &flags;
+            sinfo.waitSemaphoreCount = 1;
+            sinfo.pWaitSemaphores = &semaphore;
+
+            VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &sinfo, fence));
+            VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+            vkDestroySemaphore(ctx->device, semaphore, ctx->allocator);
+        }
+
+        VulkanCommandBufferFree(ctx, buff, ctx->commandPool);
+        vkDestroyFence(ctx->device, fence, ctx->allocator);
     }
 
-    VulkanBufferFree(&staging, image->info.ctx);
+    VulkanBufferFree(&staging, ctx);
 }

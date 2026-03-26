@@ -48,7 +48,7 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
     VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
 
-    vkMapMemory(ctx->device, buffer->mem, 0, buffer->size, 0, &buffer->mappedMem);  // NOTE: Make the offset configurable if necessary
+    VK_CHECK(vkMapMemory(ctx->device, buffer->mem, 0, buffer->size, 0, &buffer->mappedMem)); // NOTE: Make the offset configurable if necessary
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
 }
 
@@ -166,6 +166,7 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
 
     // Copy
     {
+        VkSemaphore semaphore = VK_NULL_HANDLE;
         VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, pool, true);
 
         VulkanCommandBufferBegin(buff);
@@ -177,6 +178,23 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
         };
 
         vkCmdCopyBuffer(buff, staging.handle, buffer->handle, 1, &region);
+
+        b8 explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
+        if(explicitOwnership) {
+            VkBufferMemoryBarrier barrier = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                .buffer = buffer->handle,
+                .offset = 0,
+                .size = buffer->size,
+                .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+                .dstAccessMask = 0,
+                .srcQueueFamilyIndex = ctx->queueData.transferQueueIdx,
+                .dstQueueFamilyIndex = ctx->queueData.graphicsQueueIdx
+            };
+
+            vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                                0, mfnull, 0, 1, &barrier, 0, mfnull);
+        }
 
         VulkanCommandBufferEnd(buff);
 
@@ -195,8 +213,58 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
             .pCommandBuffers = &buff
         };
 
+        if(explicitOwnership) {
+            VkSemaphoreCreateInfo createInfo = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+            };
+            VK_CHECK(vkCreateSemaphore(ctx->device, &createInfo, ctx->allocator, &semaphore));
+
+            info.signalSemaphoreCount = 1;
+            info.pSignalSemaphores = &semaphore;
+        }
+
         VK_CHECK(vkQueueSubmit(ctx->queueData.transferQueue, 1, &info, fence));
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(ctx->device, 1, &fence));
+
+        if(explicitOwnership) {
+            VK_CHECK(vkResetCommandBuffer(buff, 0));
+            VulkanCommandBufferBegin(buff);
+
+            VkBufferMemoryBarrier barrier = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                .buffer = buffer->handle,
+                .offset = 0,
+                .size = buffer->size,
+                .srcAccessMask = 0,
+                .srcQueueFamilyIndex = ctx->queueData.transferQueueIdx,
+                .dstQueueFamilyIndex = ctx->queueData.graphicsQueueIdx
+            };
+
+            if(buffer->type == VULKAN_BUFFER_TYPE_VERTEX) {
+                barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+            } else if(buffer->type == VULKAN_BUFFER_TYPE_INDEX) {
+                barrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+            } else {
+                // NOTE: IF INVALID TYPE, VALIDATION ERROR OR CRASH
+            }
+
+            vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT , VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 
+                                0, mfnull, 0, 1, &barrier, 0, mfnull);
+            
+            VulkanCommandBufferEnd(buff);
+
+            VkPipelineStageFlags flags = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+            info.signalSemaphoreCount = 0;
+            info.pSignalSemaphores = mfnull;
+            info.waitSemaphoreCount = 1;
+            info.pWaitSemaphores = &semaphore;
+            info.pWaitDstStageMask = &flags;
+
+            VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, fence));
+            VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+            vkDestroySemaphore(ctx->device, semaphore, ctx->allocator);
+        }
 
         vkDestroyFence(ctx->device, fence, ctx->allocator);
         VulkanCommandBufferFree(ctx, buff, pool);
