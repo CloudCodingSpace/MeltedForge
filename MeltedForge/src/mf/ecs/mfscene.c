@@ -33,7 +33,9 @@ void mfSceneDestroy(MFScene* scene) {
 
     for(u32 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
-        
+        if(!e->valid)
+            continue;
+
         if(!mfEntityHasMeshComponent(e))
             continue;
 
@@ -95,10 +97,7 @@ void mfSceneDeleteEntity(MFScene* scene, u64* id) {
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id > scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
 
-    u64 index = *id;
-    u64 lastIndex = scene->entities.len - 1;
-
-    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, index);
+    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, *id);
 
     if(e->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!");
@@ -118,21 +117,7 @@ void mfSceneDeleteEntity(MFScene* scene, u64* id) {
 
     MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, e->compGrpId);
     MF_SETMEM(grp, 0, sizeof(*grp));
-
-    if(index != lastIndex) {
-        MFEntity* last = &mfArrayGet(scene->entities, MFEntity, lastIndex);
-        memcpy(e, last, sizeof(MFEntity));
-
-        e->id = index;
-
-        MFComponentGroup* movedGrp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, e->compGrpId);
-    }
-
-    MF_SETMEM(&mfArrayGet(scene->entities, MFEntity, lastIndex), 0, sizeof(MFEntity));
-    MF_SETMEM(&mfArrayGet(scene->compGrpTable, MFComponentGroup, lastIndex), 0, sizeof(MFComponentGroup));
-
-    scene->entities.len--;
-    scene->compGrpTable.len--;
+    MF_SETMEM(e, 0, sizeof(MFEntity));
 
     *id = UINT64_MAX;
 }
@@ -246,14 +231,37 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
 
     u64 size = sizeof(u32); // For the scene signature
     size += sizeof(u64) * 4; // For the sizes of the 4 mfarrays
-    size += scene->meshCompPool.len * sizeof(u64);
-    size += scene->transformCompPool.len * sizeof(u64);
-    size += scene->entities.len * sizeof(u64);
-    size += scene->compGrpTable.len * sizeof(u64);
-    size += 4 * sizeof(u64) * scene->entities.len; // since 4 u64s per entity
 
-    size += 9 * sizeof(f32) * scene->transformCompPool.len; // since 9 f32s per transform component
-    size += 2 * sizeof(u64) * scene->compGrpTable.len; // since 2 u64s per group
+    u64 validEntities = 0, validMeshComponents = 0, validTransformComponents = 0, validGroupCount = 0;
+    for(u64 i = 0; i < scene->entities.len; i++) {
+        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        if(e->valid)
+            validEntities++;
+    }
+    for(u64 i = 0; i < scene->meshCompPool.len; i++) {
+        MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+        if(c->valid)
+            validMeshComponents++;
+    }
+    for(u64 i = 0; i < scene->transformCompPool.len; i++) {
+        MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+        if(t->valid)
+            validTransformComponents++;
+    }
+    for(u64 i = 0; i < scene->compGrpTable.len; i++) {
+        MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+        if(g->valid)
+            validGroupCount++;
+    }
+
+    size += validEntities * sizeof(u64);
+    size += validTransformComponents * sizeof(u64);
+    size += validGroupCount * sizeof(u64);
+    size += validMeshComponents * sizeof(u64);
+
+    size += 4 * sizeof(u64) * validEntities; // since 4 u64s per entity
+    size += 9 * sizeof(f32) * validTransformComponents; // since 9 f32s per transform component
+    size += 2 * sizeof(u64) * validGroupCount; // since 2 u64s per group
 
     for(u64 i = 0; i < scene->meshCompPool.len; i++) {
         MFMeshComponent* comp = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
@@ -270,7 +278,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
 
     // Entity array 
     {
-        mfSerializeU64(&s, scene->entities.len);
+        mfSerializeU64(&s, validEntities);
         for(u64 i = 0; i < scene->entities.len; i++) {
             MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
             if(!e->valid)
@@ -283,7 +291,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     }
     // Mesh comp array 
     {
-        mfSerializeU64(&s, scene->meshCompPool.len);
+        mfSerializeU64(&s, validMeshComponents);
         for(u64 i = 0; i < scene->meshCompPool.len; i++) {
             MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
             if(!c->valid)
@@ -294,7 +302,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     }
     // Transform comp array 
     {
-        mfSerializeU64(&s, scene->transformCompPool.len);
+        mfSerializeU64(&s, validTransformComponents);
         for(u64 i = 0; i < scene->transformCompPool.len; i++) {
             MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
             if(!t->valid)
@@ -312,7 +320,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     }
     // Component group array 
     {
-        mfSerializeU64(&s, scene->compGrpTable.len);
+        mfSerializeU64(&s, validGroupCount);
         for(u64 i = 0; i < scene->compGrpTable.len; i++) {
             MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
             if(!g->valid)

@@ -113,7 +113,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Scene & entities
     {
         mfSceneCreate(&state->scene, state->camera, appState->renderer);
-        // if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
+        if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
@@ -131,17 +131,9 @@ void MFTOnInit(void* pstate, void* pappState) {
             mfSceneEntityAddMeshComponent(&state->scene, &state->entity, mComp);
             mfSceneEntityAddTransformComponent(&state->scene, &state->entity, tComp);
 
-            u64 e1 = mfSceneCreateEntity(&state->scene);
-            u64 e2 = mfSceneCreateEntity(&state->scene);
-            u64 e3 = mfSceneCreateEntity(&state->scene);
-            u64 e4 = mfSceneCreateEntity(&state->scene);
-            mfSceneDeleteEntity(&state->scene, &e1);
-            mfSceneDeleteEntity(&state->scene, &e2);
-            mfSceneDeleteEntity(&state->scene, &e3);
-            mfSceneDeleteEntity(&state->scene, &e4);
-        // } else {
-        //     state->entity = &mfArrayGet(state->scene.entities, MFEntity, 0);
-        // }
+        } else {
+            state->entity = (&mfArrayGet(state->scene.entities, MFEntity, 0))->id; //! FIXME: CHANGE THIS! THIS IS NOT HOW CLIENT IS SUPPOSED TO BEHAVE BY ACCESSING ENGINE INTERNALS
+        }
     }
     // UBO
     {
