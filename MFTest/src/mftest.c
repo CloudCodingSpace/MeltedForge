@@ -178,11 +178,37 @@ void MFTOnInit(void* pstate, void* pappState) {
     // Model Images
     {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
-        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/deccer-cubes", state->renderer);
+        char* basePath = mfnull;
+        b8 noBasePath = false;
+        {
+            i32 idx = mfStringFindLast(&state->logger, component->path, '\\');
+            if(idx == -1) {
+                idx = mfStringFindLast(&state->logger, component->path, '/');
+                if(idx == -1) {
+                    noBasePath = true;
+                    basePath = mfStringConcatenate(&state->logger, ".", "/");
+                }
+            }
+
+            if(!noBasePath) {
+                u64 size = (idx + 3) * sizeof(char);
+                basePath = MF_ALLOCMEM(char, size);
+                u64 i;
+                for(i = 0; i <= idx; i++) {
+                    basePath[i] = component->path[i];
+                }
+                basePath[i++] = '/';
+                basePath[i++] = '\0';
+            }
+        }
+
+        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/pistol", state->renderer);
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
         }
+
+        MF_FREEMEM(basePath);
     }
     // Resource layouts
     {

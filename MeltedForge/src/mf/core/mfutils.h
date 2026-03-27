@@ -115,8 +115,8 @@ MF_INLINE u32 mfStringLen(SLogger* logger, const char* a) {
     }
 }
 
-// @note The returned const char* must be freed since it is allocated on the heap
-MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const char* b) {
+// @note The returned char* must be freed since it is allocated on the heap
+MF_INLINE char* mfStringConcatenate(SLogger* logger, const char* a, const char* b) {
     MF_PANIC_IF(a == mfnull, logger, "The first string provided shouldn't be null!");
     MF_PANIC_IF(b == mfnull, logger, "The second string provided shouldn't be null!");
 
@@ -136,8 +136,8 @@ MF_INLINE const char* mfStringConcatenate(SLogger* logger, const char* a, const 
     return final;
 }
 
-// @note The returned const char* must be freed since it is allocated on the heap
-MF_INLINE const char* mfStringDuplicate(SLogger* logger, const char* a) {
+// @note The returned char* must be freed since it is allocated on the heap
+MF_INLINE char* mfStringDuplicate(SLogger* logger, const char* a) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
 
     i32 len = mfStringLen(logger, a) + 1;
