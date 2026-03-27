@@ -224,6 +224,22 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64* id
     return t;
 }
 
+void mfSceneGetValidEntities(MFScene* scene, u64* validEntityCount, MFEntity* entities) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
+    MF_PANIC_IF(validEntityCount == mfnull, mfGetLogger(), "The pointer to valid entity count shouldn't be null!");
+    
+    *validEntityCount = 0;
+    for(u64 i = 0; i < scene->entities.len; i++) {
+        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        if(e->valid) {
+            if(entities)
+                memcpy(&entities[*validEntityCount], e, sizeof(MFEntity));
+            *validEntityCount = *validEntityCount + 1;
+        }
+    }
+}
+
 void mfSceneSerialize(MFScene* scene, const char* fileName) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");

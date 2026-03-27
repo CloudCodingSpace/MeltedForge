@@ -117,7 +117,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/deccer-cubes/SM_Deccer_Cubes_Textured_Complex.gltf",
+                .path = "meshes/pistol/service_pistol.gltf",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
@@ -132,7 +132,14 @@ void MFTOnInit(void* pstate, void* pappState) {
             mfSceneEntityAddTransformComponent(&state->scene, &state->entity, tComp);
 
         } else {
-            state->entity = (&mfArrayGet(state->scene.entities, MFEntity, 0))->id; //! FIXME: CHANGE THIS! THIS IS NOT HOW CLIENT IS SUPPOSED TO BEHAVE BY ACCESSING ENGINE INTERNALS
+            u64 entityCount = 0;
+            mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
+            MFEntity* entities = MF_ALLOCMEM(MFEntity, sizeof(MFEntity) * entityCount);
+            mfSceneGetValidEntities(&state->scene, &entityCount, entities);
+
+            state->entity = entities[0].id;
+
+            MF_FREEMEM(entities);
         }
     }
     // UBO
