@@ -186,23 +186,19 @@ void MFTOnInit(void* pstate, void* pappState) {
                 idx = mfStringFindLast(&state->logger, component->path, '/');
                 if(idx == -1) {
                     noBasePath = true;
-                    basePath = mfStringConcatenate(&state->logger, ".", "/");
+                    basePath = MF_ALLOCMEM(char, sizeof(char) * 3);
+                    basePath[0] = '.';
+                    basePath[1] = '/';
+                    basePath[2] = '\0';
                 }
             }
 
             if(!noBasePath) {
-                u64 size = (idx + 3) * sizeof(char);
-                basePath = MF_ALLOCMEM(char, size);
-                u64 i;
-                for(i = 0; i <= idx; i++) {
-                    basePath[i] = component->path[i];
-                }
-                basePath[i++] = '/';
-                basePath[i++] = '\0';
+                basePath = mfStringSliceRight(&state->logger, component->path, idx);
             }
         }
 
-        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, "meshes/pistol", state->renderer);
+        state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, basePath, state->renderer);
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);

@@ -148,6 +148,38 @@ MF_INLINE char* mfStringDuplicate(SLogger* logger, const char* a) {
     return str;
 }
 
+// @note The returned char* must be freed since it is allocated on the heap
+MF_INLINE char* mfStringSliceLeft(SLogger* logger, const char* a, i32 idx) {
+    MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
+    MF_PANIC_IF((idx < 0) || (idx >= mfStringLen(logger, a)), logger, "The string index provided should be valid!");
+    
+    char* str = MF_ALLOCMEM(char, sizeof(char) * (mfStringLen(logger, a) - idx));
+    u64 j = 0;
+    for(u32 i = idx; i < mfStringLen(logger, a); i++) {
+        str[j] = a[i];
+        j++;
+    }
+    str[j++] = '\0';
+
+    return str;
+}
+
+// @note The returned char* must be freed since it is allocated on the heap
+MF_INLINE char* mfStringSliceRight(SLogger* logger, const char* a, i32 idx) {
+    MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
+    MF_PANIC_IF((idx < 0) || (idx >= mfStringLen(logger, a)), logger, "The string index provided should be valid!");
+    
+    char* str = MF_ALLOCMEM(char, (idx + 3) * sizeof(char));
+    u64 i;
+    for(i = 0; i <= idx; i++) {
+        str[i] = a[i];
+    }
+    str[i++] = '/';
+    str[i++] = '\0';
+
+    return str;
+}
+
 MF_INLINE i32 mfStringFind(SLogger* logger, const char* s, const char a) {
     MF_PANIC_IF(s == mfnull, logger, "The string provided shouldn't be null!");
 
