@@ -331,20 +331,22 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
 
-        float posData[3] = {0};
-        mfCopyVec3ToFloatArr(posData, state->lightData.lightPos);
+        if(igCollapsingHeader_BoolPtr("Light settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
+            f32 posData[3] = {0};
+            mfCopyVec3ToFloatArr(posData, state->lightData.lightPos);
 
-        float colorData[3] = {0};
-        mfCopyVec3ToFloatArr(colorData, state->lightData.lightColor);
+            f32 colorData[3] = {0};
+            mfCopyVec3ToFloatArr(colorData, state->lightData.lightColor);
 
-        igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
-        igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
-        igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
-        igDragFloat("lightIntensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
-        igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
+            igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
+            igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
+            igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
+            igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
+            igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-        state->lightData.lightPos = mfCopyFloatArrToVec3(posData);
-        state->lightData.lightColor = mfCopyFloatArrToVec3(colorData);
+            state->lightData.lightPos = mfCopyFloatArrToVec3(posData);
+            state->lightData.lightColor = mfCopyFloatArrToVec3(colorData);
+        }
 
         igEnd();
     }
