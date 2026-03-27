@@ -40,6 +40,10 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 
         backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
+
+    if(backend->renderTarget != mfnull) {
+        mfRenderTargetResize(backend->renderTarget, (MFVec2){mfRenderTargetGetWidth(backend->renderTarget), mfRenderTargetGetHeight(backend->renderTarget)});
+    }
 }
 
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
@@ -266,9 +270,6 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        if(backend->renderTarget != mfnull) {
-            mfRenderTargetResize(backend->renderTarget, (MFVec2){mfRenderTargetGetWidth(backend->renderTarget), mfRenderTargetGetHeight(backend->renderTarget)});
-        }
         return;
     }
     VK_CHECK(result);
