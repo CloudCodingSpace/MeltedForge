@@ -4,11 +4,10 @@
 
 #include "objects/mfmodel.h"
 
-// TODO: Add more components when necessary
 typedef enum MFComponentsType_e {
     MF_COMPONENT_TYPE_NONE,
-    MF_COMPONENT_TYPE_MESH,
-    MF_COMPONENT_TYPE_TRANSFORM
+    MF_COMPONENT_TYPE_MESH = 1 << 1,
+    MF_COMPONENT_TYPE_TRANSFORM = 1 << 2
 } MFComponentsType;
 
 typedef struct MFTransformComponent_s {

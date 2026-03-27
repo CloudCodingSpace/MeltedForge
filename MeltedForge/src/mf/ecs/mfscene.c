@@ -179,6 +179,53 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComp
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;
 }
 
+void mfSceneEntityRemoveMeshComponent(MFScene* scene, u64* id) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
+
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
+
+    if(entity->ownerScene != scene) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!");
+        return;
+    }
+
+    if(!mfEntityHasMeshComponent(entity))
+        return;
+
+    MFMeshComponent* comp = mfSceneEntityGetMeshComponent(scene, id);
+    mfModelDestroy(&comp->model);
+    MF_SETMEM(comp, 0, sizeof(*comp));
+
+    entity->components &= MF_COMPONENT_TYPE_MESH;
+}
+
+void mfSceneEntityRemoveTransformComponent(MFScene* scene, u64* id) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
+    MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
+    MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
+    
+    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
+    
+    if(entity->ownerScene != scene) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!");
+        return;
+    }
+    
+    if(!mfEntityHasTransformComponent(entity))
+        return;
+    
+    MFTransformComponent* comp = mfSceneEntityGetTransformComponent(scene, id);
+    MF_SETMEM(comp, 0, sizeof(*comp));
+    
+    entity->components &= MF_COMPONENT_TYPE_TRANSFORM;
+}
+
 MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");

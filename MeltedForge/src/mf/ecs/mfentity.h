@@ -16,12 +16,12 @@ MF_INLINE b8 mfEntityHasMeshComponent(const MFEntity* entity) {
     MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity provided shouldn't be null!");
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
-    return (((entity->components & MF_COMPONENT_TYPE_MESH) == MF_COMPONENT_TYPE_MESH) ? true : false);
+    return entity->components & MF_COMPONENT_TYPE_MESH;
 }
 
 MF_INLINE b8 mfEntityHasTransformComponent(const MFEntity* entity) {
     MF_PANIC_IF(entity == mfnull, mfGetLogger(), "The entity provided shouldn't be null!");
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
-    return (((entity->components & MF_COMPONENT_TYPE_TRANSFORM) == MF_COMPONENT_TYPE_TRANSFORM) ? true : false);
+    return entity->components & MF_COMPONENT_TYPE_TRANSFORM;
 }
