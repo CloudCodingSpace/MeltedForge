@@ -124,35 +124,13 @@ struct VulkanImage_s mfGpuImageGetBackend(MFGpuImage* image) {
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    
-    u8 invColor[4 * 4 * 4] = {0};
-    u32 cellSize = 1;
-    for(u32 h = 0; h < 4; h++) {
-        for(u32 w = 0; w < 4; w++) {
-            u32 idx = (h * 4 + w) * 4;
-            u32 x = w / cellSize;
-            u32 y = h / cellSize;
-
-            if(((x + y) % 2) == 0) {
-                invColor[idx + 0] = 0xff;
-                invColor[idx + 1] = 0x00;
-                invColor[idx + 2] = 0xff;
-                invColor[idx + 3] = 0xff;
-            } else {
-                invColor[idx + 0] = 0x00;
-                invColor[idx + 1] = 0x00;
-                invColor[idx + 2] = 0x00;
-                invColor[idx + 3] = 0xff;
-            }
-        }
-    }
 
     MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
     
     MFGpuImageConfig config = {
-        .width = 4,
-        .height = 4,
-        .pixels = invColor,
+        .width = mfGetErrorImageWidth(),
+        .height = mfGetErrorImageHeight(),
+        .pixels = mfGetErrorImagePixels(),
         .binding = MF_INFINITY
     };
 

@@ -70,16 +70,16 @@ static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
         tranformMat = mfMat4Mul(transformMat, scale);
     }
     
+
+    MFViewport vp = mfRendererGetViewport(scene->renderer);
+    MFRect2D scissor = mfRendererGetScissor(scene->renderer);
+    mfPipelineBind(state->pipeline, vp, scissor);
     for(u64 i = 0; i < mcomponent->model.meshCount; i++) {
         modelData.model = mfMat4Mul(tranformMat, mcomponent->model.meshes[i].transform);
         modelData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(state->cameraUboData.view, modelData.model)));
 
-        MFViewport vp = mfRendererGetViewport(scene->renderer);
-        MFRect2D scissor = mfRendererGetScissor(scene->renderer);
-
         mfResourceSetBind(state->sets[i], state->pipeline);
         mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
-        mfPipelineBind(state->pipeline, vp, scissor);
         mfMeshRender(&mcomponent->model.meshes[i]);
     }
 }
