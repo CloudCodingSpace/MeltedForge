@@ -57,6 +57,9 @@ void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scen
     for(u64 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
 
+        if(!e->valid)
+            continue;
+
         if(!mfEntityHasMeshComponent(e) || !mfEntityHasTransformComponent(e))
             continue;
         
