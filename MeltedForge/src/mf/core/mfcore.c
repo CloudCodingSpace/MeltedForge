@@ -36,7 +36,7 @@ void mfInit(void) {
 
     // Deserializing
     do {
-        FILE* file = fopen("mfcache.bin", "rb");
+        FILE* file = fopen("mfcore_cache.bin", "rb");
         if(file == mfnull)
             break;
 
@@ -90,9 +90,9 @@ void mfShutdown(void) {
         mfSerializeU32(&serializer, ctx->counter);
 
         do {
-            FILE* file = fopen("mfcache.bin", "wb");
+            FILE* file = fopen("mfcore_cache.bin", "wb");
             if(file == mfnull) {
-                slogLogMsg(&ctx->logger, SLOG_SEVERITY_ERROR, "Can't serialize to core cache file named 'mfcache.bin'!");
+                slogLogMsg(&ctx->logger, SLOG_SEVERITY_ERROR, "Can't serialize to core cache file named 'mfcore_cache.bin'!");
                 break;
             }
 
