@@ -17,7 +17,7 @@ MFAppConfig mfClientCreateAppConfig() {
 
     MFArray layers = mfArrayCreate(mfGetLogger(), 1, sizeof(MFLayer));
     mfArrayAddElement(layers, MFLayer, mfGetLogger(), testLayer);
-   
+
     config.layers = layers;
     config.winConfig.resizable = true;
     config.vsync = false;

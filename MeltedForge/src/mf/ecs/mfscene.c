@@ -80,7 +80,7 @@ u64 mfSceneCreateEntity(MFScene* scene) {
     MFEntity entity = {};
     entity.compGrpId = scene->compGrpTable.len;
     entity.components = MF_COMPONENT_TYPE_NONE;
-    entity.uuid = 0xffffffff; // TODO: Find a way to generate UUIDs!!
+    entity.uuid = mfGetNextID();
     entity.id = scene->entities.len;
     entity.ownerScene = (void*)scene;
     entity.valid = true;
