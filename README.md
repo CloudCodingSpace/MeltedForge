@@ -10,44 +10,44 @@
 
 ## Features
 
-- Model loading along with the material data
-- Engine & editor level UI
-- UI customization
-- Render targets
-    * Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
-- A binary serialization/deserialization api
-- Explicit shader resource management control for resources like UBOs and image samplers.
+ - Model loading along with the material data
+    - Can load complex models (Tested with [deccer's cubes](https://github.com/GraphicsProgramming/deccer-cubes))
+ - Engine & editor level UI
+    - UI customization (Using Dear ImGui's styles)
+ - Render targets
+    - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
+ - A binary serialization/deserialization api
+ - Explicit shader resource management control for resources like UBOs and image samplers.
 
 ---
 
 ## WIP (Work In Progress)
 
-- Material system
-- Entity Component System (ECS)
-- Loading complex model scenes
-- Documentation
+ - Material system
+ - Entity Component System (ECS)
+ - Documentation
 
 ---
 
 ## Reasons for starting
 
-- Partly to satisfy my curiosity.
-- To showcase what **C** can really do in modern day
-- To serve as a helpful learning resource for both me (@CloudCodingSpace) and other devs
-- To gain experience in this field
+ - Partly to satisfy my curiosity.
+ - To showcase what C can really do in game/game engine dev these days
+ - To serve as a helpful learning resource for both me (@CloudCodingSpace) and other devs
+ - To gain experience in this field
 
 ---
 
 ## Goals
 
-- Beginner-friendly setup and usage
-- Low-end devices friendly
-- Cross-platform (Only on desktop platforms)
-- Realistic graphics
-- Sound system support
-- Animation system
-- Multithreading
-- Async resource handling
+ - Beginner-friendly setup and usage
+ - Low-end devices friendly
+ - Cross-platform (Only on desktop platforms)
+ - Realistic graphics
+ - Sound system support
+ - Animation system
+ - Multithreading
+ - Async resource handling
 
  ---
 
@@ -72,12 +72,12 @@ It is hosted on trello. It can be found [here](https://trello.com/b/Zt1Azhtg/mel
 
 > **Note:** The following are the **important conditions** met by the PC for **building/running** MeltedForge
 
-- Vulkan SDK (Get from [LunarG](https://vulkan.lunarg.com/))
-- A GPU driver with **modern Vulkan support** (Vulkan 1.2.000+)
-- A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries**
+ - Vulkan SDK (Get from [LunarG](https://vulkan.lunarg.com/))
+ - A GPU driver with **modern Vulkan support** (Vulkan 1.2.000+)
+ - A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries**
     (Preferably GCC & G++ or MSVC, but currently clang is not tested and is not supported)
-- CMake (Get from [here](https://cmake.org/download/))
-- Make if using GCC & G++
+ - CMake (Get from [here](https://cmake.org/download/))
+ - Make if using GCC & G++
 
 ---
 
@@ -100,12 +100,12 @@ cmake --build <path-to-build-dir> --parallel
 ---
 
 ## Technical Details (For developers and nerds)
-- This engine is mostly using C. But there *is* some usage of other languages like C++ since
+ - This engine is mostly using C. But there *is* some usage of other languages like C++ since
     3rd party vendors like Dear ImGui and Assimp use it.
-- Currently supports compilers like GCC, G++ and MSVC.
-- Aims at having support for Clang & Clang++, but currently it is not tested and does not have official support for it.
-- Currently tested in and developed on Windows with MSVC and GCC/G++
-- Linux isn't tested yet.
+ - Currently supports compilers like GCC, G++ and MSVC.
+ - Aims at having support for Clang & Clang++, but currently it is not tested and does not have official support for it.
+ - Currently tested in and developed on Windows with MSVC and GCC/G++
+ - Linux isn't tested yet.
 
 ---
 
