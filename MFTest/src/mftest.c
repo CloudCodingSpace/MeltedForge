@@ -342,6 +342,8 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             state->lightData.lightColor = mfFloatArrToVec3(colorData);
         }
 
+        igDummy((ImVec2){ 0.0f, 50.0f });
+
         if(igCollapsingHeader_BoolPtr("Model transform settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entity);
             
