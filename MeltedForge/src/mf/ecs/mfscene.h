@@ -5,8 +5,20 @@
 #include "mfcomponents.h"
 
 #include "renderer/mfrenderer.h"
+#include "renderer/mfpipeline.h"
+
 #include "objects/mfcamera.h"
 #include "window/mfwindow.h"
+
+typedef struct MFSceneRenderConfig_s {
+    MFPipeline* entityPipeline;
+    MFViewport viewport;
+    MFRect2D scissor;
+    void* state;
+
+    MFMat4 (*computeModelMatrix)(const MFTransformComponent* component);
+    void (*perMeshDrawCallback)(void* state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline);
+} MFSceneRenderConfig;
 
 typedef struct MFScene_s {
     MFArray entities;
@@ -22,7 +34,7 @@ typedef struct MFScene_s {
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer);
 void mfSceneDestroy(MFScene* scene);
 
-void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scene, void* state), void* state);
+void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config);
 void mfSceneUpdate(MFScene* scene);
 
 u64 mfSceneCreateEntity(MFScene* scene);

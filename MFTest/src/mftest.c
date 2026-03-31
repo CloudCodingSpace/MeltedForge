@@ -48,40 +48,27 @@ static void RenderTargetResizeCallback(void* pstate) {
     CreatePipeline(state);
 }
 
-static void renderEntity(MFEntity* e, MFScene* scene, void* pstate) {
-    MFTState* state = (MFTState*)pstate;
+static void meshCallback(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
+    MFTState* state = (MFTState*)_state;
 
     PushConstantData modelData = {
-        .model = mfMat4Identity(),
-        .normalMat = mfMat4Identity()
+        .model = transform
     };
-    MFMat4 tranformMat;
-    
-    MFMeshComponent* mcomponent = mfSceneEntityGetMeshComponent(scene, &e->id);
-    MFTransformComponent* tcomponent = mfSceneEntityGetTransformComponent(scene, &e->id);
 
-    {
-        f64 time = mfGetTimeElapsed();
-        MFMat4 transformMat = mfMat4Translate(tcomponent->position.x, tcomponent->position.y, tcomponent->position.z);
-        // MFMat4 rot = mfMat4RotateXYZ(tcomponent->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER + time, tcomponent->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-        MFMat4 scale = mfMat4Identity();
-        mfMat4Scale(&scale, tcomponent->scale.x, tcomponent->scale.y, tcomponent->scale.z);
+    modelData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(state->cameraUboData.view, modelData.model)));
 
-        tranformMat = mfMat4Mul(transformMat, scale);
-    }
-    
+    mfResourceSetBind(state->sets[meshIdx], state->pipeline);
+    mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
+}
 
-    MFViewport vp = mfRendererGetViewport(scene->renderer);
-    MFRect2D scissor = mfRendererGetScissor(scene->renderer);
-    mfPipelineBind(state->pipeline, vp, scissor);
-    for(u64 i = 0; i < mcomponent->model.meshCount; i++) {
-        modelData.model = mfMat4Mul(tranformMat, mcomponent->model.meshes[i].transform);
-        modelData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(state->cameraUboData.view, modelData.model)));
+static MFMat4 computeModelMatrix(const MFTransformComponent* component) {
+    MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
+    MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+    MFMat4 scale = mfMat4Identity();
+    mfMat4Scale(&scale, component->scale.x, component->scale.y, component->scale.z);
 
-        mfResourceSetBind(state->sets[i], state->pipeline);
-        mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
-        mfMeshRender(&mcomponent->model.meshes[i]);
-    }
+    MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
+    return model;
 }
 
 #pragma region MFTest
@@ -124,7 +111,7 @@ void MFTOnInit(void* pstate, void* pappState) {
 
             MFTransformComponent tComp = {
                 .position = (MFVec3){0, 0, 0},
-                .rotationXYZ = (MFVec3){45, 0, 0},
+                .rotationXYZ = (MFVec3){0, 0, 0},
                 .scale = (MFVec3){1, 1, 1}
             };
 
@@ -299,7 +286,15 @@ void MFTOnRender(void* pstate, void* pappState) {
         mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
     }
 
-    mfSceneRender(&state->scene, renderEntity, pstate);
+    MFSceneRenderConfig config = {
+        .state = state,
+        .entityPipeline = state->pipeline,
+        .scissor = mfRendererGetScissor(state->renderer),
+        .viewport = mfRendererGetViewport(state->renderer),
+        .perMeshDrawCallback = meshCallback,
+        .computeModelMatrix = computeModelMatrix
+    };
+    mfSceneRender(&state->scene, &config);
 }
 
 void MFTOnUIRender(void* pstate, void* pappState) {

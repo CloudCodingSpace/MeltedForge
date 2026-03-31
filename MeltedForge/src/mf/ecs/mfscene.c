@@ -49,11 +49,12 @@ void mfSceneDestroy(MFScene* scene) {
     mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
 }
 
-void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scene, void* state), void* state) {
+void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
-    MF_PANIC_IF(entityDraw == mfnull, mfGetLogger(), "The entity draw function ptr handle shouldn't be null!");
-    
+    MF_PANIC_IF(config == mfnull, mfGetLogger(), "The scene render config function pointer shouldn't be null!");
+
+    mfPipelineBind(config->entityPipeline, config->viewport, config->scissor);
     for(u64 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
 
@@ -63,7 +64,19 @@ void mfSceneRender(MFScene* scene, void (*entityDraw)(MFEntity* e, MFScene* scen
         if(!mfEntityHasMeshComponent(e) || !mfEntityHasTransformComponent(e))
             continue;
         
-        entityDraw(e, scene, state);
+        MFMeshComponent* meshComp = mfSceneEntityGetMeshComponent(scene, &e->id);
+        MFTransformComponent* transformComp = mfSceneEntityGetTransformComponent(scene, &e->id);
+
+        MFMat4 modelMatrix = mfMat4Identity();
+        if(config->computeModelMatrix)
+            modelMatrix = config->computeModelMatrix(transformComp);
+
+        for(u64 meshIdx = 0; meshIdx < meshComp->model.meshCount; meshIdx++) {
+            MFMesh* mesh = &meshComp->model.meshes[meshIdx];
+            if(config->perMeshDrawCallback)
+                config->perMeshDrawCallback(config->state, mfMat4Mul(modelMatrix, mesh->transform), meshComp, meshIdx, config->entityPipeline);
+            mfMeshRender(mesh);
+        }
     }
 }
 
