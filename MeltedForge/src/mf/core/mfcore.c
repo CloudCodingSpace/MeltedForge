@@ -40,16 +40,13 @@ void mfInit(void) {
 
     // Deserializing
     do {
-        FILE* file = fopen("mfcore_cache.bin", "rb");
-        if(file == mfnull)
+        b8 success = false;
+        u64 size;
+        char* content = mfReadFile(mfGetLogger(), &size, &success, "mfcore_cache.bin", "rb");
+        MF_DO_IF(!success, {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
             break;
-
-        fseek(file, 0, SEEK_END);
-        u64 size = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        u8* content = MF_ALLOCMEM(u8, size);
-        fread(content, 1, size, file);
+        });
 
         MFSerializer serializer = {
             .buffer = content
@@ -59,7 +56,6 @@ void mfInit(void) {
         u32 sign = mfDeserializeU32(&serializer);
         if(sign != MF_SIGNATURE_CORE_CACHE_FILE) {
             mfSerializerDestroy(&serializer);
-            fclose(file);
             break;
         }
 
@@ -67,7 +63,6 @@ void mfInit(void) {
         ctx->counter = mfDeserializeU32(&serializer);
 
         mfSerializerDestroy(&serializer);
-        fclose(file);
     } while(0);
 
     // Error texture
@@ -121,15 +116,11 @@ void mfShutdown(void) {
         mfSerializeU32(&serializer, ctx->counter);
 
         do {
-            FILE* file = fopen("mfcore_cache.bin", "wb");
-            if(file == mfnull) {
-                slogLogMsg(&ctx->logger, SLOG_SEVERITY_ERROR, "Can't serialize to core cache file named 'mfcore_cache.bin'!");
+            b8 success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
+            MF_DO_IF(!success, {
+                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
                 break;
-            }
-
-            fwrite(serializer.buffer, serializer.bufferSize, 1, file);
-
-            fclose(file);
+            });
         } while(0);
 
         mfSerializerDestroy(&serializer);

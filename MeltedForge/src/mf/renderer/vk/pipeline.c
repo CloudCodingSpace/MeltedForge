@@ -117,8 +117,11 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     // Modules
     {
         size_t vertSize, fragSize;
-        char* vertCode = mfReadFile(mfGetLogger(), &vertSize, info->vertPath, "rb");
-        char* fragCode = mfReadFile(mfGetLogger(), &fragSize, info->fragPath, "rb");
+        b8 success = false;
+        char* vertCode = mfReadFile(mfGetLogger(), &vertSize, &success, info->vertPath, "rb");
+        MF_PANIC_IF(!success, mfGetLogger(), "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
+        char* fragCode = mfReadFile(mfGetLogger(), &fragSize, &success, info->fragPath, "rb");
+        MF_PANIC_IF(!success, mfGetLogger(), "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
 
         VkShaderModuleCreateInfo vertInfo = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

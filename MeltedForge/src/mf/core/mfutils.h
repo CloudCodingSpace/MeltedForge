@@ -65,39 +65,47 @@ typedef uint8_t b8;
 #pragma region file_funcs
 
 // @note The returned const char* must be freed since it is allocated on the heap
-MF_INLINE char* mfReadFile(SLogger* logger, u64* size, const char* path, const char* mode) {
+MF_INLINE char* mfReadFile(SLogger* logger, u64* size, b8* success, const char* path, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
     MF_PANIC_IF(mode == 0, logger, "The file reading mode provided shouldn't be null!");
     MF_PANIC_IF(size == 0, logger, "The size pointer provided shouldn't be null!");
+    MF_PANIC_IF(success == 0, logger, "The success pointer provided shouldn't be null!");
 
-    char* content;
     FILE* file = fopen(path, mode);
-    MF_PANIC_IF(file == 0, logger, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
+    if(file == mfnull) {
+        *success = false;
+        return mfnull;
+    }
 
     fseek(file, 0, SEEK_END);
     *size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    content = MF_ALLOCMEM(char, sizeof(char) * (*size) + 1);
-    fread(content, sizeof(char), *size, file);
+    char* buffer = MF_ALLOCMEM(char, sizeof(char) * (*size) + 1);
+    fread(buffer, sizeof(char), *size, file);
     fclose(file);
 
-    content[*size] = '\0';
-    return content;
+    buffer[*size] = '\0';
+
+    *success = true;
+    return buffer;
 }
 
-MF_INLINE void mfWriteFile(SLogger* logger, u64 size, const char* path, const char* data, const char* mode) {
+MF_INLINE b8 mfWriteFile(SLogger* logger, u64 size, const char* path, const char* data, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
     MF_PANIC_IF(mode == 0, logger, "The file reading mode provided shouldn't be null!");
     MF_PANIC_IF(data == 0, logger, "The data pointer provided shouldn't be null!");
     MF_PANIC_IF(size == 0, logger, "The size provided shouldn't be 0!");
 
     FILE* file = fopen(path, mode);
-    MF_PANIC_IF(file == 0, logger, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
+    if(file == mfnull) {
+        return false;
+    }
 
     fwrite(data, 1, size, file);
 
     fclose(file);
+    return true;
 }
 
 #pragma endregion
