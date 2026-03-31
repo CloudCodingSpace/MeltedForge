@@ -2,7 +2,7 @@
 #include "core/mfmaths.h"
 #include "ecs/mfscene.h"
 #include "renderer/mfrenderer.h"
-#include "slog/slog.h"
+
 #include "util.h"
 
 #define INFO(logger, msg, ...) slogLogMsg(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
@@ -64,8 +64,7 @@ static void meshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
 static MFMat4 computeModelMatrix(const MFTransformComponent* component) {
     MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
     MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-    MFMat4 scale = mfMat4Identity();
-    mfMat4Scale(&scale, component->scale.x, component->scale.y, component->scale.z);
+    MFMat4 scale = mfMat4Scale(component->scale.x, component->scale.y, component->scale.z);
 
     MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
     return model;

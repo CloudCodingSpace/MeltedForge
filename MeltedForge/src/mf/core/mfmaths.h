@@ -286,9 +286,11 @@ MF_INLINE void mfMat2Rotate(MFMat2* mat, f32 theta_rad) {
     *mat = mfMat2Mul(rotation, *mat);
 }
 
-MF_INLINE void mfMat2Scale(MFMat2* mat, f32 x, f32 y) {
-    mat->data[0] *= x;
-    mat->data[3] *= y;
+MF_INLINE MFMat2 mfMat2Scale(f32 x, f32 y) {
+    MFMat2 mat = mfMat2Identity();
+    mat.data[0] *= x;
+    mat.data[3] *= y;
+    return mat;
 }
 
 MF_INLINE MFMat2 mfMat2Transpose(MFMat2 mat) {
@@ -408,10 +410,12 @@ MF_INLINE void mfMat3Rotate(MFMat3* mat, f32 theta_rad) {
     *mat = mfMat3Mul(rotation, *mat);
 }
 
-MF_INLINE void mfMat3Scale(MFMat3* mat, f32 x, f32 y, f32 z) {
-    mat->data[0] *= x;
-    mat->data[4] *= y;
-    mat->data[8] *= z;
+MF_INLINE MFMat3 mfMat3Scale(f32 x, f32 y, f32 z) {
+    MFMat3 mat = mfMat3Identity();
+    mat.data[0] *= x;
+    mat.data[4] *= y;
+    mat.data[8] *= z;
+    return mat;
 }
 
 MF_INLINE MFMat3 mfMat3Transpose(MFMat3 mat) {
@@ -514,10 +518,12 @@ MF_INLINE MFMat4 mfMat4Translate(f32 x, f32 y, f32 z) {
     return mat;
 }
 
-MF_INLINE void mfMat4Scale(MFMat4* mat, f32 x, f32 y, f32 z) {
-    mat->data[0] *= x;
-    mat->data[5] *= y;
-    mat->data[10] *= z;
+MF_INLINE MFMat4 mfMat4Scale(f32 x, f32 y, f32 z) {
+    MFMat4 mat = mfMat4Identity();
+    mat.data[0] *= x;
+    mat.data[5] *= y;
+    mat.data[10] *= z;
+    return mat;
 }
 
 MF_INLINE MFMat4 mfMat4RotateX(f32 radians) {
