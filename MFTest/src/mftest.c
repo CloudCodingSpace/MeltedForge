@@ -338,8 +338,27 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-            state->lightData.lightPos = mfCopyFloatArrToVec3(posData);
-            state->lightData.lightColor = mfCopyFloatArrToVec3(colorData);
+            state->lightData.lightPos = mfFloatArrToVec3(posData);
+            state->lightData.lightColor = mfFloatArrToVec3(colorData);
+        }
+
+        if(igCollapsingHeader_BoolPtr("Model transform settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
+            MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entity);
+            
+            f32 scale[3] = {0};
+            mfCopyVec3ToFloatArr(scale, transformComponent->scale);
+            f32 position[3] = {0};
+            mfCopyVec3ToFloatArr(position, transformComponent->position);
+            f32 rotation[3] = {0};
+            mfCopyVec3ToFloatArr(rotation, transformComponent->rotationXYZ);
+            
+            igDragFloat3("Postion", position, 0.1f, -1e6f, 1e6f, mfnull, ImGuiSliderFlags_None);
+            igDragFloat3("Scale", scale, 0.1f, 1.0f, 1e6f, mfnull, ImGuiSliderFlags_None);
+            igDragFloat3("Rotation (In degrees)", rotation, 0.1f, 0.0f, 360.0f, mfnull, ImGuiSliderFlags_None);
+        
+            transformComponent->position = mfFloatArrToVec3(position);
+            transformComponent->scale = mfFloatArrToVec3(scale);
+            transformComponent->rotationXYZ = mfFloatArrToVec3(rotation);
         }
 
         igEnd();

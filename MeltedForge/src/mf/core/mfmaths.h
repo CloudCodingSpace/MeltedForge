@@ -713,7 +713,7 @@ MF_INLINE void mfCopyVec3ToFloatArr(f32* out, MFVec3 v) {
     out[2] = v.z;
 }
 
-MF_INLINE MFVec3 mfCopyFloatArrToVec3(f32* in) {
+MF_INLINE MFVec3 mfFloatArrToVec3(f32* in) {
     MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     return mfVec3Create(in[0], in[1], in[2]);
 }
