@@ -17,7 +17,7 @@ typedef struct MFMeshMaterial_s {
     const char* ambient_texpath;
     const char* diffuse_texpath;
     const char* specular_texpath;
-    const char* bump_texpath;
+    const char* normal_texpath;
     const char* displacement_texpath;
     const char* shininess_texpath;
     const char* lightmap_texpath;

@@ -141,7 +141,7 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
         matData.diffuse_texpath = get_materialtex(scene, mat, aiTextureType_DIFFUSE);
         matData.displacement_texpath = get_materialtex(scene, mat, aiTextureType_DISPLACEMENT);
         matData.specular_texpath = get_materialtex(scene, mat, aiTextureType_SPECULAR);
-        matData.bump_texpath = get_materialtex(scene, mat, aiTextureType_HEIGHT);
+        matData.normal_texpath = get_materialtex(scene, mat, aiTextureType_NORMALS);
         matData.shininess_texpath = get_materialtex(scene, mat, aiTextureType_SHININESS);
         matData.emission_texpath = get_materialtex(scene, mat, aiTextureType_EMISSIVE);
         matData.metalness_texpath = get_materialtex(scene, mat, aiTextureType_METALNESS);

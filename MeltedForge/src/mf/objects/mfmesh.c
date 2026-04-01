@@ -38,7 +38,7 @@ void mfMeshDestroy(MFMesh* mesh) {
     mfGpuBufferFree(mesh->indBuffer);
     mfGpuBufferFree(mesh->vertBuffer);
     
-    MF_FREEMEM(mesh->mat.bump_texpath);
+    MF_FREEMEM(mesh->mat.normal_texpath);
     MF_FREEMEM(mesh->mat.alpha_texpath);
     MF_FREEMEM(mesh->mat.ambient_texpath);
     MF_FREEMEM(mesh->mat.diffuse_texpath);

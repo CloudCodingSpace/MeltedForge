@@ -188,6 +188,8 @@ void MFTOnInit(void* pstate, void* pappState) {
         for(u64 i = 0; i < component->model.meshCount; i++) {
             MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             mfGpuImageSetBinding(image, 2);
+            image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
+            mfGpuImageSetBinding(image, 3);
         }
 
         MF_FREEMEM(basePath);
@@ -197,10 +199,12 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfResourceSetLayoutGetSizeInBytes());
         
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
+        MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
+        MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, 0, appState->renderer);
         
         MFResourceDescription descs[] = {
-            mfGpuImageGetDescription(image), // NOTE: Description for one image is enough since they have the same bindings 
+            mfGpuImageGetDescription(diffuseImage), // NOTE: Description for one image is enough since they have the same bindings 
+            mfGpuImageGetDescription(normalImage), // NOTE: Description for one image is enough since they have the same bindings 
             mfGpuBufferGetDescription(state->cameraUbo),
             mfGpuBufferGetDescription(state->lightUbo)
         };
@@ -221,9 +225,12 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfResourceSetGetSizeInBytes());
             mfResourceSetCreate(state->sets[i], state->layout, appState->renderer);
 
-            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
-            MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(images, MFGpuImage*, &state->logger, image);
+            MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
+            MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
+            
+            MFArray images = mfArrayCreate(&state->logger, 2, sizeof(MFGpuImage*));
+            mfArrayAddElement(images, MFGpuImage*, &state->logger, diffuseImage);
+            mfArrayAddElement(images, MFGpuImage*, &state->logger, normalImage);
 
             mfResourceSetUpdate(state->sets[i], &images, &buffers);
             

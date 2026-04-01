@@ -5,6 +5,7 @@
 typedef struct Vertex_s {
     MFVec3 pos;
     MFVec3 normal;
+    MFVec3 tangent;
     MFVec2 uv;
 } Vertex;
 
@@ -18,9 +19,9 @@ MF_INLINE MFVertexInputBindingDescription getVertBindingDesc() {
 }
 
 MF_INLINE MFVertexInputAttributeDescription* getVertAttribDescs(u32* count) {
-    *count = 3;
+    *count = 4;
 
-    MFVertexInputAttributeDescription* desc = MF_ALLOCMEM(MFVertexInputAttributeDescription, sizeof(MFVertexInputAttributeDescription) * 3);
+    MFVertexInputAttributeDescription* desc = MF_ALLOCMEM(MFVertexInputAttributeDescription, sizeof(MFVertexInputAttributeDescription) * (*count));
     desc[0].binding = 0;
     desc[0].location = 0;
     desc[0].offset = offsetof(Vertex, pos);
@@ -35,6 +36,11 @@ MF_INLINE MFVertexInputAttributeDescription* getVertAttribDescs(u32* count) {
     desc[2].location = 2;
     desc[2].offset = offsetof(Vertex, uv);
     desc[2].format = MF_FORMAT_R32G32_SFLOAT;
+    
+    desc[3].binding = 0;
+    desc[3].location = 3;
+    desc[3].offset = offsetof(Vertex, tangent);
+    desc[3].format = MF_FORMAT_R32G32B32_SFLOAT;
 
     return desc;
 }
@@ -45,6 +51,7 @@ MF_INLINE void vertBuilder(void* dst, MFModelVertexBuilderData data) {
     vertex->pos = data.pos;
     vertex->normal = data.normal;
     vertex->uv = data.texCoord;
+    vertex->tangent = data.tangent;
 }
 
 MF_INLINE void SetUiStyle() {

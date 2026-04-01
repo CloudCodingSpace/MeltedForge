@@ -4,9 +4,9 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout (location = 1) in vec3 oNormal;
-layout (location = 2) in vec2 oUv;
-layout (location = 3) in vec3 oFragPos;
+layout (location = 4) in mat3 oTBN_matrix;
+layout (location = 7) in vec2 oUv;
+layout (location = 8) in vec3 oFragPos;
 
 layout (binding = 1) uniform LightUBO {
     vec3 lightPos;
@@ -17,10 +17,14 @@ layout (binding = 1) uniform LightUBO {
     float lightIntensity;
 } ubo;
 
-layout (binding = 2) uniform sampler2D u_Tex;
+layout (binding = 2) uniform sampler2D u_DiffuseTex;
+layout (binding = 3) uniform sampler2D u_NormalTex;
 
 void main() {
-    outColor = texture(u_Tex, oUv) * vec4(mfComputePhongLighting(oNormal, 
+    vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
+    vec3 normal = oTBN_matrix * texel;
+
+    outColor = texture(u_DiffuseTex, oUv) * vec4(mfComputePhongLighting(normal, 
                                     oFragPos, 
                                     ubo.lightPos - oFragPos, 
                                     ubo.camPos, 
