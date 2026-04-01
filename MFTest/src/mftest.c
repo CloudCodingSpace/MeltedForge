@@ -64,7 +64,7 @@ static void meshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
 static MFMat4 computeModelMatrix(const MFTransformComponent* component) {
     MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
     MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-    MFMat4 scale = mfMat4Scale(component->scale.x, component->scale.y, component->scale.z);
+    MFMat4 scale = mfMat4Scale(fmax(component->scale.x, 1e-4f), fmax(component->scale.y, 1e-4f), fmax(component->scale.z, 1e-4f));
 
     MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
     return model;
@@ -154,7 +154,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .lightPos = (MFVec3){0.0f, 20.0f, 20.0f},
             .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
             .specularFactor = 32,
-            .lightIntensity = 100
+            .lightIntensity = 2500
         };
         
         state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
