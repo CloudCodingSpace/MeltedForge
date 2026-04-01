@@ -15,8 +15,7 @@ struct MFContext_s {
     SLogger logger;
     bool init;
     // UUID Generator
-    u32 sessionID;
-    u32 counter;
+    u64 counter;
 
     u32 errorImageWidth;
     u32 errorImageHeight;
@@ -39,31 +38,27 @@ void mfInit(void) {
     slogLoggerCreate(&ctx->logger, "MeltedForge", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE); // TODO: Make the features configurable!!
 
     // Deserializing
-    do {
+    {
         b8 success = false;
         u64 size;
         char* content = mfReadFile(mfGetLogger(), &size, &success, "mfcore_cache.bin", "rb");
-        MF_DO_IF(!success, {
+        if(!success) {
             slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
-            break;
-        });
-
-        MFSerializer serializer = {
-            .buffer = content
-        };
-        mfSerializerCreate(&serializer, size, true);
-        
-        u32 sign = mfDeserializeU32(&serializer);
-        if(sign != MF_SIGNATURE_CORE_CACHE_FILE) {
-            mfSerializerDestroy(&serializer);
-            break;
+        } else {
+            MFSerializer serializer = {
+                .buffer = content
+            };
+            mfSerializerCreate(&serializer, size, true);
+            
+            u32 sign = mfDeserializeU32(&serializer);
+            if(sign != MF_SIGNATURE_CORE_CACHE_FILE) {
+                mfSerializerDestroy(&serializer);
+            } else {
+                ctx->counter = mfDeserializeU32(&serializer);
+                mfSerializerDestroy(&serializer);
+            }
         }
-
-        ctx->sessionID = mfDeserializeU32(&serializer);
-        ctx->counter = mfDeserializeU32(&serializer);
-
-        mfSerializerDestroy(&serializer);
-    } while(0);
+    }
 
     // Error texture
     {
@@ -109,21 +104,18 @@ void mfShutdown(void) {
     // Serializing
     {
         MFSerializer serializer = {0};
-        mfSerializerCreate(&serializer, sizeof(u32) * 3, false);
+        mfSerializerCreate(&serializer, sizeof(u32) + sizeof(u64), false);
         
         mfSerializeU32(&serializer, MF_SIGNATURE_CORE_CACHE_FILE);
-        mfSerializeU32(&serializer, ctx->sessionID);
-        mfSerializeU32(&serializer, ctx->counter);
+        mfSerializeU64(&serializer, ctx->counter);
 
-        do {
-            b8 success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
-            MF_DO_IF(!success, {
-                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
-                break;
-            });
-        } while(0);
+        b8 success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
 
-        mfSerializerDestroy(&serializer);
+        if(!success) {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
+        } else {
+            mfSerializerDestroy(&serializer);
+        }
     }
 
     MF_FREEMEM(ctx->errorImagePixels);
@@ -148,15 +140,11 @@ u64 mfGetNextID(void) {
     }
     
     if(ctx->counter == UINT32_MAX) {
-        if(ctx->sessionID == UINT32_MAX) {
-            slogLogMsg(&ctx->logger, SLOG_SEVERITY_FATAL, "[MeltedForge]: Can't generate more IDs!");
-            abort();
-        }
-        ctx->sessionID++;
-        ctx->counter = 0;
+        slogLogMsg(&ctx->logger, SLOG_SEVERITY_FATAL, "[MeltedForge]: Can't generate more IDs!");
+        abort();
     }
 
-    return (u64)(((u64)ctx->sessionID << 32) | (ctx->counter++));
+    return ctx->counter++;
 }
 
 u8* mfGetErrorImagePixels(void) {
