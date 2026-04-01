@@ -82,7 +82,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     INFO(&state->logger, "MFTest init");
 
     state->renderer = appState->renderer;
-    mfRendererSetClearColor(appState->renderer, mfVec3Create(0.1f, 0.1f, 0.1f));
+    mfRendererSetClearColor(appState->renderer, mfVec3Create(0, 0, 0.01f));
 
     mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
 
