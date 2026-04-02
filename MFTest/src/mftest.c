@@ -103,7 +103,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             state->entity = mfSceneCreateEntity(&state->scene);
 
             MFMeshComponent mComp = {
-                .path = "meshes/moon_rock/moon_rock.obj",
+                .path = "meshes/pistol/service_pistol.gltf",
                 .perVertSize = sizeof(Vertex),
                 .vertBuilder = vertBuilder
             };
