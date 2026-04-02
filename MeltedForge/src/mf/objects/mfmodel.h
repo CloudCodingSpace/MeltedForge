@@ -14,7 +14,7 @@ typedef struct MFModelVertexBuilderData_s {
 typedef void (*MFModelVertexBuilder)(void* dst, MFModelVertexBuilderData data);
 
 typedef struct MFModel_s {
-    u64 meshCount, perVertexSize, meshIdx;
+    u64 meshCount, perVertexSize, _meshIdx;
     MFMesh* meshes;
 
     MFModelVertexBuilder builder;

@@ -20,13 +20,14 @@ layout (push_constant) uniform ModelData {
 } md;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * md.model * vec4(pos, 1.0);
+    vec4 worldPos = md.model * vec4(pos, 1.0);
+    gl_Position = ubo.proj * ubo.view * worldPos;
     
     vec3 N = normalize(mat3(md.normalMat) * normal);
     vec3 T = normalize(mat3(md.normalMat) * tangent);
     vec3 B = normalize(cross(N, tangent));
     oTBN_matrix = mat3(T, B, N);
 
-    oFragPos = (md.model * vec4(pos, 1.0)).xyz;
+    oFragPos = worldPos.xyz;
     oUv = uv;
 }

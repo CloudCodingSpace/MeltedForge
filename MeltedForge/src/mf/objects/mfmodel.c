@@ -164,10 +164,10 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
         }
     }
 
-    model->meshes[model->meshIdx].mat = matData;
-    model->meshes[model->meshIdx].transform = transform;
-    mfMeshCreate(&model->meshes[model->meshIdx], model->renderer, model->perVertexSize * mesh->mNumVertices, vertices, mesh->mNumFaces * 3, indices);
-    model->meshIdx++;
+    model->meshes[model->_meshIdx].mat = matData;
+    model->meshes[model->_meshIdx].transform = transform;
+    mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * mesh->mNumVertices, vertices, mesh->mNumFaces * 3, indices);
+    model->_meshIdx++;
 
     MF_FREEMEM(vertices);
     MF_FREEMEM(indices);
