@@ -154,7 +154,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .lightPos = (MFVec3){0.0f, 20.0f, 20.0f},
             .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
             .specularFactor = 32,
-            .lightIntensity = 2500
+            .lightIntensity = 100
         };
         
         state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
