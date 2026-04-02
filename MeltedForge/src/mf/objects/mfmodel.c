@@ -33,25 +33,6 @@ const char* ToString(struct aiString string) {
     return str;
 }
 
-void file_reader(void* ctx, const char* filename, int is_mtl, const char* base_dir, char** out_buf, uint64_t* out_len) {
-    FILE* f = fopen(filename, "rb");
-    if (!f) {
-        *out_buf = NULL;
-        *out_len = 0;
-        return;
-    }
-
-    fseek(f, 0, SEEK_END);
-    *out_len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    *out_buf = malloc(*out_len + 1);
-    fread(*out_buf, 1, *out_len, f);
-    (*out_buf)[*out_len] = '\0';
-
-    fclose(f);
-}
-
 const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat, enum aiTextureType type) {
     //! FIXME: MAKE USE OF ALL THE TEXTURE TYPES AVAILABLE!
     int count = aiGetMaterialTextureCount(mat, type);

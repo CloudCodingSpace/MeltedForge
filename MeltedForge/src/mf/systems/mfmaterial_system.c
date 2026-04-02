@@ -10,7 +10,8 @@ MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial*
     u8* pixels;
     u8* img_pixels = stbi_load(path, &width, &height, &channels, 4);
     if (!img_pixels) {
-        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s", stbi_failure_reason());
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s.", stbi_failure_reason());
+        
         switch(type) {
             case MF_MODEL_MAT_TEXTURE_DIFFUSE:
                 if(mat->diffuse[0] == -1)
@@ -41,7 +42,12 @@ MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial*
                 buff[2] = (u8)mat->emission[2] * 255;
                 break;
 error_return:
+            if(type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT && type != MF_MODEL_MAT_TEXTURE_NORMAL)
                 return mfCreateErrorGpuImage(renderer);
+            else {
+                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_FATAL, "Failed to load the normal/displacement material image!");
+                abort();
+            }
         };
         pixels = buff;
         width = 1;

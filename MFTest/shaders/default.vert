@@ -23,8 +23,7 @@ void main() {
     gl_Position = ubo.proj * ubo.view * md.model * vec4(pos, 1.0);
     
     vec3 N = normalize(mat3(md.normalMat) * normal);
-    vec3 T = normalize(mat3(md.model) * tangent);
-    T = normalize(T - dot(T, N) * N);
+    vec3 T = normalize(mat3(md.normalMat) * tangent);
     vec3 B = normalize(cross(N, tangent));
     oTBN_matrix = mat3(T, B, N);
 
