@@ -45,6 +45,7 @@ static void RenderTargetResizeCallback(void* pstate) {
     MFTState* state = (MFTState*)pstate;
     
     // Updating the viewport size but not really necessary for pipelines! This callback is only for demonstration!
+    
     mfPipelineDestroy(state->pipeline);
     CreatePipeline(state);
 }

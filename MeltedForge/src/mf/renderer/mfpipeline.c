@@ -142,7 +142,7 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
                 if(result != VK_SUCCESS) {
                     slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to get the pipeline cache's data! Result by vulkan :- %s", string_VkResult(result));
                 } else {
-                    mfWriteFile(mfGetLogger(), size, pipeline->cacheFilePath, buffer, "rb");
+                    mfWriteFile(mfGetLogger(), size, pipeline->cacheFilePath, buffer, "wb");
                 }
 
                 MF_FREEMEM(buffer);
