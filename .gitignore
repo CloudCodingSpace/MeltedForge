@@ -7,3 +7,4 @@ out
 vkconfig.txt
 *.spv
 .vscode/settings.json
+build-tracy

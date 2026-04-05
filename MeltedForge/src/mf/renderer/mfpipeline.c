@@ -131,7 +131,6 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
     
-    //! FIXME: This following code commits a programming warcrime! Fix it!!!
     if(pipeline->pipelineCache) {
         if(pipeline->cacheFilePath) {
             size_t size = 0;
@@ -139,11 +138,10 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
             if(result == VK_SUCCESS) {
                 u8* buffer = MF_ALLOCMEM(u8, sizeof(u8) * size);
                 result = vkGetPipelineCacheData(pipeline->ctx->device, pipeline->pipelineCache, &size, buffer);
-                if(result != VK_SUCCESS) {
+                if(result != VK_SUCCESS)
                     slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to get the pipeline cache's data! Result by vulkan :- %s", string_VkResult(result));
-                } else {
+                else
                     mfWriteFile(mfGetLogger(), size, pipeline->cacheFilePath, buffer, "wb");
-                }
 
                 MF_FREEMEM(buffer);
             } else {

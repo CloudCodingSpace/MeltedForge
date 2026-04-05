@@ -5,7 +5,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
   add_compile_definitions(NDEBUG)
 endif()
-
+add_compile_definitions(TRACY_ENABLE)
 
 function(EnableFlags target)
     if(MSVC)

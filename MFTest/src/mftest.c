@@ -1,8 +1,4 @@
 #include "mftest.h"
-#include "core/mfmaths.h"
-#include "ecs/mfscene.h"
-#include "renderer/mfrenderer.h"
-
 #include "util.h"
 
 #define INFO(logger, msg, ...) slogLogMsg(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
@@ -43,6 +39,7 @@ static void CreatePipeline(MFTState* state) {
 
 static void RenderTargetResizeCallback(void* pstate) {
     MFTState* state = (MFTState*)pstate;
+    
     
     // Updating the viewport size but not really necessary for pipelines! This callback is only for demonstration!
     
