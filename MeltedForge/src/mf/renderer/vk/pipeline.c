@@ -178,7 +178,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     if(info->hasDepth)
         ginfo.pDepthStencilState = &depthState;
 
-    VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &ginfo, ctx->allocator, &pipeline->pipeline));    
+    VK_CHECK(vkCreateGraphicsPipelines(ctx->device, info->cache, 1, &ginfo, ctx->allocator, &pipeline->pipeline));    
 
     vkDestroyShaderModule(ctx->device, vertMod, ctx->allocator);
     vkDestroyShaderModule(ctx->device, fragMod, ctx->allocator);

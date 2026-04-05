@@ -24,6 +24,7 @@ typedef struct MFPipelineConfig_s {
     b8 hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
+    const char* cacheFilePath;
     MFRenderTarget* renderTarget;
 } MFPipelineConfig;
 

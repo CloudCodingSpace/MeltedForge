@@ -7,10 +7,14 @@
 #include "vk/buffer.h"
 #include "vk/render_target.h"
 
+#include <vulkan/vk_enum_string_helper.h>
+
 struct MFPipeline_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
+    VkPipelineCache pipelineCache;
+    char* cacheFilePath;
     b8 init;
 };
 
@@ -62,6 +66,26 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
         ranges[i].size = info->pushConstRanges[i].size;
         ranges[i].stageFlags = (VkShaderStageFlags)((int)info->pushConstRanges[i].stage);
     }
+    
+    // Pipeline cache
+    VkPipelineCacheCreateInfo cacheInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+        .initialDataSize = 0,
+        .pInitialData = mfnull
+    };
+
+    if(info->cacheFilePath) {
+        pipeline->cacheFilePath = strdup(info->cacheFilePath);
+        // TODO: load the cache from file
+    } else {
+        pipeline->cacheFilePath = mfnull;
+    }
+
+    VkResult cacheResult = vkCreatePipelineCache(pipeline->ctx->device, &cacheInfo, pipeline->ctx->allocator, &pipeline->pipelineCache);
+    if(cacheResult != VK_SUCCESS) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to create the pipeline cache! Result by vulkan :- %s", string_VkResult(cacheResult));
+        pipeline->pipelineCache = mfnull;
+    }
 
     VulkanPipelineInfo binfo = {
         .vertPath = info->vertPath,
@@ -97,6 +121,13 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
+    
+    if(pipeline->pipelineCache) {
+        if(pipeline->cacheFilePath) {
+            // TODO: serialize here
+        }
+        vkDestroyPipelineCache(pipeline->ctx->device, pipeline->pipelineCache, pipeline->ctx->allocator);
+    }
     
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
     
