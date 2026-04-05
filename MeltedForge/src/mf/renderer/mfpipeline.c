@@ -68,6 +68,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     }
     
     // Pipeline cache
+    u8* initialData = mfnull;
     VkPipelineCacheCreateInfo cacheInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         .initialDataSize = 0,
@@ -76,7 +77,14 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     if(info->cacheFilePath) {
         pipeline->cacheFilePath = strdup(info->cacheFilePath);
-        // TODO: load the cache from file
+
+        size_t size = 0;
+        b8 success = false;
+        initialData = mfReadFile(mfGetLogger(), &size, &success, info->cacheFilePath, "rb");
+        if(success) {
+            cacheInfo.initialDataSize = size;
+            cacheInfo.pInitialData = initialData;
+        }
     } else {
         pipeline->cacheFilePath = mfnull;
     }
@@ -110,6 +118,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);
 
+    MF_FREEMEM(initialData);
     MF_FREEMEM(ranges);
     MF_FREEMEM(setLayouts);
     MF_FREEMEM(bindings);
@@ -122,9 +131,26 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
     
+    //! FIXME: This following code commits a programming warcrime! Fix it!!!
     if(pipeline->pipelineCache) {
         if(pipeline->cacheFilePath) {
-            // TODO: serialize here
+            size_t size = 0;
+            VkResult result = vkGetPipelineCacheData(pipeline->ctx->device, pipeline->pipelineCache, &size, mfnull);
+            if(result == VK_SUCCESS) {
+                u8* buffer = MF_ALLOCMEM(u8, sizeof(u8) * size);
+                result = vkGetPipelineCacheData(pipeline->ctx->device, pipeline->pipelineCache, &size, buffer);
+                if(result != VK_SUCCESS) {
+                    slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to get the pipeline cache's data! Result by vulkan :- %s", string_VkResult(result));
+                } else {
+                    mfWriteFile(mfGetLogger(), size, pipeline->cacheFilePath, buffer, "rb");
+                }
+
+                MF_FREEMEM(buffer);
+            } else {
+                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to get the pipeline cache's data! Result by vulkan :- %s", string_VkResult(result));
+            }
+
+            MF_FREEMEM(pipeline->cacheFilePath);
         }
         vkDestroyPipelineCache(pipeline->ctx->device, pipeline->pipelineCache, pipeline->ctx->allocator);
     }
