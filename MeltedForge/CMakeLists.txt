@@ -20,11 +20,7 @@ set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_FBX_IMPORTER ON CACHE BOOL "" FORCE)
 
-# option(TRACY_ENABLE "" ON)
-# option(TRACY_ON_DEMAND "" ON)
-
 file(GLOB_RECURSE CSRCS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
-file(GLOB_RECURSE CXX_SRCS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mfassets" DESTINATION "${CMAKE_BINARY_DIR}")
 
@@ -60,11 +56,11 @@ target_compile_definitions(cimgui PUBLIC "CIMGUI_NO_EXPORT")
 target_compile_definitions(cimgui PUBLIC "IMGUI_IMPL_API=extern \"C\"")
 target_link_libraries(cimgui PRIVATE glfw Vulkan::Vulkan)
 
-add_library(mf ${CSRCS} ${CXX_SRCS})
+add_library(mf ${CSRCS})
 target_compile_definitions(mf PUBLIC "CIMGUI_DEFINE_ENUMS_AND_STRUCTS")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
-target_link_libraries(mf PUBLIC stb slog cimgui assimp)
-target_link_libraries(mf PRIVATE glfw Vulkan::Vulkan TracyClient)
+target_link_libraries(mf PUBLIC stb slog cimgui assimp TracyClient)
+target_link_libraries(mf PRIVATE glfw Vulkan::Vulkan)
 set_property(TARGET mf PROPERTY C_STANDARD 23)
 EnableFlags(mf)

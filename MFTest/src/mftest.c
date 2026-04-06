@@ -38,13 +38,14 @@ static void CreatePipeline(MFTState* state) {
 }
 
 static void RenderTargetResizeCallback(void* pstate) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "Render target resize callback");
+
     MFTState* state = (MFTState*)pstate;
-    
-    
     // Updating the viewport size but not really necessary for pipelines! This callback is only for demonstration!
-    
     mfPipelineDestroy(state->pipeline);
     CreatePipeline(state);
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 static void meshCallback(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
@@ -61,17 +62,22 @@ static void meshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
 }
 
 static MFMat4 computeModelMatrix(const MFTransformComponent* component) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "Computing model matrix");
     MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
     MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
     MFMat4 scale = mfMat4Scale(fmax(component->scale.x, 1e-4f), fmax(component->scale.y, 1e-4f), fmax(component->scale.z, 1e-4f));
 
     MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
+    
+    MF_PROFILE_ZONE_END(__temp);
     return model;
 }
 
 #pragma region MFTest
 
 void MFTOnInit(void* pstate, void* pappState) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest init");
+
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
@@ -242,8 +248,9 @@ void MFTOnInit(void* pstate, void* pappState) {
     state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
     CreatePipeline(state);
 
-    // UI customization
     SetUiStyle();
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 void MFTOnDeinit(void* pstate, void* pappState) {
@@ -374,6 +381,8 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 }
 
 void MFTOnUpdate(void* pstate, void* pappState) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest update");
+
     MFDefaultAppState* aState = (MFDefaultAppState*)pappState;
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfWindowGetConfig(aState->window);
@@ -391,6 +400,8 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(aState->window);
     }
+    
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 #pragma endregion
