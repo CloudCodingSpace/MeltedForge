@@ -32,7 +32,7 @@ void mfSceneDestroy(MFScene* scene) {
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
 
     for(u32 i = 0; i < scene->entities.len; i++) {
-        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
         if(!e->valid)
             continue;
 
@@ -56,7 +56,7 @@ void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
 
     mfPipelineBind(config->entityPipeline, config->viewport, config->scissor);
     for(u64 i = 0; i < scene->entities.len; i++) {
-        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
 
         if(!e->valid)
             continue;
@@ -113,7 +113,7 @@ void mfSceneDeleteEntity(MFScene* scene, u64* id) {
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id > scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
 
-    MFEntity* e = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, *id);
 
     if(e->ownerScene != scene) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The entity provided doesn't belong to this scene!");
@@ -131,7 +131,7 @@ void mfSceneDeleteEntity(MFScene* scene, u64* id) {
         MF_SETMEM(trans, 0, sizeof(*trans));
     }
 
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, e->compGrpId);
+    MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, e->compGrpId);
     MF_SETMEM(grp, 0, sizeof(*grp));
     MF_SETMEM(e, 0, sizeof(MFEntity));
 
@@ -147,7 +147,7 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id > scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
     
-    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* entity = &mfArrayGetElement(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
     
     if(entity->ownerScene != scene) {
@@ -161,10 +161,10 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp
     comp.valid = true;
     mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
     
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->meshIdx = scene->meshCompPool.len - 1;
 
-    MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
+    MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
     mfModelLoadAndCreate(&c->model, comp.path, scene->renderer, comp.perVertSize, comp.vertBuilder);
 
     entity->components |= MF_COMPONENT_TYPE_MESH;
@@ -176,7 +176,7 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComp
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
 
-    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* entity = &mfArrayGetElement(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
@@ -189,7 +189,7 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComp
    
     comp.valid = true;
     mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->transformIdx = scene->transformCompPool.len - 1;
 
     entity->components |= MF_COMPONENT_TYPE_TRANSFORM;
@@ -201,7 +201,7 @@ void mfSceneEntityRemoveMeshComponent(MFScene* scene, u64* id) {
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
 
-    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* entity = &mfArrayGetElement(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
@@ -225,7 +225,7 @@ void mfSceneEntityRemoveTransformComponent(MFScene* scene, u64* id) {
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
     
-    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* entity = &mfArrayGetElement(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
     
     if(entity->ownerScene != scene) {
@@ -248,7 +248,7 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id) {
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
 
-    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* entity = &mfArrayGetElement(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
@@ -259,8 +259,8 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id) {
     if(!mfEntityHasMeshComponent(entity))
         return mfnull;
 
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
+    MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
     return c;
 }
 
@@ -270,7 +270,7 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64* id
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id >= scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
 
-    MFEntity* entity = &mfArrayGet(scene->entities, MFEntity, *id);
+    MFEntity* entity = &mfArrayGetElement(scene->entities, MFEntity, *id);
     MF_PANIC_IF(!entity->valid, mfGetLogger(), "The entity provided isn't valid anymore!");
 
     if(entity->ownerScene != scene) {
@@ -281,8 +281,8 @@ MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64* id
     if(!mfEntityHasTransformComponent(entity))
         return mfnull;
 
-    MFComponentGroup* grp = &mfArrayGet(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
-    MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, grp->transformIdx);
+    MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
+    MFTransformComponent* t = &mfArrayGetElement(scene->transformCompPool, MFTransformComponent, grp->transformIdx);
 
     return t;
 }
@@ -294,7 +294,7 @@ void mfSceneGetValidEntities(MFScene* scene, u64* validEntityCount, MFEntity* en
     
     *validEntityCount = 0;
     for(u64 i = 0; i < scene->entities.len; i++) {
-        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
         if(e->valid) {
             if(entities)
                 memcpy(&entities[*validEntityCount], e, sizeof(MFEntity));
@@ -313,22 +313,22 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
 
     u64 validEntities = 0, validMeshComponents = 0, validTransformComponents = 0, validGroupCount = 0;
     for(u64 i = 0; i < scene->entities.len; i++) {
-        MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+        MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
         if(e->valid)
             validEntities++;
     }
     for(u64 i = 0; i < scene->meshCompPool.len; i++) {
-        MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+        MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, i);
         if(c->valid)
             validMeshComponents++;
     }
     for(u64 i = 0; i < scene->transformCompPool.len; i++) {
-        MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+        MFTransformComponent* t = &mfArrayGetElement(scene->transformCompPool, MFTransformComponent, i);
         if(t->valid)
             validTransformComponents++;
     }
     for(u64 i = 0; i < scene->compGrpTable.len; i++) {
-        MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+        MFComponentGroup* g = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, i);
         if(g->valid)
             validGroupCount++;
     }
@@ -343,7 +343,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     size += 2 * sizeof(u64) * validGroupCount; // since 2 u64s per group
 
     for(u64 i = 0; i < scene->meshCompPool.len; i++) {
-        MFMeshComponent* comp = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+        MFMeshComponent* comp = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, i);
         if(!comp)
             continue;
         size += sizeof(u32);
@@ -359,7 +359,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     {
         mfSerializeU64(&s, validEntities);
         for(u64 i = 0; i < scene->entities.len; i++) {
-            MFEntity* e = &mfArrayGet(scene->entities, MFEntity, i);
+            MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
             if(!e->valid)
                 continue;
             mfSerializeU64(&s, e->uuid);
@@ -372,7 +372,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     {
         mfSerializeU64(&s, validMeshComponents);
         for(u64 i = 0; i < scene->meshCompPool.len; i++) {
-            MFMeshComponent* c = &mfArrayGet(scene->meshCompPool, MFMeshComponent, i);
+            MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, i);
             if(!c->valid)
                 continue;
             mfSerializeString(&s, c->path);
@@ -383,7 +383,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     {
         mfSerializeU64(&s, validTransformComponents);
         for(u64 i = 0; i < scene->transformCompPool.len; i++) {
-            MFTransformComponent* t = &mfArrayGet(scene->transformCompPool, MFTransformComponent, i);
+            MFTransformComponent* t = &mfArrayGetElement(scene->transformCompPool, MFTransformComponent, i);
             if(!t->valid)
                 continue;
             mfSerializeF32(&s, t->position.x);
@@ -401,7 +401,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     {
         mfSerializeU64(&s, validGroupCount);
         for(u64 i = 0; i < scene->compGrpTable.len; i++) {
-            MFComponentGroup* g = &mfArrayGet(scene->compGrpTable, MFComponentGroup, i);
+            MFComponentGroup* g = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, i);
             if(!g->valid)
                 continue;
             mfSerializeU64(&s, g->meshIdx);

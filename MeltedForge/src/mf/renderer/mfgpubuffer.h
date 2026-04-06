@@ -6,8 +6,6 @@
 #include "mfrenderer.h"
 #include "mfutil_types.h"
 
-struct VulkanBuffer_s;
-
 typedef enum MFGpuBufferTypes_s {
     MF_GPU_BUFFER_TYPE_NONE,
     MF_GPU_BUFFER_TYPE_VERTEX,
@@ -37,4 +35,4 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer);
 
 size_t mfGpuBufferGetSizeInBytes(void);
 MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer);
-struct VulkanBuffer_s* mfGpuBufferGetBackend(MFGpuBuffer* buffer);
+void* mfGpuBufferGetBackend(MFGpuBuffer* buffer);

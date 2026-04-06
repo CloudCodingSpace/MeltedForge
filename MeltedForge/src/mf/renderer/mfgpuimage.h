@@ -7,8 +7,6 @@
 
 typedef struct MFGpuImage_s MFGpuImage;
 
-struct VulkanImage_s;
-
 typedef struct MFGpuImageConfig_s {
     u32 width;
     u32 height;
@@ -28,6 +26,6 @@ size_t mfGpuImageGetSizeInBytes(void);
 void mfGpuImageSetBinding(MFGpuImage* image, u32 binding);
 
 MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image);
-struct VulkanImage_s mfGpuImageGetBackend(MFGpuImage* image);
+void* mfGpuImageGetBackend(MFGpuImage* image);
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer);

@@ -115,11 +115,11 @@ MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image) {
     };
 }
 
-struct VulkanImage_s mfGpuImageGetBackend(MFGpuImage* image) {
+void* mfGpuImageGetBackend(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     
-    return image->image;
+    return &image->image;
 }
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {

@@ -109,7 +109,7 @@ MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
     };
 }
 
-struct VulkanBuffer_s* mfGpuBufferGetBackend(MFGpuBuffer* buffer) {
+void* mfGpuBufferGetBackend(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
 

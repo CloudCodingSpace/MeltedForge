@@ -318,7 +318,8 @@ MF_INLINE void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger) {
     array->len--;
 }
 
-#define mfArrayGet(arr, type, index) (((type*)(arr).data)[(index)])
+#define mfArrayGetElement(arr, type, index) (((type*)(arr).data)[(index)])
+#define mfArraySetElement(arr, type, index, element) (mfArrayGetElement(arr, type, index) = element)
 #define mfArrayAddElement(arr, type, logger, element) \
     do { \
         if ((arr).len == (arr).capacity) { \
@@ -326,7 +327,7 @@ MF_INLINE void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger) {
             mfArrayResize(&(arr), newCap, (logger)); \
         } \
         type tmp = (element); \
-        memcpy(&mfArrayGet((arr), type, (arr).len), &tmp, sizeof(type)); \
+        memcpy(&mfArrayGetElement((arr), type, (arr).len), &tmp, sizeof(type)); \
         (arr).len++; \
     } while(0)
 

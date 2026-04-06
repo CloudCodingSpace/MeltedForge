@@ -21,7 +21,7 @@ static void initApp(void* st, MFAppConfig* config) {
     mfRendererInit(state->renderer, config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
 
     for(u32 i = 0; i < config->layers.len; i++) {
-        MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+        MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
         if(layer->onInit)
             layer->onInit(layer->state, st);
     }
@@ -29,10 +29,10 @@ static void initApp(void* st, MFAppConfig* config) {
 
 static void deinitApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
-    mfRendererWait(state->renderer);
+    mfRendererWaitForGPU(state->renderer);
 
     for(u32 i = 0; i < config->layers.len; i++) {
-        MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+        MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
         if(layer->onDeinit)
             layer->onDeinit(layer->state, st);
         if(layer->state != 0)
@@ -55,13 +55,13 @@ static void runApp(void* st, MFAppConfig* config) {
     while(mfIsWindowOpen(state->window)) {
         mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layers.len; i++) {
-            MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+            MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
             if(layer->onUpdate)
                 layer->onUpdate(layer->state, st);
         }
 
         for(u32 i = 0; i < config->layers.len; i++) {
-            MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
+            MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
             if(layer->onRender)
                 layer->onRender(layer->state, st);
             if(config->enableUI && layer->onUIRender)

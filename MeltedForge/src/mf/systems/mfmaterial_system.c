@@ -45,8 +45,7 @@ error_return:
             if(type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT && type != MF_MODEL_MAT_TEXTURE_NORMAL)
                 return mfCreateErrorGpuImage(renderer);
             else {
-                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_FATAL, "Failed to load the normal/displacement material image!");
-                abort();
+                MF_FATAL_ABORT(mfGetLogger(), "Failed to load the normal/displacement material image!");
             }
         };
         pixels = buff;
@@ -110,12 +109,12 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
             if(paths[j]) {
                 const char* path = mfStringConcatenate(mfGetLogger(), bPath, paths[j]);
 
-                mfArrayGet(arr, MFGpuImage*, j) = loadImage(path, j, &mat, renderer);
+                mfArraySetElement(arr, MFGpuImage*, j, loadImage(path, j, &mat, renderer));
                 MF_FREEMEM(path);
             }
         }
         
-        mfArrayGet(list, MFArray, i) = arr;
+        mfArraySetElement(list, MFArray, i, arr);
     }
     
     if(allocated)
@@ -128,9 +127,9 @@ void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The provided MFArray handle shouldn't be null!");
 
     for(u64 i = 0; i < array->len; i++) {
-        MFArray arr = mfArrayGet(*array, MFArray, i);
+        MFArray arr = mfArrayGetElement(*array, MFArray, i);
         for(u64 j = 0; j < arr.len; j++) {
-            MFGpuImage* image = mfArrayGet(arr, MFGpuImage*, j);
+            MFGpuImage* image = mfArrayGetElement(arr, MFGpuImage*, j);
             if(image != mfnull)
                 mfGpuImageDestroy(image);
         }
@@ -156,7 +155,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         return mfnull;
     });
     
-    MFGpuImage* image = mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type);
+    MFGpuImage* image = mfArrayGetElement(mfArrayGetElement(*array, MFArray, meshIdx), MFGpuImage*, type);
     if(image == mfnull) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The queried material texture doesn't exists!");
         MFMeshMaterial* mat = &model->meshes[meshIdx].mat;
@@ -202,13 +201,13 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
             .height = 1,
             .pixels = color
         });
-        mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = img;
+        mfArraySetElement(mfArrayGetElement(*array, MFArray, meshIdx), MFGpuImage*, type, img);
         return img;
 
 g_error:
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Creating error texture!");
-        mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type) = mfCreateErrorGpuImage(renderer);
-        image = mfArrayGet(mfArrayGet(*array, MFArray, meshIdx), MFGpuImage*, type);
+        mfArraySetElement(mfArrayGetElement(*array, MFArray, meshIdx), MFGpuImage*, type, mfCreateErrorGpuImage(renderer));
+        image = mfArrayGetElement(mfArrayGetElement(*array, MFArray, meshIdx), MFGpuImage*, type);
     }
 
     return image;

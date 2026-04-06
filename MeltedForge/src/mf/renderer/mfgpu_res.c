@@ -41,7 +41,7 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescripti
     layout->resourceDescriptions.len = reourceDescriptionLen;
 
     for(u64 i = 0; i < reourceDescriptionLen; i++) {
-        mfArrayGet(layout->resourceDescriptions, MFResourceDescription, i) = resourceDescriptions[i];
+        mfArraySetElement(layout->resourceDescriptions, MFResourceDescription, i, resourceDescriptions[i]);
     }
 
     // TODO: Support more shader res type!
@@ -221,10 +221,11 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * set->layout->bufferCount);
 
     for(u64 i = 0; i < set->layout->imageCount; i++) {
+        VulkanImage* image = (VulkanImage*)mfGpuImageGetBackend(mfArrayGetElement(*images, MFGpuImage*, i));
         imgInfos[i] = (VkDescriptorImageInfo){
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .imageView = mfGpuImageGetBackend(mfArrayGet(*images, MFGpuImage*, i)).view,
-            .sampler = mfGpuImageGetBackend(mfArrayGet(*images, MFGpuImage*, i)).sampler
+            .imageView = image->view,
+            .sampler = image->sampler
         };
     }
     
@@ -236,7 +237,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfGpuImageGetDescription(mfArrayGet(*images, MFGpuImage*, i)).binding,
+                .dstBinding = mfGpuImageGetDescription(mfArrayGetElement(*images, MFGpuImage*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
@@ -246,19 +247,20 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
         // Buffers
         for (u64 i = 0; i < set->layout->bufferCount; i++) {
-            MF_PANIC_IF(mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))->type != VULKAN_BUFFER_TYPE_UBO, mfGetLogger(), 
+            VulkanBuffer* buffer = (VulkanBuffer*)mfGpuBufferGetBackend(mfArrayGetElement(*buffers, MFGpuBuffer*, i));
+            MF_PANIC_IF(buffer->type != VULKAN_BUFFER_TYPE_UBO, mfGetLogger(), 
                                         "The given buffer for resource set isn't of an uniform buffer!");
 
             buffInfos[i] = (VkDescriptorBufferInfo){
-                .buffer = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))[frame].handle,
+                .buffer = buffer[frame].handle,
                 .offset = 0,
-                .range = mfGpuBufferGetBackend(mfArrayGet(*buffers, MFGpuBuffer*, i))[frame].size
+                .range = buffer[frame].size
             };
 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfGpuBufferGetDescription(mfArrayGet(*buffers, MFGpuBuffer*, i)).binding,
+                .dstBinding = mfGpuBufferGetDescription(mfArrayGetElement(*buffers, MFGpuBuffer*, i)).binding,
                 .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1,
                 .pBufferInfo = &buffInfos[i]

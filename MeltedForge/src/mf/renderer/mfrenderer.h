@@ -18,7 +18,7 @@ void mfRendererShutdown(MFRenderer* renderer);
 void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 
-void mfRendererWait(MFRenderer* renderer);
+void mfRendererWaitForGPU(MFRenderer* renderer);
 
 void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt);
 

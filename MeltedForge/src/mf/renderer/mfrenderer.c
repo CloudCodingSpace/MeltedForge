@@ -62,7 +62,7 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
     VulkanBackendEndframe(&renderer->backend, window);
 }
 
-void mfRendererWait(MFRenderer* renderer) {
+void mfRendererWaitForGPU(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
     
