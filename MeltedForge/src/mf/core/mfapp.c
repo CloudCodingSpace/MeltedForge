@@ -1,7 +1,7 @@
 #include "mfapp.h"
 
-#include <tracy/TracyC.h>
 #include <stb/stb_image.h>
+#include "mfprofiler.h"
 
 static void initApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
@@ -53,8 +53,6 @@ static void runApp(void* st, MFAppConfig* config) {
 
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
-        TracyCFrameMarkStart("MeltedForge App");
-
         mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layers.len; i++) {
             MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
@@ -73,7 +71,7 @@ static void runApp(void* st, MFAppConfig* config) {
 
         mfWindowUpdate(state->window);
 
-        TracyCFrameMarkEnd("MeltedForge App");
+        mfProfilerMarkFrame();
     }
 }
 

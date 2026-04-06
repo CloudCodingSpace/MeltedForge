@@ -35,4 +35,3 @@
 // Other
 #include <cimgui.h>
 #include <slog/slog.h>
-#include <tracy/TracyC.h>
