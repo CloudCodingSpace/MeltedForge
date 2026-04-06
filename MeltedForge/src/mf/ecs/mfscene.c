@@ -347,7 +347,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         if(!comp)
             continue;
         size += sizeof(u32);
-        size += sizeof(char) * mfStringLen(mfGetLogger(), comp->path);
+        size += sizeof(char) * mfStringLen(comp->path);
     }
 
     MFSerializer s = {};

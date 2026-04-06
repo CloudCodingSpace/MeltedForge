@@ -242,12 +242,13 @@ void mfSerializeString(MFSerializer* serializer, const char* value) {
         return;
     });   
 
+    u32 len = mfStringLen(value);
     //! NOTE: Things may break if the length is too long for a u32 to store, which is very unlikely but still to be noted!
-    u64 stringSize = (sizeof(char) * mfStringLen(mfGetLogger(), value)) + sizeof(u32);
+    u64 stringSize = (sizeof(char) * len) + sizeof(u32);
     MF_PANIC_IF((serializer->offset + stringSize) > serializer->bufferSize, mfGetLogger(), "Serializer buffer out of memory!");
     
-    mfSerializeU32(serializer, mfStringLen(mfGetLogger(), value));
-    for(u32 i = 0; i < mfStringLen(mfGetLogger(), value); i++) {
+    mfSerializeU32(serializer, len);
+    for(u32 i = 0; i < len; i++) {
         mfSerializeChar(serializer, value[i]);
     }
 }

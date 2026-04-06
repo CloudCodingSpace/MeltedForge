@@ -78,7 +78,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
     
     b8 allocated = false;
     const char* bPath = basePath;
-    char lastChar = basePath[mfStringLen(mfGetLogger(), basePath) - 1];
+    char lastChar = basePath[mfStringLen(basePath) - 1];
     if(lastChar != '\\' && lastChar != '/') {
         bPath = mfStringConcatenate(mfGetLogger(), basePath, "/");
         allocated = true;
