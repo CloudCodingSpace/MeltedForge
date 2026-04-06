@@ -13,11 +13,13 @@ function(EnableFlags target)
             $<$<CONFIG:Debug>:/Zi>
             $<$<CONFIG:Release>:/O2>
         )
+        set(MF_PROFILE "MF_ENABLE_PROFILING")
     elseif(CMAKE_COMPILER_IS_GNUCXX)
         target_compile_options(${target} PRIVATE
             $<$<CONFIG:Debug>:-g>
             $<$<CONFIG:Release>:-O3>
         )
+        set(MF_PROFILE "")
     endif()
 
     if(WIN32)
@@ -32,6 +34,7 @@ function(EnableFlags target)
         $<$<CONFIG:Debug>:_DEBUG;MF_DEBUG>
         $<$<CONFIG:Release>:NDEBUG;MF_NDEBUG>
         ${MF_PLATFORM}
+        ${MF_PROFILE}
     )
 endfunction()
 

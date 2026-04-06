@@ -53,6 +53,8 @@ static void runApp(void* st, MFAppConfig* config) {
 
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
+        mfProfilerMarkFrameStart("MeltedForge app");
+
         mfRendererBeginframe(state->renderer, state->window);
         for(u32 i = 0; i < config->layers.len; i++) {
             MFLayer* layer = &mfArrayGet(config->layers, MFLayer, i);
@@ -71,7 +73,7 @@ static void runApp(void* st, MFAppConfig* config) {
 
         mfWindowUpdate(state->window);
 
-        mfProfilerMarkFrame();
+        mfProfilerMarkFrameEnd("MeltedForge app");
     }
 }
 
