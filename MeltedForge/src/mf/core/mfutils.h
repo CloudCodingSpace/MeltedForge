@@ -115,7 +115,7 @@ MF_INLINE b8 mfWriteFile(SLogger* logger, u64 size, const char* path, const char
 // @note The returned char* must be freed since it is allocated on the heap
 #define mfStringDuplicate(a) strdup(a)
 #define mfStringLen(a) strlen(a)
-#define mfStringCompare(a) strcmp(a)
+#define mfStringCompare(a, b) strcmp(a, b)
 
 // @note The returned char* must be freed since it is allocated on the heap
 MF_INLINE char* mfStringConcatenate(SLogger* logger, const char* a, const char* b) {
