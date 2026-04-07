@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <ctype.h>
 
 #include <slog/slog.h>
 
@@ -215,6 +216,58 @@ MF_INLINE b8 mfStringEndsWith(SLogger* logger, const char* a, const char* b) {
     return true;
 }
 
+MF_INLINE void mfNormalizePath(char* path, SLogger* logger) {
+    MF_PANIC_IF(path == mfnull, logger, "The path provided for normalizing shouldn't be null!");
+
+    char* src = path;
+    char* dst = path;
+
+    while (*src) {
+        char c = *src;
+
+        if (c == '\\')
+            c = '/';
+
+        c = (char)tolower((unsigned char)c);
+
+        *dst++ = c;
+        src++;
+    }
+    *dst = '\0';
+
+    src = path;
+    dst = path;
+
+    while (*src) {
+        *dst++ = *src;
+
+        if (*src == '/') {
+            while (*src == '/')
+                src++;
+        } else {
+            src++;
+        }
+    }
+    *dst = '\0';
+
+    src = path;
+    dst = path;
+
+    while (*src) {
+        if (src[0] == '.' && src[1] == '/') {
+            src += 2;
+            continue;
+        }
+
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+
+    size_t len = mfStringLen(path);
+    if (len > 1 && path[len - 1] == '/')
+        path[len - 1] = '\0';
+}
+
 #pragma endregion
 
 #pragma region mfarray
@@ -333,3 +386,22 @@ MF_INLINE void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger) {
 
 
 #pragma endregion
+
+// @note A little modified version of FNV-1a-64
+MF_INLINE u64 mfHash_FNV1A(const void* data, u64 size, SLogger* logger) {
+    MF_PANIC_IF(data == mfnull, logger, "The data provided for hashing shouldn't be null!");
+    if(size == 0) {
+        return 0;
+    }
+
+    const u8 *p = (const u8*)data;
+
+    u64 hash = 1469598103934665603ULL;
+
+    for (u64 i = 0; i < size; i++) {
+        hash ^= p[i];
+        hash *= 1099511628211ULL;
+    }
+
+    return hash;
+}

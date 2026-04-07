@@ -1,7 +1,6 @@
 #include "mfmaterial_system.h"
 
 #include <stb/stb_image.h>
-#include <ctype.h>
 
 typedef struct {
     u64 path_hash;
@@ -23,11 +22,9 @@ typedef struct MFMaterialSystemState_s {
 static MFMaterialSystemState s_State = {0};
 
 static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer);
-static u64 FNV1A(const void* data, u64 size);
 static b8 compareEntry(Entry* entry, const char* path, u32 rgba);
 static Entry* findEntry(MFArray* array, const char* path, u32 rgba, u64 descHash);
 static u32 arrayToU32(f32* data);
-static void normalizePath(char* path);
 
 void mfMaterialSystemInitialize(void) {
     if(s_State.init) {
@@ -103,7 +100,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
         for(int j = 0; j < MF_MODEL_MAT_TEXTURE_MAX; j++) {
             if(paths[j] && paths[j][0] != '\0') {
                 char* path = mfStringConcatenate(mfGetLogger(), bPath, paths[j]);
-                normalizePath(path);
+                mfNormalizePath(path, mfGetLogger());
 
                 f32 color[3] = {0x0};
                 switch(j) {
@@ -128,10 +125,10 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                 TextureDescription description = {
                     .rgba = arrayToU32(color),
                     .path = mfStringDuplicate(path),
-                    .path_hash = FNV1A(path, sizeof(char) * mfStringLen(path))
+                    .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger())
                 };
                 u64 hashData[2] = { description.path_hash, description.rgba };
-                u64 hash = FNV1A(hashData, sizeof(hashData));
+                u64 hash = mfHash_FNV1A(hashData, sizeof(hashData), mfGetLogger());
                 Entry* entry = findEntry(&s_State.array, path, description.rgba, hash);
                 if(entry) {
                     mfArraySetElement(arr, MFGpuImage*, j, entry->image);
@@ -269,7 +266,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     };
 
     u64 hashData[2] = { desc.path_hash, desc.rgba };
-    u64 hash = FNV1A(hashData, sizeof(hashData));
+    u64 hash = mfHash_FNV1A(hashData, sizeof(hashData), mfGetLogger());
 
     Entry* entry = findEntry(&s_State.array, mfnull, rgba, hash);
 
@@ -392,22 +389,8 @@ error_return:
     return tex;
 }
 
-// @note A little modified version of FNV-1a-64
-static u64 FNV1A(const void* data, u64 size) {
-    const u8 *p = (const u8*)data;
-
-    u64 hash = 1469598103934665603ULL; // offset basis
-
-    for (u64 i = 0; i < size; i++) {
-        hash ^= p[i];
-        hash *= 1099511628211ULL; // FNV prime
-    }
-
-    return hash;
-}
-
 static b8 compareEntry(Entry* entry, const char* path, u32 rgba) {
-    u64 h = path ? FNV1A(path, sizeof(char) * mfStringLen(path)) : 0;
+    u64 h = path ? mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger()) : 0;
     if((entry->description.path_hash == h) &&
         (entry->description.rgba == rgba) && 
         (mfStringCompare(entry->description.path, path) == 0)) {
@@ -463,54 +446,4 @@ static u32 arrayToU32(f32* data) {
     u8 g = (u8)round(data[1] * 255.0f);
     u8 b = (u8)round(data[2] * 255.0f);
     return (u32)((0xff << 24) | (g << 16) | (b << 8) | r);
-}
-
-static void normalizePath(char* path) {
-    char* src = path;
-    char* dst = path;
-
-    while (*src) {
-        char c = *src;
-
-        if (c == '\\')
-            c = '/';
-
-        c = (char)tolower((unsigned char)c);
-
-        *dst++ = c;
-        src++;
-    }
-    *dst = '\0';
-
-    src = path;
-    dst = path;
-
-    while (*src) {
-        *dst++ = *src;
-
-        if (*src == '/') {
-            while (*src == '/')
-                src++;
-        } else {
-            src++;
-        }
-    }
-    *dst = '\0';
-
-    src = path;
-    dst = path;
-
-    while (*src) {
-        if (src[0] == '.' && src[1] == '/') {
-            src += 2;
-            continue;
-        }
-
-        *dst++ = *src++;
-    }
-    *dst = '\0';
-
-    size_t len = strlen(path);
-    if (len > 1 && path[len - 1] == '/')
-        path[len - 1] = '\0';
 }
