@@ -17,7 +17,7 @@ static void initApp(void* st, MFAppConfig* config) {
         stbi_image_free(data);
     }
 
-    state->renderer = MF_ALLOCMEM(MFRenderer, mRendererGetSizeInBytes());
+    state->renderer = MF_ALLOCMEM(MFRenderer, mfRendererGetSizeInBytes());
     mfRendererInit(state->renderer, config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
 
     for(u32 i = 0; i < config->layers.len; i++) {

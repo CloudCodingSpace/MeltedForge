@@ -176,6 +176,6 @@ u8 mfRendererGetFramesInFlight(void) {
     return FRAMES_IN_FLIGHT;
 }
 
-size_t mRendererGetSizeInBytes(void) {
+size_t mfRendererGetSizeInBytes(void) {
     return sizeof(MFRenderer);
 }
