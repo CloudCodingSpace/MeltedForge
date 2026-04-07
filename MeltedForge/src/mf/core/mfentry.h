@@ -5,11 +5,7 @@
 MFAppConfig mfClientCreateAppConfig();
 
 int main(int argc, const char** argv) {
-    MFContext* context = MF_ALLOCMEM(MFContext, mfGetContextSizeInBytes());
-    
-    mfSetCurrentContext(context);
-    mfInit();
-    
+    mfInitialize();
     MFAppConfig config = mfClientCreateAppConfig();
     
     if(config.initApp)
@@ -22,7 +18,5 @@ int main(int argc, const char** argv) {
         config.shutdownApp(config.state, &config);
 
     mfShutdown();
-
-    MF_FREEMEM(context);
     return 0;
 }

@@ -4,9 +4,7 @@
 #include <stdint.h>
 #include <slog/slog.h>
 
-typedef struct MFContext_s MFContext;
-
-void mfInit(void);
+void mfInitialize(void);
 void mfShutdown(void);
 
 uint64_t mfGetNextID(void);
@@ -14,8 +12,4 @@ uint8_t* mfGetErrorImagePixels(void);
 uint32_t mfGetErrorImageWidth(void);
 uint32_t mfGetErrorImageHeight(void);
 
-void mfSetCurrentContext(MFContext* ctx);
-MFContext* mfGetCurrentContext(void);
-
-size_t mfGetContextSizeInBytes(void);
 SLogger* mfGetLogger(void);

@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-struct MFContext_s {
+typedef struct MFContext_s {
     SLogger logger;
     bool init;
     // UUID Generator
@@ -20,22 +20,18 @@ struct MFContext_s {
     u32 errorImageWidth;
     u32 errorImageHeight;
     u8* errorImagePixels;
-};
+} MFContext;
 
-static MFContext* ctx = mfnull;
+static MFContext s_Ctx = {0};
 
-void mfInit(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+void mfInitialize(void) {
+    if(s_Ctx.init) {
+        slogLogMsg(&s_Ctx.logger, SLOG_SEVERITY_ERROR, "MeltedForge's core is already initialized!");
         abort();
     }
+    s_Ctx.init = true;
     
-    if(ctx->init) {
-        slogLogMsg(&ctx->logger, SLOG_SEVERITY_WARN, "The same context is already initialized!");
-        return;
-    }
-    
-    slogLoggerCreate(&ctx->logger, "MeltedForge", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE); // TODO: Make the features configurable!!
+    slogLoggerCreate(&s_Ctx.logger, "MeltedForge", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE); // TODO: Make the features configurable!!
 
     // Deserializing
     {
@@ -54,7 +50,7 @@ void mfInit(void) {
             if(sign != MF_SIGNATURE_CORE_CACHE_FILE) {
                 mfSerializerDestroy(&serializer);
             } else {
-                ctx->counter = mfDeserializeU32(&serializer);
+                s_Ctx.counter = mfDeserializeU32(&serializer);
                 mfSerializerDestroy(&serializer);
             }
         }
@@ -62,9 +58,9 @@ void mfInit(void) {
 
     // Error texture
     {
-        ctx->errorImageWidth = 4;
-        ctx->errorImageHeight = 4;
-        ctx->errorImagePixels = MF_ALLOCMEM(u8, ctx->errorImageWidth * ctx->errorImageHeight * 4);
+        s_Ctx.errorImageWidth = 4;
+        s_Ctx.errorImageHeight = 4;
+        s_Ctx.errorImagePixels = MF_ALLOCMEM(u8, s_Ctx.errorImageWidth * s_Ctx.errorImageHeight * 4);
         u32 cellSize = 1;
         for(u32 h = 0; h < 4; h++) {
             for(u32 w = 0; w < 4; w++) {
@@ -73,31 +69,24 @@ void mfInit(void) {
                 u32 y = h / cellSize;
 
                 if(((x + y) % 2) == 0) {
-                    ctx->errorImagePixels[idx + 0] = 0xff;
-                    ctx->errorImagePixels[idx + 1] = 0x00;
-                    ctx->errorImagePixels[idx + 2] = 0xff;
-                    ctx->errorImagePixels[idx + 3] = 0xff;
+                    s_Ctx.errorImagePixels[idx + 0] = 0xff;
+                    s_Ctx.errorImagePixels[idx + 1] = 0x00;
+                    s_Ctx.errorImagePixels[idx + 2] = 0xff;
+                    s_Ctx.errorImagePixels[idx + 3] = 0xff;
                 } else {
-                    ctx->errorImagePixels[idx + 0] = 0x00;
-                    ctx->errorImagePixels[idx + 1] = 0x00;
-                    ctx->errorImagePixels[idx + 2] = 0x00;
-                    ctx->errorImagePixels[idx + 3] = 0xff;
+                    s_Ctx.errorImagePixels[idx + 0] = 0x00;
+                    s_Ctx.errorImagePixels[idx + 1] = 0x00;
+                    s_Ctx.errorImagePixels[idx + 2] = 0x00;
+                    s_Ctx.errorImagePixels[idx + 3] = 0xff;
                 }
             }
         }
     }
-
-    ctx->init = true;
 }
 
 void mfShutdown(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
-        abort();
-    }
-    
-    if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!");
+    if(!s_Ctx.init) {
+        printf("[MeltedForge]: MeltedForge's core is not yet initialized!");
         abort();
     }
 
@@ -107,7 +96,7 @@ void mfShutdown(void) {
         mfSerializerCreate(&serializer, sizeof(u32) + sizeof(u64), false);
         
         mfSerializeU32(&serializer, MF_SIGNATURE_CORE_CACHE_FILE);
-        mfSerializeU64(&serializer, ctx->counter);
+        mfSerializeU64(&serializer, s_Ctx.counter);
 
         b8 success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
 
@@ -118,103 +107,57 @@ void mfShutdown(void) {
         }
     }
 
-    MF_FREEMEM(ctx->errorImagePixels);
-    ctx->errorImageWidth = 0;
-    ctx->errorImageHeight = 0;
+    MF_FREEMEM(s_Ctx.errorImagePixels);
+    s_Ctx.errorImageWidth = 0;
+    s_Ctx.errorImageHeight = 0;
 
-    slogLoggerDestroy(&ctx->logger);
+    slogLoggerDestroy(&s_Ctx.logger);
 
-    ctx->init = false;
+    s_Ctx.init = false;
     glfwTerminate();
 }
 
 u64 mfGetNextID(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+    if(!s_Ctx.init) {
+        printf("[MeltedForge]: MeltedForge's core is not yet initialized!");
         abort();
     }
     
-    if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!");
-        abort();
-    }
-    
-    if(ctx->counter == UINT32_MAX) {
-        slogLogMsg(&ctx->logger, SLOG_SEVERITY_FATAL, "[MeltedForge]: Can't generate more IDs!");
+    if(s_Ctx.counter == UINT32_MAX) {
+        slogLogMsg(&s_Ctx.logger, SLOG_SEVERITY_FATAL, "[MeltedForge]: Can't generate more IDs!");
         abort();
     }
 
-    return ctx->counter++;
+    return s_Ctx.counter++;
 }
 
 u8* mfGetErrorImagePixels(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+    if(!s_Ctx.init) {
+        printf("[MeltedForge]: MeltedForge's core is not yet initialized!");
         abort();
     }
     
-    if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!");
-        abort();
-    }
-    
-    return ctx->errorImagePixels;
+    return s_Ctx.errorImagePixels;
 }
 
 u32 mfGetErrorImageWidth(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
-        abort();
-    }
-    
-    if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!");
-        abort();
-    }
-    
-    return ctx->errorImageWidth;
+    return s_Ctx.errorImageWidth;
 }
 
 u32 mfGetErrorImageHeight(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
-        abort();
-    }
-    
-    if(!ctx->init) {
-        printf("[MeltedForge]: The current context is not yet initialized!");
+    if(!s_Ctx.init) {
+        printf("[MeltedForge]: MeltedForge's core is not yet initialized!");
         abort();
     }
 
-    return ctx->errorImageHeight;
-}
-
-void mfSetCurrentContext(MFContext* ctx_) {
-    if(ctx_ == mfnull) {
-        printf("[MeltedForge]: The context provided shouldn't be null!");
-        abort();
-    }
-    
-    ctx = ctx_;
-}
-
-MFContext* mfGetCurrentContext(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context is null as it is not set!");
-        abort();
-    }
-    return ctx;
-}
-
-size_t mfGetContextSizeInBytes(void) {
-    return sizeof(MFContext);
+    return s_Ctx.errorImageHeight;
 }
 
 SLogger* mfGetLogger(void) {
-    if(ctx == mfnull) {
-        printf("[MeltedForge]: The current context shouldn't be null!");
+    if(!s_Ctx.init) {
+        printf("[MeltedForge]: MeltedForge's core is not yet initialized!");
         abort();
     }
     
-    return &ctx->logger;
+    return &s_Ctx.logger;
 }
