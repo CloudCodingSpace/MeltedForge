@@ -19,6 +19,9 @@ typedef enum MFModelMatTextures_e {
     MF_MODEL_MAT_TEXTURE_MAX
 } MFModelMatTextures;
 
+void mfMaterialSystemInitialize(void);
+void mfMaterialSystemShutdown(void);
+
 MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer);
 void mfMaterialSystemDeleteModelMatImages(MFArray* array);
 

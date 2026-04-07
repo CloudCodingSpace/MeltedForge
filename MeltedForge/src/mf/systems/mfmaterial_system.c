@@ -2,73 +2,35 @@
 
 #include <stb/stb_image.h>
 
-MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer) {
-    i32 width, height, channels;
-    stbi_set_flip_vertically_on_load(true);
+typedef struct MFMaterialSystemState_s {
+    b8 init;
+} MFMaterialSystemState;
 
-    u8 buff[4] = {0x00, 0x00, 0x00, 0xff};
-    u8* pixels;
-    u8* img_pixels = stbi_load(path, &width, &height, &channels, 4);
-    if (!img_pixels) {
-        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s.", stbi_failure_reason());
-        
-        switch(type) {
-            case MF_MODEL_MAT_TEXTURE_DIFFUSE:
-                if(mat->diffuse[0] == -1)
-                    goto error_return;
-                buff[0] = (u8)mat->diffuse[0] * 255;
-                buff[1] = (u8)mat->diffuse[1] * 255;
-                buff[2] = (u8)mat->diffuse[2] * 255;
-                break;
-            case MF_MODEL_MAT_TEXTURE_AMBIENT:
-                if(mat->ambient[0] == -1)
-                    goto error_return;
-                buff[0] = (u8)mat->ambient[0] * 255;
-                buff[1] = (u8)mat->ambient[1] * 255;
-                buff[2] = (u8)mat->ambient[2] * 255;
-                break;
-            case MF_MODEL_MAT_TEXTURE_SPECULAR:
-                if(mat->specular[0] == -1)
-                    goto error_return;
-                buff[0] = (u8)mat->specular[0] * 255;
-                buff[1] = (u8)mat->specular[1] * 255;
-                buff[2] = (u8)mat->specular[2] * 255;
-                break;
-            case MF_MODEL_MAT_TEXTURE_EMISSIVE:
-                if(mat->emission[0] == -1)
-                    goto error_return;
-                buff[0] = (u8)mat->emission[0] * 255;
-                buff[1] = (u8)mat->emission[1] * 255;
-                buff[2] = (u8)mat->emission[2] * 255;
-                break;
-error_return:
-            if(type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT && type != MF_MODEL_MAT_TEXTURE_NORMAL)
-                return mfCreateErrorGpuImage(renderer);
-            else {
-                MF_FATAL_ABORT(mfGetLogger(), "Failed to load the normal/displacement material image!");
-            }
-        };
-        pixels = buff;
-        width = 1;
-        height = 1;
-    } else {
-        pixels = img_pixels;
+static MFMaterialSystemState s_State = {0};
+
+static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer);
+
+void mfMaterialSystemInitialize(void) {
+    if(s_State.init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The material system is already initialised!");
     }
 
-    MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
-    
-    MFGpuImageConfig config = {
-        .width = width,
-        .height = height,
-        .pixels = pixels,
-        .binding = MF_INFINITY
-    };
-    mfGpuImageCreate(tex, renderer, config);
+    s_State.init = true;
+}
 
-    return tex;
+void mfMaterialSystemShutdown(void) {
+    if(!s_State.init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The material system isn't initialised!");
+    }
+
+    s_State.init = false;
 }
 
 MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer) {
+    if(!s_State.init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The material system isn't initialised!");
+    }
+
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     MF_PANIC_IF(!model->init, mfGetLogger(), "The model handle provided isn't initialised!");
     MF_PANIC_IF(model->meshCount <= 0, mfGetLogger(), "The model must have atleast 1 mesh!");
@@ -124,6 +86,9 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
 }
 
 void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
+    if(!s_State.init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The material system isn't initialised!");
+    }
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The provided MFArray handle shouldn't be null!");
 
     for(u64 i = 0; i < array->len; i++) {
@@ -139,6 +104,10 @@ void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
 }
 
 MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer) {
+    if(!s_State.init) {
+        MF_FATAL_ABORT(mfGetLogger(), "The material system isn't initialised!");
+    }
+
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be null!");
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model provided shouldn't be null!");
     MF_PANIC_IF(!model->init, mfGetLogger(), "The model handle provided isn't initialised!");
@@ -211,4 +180,70 @@ g_error:
     }
 
     return image;
+}
+
+static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer) {
+    i32 width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
+
+    u8 buff[4] = {0x00, 0x00, 0x00, 0xff};
+    u8* pixels;
+    u8* img_pixels = stbi_load(path, &width, &height, &channels, 4);
+    if (!img_pixels) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to load image! More reasons by image loader :- %s.", stbi_failure_reason());
+        
+        switch(type) {
+            case MF_MODEL_MAT_TEXTURE_DIFFUSE:
+                if(mat->diffuse[0] == -1)
+                    goto error_return;
+                buff[0] = (u8)mat->diffuse[0] * 255;
+                buff[1] = (u8)mat->diffuse[1] * 255;
+                buff[2] = (u8)mat->diffuse[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_AMBIENT:
+                if(mat->ambient[0] == -1)
+                    goto error_return;
+                buff[0] = (u8)mat->ambient[0] * 255;
+                buff[1] = (u8)mat->ambient[1] * 255;
+                buff[2] = (u8)mat->ambient[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_SPECULAR:
+                if(mat->specular[0] == -1)
+                    goto error_return;
+                buff[0] = (u8)mat->specular[0] * 255;
+                buff[1] = (u8)mat->specular[1] * 255;
+                buff[2] = (u8)mat->specular[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_EMISSIVE:
+                if(mat->emission[0] == -1)
+                    goto error_return;
+                buff[0] = (u8)mat->emission[0] * 255;
+                buff[1] = (u8)mat->emission[1] * 255;
+                buff[2] = (u8)mat->emission[2] * 255;
+                break;
+error_return:
+            if(type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT && type != MF_MODEL_MAT_TEXTURE_NORMAL)
+                return mfCreateErrorGpuImage(renderer);
+            else {
+                MF_FATAL_ABORT(mfGetLogger(), "Failed to load the normal/displacement material image!");
+            }
+        };
+        pixels = buff;
+        width = 1;
+        height = 1;
+    } else {
+        pixels = img_pixels;
+    }
+
+    MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
+    
+    MFGpuImageConfig config = {
+        .width = width,
+        .height = height,
+        .pixels = pixels,
+        .binding = MF_INFINITY
+    };
+    mfGpuImageCreate(tex, renderer, config);
+
+    return tex;
 }

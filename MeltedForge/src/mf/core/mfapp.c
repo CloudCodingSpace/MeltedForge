@@ -1,7 +1,8 @@
 #include "mfapp.h"
+#include "mfprofiler.h"
+#include "systems/mfmaterial_system.h"
 
 #include <stb/stb_image.h>
-#include "mfprofiler.h"
 
 static void initApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
@@ -19,6 +20,8 @@ static void initApp(void* st, MFAppConfig* config) {
 
     state->renderer = MF_ALLOCMEM(MFRenderer, mfRendererGetSizeInBytes());
     mfRendererInit(state->renderer, config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
+
+    mfMaterialSystemInitialize();
 
     for(u32 i = 0; i < config->layers.len; i++) {
         MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
@@ -39,6 +42,8 @@ static void deinitApp(void* st, MFAppConfig* config) {
             MF_FREEMEM(layer->state);
     }
     
+    mfMaterialSystemShutdown();
+
     if(config->layers.data && config->layers.len > 0)
         mfArrayDestroy(&config->layers, mfGetLogger());
 

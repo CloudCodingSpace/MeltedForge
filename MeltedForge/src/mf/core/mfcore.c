@@ -9,11 +9,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 typedef struct MFContext_s {
     SLogger logger;
-    bool init;
+    b8 init;
     // UUID Generator
     u64 counter;
 
@@ -82,6 +81,8 @@ void mfInitialize(void) {
             }
         }
     }
+
+    
 }
 
 void mfShutdown(void) {
