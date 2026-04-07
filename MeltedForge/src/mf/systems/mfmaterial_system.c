@@ -404,38 +404,40 @@ static Entry* findEntry(MFArray* array, const char* path, u32 rgba, u64 descHash
     if(array->len == 0) 
         return mfnull;
 
-    // u64 low = 0;
-    // u64 high = array->len - 1;
+    u64 low = 0;
+    u64 high = array->len - 1;
 
-    // while(low <= high) {
-    //     u64 mid = (low + high) / 2;
-    //     Entry* entry = &mfArrayGetElement(*array, Entry, mid);
+    while(low <= high) {
+        u64 mid = low + ((high - low) / 2);
+        Entry* entry = &mfArrayGetElement(*array, Entry, mid);
 
-    //     if(entry->descHash == descHash) {
-    //         for(i64 i = (i64)mid; i >= 0; i--) {
-    //             Entry* e = &mfArrayGetElement(*array, Entry, i);
-    //             if(e->descHash != descHash) break;
-    //             if(compareEntry(e, path, rgba)) return e;
-    //         }
+        if(entry->descHash == descHash) {
+            for(i64 i = (i64)mid; i >= 0; i--) {
+                Entry* e = &mfArrayGetElement(*array, Entry, i);
+                if(e->descHash != descHash) 
+                    break;
+                if(compareEntry(e, path, rgba)) 
+                    return e;
+            }
 
-    //         for(u64 i = mid + 1; i < array->len; i++) {
-    //             Entry* e = &mfArrayGetElement(*array, Entry, i);
-    //             if(e->descHash != descHash) break;
-    //             if(compareEntry(e, path, rgba)) return e;
-    //         }
+            for(u64 i = mid + 1; i < array->len; i++) {
+                Entry* e = &mfArrayGetElement(*array, Entry, i);
+                if(e->descHash != descHash) 
+                    break;
+                if(compareEntry(e, path, rgba)) 
+                    return e;
+            }
 
-    //         return mfnull;
-    //     }
-    //     else if(entry->descHash < descHash)
-    //         low = mid + 1;
-    //     else
-    //         high = mid - 1;
-    // }
-
-    for(u64 i = 0; i < array->len; i++) {
-        Entry* entry = &mfArrayGetElement(*array, Entry, i);
-        if(entry->descHash == descHash && compareEntry(entry, path, rgba))
-            return entry;
+            return mfnull;
+        }
+        else if(entry->descHash < descHash) {
+            low = mid + 1;
+        }
+        else {
+            if(mid == 0)
+                break;
+            high = mid - 1;
+        }
     }
 
     return mfnull;
