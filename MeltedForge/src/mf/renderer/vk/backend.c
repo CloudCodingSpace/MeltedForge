@@ -86,19 +86,21 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     
     // Sync objs
     {
+        VkSemaphoreCreateInfo semaInfo = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+        };
+
+        VkFenceCreateInfo fenceInfo = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        };
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VkSemaphoreCreateInfo semaInfo = {
-                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
-            };
-
-            VkFenceCreateInfo fenceInfo = {
-                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-                .flags = VK_FENCE_CREATE_SIGNALED_BIT
-            };
-
             VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->imageAvailableSemas[i]));
-            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->renderFinishedSemas[i]));
             VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &backend->inFlightFences[i]));
+        }
+        backend->renderFinishedSemas = MF_ALLOCMEM(VkSemaphore, sizeof(VkSemaphore) * backend->ctx.swapchainImageCount);
+        for(u32 i = 0; i < backend->ctx.swapchainImageCount; i++) {
+            VK_CHECK(vkCreateSemaphore(backend->ctx.device, &semaInfo, backend->ctx.allocator, &backend->renderFinishedSemas[i]));
         }
     }
 
@@ -153,8 +155,11 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(backend->ctx.device, backend->imageAvailableSemas[i], backend->ctx.allocator);
-        vkDestroySemaphore(backend->ctx.device, backend->renderFinishedSemas[i], backend->ctx.allocator);
         vkDestroyFence(backend->ctx.device, backend->inFlightFences[i], backend->ctx.allocator);
+    }
+
+    for(u32 i = 0; i < backend->ctx.swapchainImageCount; i++) {
+        vkDestroySemaphore(backend->ctx.device, backend->renderFinishedSemas[i], backend->ctx.allocator);
     }
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
@@ -164,6 +169,7 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     VulkanRenderPassDestroy(&backend->ctx, backend->pass);
     VulkanBackendCtxDestroy(&backend->ctx);
 
+    MF_FREEMEM(backend->renderFinishedSemas);
     MF_FREEMEM(backend->frameBuffers);
     MF_SETMEM(backend, 0, sizeof(VulkanBackend));
 }
@@ -241,7 +247,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     };
 
     VkSemaphore signalSemas[1] = {
-        backend->renderFinishedSemas[backend->frameIndex]
+        backend->renderFinishedSemas[backend->swapchainImageIndex]
     };
 
     VkSubmitInfo submitInfo = {
@@ -256,7 +262,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     };
 
     if(backend->renderTarget != mfnull) {
-        waitSemas[0] = backend->renderTarget->renderFinishedSemas[backend->frameIndex];
+        waitSemas[0] = backend->renderTarget->renderFinishedSemas[backend->swapchainImageIndex];
     }
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));

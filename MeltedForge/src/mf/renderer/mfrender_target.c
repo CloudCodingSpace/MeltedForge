@@ -98,7 +98,9 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.commandPool, true);
-        
+    }
+    renderTarget->renderFinishedSemas = MF_ALLOCMEM(VkSemaphore, sizeof(VkSemaphore) * renderTarget->backend->ctx.swapchainImageCount);
+    for(u32 i = 0; i < renderTarget->backend->ctx.swapchainImageCount; i++) {
         VkSemaphoreCreateInfo semaInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
         };
@@ -114,6 +116,8 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
+    }
+    for(u32 i = 0; i < renderTarget->backend->ctx.swapchainImageCount; i++) {
         vkDestroySemaphore(renderTarget->backend->ctx.device, renderTarget->renderFinishedSemas[i], renderTarget->backend->ctx.allocator);
     }
     
@@ -129,6 +133,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     
     VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
     
+    MF_FREEMEM(renderTarget->renderFinishedSemas);
     MF_FREEMEM(renderTarget->images);
     MF_FREEMEM(renderTarget->frameBuffers);
     MF_FREEMEM(renderTarget->sets);
@@ -355,7 +360,7 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
         .commandBufferCount = 1,
         .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &renderTarget->renderFinishedSemas[renderTarget->backend->frameIndex],
+        .pSignalSemaphores = &renderTarget->renderFinishedSemas[renderTarget->backend->swapchainImageIndex],
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = waitSemas,
         .pWaitDstStageMask = waitDstFlags

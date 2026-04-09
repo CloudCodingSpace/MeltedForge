@@ -17,7 +17,7 @@ struct MFRenderTarget_s {
     VkDescriptorSet* sets;
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
-    VkSemaphore renderFinishedSemas[FRAMES_IN_FLIGHT];
+    VkSemaphore* renderFinishedSemas;
 
     b8 hasDepth, init;
 };

@@ -29,7 +29,7 @@ typedef struct VulkanBackend_s {
     VkFramebuffer* frameBuffers;
 
     VkSemaphore imageAvailableSemas[FRAMES_IN_FLIGHT];
-    VkSemaphore renderFinishedSemas[FRAMES_IN_FLIGHT];
+    VkSemaphore* renderFinishedSemas;
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
 
     struct MFRenderTarget_s* renderTarget;
