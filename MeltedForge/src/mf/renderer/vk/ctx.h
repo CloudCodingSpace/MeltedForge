@@ -22,6 +22,11 @@ typedef struct VulkanBackendCtx_s {
     VkAllocationCallbacks* allocator;
     VkInstance instance;
     VkSurfaceKHR surface;
+#ifdef MF_DEBUG
+    VkDebugUtilsMessengerEXT debugMessenger;
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT; 
+    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT; 
+#endif
 
     VulkanBackendQueueData queueData;
     VkPhysicalDeviceFeatures features;

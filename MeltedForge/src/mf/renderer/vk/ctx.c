@@ -8,6 +8,21 @@
 #include "common.h"
 #include "command_buffer.h"
 
+static VKAPI_PTR VkBool32 debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void*                                       pUserData) {
+    SLogger* logger = pUserData;
+    SLSeverity severity;
+    if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        severity = SLOG_SEVERITY_WARN;
+    } else {
+        severity = SLOG_SEVERITY_ERROR;
+    }
+    slogLogMsg(logger, severity, "(From the vulkan backend) %s", pCallbackData->pMessage);
+}
+
 static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
     VulkanBackendQueueData data = {-1};
 
@@ -50,9 +65,9 @@ static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
         u32 deviceExtCount = 1;
 
         u32 count = 0;
-        vkEnumerateDeviceExtensionProperties(device, mfnull, &count, mfnull);
+        VK_CHECK(vkEnumerateDeviceExtensionProperties(device, mfnull, &count, mfnull));
         VkExtensionProperties* props = MF_ALLOCMEM(VkExtensionProperties, sizeof(VkExtensionProperties) * count);
-        vkEnumerateDeviceExtensionProperties(device, mfnull, &count, props);
+        VK_CHECK(vkEnumerateDeviceExtensionProperties(device, mfnull, &count, props));
 
         for(u32 i = 0; i < count; i++) {
             for(u32 j = 0; j < deviceExtCount; j++) {
@@ -304,6 +319,31 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
 
         u32 extCount = 0;
         const char** exts = glfwGetRequiredInstanceExtensions(&extCount);
+#ifdef MF_DEBUG
+        // Checking if VK_LAYER_KHRONOS_validation is supported
+        bool validationSupported = false;
+        {
+            u32 count = 0;
+            VK_CHECK(vkEnumerateInstanceLayerProperties(&count, mfnull));
+            VkLayerProperties* props = MF_ALLOCMEM(VkLayerProperties, sizeof(VkLayerProperties) * count);
+            VK_CHECK(vkEnumerateInstanceLayerProperties(&count, props));
+
+            for(u32 i = 0; i < count; i++) {
+                if(strcmp(props[i].layerName, "VK_LAYER_KHRONOS_validation") == 0) {
+                    validationSupported = true;
+                    break;
+                }
+            }
+
+            MF_FREEMEM(props);
+        }
+        MF_PANIC_IF(!validationSupported, mfGetLogger(), "(From the vulkan backend) Validation layers not supported, but is required for debug builds!");
+
+        const char** exts2 = MF_ALLOCMEM(const char*, sizeof(const char*) * (extCount + 1));
+        memcpy(exts2, exts, sizeof(const char*) * extCount);
+        exts2[extCount] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+        extCount++;
+#endif
 
         VkInstanceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -311,8 +351,45 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
             .enabledExtensionCount = extCount,
             .ppEnabledExtensionNames = exts
         };
+#ifdef MF_DEBUG
+        VkDebugUtilsMessengerCreateInfoEXT debugInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+            .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
+            .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT,
+            .pUserData = mfGetLogger(),
+            .pfnUserCallback = debugCallback
+        };
+
+        info.pNext = &debugInfo;
+        info.ppEnabledExtensionNames = exts2;
+#endif
 
         VK_CHECK(vkCreateInstance(&info, ctx->allocator, &ctx->instance));
+#ifdef MF_DEBUG
+        MF_FREEMEM(exts2);
+#endif
+    }
+    // Debug messenger
+    {
+#ifdef MF_DEBUG
+        // Getting the functions
+        {
+            ctx->vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(ctx->instance, "vkCreateDebugUtilsMessengerEXT");
+            ctx->vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(ctx->instance, "vkDestroyDebugUtilsMessengerEXT");
+            MF_PANIC_IF(!ctx->vkCreateDebugUtilsMessengerEXT || !ctx->vkDestroyDebugUtilsMessengerEXT, mfGetLogger(), 
+                    "(From the vulkan backend) Failed to load the validation layer functions which are needed for debug builds!");
+        }
+
+        VkDebugUtilsMessengerCreateInfoEXT info = {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+            .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
+            .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT,
+            .pUserData = mfGetLogger(),
+            .pfnUserCallback = debugCallback
+        };
+
+        VK_CHECK(ctx->vkCreateDebugUtilsMessengerEXT(ctx->instance, &info, ctx->allocator, &ctx->debugMessenger));
+#endif
     }
     // Surface
     {
@@ -484,6 +561,10 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     vkDestroyDevice(ctx->device, ctx->allocator);
+
+#ifdef MF_DEBUG
+    ctx->vkDestroyDebugUtilsMessengerEXT(ctx->instance, ctx->debugMessenger, ctx->allocator);
+#endif
 
     vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
