@@ -99,11 +99,10 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.commandPool, true);
         
-        VkFenceCreateInfo info = {
-            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        VkSemaphoreCreateInfo semaInfo = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
         };
-        VK_CHECK(vkCreateFence(renderTarget->backend->ctx.device, &info, renderTarget->backend->ctx.allocator, &renderTarget->fences[i]));
+        VK_CHECK(vkCreateSemaphore(renderTarget->backend->ctx.device, &semaInfo, renderTarget->backend->ctx.allocator, &renderTarget->renderFinishedSemas[i]));
     }
 
     renderTarget->init = true;
@@ -115,7 +114,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
-        vkDestroyFence(renderTarget->backend->ctx.device, renderTarget->fences[i], renderTarget->backend->ctx.allocator);
+        vkDestroySemaphore(renderTarget->backend->ctx.device, renderTarget->renderFinishedSemas[i], renderTarget->backend->ctx.allocator);
     }
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -347,18 +346,22 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     };
 
+    VkSemaphore waitSemas[1] = {
+        renderTarget->backend->imageAvailableSemas[renderTarget->backend->frameIndex]
+    };
+
     VkSubmitInfo info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,
         .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &renderTarget->backend->renderFinishedSemas[renderTarget->backend->frameIndex],
+        .pSignalSemaphores = &renderTarget->renderFinishedSemas[renderTarget->backend->frameIndex],
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &renderTarget->backend->imageAvailableSemas[renderTarget->backend->frameIndex],
+        .pWaitSemaphores = waitSemas,
         .pWaitDstStageMask = waitDstFlags
     };
 
-    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, renderTarget->fences[renderTarget->backend->frameIndex]));
+    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, VK_NULL_HANDLE));
 }
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {

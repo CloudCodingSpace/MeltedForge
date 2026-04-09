@@ -169,11 +169,6 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
 }
 
 void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
-    if(backend->renderTarget != mfnull) {
-        VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->renderTarget->fences[backend->frameIndex], VK_TRUE, UINT64_MAX));
-        VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->renderTarget->fences[backend->frameIndex]));
-    }
-
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
 
@@ -241,19 +236,27 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     };
 
+    VkSemaphore waitSemas[1] = {
+        backend->imageAvailableSemas[backend->frameIndex]
+    };
+
+    VkSemaphore signalSemas[1] = {
+        backend->renderFinishedSemas[backend->frameIndex]
+    };
+
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,
         .pCommandBuffers = &backend->commandBuffers[backend->frameIndex],
         .pWaitDstStageMask = waitDstMask,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &backend->renderFinishedSemas[backend->frameIndex],
+        .pSignalSemaphores = signalSemas,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &backend->imageAvailableSemas[backend->frameIndex]
+        .pWaitSemaphores = waitSemas
     };
 
     if(backend->renderTarget != mfnull) {
-        submitInfo.pWaitSemaphores = &backend->renderFinishedSemas[backend->frameIndex];
+        waitSemas[0] = backend->renderTarget->renderFinishedSemas[backend->frameIndex];
     }
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
@@ -264,7 +267,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         .swapchainCount = 1,
         .pSwapchains = &backend->ctx.swapchain,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &backend->renderFinishedSemas[backend->frameIndex]
+        .pWaitSemaphores = signalSemas
     };
 
     VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
