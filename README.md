@@ -10,6 +10,9 @@
 
 ## Features
 
+ - A Basic ECS
+   - Material system
+   - Basic scene management
  - Model loading along with the material data
     - Can load complex models (Tested with [deccer's cubes](https://github.com/GraphicsProgramming/deccer-cubes))
  - Engine & editor level UI
@@ -22,9 +25,6 @@
 ---
 
 ## WIP (Work In Progress)
-
- - Material system
- - Entity Component System (ECS)
  - Documentation
 
 ---
