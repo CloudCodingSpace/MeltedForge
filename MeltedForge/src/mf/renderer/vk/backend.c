@@ -104,6 +104,31 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
         }
     }
 
+    // Pipeline cache
+    {
+        backend->pipelineCacheFilePath = mfStringDuplicate("mfpipeline_caches.bin");
+        u8* initialData = mfnull;
+        VkPipelineCacheCreateInfo cacheInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+            .initialDataSize = 0,
+            .pInitialData = mfnull
+        };
+
+        size_t size = 0;
+        b8 success = false;
+        initialData = mfReadFile(mfGetLogger(), &size, &success, backend->pipelineCacheFilePath, "rb");
+        if(success) {
+            cacheInfo.initialDataSize = size;
+            cacheInfo.pInitialData = initialData;
+        }
+
+        VkResult cacheResult = vkCreatePipelineCache(backend->ctx.device, &cacheInfo, backend->ctx.allocator, &backend->pipelineCache);
+        if(cacheResult != VK_SUCCESS) {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to create the pipeline cache! Result by vulkan :- %s", string_VkResult(cacheResult));
+            backend->pipelineCache = mfnull;
+        }
+    }
+
     backend->frameIndex = 0;
 
     if(!config->enableUI)
@@ -151,6 +176,26 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         igDestroyContext(igGetCurrentContext());
+    }
+
+    if(backend->pipelineCache) {
+        size_t size = 0;
+        VkResult result = vkGetPipelineCacheData(backend->ctx.device, backend->pipelineCache, &size, mfnull);
+        if(result == VK_SUCCESS) {
+            u8* buffer = MF_ALLOCMEM(u8, sizeof(u8) * size);
+            result = vkGetPipelineCacheData(backend->ctx.device, backend->pipelineCache, &size, buffer);
+            if(result != VK_SUCCESS)
+                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to get the pipeline cache's data! Result by vulkan :- %s", string_VkResult(result));
+            else
+                mfWriteFile(mfGetLogger(), size, backend->pipelineCacheFilePath, buffer, "wb");
+
+            MF_FREEMEM(buffer);
+        } else {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to get the pipeline cache's data! Result by vulkan :- %s", string_VkResult(result));
+        }
+
+        MF_FREEMEM(backend->pipelineCacheFilePath);
+        vkDestroyPipelineCache(backend->ctx.device, backend->pipelineCache, backend->ctx.allocator);
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {

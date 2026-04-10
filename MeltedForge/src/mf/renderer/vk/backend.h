@@ -32,6 +32,8 @@ typedef struct VulkanBackend_s {
     VkSemaphore* renderFinishedSemas;
     VkFence inFlightFences[FRAMES_IN_FLIGHT];
 
+    const char* pipelineCacheFilePath;
+    VkPipelineCache pipelineCache;
     struct MFRenderTarget_s* renderTarget;
 } VulkanBackend;
 

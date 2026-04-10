@@ -29,8 +29,7 @@ static void CreatePipeline(MFTState* state) {
         .resourceLayouts = &state->layout,
         .renderTarget = state->renderTarget,
         .pushConstRangeCount = 1,
-        .pushConstRanges = &range,
-        .cacheFilePath = "mftpipeline_cache.bin"
+        .pushConstRanges = &range
     };
     mfPipelineInit(state->pipeline, state->renderer, &info);
 
