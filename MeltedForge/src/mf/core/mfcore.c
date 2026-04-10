@@ -37,9 +37,7 @@ void mfInitialize(void) {
         b8 success = false;
         u64 size;
         char* content = mfReadFile(mfGetLogger(), &size, &success, "mfcore_cache.bin", "rb");
-        if(!success) {
-            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
-        } else {
+        if(success) {
             MFSerializer serializer = {
                 .buffer = content
             };
@@ -101,9 +99,7 @@ void mfShutdown(void) {
 
         b8 success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
 
-        if(!success) {
-            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
-        } else {
+        if(success) {
             mfSerializerDestroy(&serializer);
         }
     }
