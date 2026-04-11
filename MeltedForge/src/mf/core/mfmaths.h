@@ -465,6 +465,18 @@ MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
 
     return inv;
 }
+
+MF_INLINE MFMat3 mfMat4ToMat3(MFMat4 mat) {
+    f32* data = mat.data;
+    return (MFMat3){
+        .data = {
+            data[0], data[1], data[2],
+            data[4], data[5], data[6],
+            data[8], data[9], data[10]
+        }
+    };
+};
+
 /*   Mat4   */
 
 MF_INLINE MFMat4 mfMat4Identity(void) {

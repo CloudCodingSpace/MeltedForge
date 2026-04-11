@@ -7,7 +7,6 @@ layout(location = 0) out vec4 outColor;
 layout (location = 4) in mat3 oTBN_matrix;
 layout (location = 7) in vec2 oUv;
 layout (location = 8) in vec3 oFragPos;
-layout (location = 9) in vec3 oNormal;
 
 layout (binding = 1) uniform LightUBO {
     vec3 lightPos;
@@ -25,7 +24,7 @@ void main() {
     vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
     vec3 normal = oTBN_matrix * texel;
 
-    outColor = texture(u_DiffuseTex, oUv) * vec4(mfComputePhongLighting(oNormal, 
+    outColor = texture(u_DiffuseTex, oUv) * vec4(mfComputePhongLighting(normal,
                                     oFragPos, 
                                     ubo.lightPos - oFragPos, 
                                     ubo.camPos, 

@@ -54,7 +54,7 @@ static void meshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
         .model = transform
     };
 
-    modelData.normalMat = mfMat4Transpose(mfMat4Inverse(mfMat4Mul(state->cameraUboData.view, modelData.model)));
+    modelData.normalMat = mfMat3Transpose(mfMat3Inverse(mfMat4ToMat3(modelData.model)));
 
     mfResourceSetBind(state->sets[meshIdx], state->pipeline);
     mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);

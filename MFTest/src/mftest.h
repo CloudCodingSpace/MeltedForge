@@ -11,7 +11,7 @@ typedef struct UBOData_s {
 
 typedef struct PushConstantData_s {
     MFMat4 model;
-    MFMat4 normalMat;
+    MFMat3 normalMat;
 } PushConstantData;
 
 typedef struct LightUBOData_s {
