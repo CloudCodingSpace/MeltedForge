@@ -4,7 +4,8 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout (location = 4) in mat3 oTBN_matrix;
+layout (location = 4) in vec3 oNormal;
+layout (location = 6) in vec3 oTangent;
 layout (location = 7) in vec2 oUv;
 layout (location = 8) in vec3 oFragPos;
 
@@ -22,7 +23,9 @@ layout (binding = 3) uniform sampler2D u_NormalTex;
 
 void main() {
     vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
-    vec3 normal = oTBN_matrix * texel;
+    vec3 bitangent = normalize(cross(oNormal, oTangent));
+    mat3 TBN = mat3(oTangent, bitangent, oNormal);
+    vec3 normal = TBN * texel;
 
     outColor = texture(u_DiffuseTex, oUv) * vec4(mfComputePhongLighting(normal,
                                     oFragPos, 

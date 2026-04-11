@@ -5,7 +5,8 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 uv;
 layout (location = 3) in vec3 tangent;
 
-layout (location = 4) out mat3 oTBN_matrix;
+layout (location = 4) out vec3 oNormal;
+layout (location = 6) out vec3 oTangent;
 layout (location = 7) out vec2 oUv;
 layout (location = 8) out vec3 oFragPos;
 
@@ -23,11 +24,8 @@ void main() {
     vec4 worldPos = md.model * vec4(pos, 1.0);
     gl_Position = ubo.proj * ubo.view * worldPos;
     
-    vec3 N = normalize(md.normalMat * normal);
-    vec3 T = normalize(md.normalMat * tangent);
-    vec3 B = normalize(cross(N, T));
-    oTBN_matrix = mat3(T, B, N);
-
+    oNormal = normalize(md.normalMat * normal);
+    oTangent = normalize(md.normalMat * tangent);
     oFragPos = worldPos.xyz;
     oUv = uv;
 }
