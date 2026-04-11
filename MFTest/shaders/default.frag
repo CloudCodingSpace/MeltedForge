@@ -33,4 +33,7 @@ void main() {
                                     ubo.ambientFactor, 
                                     ubo.lightIntensity, 
                                     true), 1.0);
+
+    outColor = outColor / (outColor + 1);
+    outColor = pow(outColor, vec4(1.0/2.2));
 }
