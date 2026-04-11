@@ -18,8 +18,8 @@ vec3 mfComputePhongLighting(vec3 normal, vec3 fragPos, vec3 lightDir, vec3 camPo
     vec3 color = lightColor * (diffuse + spec + ambientFactor);
 
     if(isPoint) {
-        float dist = length(lightDir);
-        float attenuation = 1.0 / (1.0 + 0.39 * dist + 0.032 * dist * dist);
+        float dist = dot(lightDir, lightDir);
+        float attenuation = 1.0 / dist;
         color *= attenuation;
     }
     return color * lightIntensity;

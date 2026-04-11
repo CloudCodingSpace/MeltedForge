@@ -64,7 +64,7 @@ static MFMat4 computeModelMatrix(const MFTransformComponent* component) {
     MF_PROFILE_ZONE_START_NAMED(__temp, "Computing model matrix");
     MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
     MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-    MFMat4 scale = mfMat4Scale(fmax(component->scale.x, 1e-4f), fmax(component->scale.y, 1e-4f), fmax(component->scale.z, 1e-4f));
+    MFMat4 scale = mfMat4Scale(fmax(component->scale.x, 0.5f), fmax(component->scale.y, 0.5f), fmax(component->scale.z, 0.5f));
 
     MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
     
@@ -158,7 +158,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .lightPos = (MFVec3){0.0f, 10.0f, 0.0f},
             .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
             .specularFactor = 32,
-            .lightIntensity = 80
+            .lightIntensity = 1000
         };
         
         state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
@@ -344,10 +344,10 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             f32 colorData[3] = {0};
             mfCopyVec3ToFloatArr(colorData, state->lightData.lightColor);
 
-            igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_None);
-            igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_None);
-            igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_None);
-            igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_None);
+            igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
+            igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
+            igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
+            igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
             state->lightData.lightPos = mfFloatArrToVec3(posData);
