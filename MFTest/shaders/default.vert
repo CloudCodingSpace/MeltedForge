@@ -8,6 +8,7 @@ layout (location = 3) in vec3 tangent;
 layout (location = 4) out mat3 oTBN_matrix;
 layout (location = 7) out vec2 oUv;
 layout (location = 8) out vec3 oFragPos;
+layout (location = 9) out vec3 oNormal;
 
 layout (binding = 0) uniform UBO {
     mat4 proj;
@@ -30,4 +31,5 @@ void main() {
 
     oFragPos = worldPos.xyz;
     oUv = uv;
+    oNormal = normalize(normal);
 }
