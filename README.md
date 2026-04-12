@@ -130,6 +130,7 @@ This project may not have been possible if not for some of these sources and com
  - [Vulkan tutorial](https://vulkan-tutorial.com/) for basics of vulkan
  - Graphics programming discord server's community. [Link](https://discord.gg/graphicsprogramming)
  - [Polyhaven](https://polyhaven.com/) for free, 3D assets
+ - [Khronos's glTF Samples](https://github.com/KhronosGroup/glTF-Sample-Models) for 3D assets
 
 ---
 
