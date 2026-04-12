@@ -178,7 +178,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
     return list;
 }
 
-void mfMaterialSystemDeleteModelMatImages(MFArray* array) {
+void mfMaterialSystemDestroyModelMatImages(MFArray* array) {
     if(!s_State.init) {
         MF_FATAL_ABORT(mfGetLogger(), "The material system isn't initialised!");
     }

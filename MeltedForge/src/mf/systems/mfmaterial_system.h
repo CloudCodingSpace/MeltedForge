@@ -23,6 +23,6 @@ void mfMaterialSystemInitialize(void);
 void mfMaterialSystemShutdown(void);
 
 MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath, MFRenderer* renderer);
-void mfMaterialSystemDeleteModelMatImages(MFArray* array);
+void mfMaterialSystemDestroyModelMatImages(MFArray* array);
 
 MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer);
