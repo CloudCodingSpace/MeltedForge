@@ -16,6 +16,8 @@ layout (binding = 1) uniform LightUBO {
     float specularFactor;
     vec3 lightColor;
     float lightIntensity;
+    float isPoint;
+    vec3 padding;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
@@ -35,7 +37,7 @@ void main() {
                                     ubo.specularFactor, 
                                     ubo.ambientFactor, 
                                     ubo.lightIntensity, 
-                                    true), 1.0);
+                                    (ubo.isPoint == 1.0) ? true : false), 1.0);
 
     outColor = outColor / (outColor + 1);
     outColor = pow(outColor, vec4(1.0/2.2));

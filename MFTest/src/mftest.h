@@ -20,7 +20,9 @@ typedef struct LightUBOData_s {
     MFVec3 camPos;
     f32 specularFactor;
     MFVec3 lightColor;
-    float lightIntensity;
+    f32 lightIntensity;
+    f32 isPoint;
+    MFVec3 padding;
 } LightUBOData;
 
 typedef struct MFTState_s {

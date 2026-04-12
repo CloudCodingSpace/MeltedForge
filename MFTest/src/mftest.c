@@ -155,10 +155,11 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->lightData = (LightUBOData) {
             .ambientFactor = 0.01f,
             .camPos = state->camera.pos,
-            .lightPos = (MFVec3){0.0f, 10.0f, 0.0f},
+            .lightPos = (MFVec3){0.0f, 2.0f, 0.0f},
             .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
             .specularFactor = 32,
-            .lightIntensity = 1000
+            .lightIntensity = 1000,
+            .isPoint = 1.0f
         };
         
         state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
@@ -349,9 +350,13 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
+            
+            bool isPoint = state->lightData.isPoint;
+            igCheckbox("Point lighting", &isPoint);
 
             state->lightData.lightPos = mfFloatArrToVec3(posData);
             state->lightData.lightColor = mfFloatArrToVec3(colorData);
+            state->lightData.isPoint = isPoint;
         }
 
         igDummy((ImVec2){ 0.0f, 50.0f });
