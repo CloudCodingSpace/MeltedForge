@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfcore.h"
 
 typedef enum MFPolygonMode_e {
@@ -452,3 +456,7 @@ typedef struct MFPipelinePushConstant_s {
     MFShaderStage stageFlags;
     u32 offset, size;
 } MFPipelinePushConstant;
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 #include "core/mfcore.h"
 
@@ -29,3 +33,7 @@ MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image);
 void* mfGpuImageGetBackend(MFGpuImage* image);
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer);
+
+#ifdef __cplusplus
+}
+#endif

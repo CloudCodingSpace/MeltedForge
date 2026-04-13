@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfmaterial_system.h"
 
 #include <stb/stb_image.h>
@@ -449,3 +453,7 @@ static u32 arrayToU32(f32* data) {
     u8 b = (u8)round(data[2] * 255.0f);
     return (u32)((0xff << 24) | (g << 16) | (b << 8) | r);
 }
+
+#ifdef __cplusplus
+}
+#endif

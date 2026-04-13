@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <tracy/TracyC.h>
 
 void mfProfilerMarkFrame(void);
@@ -15,4 +19,8 @@ void mfProfilerMarkFrameEnd(const char* name);
     #define MF_PROFILE_ZONE_START(ctx)
     #define MF_PROFILE_ZONE_START_NAMED(ctx, name)
     #define MF_PROFILE_ZONE_END(ctx)
+#endif
+
+#ifdef __cplusplus
+}
 #endif

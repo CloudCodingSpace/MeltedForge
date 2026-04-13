@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfmaths.h"
 
 #include "objects/mfmodel.h"
@@ -30,3 +34,7 @@ typedef struct MFComponentGroup_s {
     u64 transformIdx;
     b8 valid;
 } MFComponentGroup;
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfwindow.h"
 
 #define MF_KEY_UNKNOWN            -1
@@ -147,3 +151,7 @@ void mfInputSetMousePos(MFWindow* window, f64 x, f64 y);
 void mfInputDisableMouse(MFWindow* window);
 void mfInputHideMouse(MFWindow* window);
 void mfInputNormalMouse(MFWindow* window);
+
+#ifdef __cplusplus
+}
+#endif

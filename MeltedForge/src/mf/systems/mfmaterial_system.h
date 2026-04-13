@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 #include "objects/mfmodel.h"
 
@@ -26,3 +30,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
 void mfMaterialSystemDestroyModelMatImages(MFArray* array);
 
 MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer);
+
+#ifdef __cplusplus
+}
+#endif

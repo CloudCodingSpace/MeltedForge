@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "renderer/mfrenderer.h"
 #include "renderer/mfgpubuffer.h"
 
@@ -43,3 +47,7 @@ void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertic
 void mfMeshDestroy(MFMesh* mesh);
 
 void mfMeshRender(MFMesh* mesh);
+
+#ifdef __cplusplus
+}
+#endif

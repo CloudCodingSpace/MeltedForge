@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfpipeline.h"
 
 #include "vk/backend.h"
@@ -164,3 +168,7 @@ void* mfPipelineGetBackend(MFPipeline* pipeline) {
 size_t mfPipelineGetSizeInBytes(void) {
     return sizeof(MFPipeline);
 }
+
+#ifdef __cplusplus
+}
+#endif

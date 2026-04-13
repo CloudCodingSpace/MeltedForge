@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfrenderer.h"
 #include "core/mftime.h"
 
@@ -179,3 +183,7 @@ u8 mfRendererGetFramesInFlight(void) {
 size_t mfRendererGetSizeInBytes(void) {
     return sizeof(MFRenderer);
 }
+
+#ifdef __cplusplus
+}
+#endif

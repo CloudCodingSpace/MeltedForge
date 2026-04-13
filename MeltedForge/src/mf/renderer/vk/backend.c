@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "backend.h"
 
 #include "command_buffer.h"
@@ -348,3 +352,7 @@ void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u3
 
     vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // NOTE: Make the offset configurable if necessary
 }
+
+#ifdef __cplusplus
+}
+#endif

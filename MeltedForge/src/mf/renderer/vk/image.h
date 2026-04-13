@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <vulkan/vulkan.h>
 
 #include "core/mfutils.h"
@@ -36,3 +40,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo info);
 void VulkanImageDestroy(VulkanImage* image);
 
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels);
+
+#ifdef __cplusplus
+}
+#endif

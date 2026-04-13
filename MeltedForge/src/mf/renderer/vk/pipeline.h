@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <vulkan/vulkan.h>
 
 #include "ctx.h"
@@ -30,3 +34,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 void VulkanPipelineDestroy(VulkanBackendCtx* ctx, VulkanPipeline* pipeline);
 
 void VulkanPipelineBind(VulkanPipeline* pipeline, VkViewport vp, VkRect2D scissor, VkCommandBuffer buffer);
+
+#ifdef __cplusplus
+}
+#endif

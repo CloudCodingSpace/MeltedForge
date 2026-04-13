@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfcamera.h"
 
 void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
@@ -142,3 +146,7 @@ void mfCameraDestroy(MFCamera* camera) {
 
     MF_SETMEM(camera, 0, sizeof(MFCamera));
 }
+
+#ifdef __cplusplus
+}
+#endif

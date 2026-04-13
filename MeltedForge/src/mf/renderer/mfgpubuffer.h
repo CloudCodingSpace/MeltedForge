@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 #include "core/mfcore.h"
 
@@ -36,3 +40,7 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer);
 size_t mfGpuBufferGetSizeInBytes(void);
 MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer);
 void* mfGpuBufferGetBackend(MFGpuBuffer* buffer);
+
+#ifdef __cplusplus
+}
+#endif

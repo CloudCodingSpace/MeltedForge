@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 #include "mfcomponents.h"
 
@@ -25,3 +29,7 @@ MF_INLINE b8 mfEntityHasTransformComponent(const MFEntity* entity) {
 
     return entity->components & MF_COMPONENT_TYPE_TRANSFORM;
 }
+
+#ifdef __cplusplus
+}
+#endif

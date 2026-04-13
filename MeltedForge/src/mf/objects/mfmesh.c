@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfmesh.h"
 
 void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indCount, u32* indices) {
@@ -63,3 +67,7 @@ void mfMeshRender(MFMesh* mesh) {
     mfGpuBufferBind(mesh->indBuffer);
     mfRendererDrawVerticesIndexed(mesh->renderer, mesh->vertCount, 1, 0, 0);
 }
+
+#ifdef __cplusplus
+}
+#endif

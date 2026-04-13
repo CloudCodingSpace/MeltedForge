@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "fb.h"
 
 #include "common.h"
@@ -21,3 +25,7 @@ VkFramebuffer VulkanFbCreate(VulkanBackendCtx* ctx, VkRenderPass pass, u32 imgVi
 void VulkanFbDestroy(VulkanBackendCtx* ctx, VkFramebuffer fb) {
     vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
 }
+
+#ifdef __cplusplus
+}
+#endif

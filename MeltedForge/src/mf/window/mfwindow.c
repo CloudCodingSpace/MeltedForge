@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfwindow.h"
 
 #include "core/mfcore.h"
@@ -170,3 +174,7 @@ const MFWindowConfig* mfWindowGetConfig(MFWindow* window) {
 size_t mfWindowGetSizeInBytes(void) {
     return sizeof(MFWindow);
 }
+
+#ifdef __cplusplus
+}
+#endif

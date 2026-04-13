@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "common.h"
 
 struct VulkanBackend_s;
@@ -21,3 +25,7 @@ struct MFRenderTarget_s {
 
     b8 hasDepth, init;
 };
+
+#ifdef __cplusplus
+}
+#endif

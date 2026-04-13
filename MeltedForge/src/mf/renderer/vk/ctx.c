@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "ctx.h"
 
 #include <GLFW/glfw3.h>
@@ -606,3 +610,7 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWind
         VulkanImageCreate(&ctx->depthImage, info);
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

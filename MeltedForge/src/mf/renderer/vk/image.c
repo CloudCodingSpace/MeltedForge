@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "image.h"
 
 #include "core/mfcore.h"
@@ -300,3 +304,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
     VulkanBufferFree(&staging, ctx);
 }
+
+#ifdef __cplusplus
+}
+#endif

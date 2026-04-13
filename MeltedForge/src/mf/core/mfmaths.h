@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfutils.h"
 #include "mfcore.h"
 
@@ -742,3 +746,7 @@ MF_INLINE MFVec4 mfCopyFloatArrToVec4(f32* in) {
     MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     return mfVec4Create(in[0], in[1], in[2], in[3]);
 }
+
+#ifdef __cplusplus
+}
+#endif

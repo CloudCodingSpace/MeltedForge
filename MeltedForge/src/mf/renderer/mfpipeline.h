@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct MFPipeline_s MFPipeline;
 
 #include "core/mfcore.h"
@@ -36,3 +40,7 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor);
 void* mfPipelineGetLayoutBackend(MFPipeline* pipeline);
 void* mfPipelineGetBackend(MFPipeline* pipeline);
 size_t mfPipelineGetSizeInBytes(void);
+
+#ifdef __cplusplus
+}
+#endif

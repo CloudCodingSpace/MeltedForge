@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfcore.h"
 #include "core/mfutils.h"
 #include "core/mfmaths.h"
@@ -38,3 +42,7 @@ f64 mfRendererGetFrameTime(MFRenderer* renderer);
 
 size_t mfRendererGetSizeInBytes(void);
 u8 mfRendererGetFramesInFlight(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfapp.h"
 #include "mfprofiler.h"
 #include "systems/mfmaterial_system.h"
@@ -102,3 +106,7 @@ MFAppConfig mfCreateDefaultApp(const char* name) {
         .appName = (name) ? name : "MeltedForge application"
     };
 }
+
+#ifdef __cplusplus
+}
+#endif

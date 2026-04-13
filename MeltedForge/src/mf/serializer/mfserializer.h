@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 
 #include "mfserializerutils.h"
@@ -51,3 +55,7 @@ b8 mfDeserializeB8(MFSerializer* serializer);
 char mfDeserializeChar(MFSerializer* serializer);
 // @note The returned char* must be freed since it is allocated on the heap
 char* mfDeserializeString(MFSerializer* serializer);
+
+#ifdef __cplusplus
+}
+#endif

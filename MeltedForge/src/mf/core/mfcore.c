@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfcore.h"
 #include "mfutils.h"
 
@@ -158,3 +162,7 @@ SLogger* mfGetLogger(void) {
     
     return &s_Ctx.logger;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfprofiler.h"
 
 #include <tracy/TracyC.h>
@@ -19,3 +23,7 @@ void mfProfilerMarkFrameEnd(const char* name) {
     TracyCFrameMarkEnd(name);
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

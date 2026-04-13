@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "buffer.h"
 
 #include "command_buffer.h"
@@ -278,3 +282,7 @@ void VulkanBufferResize(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPo
 
     VulkanBufferAllocate(buffer, ctx, pool, size, data, buffer->type);
 }
+
+#ifdef __cplusplus
+}
+#endif

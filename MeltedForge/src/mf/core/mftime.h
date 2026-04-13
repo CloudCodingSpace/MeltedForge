@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfutils.h"
 
 typedef struct MFTimer_s {
@@ -20,3 +24,7 @@ u64 mfGetCurrentTimeHours(void);
 u64 mfGetCurrentTimeDays(void);
 u32 mfGetCurrentTimeMonths(void);
 u64 mfGetCurrentTimeYears(void);
+
+#ifdef __cplusplus
+}
+#endif

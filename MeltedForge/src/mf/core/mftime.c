@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mftime.h"
 
 #include "mfcore.h"
@@ -87,3 +91,7 @@ u64 mfGetCurrentTimeYears(void) {
     struct tm* t = localtime(&now);
     return t->tm_year + 1900;
 }
+
+#ifdef __cplusplus
+}
+#endif

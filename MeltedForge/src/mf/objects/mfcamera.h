@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "window/mfwindow.h"
 #include "window/mfinput.h"
 
@@ -19,3 +23,7 @@ typedef struct MFCamera_s {
 
 void mfCameraCreate(MFCamera* camera, MFWindow* window, f32 width, f32 height, f32 fov, f32 nearPlane, f32 farPlane, f32 speed, f32 sensitivity, MFVec3 pos);
 void mfCameraDestroy(MFCamera* camera);
+
+#ifdef __cplusplus
+}
+#endif

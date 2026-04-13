@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfgpubuffer.h"
 
 #include "vk/backend.h"
@@ -115,3 +119,7 @@ void* mfGpuBufferGetBackend(MFGpuBuffer* buffer) {
 
     return buffer->buffer;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfinput.h"
 
 #include "core/mfcore.h"
@@ -50,3 +54,7 @@ b8 mfInputIsMBReleased(MFWindow* window, i32 button) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle shouldn't be null!");
     return glfwGetMouseButton(mfWindowGetHandle(window), button) == GLFW_RELEASE;
 }
+
+#ifdef __cplusplus
+}
+#endif

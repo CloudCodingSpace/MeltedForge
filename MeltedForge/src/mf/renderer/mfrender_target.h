@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 #include "core/mfmaths.h"
 
@@ -23,3 +27,7 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget);
 
 void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget);
 size_t mfRenderTargetGetSizeInBytes(void);
+
+#ifdef __cplusplus
+}
+#endif

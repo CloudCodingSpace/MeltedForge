@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <slog/slog.h>
@@ -13,3 +17,7 @@ uint32_t mfGetErrorImageWidth(void);
 uint32_t mfGetErrorImageHeight(void);
 
 SLogger* mfGetLogger(void);
+
+#ifdef __cplusplus
+}
+#endif

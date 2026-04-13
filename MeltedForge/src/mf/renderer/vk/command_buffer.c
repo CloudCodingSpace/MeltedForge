@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "command_buffer.h"
 
 #include "common.h"
@@ -48,3 +52,7 @@ void VulkanCommandBufferBegin(VkCommandBuffer buffer) {
 void VulkanCommandBufferEnd(VkCommandBuffer buffer) {
     VK_CHECK(vkEndCommandBuffer(buffer));
 }
+
+#ifdef __cplusplus
+}
+#endif

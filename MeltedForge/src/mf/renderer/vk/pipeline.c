@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "pipeline.h"
 
 #include "common.h"
@@ -195,3 +199,7 @@ void VulkanPipelineBind(VulkanPipeline* pipeline, VkViewport vp, VkRect2D scisso
     vkCmdSetViewport(buffer, 0, 1, &vp);
     vkCmdSetScissor(buffer, 0, 1, &scissor);
 }
+
+#ifdef __cplusplus
+}
+#endif

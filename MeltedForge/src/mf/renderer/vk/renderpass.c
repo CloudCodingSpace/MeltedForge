@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "renderpass.h"
 
 #include "common.h"
@@ -83,3 +87,7 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
 void VulkanRenderPassDestroy(VulkanBackendCtx* ctx, VkRenderPass pass) {
     vkDestroyRenderPass(ctx->device, pass, ctx->allocator);
 }
+
+#ifdef __cplusplus
+}
+#endif

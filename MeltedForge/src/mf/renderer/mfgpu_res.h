@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfcore.h"
 #include "core/mfutils.h"
 
@@ -23,3 +27,7 @@ void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout);
 
 size_t mfResourceSetLayoutGetSizeInBytes(void);
 size_t mfResourceSetGetSizeInBytes(void);
+
+#ifdef __cplusplus
+}
+#endif

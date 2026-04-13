@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfmesh.h"
 #include "core/mfutils.h"
 #include "core/mfcore.h"
@@ -25,3 +29,7 @@ typedef struct MFModel_s {
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder);
 void mfModelDestroy(MFModel* model);
+
+#ifdef __cplusplus
+}
+#endif

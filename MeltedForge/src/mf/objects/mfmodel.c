@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfmodel.h"
 
 #include <stdint.h>
@@ -216,3 +220,7 @@ void mfModelDestroy(MFModel* model) {
 
     MF_SETMEM(model, 0, sizeof(MFModel));
 }
+
+#ifdef __cplusplus
+}
+#endif

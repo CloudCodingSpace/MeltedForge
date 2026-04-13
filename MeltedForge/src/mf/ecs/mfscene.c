@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfscene.h"
 
 #include "core/mfcore.h"
@@ -505,3 +509,7 @@ b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder
 
     return true;
 }
+
+#ifdef __cplusplus
+}
+#endif

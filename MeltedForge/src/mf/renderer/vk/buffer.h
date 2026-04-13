@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "common.h"
 #include "ctx.h"
 
@@ -27,3 +31,7 @@ void VulkanBufferFree(VulkanBuffer* buffer, VulkanBackendCtx* ctx);
 
 void VulkanBufferResize(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, u64 size, void* data);
 void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, void* data);
+
+#ifdef __cplusplus
+}
+#endif

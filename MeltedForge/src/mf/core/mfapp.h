@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "window/mfwindow.h"
 #include "renderer/mfrenderer.h"
 
@@ -31,3 +35,7 @@ typedef struct MFDefaultAppState_s {
 } MFDefaultAppState;
 
 MFAppConfig mfCreateDefaultApp(const char* name);
+
+#ifdef __cplusplus
+}
+#endif

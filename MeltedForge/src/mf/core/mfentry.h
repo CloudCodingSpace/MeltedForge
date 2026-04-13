@@ -2,7 +2,7 @@
 
 #include "mfapp.h"
 
-MFAppConfig mfClientCreateAppConfig();
+MFAppConfig mfClientCreateAppConfig(void);
 
 int main(int argc, const char** argv) {
     mfInitialize();

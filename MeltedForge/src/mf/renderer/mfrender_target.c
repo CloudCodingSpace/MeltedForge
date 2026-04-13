@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfrender_target.h"
 
 #include "core/mfcore.h"
@@ -410,3 +414,7 @@ void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget) {
 size_t mfRenderTargetGetSizeInBytes(void) {
     return sizeof(MFRenderTarget);
 }
+
+#ifdef __cplusplus
+}
+#endif

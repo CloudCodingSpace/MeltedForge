@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 #include "mfentity.h"
 #include "mfcomponents.h"
@@ -55,3 +59,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName);
 // @note Returns false if the scene file doesnt exists or if the file isn't a scene file!
 //       Else it returns true.
 b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertBuilder);
+
+#ifdef __cplusplus
+}
+#endif

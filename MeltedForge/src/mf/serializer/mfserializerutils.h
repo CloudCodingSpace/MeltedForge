@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 
 #define MF_CREATE_SIGNATURE_BYTES(a, b, c, d) ((u32)(((u8)a << 24) | ((u8)b << 16) | ((u8)c << 8) | ((u8)d << 0)))
@@ -11,3 +15,7 @@ typedef enum MFSignatures_e {
     MF_SIGNATURE_SCENE_FILE = MF_CREATE_SIGNATURE_BYTES('M', 'F', 'S', 'F'),
     MF_SIGNATURE_CORE_CACHE_FILE = MF_CREATE_SIGNATURE_BYTES('M', 'F', 'C', 'F')
 } MFSignatures;
+
+#ifdef __cplusplus
+}
+#endif

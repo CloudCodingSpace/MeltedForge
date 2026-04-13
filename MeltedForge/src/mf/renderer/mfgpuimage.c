@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfgpuimage.h"
 
 #include "vk/image.h"
@@ -138,3 +142,7 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
 
     return tex;
 }
+
+#ifdef __cplusplus
+}
+#endif

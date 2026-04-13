@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfserializer.h"
 #include "core/mfutils.h"
 #include "core/mfcore.h"
@@ -458,3 +462,7 @@ char* mfDeserializeString(MFSerializer* serializer) {
     string[len] = '\0';
     return string;
 }
+
+#ifdef __cplusplus
+}
+#endif

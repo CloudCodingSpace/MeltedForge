@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "window/mfwindow.h"
 
 #include "ctx.h"
@@ -45,3 +49,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window);
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance);
+
+#ifdef __cplusplus
+}
+#endif

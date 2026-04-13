@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <vulkan/vulkan.h>
 
 #include "window/mfwindow.h"
@@ -54,3 +58,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core/mfutils.h"
 
 typedef struct GLFWwindow GLFWwindow;
@@ -34,3 +38,7 @@ GLFWwindow* mfWindowGetHandle(MFWindow* window);
 const MFWindowConfig* mfWindowGetConfig(MFWindow* window);
 
 size_t mfWindowGetSizeInBytes(void);
+
+#ifdef __cplusplus
+}
+#endif

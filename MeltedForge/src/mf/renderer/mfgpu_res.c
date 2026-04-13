@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mfgpu_res.h"
 
 #include <vulkan/vulkan.h>
@@ -291,3 +295,7 @@ size_t mfResourceSetLayoutGetSizeInBytes(void) {
 size_t mfResourceSetGetSizeInBytes(void) {
     return sizeof(MFResourceSet);
 }
+
+#ifdef __cplusplus
+}
+#endif

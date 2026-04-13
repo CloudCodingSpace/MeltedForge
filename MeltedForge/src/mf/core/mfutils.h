@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -405,3 +409,7 @@ MF_INLINE u64 mfHash_FNV1A(const void* data, u64 size, SLogger* logger) {
 
     return hash;
 }
+
+#ifdef __cplusplus
+}
+#endif
