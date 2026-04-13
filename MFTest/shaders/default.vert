@@ -17,15 +17,16 @@ layout (binding = 0) uniform UBO {
 
 layout (push_constant) uniform ModelData {
     mat4 model;
-    mat3 normalMat;
+    mat4 normalMat;
 } md;
 
 void main() {
     vec4 worldPos = md.model * vec4(pos, 1.0);
     gl_Position = ubo.proj * ubo.view * worldPos;
     
-    oNormal = normalize(md.normalMat * normal);
-    oTangent = normalize(md.normalMat * tangent);
+    mat3 normalMat = mat3(md.normalMat);
+    oNormal = normalize(normalMat * normal);
+    oTangent = normalize(normalMat * tangent);
     oFragPos = worldPos.xyz;
     oUv = uv;
 }

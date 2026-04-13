@@ -27,7 +27,7 @@ void main() {
     vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
     vec3 bitangent = normalize(cross(oNormal, oTangent));
     mat3 TBN = mat3(oTangent, bitangent, oNormal);
-    vec3 normal = TBN * texel;
+    vec3 normal = normalize(TBN * texel);
 
     outColor = pow(texture(u_DiffuseTex, oUv), vec4(2.2)) * vec4(mfComputePhongLighting(normal,
                                     oFragPos, 

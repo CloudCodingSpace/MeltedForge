@@ -579,7 +579,7 @@ MF_INLINE MFMat4 mfMat4RotateXYZ(f32 radiansX, f32 radiansY, f32 radiansZ) {
     MFMat4 x = mfMat4RotateX(radiansX);
     MFMat4 y = mfMat4RotateY(radiansY);
     MFMat4 z = mfMat4RotateZ(radiansZ);
-    return mfMat4Mul(mfMat4Mul(x, y), z);
+    return mfMat4Mul(mfMat4Mul(z, y), x);
 }
 
 MF_INLINE MFMat4 mfMat4Perspective(f32 fovYRadians, f32 aspect, f32 nearZ, f32 farZ) {

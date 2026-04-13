@@ -57,7 +57,7 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
         .model = transform
     };
 
-    modelData.normalMat = mfMat3Transpose(mfMat3Inverse(mfMat4ToMat3(modelData.model)));
+    modelData.normalMat = mfMat4Transpose(mfMat4Inverse(modelData.model));
 
     mfResourceSetBind(state->sets[meshIdx], state->pipeline);
     mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
@@ -147,8 +147,8 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .camPos = state->camera.pos,
         .lightPos = (MFVec3){0.0f, 2.0f, 0.0f},
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
-        .specularFactor = 32,
-        .lightIntensity = 1000,
+        .specularFactor = 128,
+        .lightIntensity = 100,
         .isPoint = 1.0f
     };
     

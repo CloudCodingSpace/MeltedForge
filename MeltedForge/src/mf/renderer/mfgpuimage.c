@@ -29,7 +29,7 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
         .height = config.height,
         .gpuResource = true,
         .pixels = config.pixels,
-        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .format = (VkFormat)(u32)(config.imageFormat),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
         .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -78,7 +78,7 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
         .height = image->config.height,
         .gpuResource = true,
         .pixels = image->config.pixels,
-        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .format = (VkFormat)(u32)(image->config.imageFormat),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
         .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -135,7 +135,8 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
         .width = mfGetErrorImageWidth(),
         .height = mfGetErrorImageHeight(),
         .pixels = mfGetErrorImagePixels(),
-        .binding = MF_INFINITY
+        .binding = MF_INFINITY,
+        .imageFormat = MF_FORMAT_R8G8B8A8_SRGB
     };
 
     mfGpuImageCreate(tex, renderer, config);

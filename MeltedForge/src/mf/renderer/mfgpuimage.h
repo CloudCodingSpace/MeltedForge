@@ -16,6 +16,7 @@ typedef struct MFGpuImageConfig_s {
     u32 height;
     u32 binding;
     u8* pixels;
+    MFFormat imageFormat;
 } MFGpuImageConfig;
 
 void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig config);

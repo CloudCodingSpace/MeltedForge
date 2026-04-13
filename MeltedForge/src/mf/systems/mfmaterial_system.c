@@ -386,8 +386,14 @@ error_return:
         .width = width,
         .height = height,
         .pixels = pixels,
-        .binding = MF_INFINITY
+        .binding = MF_INFINITY,
+        .imageFormat = MF_FORMAT_R8G8B8A8_SRGB
     };
+
+    if(type == MF_MODEL_MAT_TEXTURE_NORMAL) {
+        config.imageFormat = MF_FORMAT_R8G8B8A8_UNORM;
+    }
+
     mfGpuImageCreate(tex, renderer, config);
 
     return tex;
