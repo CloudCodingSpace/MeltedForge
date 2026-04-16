@@ -32,7 +32,7 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
     renderTarget->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
     renderTarget->sets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
-    if(hasDepth) {
+    if(hasDepth && renderTarget->backend->enableDepth) {
         VulkanImageInfo info = {
             .ctx = &renderTarget->backend->ctx,
             .width = renderTarget->backend->ctx.swapchainExtent.width,
@@ -57,7 +57,7 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
             .format = renderTarget->backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .hasDepth = hasDepth,
+            .hasDepth = hasDepth && renderTarget->backend->enableDepth,
             .renderTarget = true
         };
 
@@ -90,7 +90,7 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
             renderTarget->images[i].view
         };
 
-        if(hasDepth) {
+        if(hasDepth && renderTarget->backend->enableDepth) {
             views[1] = renderTarget->depthImage.view;
             count++;
         }
@@ -132,7 +132,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
         VulkanImageDestroy(&renderTarget->images[i]);
     }
 
-    if(renderTarget->hasDepth)
+    if(renderTarget->hasDepth && renderTarget->backend->enableDepth)
         VulkanImageDestroy(&renderTarget->depthImage);
     
     VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
@@ -164,7 +164,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             VulkanImageDestroy(&renderTarget->images[i]);
         }
         
-        if(renderTarget->hasDepth)
+        if(renderTarget->hasDepth && renderTarget->backend->enableDepth)
             VulkanImageDestroy(&renderTarget->depthImage);
         
         MF_SETMEM(renderTarget->sets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
@@ -174,7 +174,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     }
     // Re-creating
     {
-        if(renderTarget->hasDepth) {
+        if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
             VulkanImageInfo info = {
                 .ctx = &renderTarget->backend->ctx,
                 .width = extent.x,
@@ -193,7 +193,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 
             VulkanImageCreate(&renderTarget->depthImage, info);
         }
-
 
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             {
@@ -221,7 +220,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 renderTarget->images[i].view
             };
 
-            if(renderTarget->hasDepth) {
+            if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
                 views[1] = renderTarget->depthImage.view;
                 count++;
             }
@@ -287,7 +286,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             renderTarget->backend->clearColor
         };
         
-        if(renderTarget->hasDepth) {
+        if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
             count++;
             values[1].depthStencil.depth = 1.0f;
             values[1].depthStencil.stencil = 0;
@@ -324,7 +323,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
         renderTarget->backend->clearColor
     };
     
-    if(renderTarget->hasDepth) {
+    if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
         count++;
         values[1].depthStencil.depth = 1.0f;
         values[1].depthStencil.stencil = 0;

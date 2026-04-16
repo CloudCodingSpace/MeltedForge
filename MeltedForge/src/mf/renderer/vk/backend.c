@@ -245,15 +245,18 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     VK_CHECK(vkResetCommandBuffer(backend->commandBuffers[backend->frameIndex], 0));
     VulkanCommandBufferBegin(backend->commandBuffers[backend->frameIndex]);
 
+    u32 clearCount = 1;
     VkClearValue values[2] = {
         backend->clearColor
     };
-    values[1].depthStencil.depth = 1.0f;
-    values[1].depthStencil.stencil = 0;
-
+    if(backend->enableDepth) {
+        clearCount++;
+        values[1].depthStencil.depth = 1.0f;
+        values[1].depthStencil.stencil = 0;
+    }
     VkRenderPassBeginInfo rpInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .clearValueCount = MF_ARRAYLEN(values, VkClearColorValue),
+        .clearValueCount = clearCount,
         .pClearValues = values,
         .framebuffer = backend->frameBuffers[backend->swapchainImageIndex],
         .renderArea = (VkRect2D){.extent = backend->ctx.swapchainExtent, .offset = (VkOffset2D){ 0, 0 }},
