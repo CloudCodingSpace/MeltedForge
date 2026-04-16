@@ -4,4 +4,8 @@ include(cmake/global.cmake)
 
 add_subdirectory(MeltedForge)
 
-add_subdirectory(MFTest)
+option(MF_BUILD_TEST "Build MFTest executable" ON)
+
+if(MF_BUILD_TEST)
+    add_subdirectory(MFTest)
+endif()

@@ -1,9 +1,9 @@
 set(CMAKE_C_STANDARD 23)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_compile_definitions(_DEBUG)
+  add_compile_definitions(_DEBUG MF_DEBUG)
 else()
-  add_compile_definitions(NDEBUG)
+  add_compile_definitions(NDEBUG MF_NDEBUG)
 endif()
 add_compile_definitions(TRACY_ENABLE)
 
@@ -31,8 +31,6 @@ function(EnableFlags target)
     endif()
 
     target_compile_definitions(${target} PUBLIC
-        $<$<CONFIG:Debug>:_DEBUG;MF_DEBUG>
-        $<$<CONFIG:Release>:NDEBUG;MF_NDEBUG>
         ${MF_PLATFORM}
         ${MF_PROFILE}
     )
