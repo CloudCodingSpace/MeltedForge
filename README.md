@@ -14,7 +14,7 @@
    - Material system
    - Basic scene management
  - Model loading along with the material data
-    - Can load complex models (Tested with [deccer's cubes](https://github.com/GraphicsProgramming/deccer-cubes))
+    - Can load complex models (Tested with Sponza)
  - Engine & editor level UI
     - UI customization (Using Dear ImGui's styles)
  - Render targets
