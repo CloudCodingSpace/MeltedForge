@@ -51,6 +51,10 @@ void mfSceneDestroy(MFScene* scene) {
     mfArrayDestroy(&scene->transformCompPool, mfGetLogger());
     mfArrayDestroy(&scene->meshCompPool, mfGetLogger());
     mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
+
+    mfCameraDestroy(&scene->camera);
+
+    MF_SETMEM(scene, 0, sizeof(MFScene));
 }
 
 void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {

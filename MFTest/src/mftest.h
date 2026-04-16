@@ -40,7 +40,6 @@ typedef struct MFTState_s {
     u64 entity;
     MFArray materialImages;
     
-    MFCamera camera;
     LightUBOData lightData;
     UBOData cameraUboData;
     

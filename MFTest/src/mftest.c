@@ -43,9 +43,9 @@ static void RenderTargetResizeCallback(void* pstate) {
 
     MFTState* state = (MFTState*)pstate;
     
-    state->camera.width = state->sceneViewport.x;
-    state->camera.height = state->sceneViewport.y;
-    state->camera.constructMatrices(&state->camera);
+    state->scene.camera.width = state->sceneViewport.x;
+    state->scene.camera.height = state->sceneViewport.y;
+    state->scene.camera.constructMatrices(&state->scene.camera);
 
     MF_PROFILE_ZONE_END(__temp);
 }
@@ -131,8 +131,8 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .stage = MF_SHADER_STAGE_VERTEX
     };
 
-    state->cameraUboData.proj = state->camera.proj;
-    state->cameraUboData.view = state->camera.view;
+    state->cameraUboData.proj = state->scene.camera.proj;
+    state->cameraUboData.view = state->scene.camera.view;
 
     state->cameraUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
     mfGpuBufferAllocate(state->cameraUbo, config, appState->renderer);
@@ -144,7 +144,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     
     state->lightData = (LightUBOData) {
         .ambientFactor = 0.01f,
-        .camPos = state->camera.pos,
+        .camPos = state->scene.camera.pos,
         .lightPos = (MFVec3){0.0f, 2.0f, 0.0f},
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .specularFactor = 128,
@@ -191,7 +191,9 @@ static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
 }
 
 static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
-    mfSceneCreate(&state->scene, state->camera, appState->renderer);
+    MFCamera camera;
+    mfCameraCreate(&camera, appState->window, mfWindowGetConfig(appState->window)->width, mfWindowGetConfig(appState->window)->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
+    mfSceneCreate(&state->scene, camera, appState->renderer);
     if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
@@ -240,8 +242,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     state->renderer = appState->renderer;
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0, 0, 0.01f));
 
-    mfCameraCreate(&state->camera, appState->window, winConfig->width, winConfig->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
-
     // Viewport and render target
     {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
@@ -288,7 +288,6 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     mfRenderTargetDestroy(state->renderTarget);
 
-    mfCameraDestroy(&state->camera);
     mfPipelineDestroy(state->pipeline);
 
     for(u64 i = 0; i < state->setCount; i++) {
@@ -403,13 +402,13 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfWindowGetConfig(aState->window);
 
-    state->camera.width = state->sceneViewport.x;
-    state->camera.height = state->sceneViewport.y;
-    state->camera.update(&state->camera, mfRendererGetDeltaTime(aState->renderer), mfnull);
+    state->scene.camera.width = state->sceneViewport.x;
+    state->scene.camera.height = state->sceneViewport.y;
+    state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(aState->renderer), mfnull);
 
-    state->cameraUboData.proj = state->camera.proj;
-    state->cameraUboData.view = state->camera.view;
-    state->lightData.camPos = state->camera.pos;
+    state->cameraUboData.proj = state->scene.camera.proj;
+    state->cameraUboData.view = state->scene.camera.view;
+    state->lightData.camPos = state->scene.camera.pos;
     mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
 
