@@ -30,7 +30,8 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
 
     renderTarget->images = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
     renderTarget->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
-    renderTarget->sets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
+    if(renderTarget->backend->enableUI)
+        renderTarget->igSets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
     if(hasDepth && renderTarget->backend->enableDepth) {
         VulkanImageInfo info = {
@@ -96,8 +97,8 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
         }
 
         renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.swapchainExtent);
-
-        renderTarget->sets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        if(renderTarget->backend->enableUI)
+            renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -126,7 +127,8 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     }
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        ImGui_ImplVulkan_RemoveTexture(renderTarget->sets[i]);
+        if(renderTarget->backend->enableUI)
+            ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
         
         VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
         VulkanImageDestroy(&renderTarget->images[i]);
@@ -140,7 +142,8 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     MF_FREEMEM(renderTarget->renderFinishedSemas);
     MF_FREEMEM(renderTarget->images);
     MF_FREEMEM(renderTarget->frameBuffers);
-    MF_FREEMEM(renderTarget->sets);
+    if(renderTarget->backend->enableUI)
+        MF_FREEMEM(renderTarget->igSets);
     
     MF_SETMEM(renderTarget, 0, sizeof(MFRenderTarget));
 }
@@ -158,7 +161,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     // Deleting
     {
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            ImGui_ImplVulkan_RemoveTexture(renderTarget->sets[i]);
+            if(renderTarget->backend->enableUI)
+                ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
             
             VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
             VulkanImageDestroy(&renderTarget->images[i]);
@@ -166,8 +170,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
         
         if(renderTarget->hasDepth && renderTarget->backend->enableDepth)
             VulkanImageDestroy(&renderTarget->depthImage);
-        
-        MF_SETMEM(renderTarget->sets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
+        if(renderTarget->backend->enableUI)
+            MF_SETMEM(renderTarget->igSets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->frameBuffers, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
         MF_SETMEM(&renderTarget->depthImage, 0, sizeof(VulkanImage));
@@ -226,8 +230,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             }
 
             renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, (VkExtent2D){extent.x, extent.y});
-
-            renderTarget->sets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            if(renderTarget->backend->enableUI)
+                renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
     }
 
@@ -403,11 +407,13 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
     return renderTarget->images[0].info.height;
 }
 
-void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget) {
+ImTextureID mfRenderTargetGetImGuiTextureID(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
-    return renderTarget->sets[renderTarget->backend->frameIndex];
+    if(!renderTarget->backend->enableUI)
+        return mfnull;
+    return (ImTextureID)renderTarget->igSets[renderTarget->backend->frameIndex];
 }
 
 size_t mfRenderTargetGetSizeInBytes(void) {

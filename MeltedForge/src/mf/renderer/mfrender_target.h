@@ -7,6 +7,8 @@ extern "C" {
 #include "core/mfutils.h"
 #include "core/mfmaths.h"
 
+#include <cimgui.h>
+
 struct MFRenderer_s;
 
 typedef struct MFRenderTarget_s MFRenderTarget;
@@ -25,7 +27,7 @@ void* mfRenderTargetGetPass(MFRenderTarget* renderTarget);
 u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget);
 u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget);
 
-void* mfRenderTargetGetHandle(MFRenderTarget* renderTarget);
+ImTextureID mfRenderTargetGetImGuiTextureID(MFRenderTarget* renderTarget);
 size_t mfRenderTargetGetSizeInBytes(void);
 
 #ifdef __cplusplus

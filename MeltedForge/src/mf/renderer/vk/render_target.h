@@ -18,7 +18,7 @@ struct MFRenderTarget_s {
     VulkanImage* images;
     VkFramebuffer* frameBuffers;
     VkRenderPass renderPass;
-    VkDescriptorSet* sets;
+    VkDescriptorSet* igSets;
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkSemaphore* renderFinishedSemas;

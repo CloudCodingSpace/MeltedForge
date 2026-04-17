@@ -176,7 +176,7 @@ f64 mfRendererGetFrameTime(MFRenderer* renderer) {
     return renderer->frameTimer.delta;
 }
 
-u8 mfRendererGetFramesInFlight(void) {
+u8 mfRendererGetFramesInFlightCount(void) {
     return FRAMES_IN_FLIGHT;
 }
 
