@@ -38,8 +38,8 @@ static void CreatePipeline(MFTState* state) {
     MF_FREEMEM(attributes);
 }
 
-static void RenderTargetResizeCallback(void* pstate) {
-    MF_PROFILE_ZONE_START_NAMED(__temp, "Render target resize callback");
+static void ResizeCallback(void* pstate) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "Resize callback");
 
     MFTState* state = (MFTState*)pstate;
     
@@ -241,12 +241,13 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     state->renderer = appState->renderer;
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0, 0, 0.01f));
+    mfRendererSetResizeCallback(appState->renderer, state, &ResizeCallback);
 
     // Viewport and render target
     {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
-        mfRenderTargetSetResizeCallback(state->renderTarget, &RenderTargetResizeCallback, state);
+        mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
         mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
 
         state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);

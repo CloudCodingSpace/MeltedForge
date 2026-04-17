@@ -39,6 +39,9 @@ typedef struct VulkanBackend_s {
     const char* pipelineCacheFilePath;
     VkPipelineCache pipelineCache;
     struct MFRenderTarget_s* renderTarget;
+
+    void* callbackState;
+     void (*resizeCallback)(void* state);
 } VulkanBackend;
 
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config);

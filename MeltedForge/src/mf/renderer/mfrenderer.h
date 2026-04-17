@@ -24,6 +24,7 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 
 void mfRendererWaitForGPU(MFRenderer* renderer);
 
+void mfRendererSetResizeCallback(MFRenderer* renderer, void* state, void (*callback)(void* state));
 void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt);
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);

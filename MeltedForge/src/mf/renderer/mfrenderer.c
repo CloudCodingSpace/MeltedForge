@@ -73,6 +73,14 @@ void mfRendererWaitForGPU(MFRenderer* renderer) {
     vkDeviceWaitIdle(renderer->backend.ctx.device);
 }
 
+void mfRendererSetResizeCallback(MFRenderer* renderer, void* state, void (*callback)(void* state)) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+    
+    renderer->backend.callbackState = state;
+    renderer->backend.resizeCallback = callback;
+}
+
 void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");

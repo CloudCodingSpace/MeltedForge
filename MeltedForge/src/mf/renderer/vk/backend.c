@@ -45,6 +45,10 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
 
+    if(backend->resizeCallback) {
+        backend->resizeCallback(backend->callbackState);
+    }
+
     if(backend->renderTarget != mfnull) {
         mfRenderTargetResize(backend->renderTarget, (MFVec2){mfRenderTargetGetWidth(backend->renderTarget), mfRenderTargetGetHeight(backend->renderTarget)});
     }
