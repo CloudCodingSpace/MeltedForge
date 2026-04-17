@@ -88,7 +88,18 @@ static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
         if(props != mfnull)
             MF_FREEMEM(props);
     }
-    return IsQueueDataComplete(data) && extSupport;
+
+    VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES
+    };
+
+    VkPhysicalDeviceFeatures2 features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &scalarFeatures
+    };
+    vkGetPhysicalDeviceFeatures2(device, &features);
+
+    return IsQueueDataComplete(data) && extSupport && scalarFeatures.scalarBlockLayout;
 }
 
 static VulkanScCaps GetScCaps(VulkanBackendCtx* ctx) {
@@ -478,13 +489,19 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
         VkPhysicalDeviceFeatures features = {0};
         vkGetPhysicalDeviceFeatures(ctx->physicalDevice, &features);
 
+        VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES,
+            .scalarBlockLayout = VK_TRUE
+        };
+
         VkDeviceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
             .enabledExtensionCount = deviceCount,
             .ppEnabledExtensionNames = deviceExts,
             .pEnabledFeatures = &features,
             .queueCreateInfoCount = queueCount,
-            .pQueueCreateInfos = qInfos
+            .pQueueCreateInfos = qInfos,
+            .pNext = &scalarFeatures
         };
 
         VK_CHECK(vkCreateDevice(ctx->physicalDevice, &info, ctx->allocator, &ctx->device));

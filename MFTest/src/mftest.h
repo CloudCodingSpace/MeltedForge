@@ -11,18 +11,17 @@ typedef struct UBOData_s {
 
 typedef struct PushConstantData_s {
     MFMat4 model;
-    MFMat4 normalMat;
+    MFMat3 normalMat;
 } PushConstantData;
 
 typedef struct LightUBOData_s {
     MFVec3 lightPos;
-    f32 ambientFactor;
     MFVec3 camPos;
-    f32 specularFactor;
     MFVec3 lightColor;
+    f32 ambientFactor;
+    f32 specularFactor;
     f32 lightIntensity;
     f32 isPoint;
-    MFVec3 padding;
 } LightUBOData;
 
 typedef struct MFTState_s {

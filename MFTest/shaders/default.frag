@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_scalar_block_layout : require
 
 #include <mfshaderutils.glsl>
 
@@ -9,15 +10,14 @@ layout (location = 6) in vec3 oTangent;
 layout (location = 7) in vec2 oUv;
 layout (location = 8) in vec3 oFragPos;
 
-layout (binding = 1) uniform LightUBO {
+layout (binding = 1, scalar) uniform LightUBO {
     vec3 lightPos;
-    float ambientFactor;
     vec3 camPos;
-    float specularFactor;
     vec3 lightColor;
+    float ambientFactor;
+    float specularFactor;
     float lightIntensity;
     float isPoint;
-    vec3 padding;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
