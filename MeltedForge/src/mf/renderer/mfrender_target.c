@@ -27,11 +27,6 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8
 
     renderTarget->renderer = renderer;
     renderTarget->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
-
-    renderTarget->images = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
-    renderTarget->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
-    if(renderTarget->backend->enableUI)
-        renderTarget->igSets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
     
     if(hasDepth && renderTarget->backend->enableDepth) {
         VulkanImageInfo info = {
@@ -139,12 +134,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     
     VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
     
-    MF_FREEMEM(renderTarget->renderFinishedSemas);
-    MF_FREEMEM(renderTarget->images);
-    MF_FREEMEM(renderTarget->frameBuffers);
-    if(renderTarget->backend->enableUI)
-        MF_FREEMEM(renderTarget->igSets);
-    
+    MF_FREEMEM(renderTarget->renderFinishedSemas);    
     MF_SETMEM(renderTarget, 0, sizeof(MFRenderTarget));
 }
 
