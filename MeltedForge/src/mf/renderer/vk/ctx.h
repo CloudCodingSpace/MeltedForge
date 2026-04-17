@@ -57,7 +57,7 @@ typedef struct VulkanBackendCtx_s {
 void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
-void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window);
+void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);
 
 #ifdef __cplusplus
 }

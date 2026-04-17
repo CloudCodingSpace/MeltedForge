@@ -595,7 +595,7 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
 
-void VulkanBackendCtxResize(VulkanBackendCtx* ctx, u32 width, u32 height, MFWindow* window) {
+void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
     
     if(ctx->enableDepth)

@@ -30,7 +30,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
 
-    VulkanBackendCtxResize(&backend->ctx, width, height, window);
+    VulkanBackendCtxResize(&backend->ctx, window);
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
