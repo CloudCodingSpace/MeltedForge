@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.30.0)
 cmake_policy(SET CMP0069 NEW)
 project(stb)
 
