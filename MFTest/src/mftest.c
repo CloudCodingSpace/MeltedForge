@@ -339,7 +339,6 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     {
         igBegin("Performance", mfnull, ImGuiWindowFlags_None);
         
-        igText("Frame time :- %.3f", mfRendererGetFrameTime(appState->renderer));
         igText("Delta time :- %.3f", mfRendererGetDeltaTime(appState->renderer));
         igText("FPS :- %.3f", (f64)(1000.0/mfRendererGetDeltaTime(appState->renderer)));
 

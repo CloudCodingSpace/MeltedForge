@@ -10,8 +10,7 @@ extern "C" {
 
 struct MFRenderer_s {
     VulkanBackend backend;
-    f64 lastTime, deltaTime;
-    MFTimer frameTimer;
+    f64 lastTime, deltaTime;;
     bool init;
 };
 
@@ -52,16 +51,12 @@ void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     renderer->deltaTime = crntTime - renderer->lastTime;
     renderer->lastTime = crntTime;
 
-    mfTimerStart(&renderer->frameTimer);
-
     VulkanBackendBeginframe(&renderer->backend, window);
 }
 
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
-    
-    mfTimerEnd(&renderer->frameTimer);
 
     VulkanBackendEndframe(&renderer->backend, window);
 }
@@ -175,13 +170,6 @@ f64 mfRendererGetDeltaTime(MFRenderer* renderer) {
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
     return renderer->deltaTime;
-}
-
-f64 mfRendererGetFrameTime(MFRenderer* renderer) {
-    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
-
-    return renderer->frameTimer.delta;
 }
 
 u8 mfRendererGetFramesInFlightCount(void) {

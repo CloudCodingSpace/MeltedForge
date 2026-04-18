@@ -39,7 +39,6 @@ void* mfRendererGetRenderPass(MFRenderer* renderer);
 
 u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
 f64 mfRendererGetDeltaTime(MFRenderer* renderer);
-f64 mfRendererGetFrameTime(MFRenderer* renderer);
 
 size_t mfRendererGetSizeInBytes(void);
 u8 mfRendererGetFramesInFlightCount(void);
