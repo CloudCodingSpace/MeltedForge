@@ -29,15 +29,18 @@ void main() {
     mat3 TBN = mat3(oTangent, bitangent, oNormal);
     vec3 normal = normalize(TBN * texel);
 
-    outColor = pow(texture(u_DiffuseTex, oUv), vec4(2.2)) * vec4(mfComputePhongLighting(normal,
-                                    oFragPos, 
-                                    ubo.lightPos - oFragPos, 
-                                    ubo.camPos, 
-                                    ubo.lightColor, 
-                                    ubo.specularFactor, 
-                                    ubo.ambientFactor, 
-                                    ubo.lightIntensity, 
-                                    (ubo.isPoint == 1.0) ? true : false), 1.0);
+    MFPhongLightingInfo info;
+    info.normal = normal;
+    info.camPos = ubo.camPos;
+    info.fragPos = oFragPos;
+    info.lightColor = ubo.lightColor;
+    info.lightDir = ubo.lightPos - oFragPos;
+    info.lightIntensity = ubo.lightIntensity;
+    info.ambientFactor = ubo.ambientFactor;
+    info.specularFactor = ubo.specularFactor;
+    info.isPoint = (ubo.isPoint == 1.0) ? true : false;
+
+    outColor = pow(texture(u_DiffuseTex, oUv), vec4(2.2)) * vec4(mfComputePhongLighting(info), 1.0);
 
     outColor = outColor / (outColor + 1);
     outColor = pow(outColor, vec4(1.0/2.2));
