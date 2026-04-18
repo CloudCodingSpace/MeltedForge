@@ -18,7 +18,7 @@ typedef struct VulkanPipelineInfo_s {
     VkDescriptorSetLayout* setLayouts;
     VkCompareOp depthCompareOp;
     VkPipelineCache cache;
-    b8 hasDepth, transparent;
+    bool hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
 } VulkanPipelineInfo;

@@ -6,7 +6,7 @@ extern "C" {
 
 void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
     MF_PANIC_IF(!camera->init, mfGetLogger(), "The camera handle provided isn't initialised!");
-    b8 moved = false;
+    bool moved = false;
     
     // Key input
     {

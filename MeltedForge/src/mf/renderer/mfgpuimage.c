@@ -12,7 +12,7 @@ struct MFGpuImage_s {
     VulkanImage image;
     VulkanBackendCtx* ctx;
     MFGpuImageConfig config;
-    b8 init;
+    bool init;
 };
 
 void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig config) {

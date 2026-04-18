@@ -183,7 +183,7 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
 
         vkCmdCopyBuffer(buff, staging.handle, buffer->handle, 1, &region);
 
-        b8 explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
+        bool explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
         if(explicitOwnership) {
             VkBufferMemoryBarrier barrier = {
                 .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,

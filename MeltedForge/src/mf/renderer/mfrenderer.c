@@ -12,10 +12,10 @@ struct MFRenderer_s {
     VulkanBackend backend;
     f64 lastTime, deltaTime;
     MFTimer frameTimer;
-    b8 init;
+    bool init;
 };
 
-void mfRendererInit(MFRenderer* renderer, const char* appName, b8 enableDepth, b8 vsync, b8 enableUI, MFWindow* window) {
+void mfRendererInit(MFRenderer* renderer, const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(renderer->init, mfGetLogger(), "The renderer is already initialised!");
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");

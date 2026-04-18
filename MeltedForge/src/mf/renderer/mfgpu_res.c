@@ -22,14 +22,14 @@ struct MFResourceSetLayout_s {
     MFRenderer* renderer;
     MFArray resourceDescriptions;
     u64 imageCount, bufferCount;
-    b8 init;
+    bool init;
 };
 
 struct MFResourceSet_s {
     VkDescriptorSet sets[FRAMES_IN_FLIGHT];
     MFResourceSetLayout* layout;
     MFRenderer* renderer;
-    b8 init;
+    bool init;
 };
 
 void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, u64 maxSets, MFRenderer* renderer) {

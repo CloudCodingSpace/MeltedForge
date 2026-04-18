@@ -12,9 +12,9 @@ extern "C" {
 struct MFRenderTarget_s;
 
 typedef struct VulkanBackendConfig_s {
-    b8 enableUI;
-    b8 enableDepth;
-    b8 vsync;
+    bool enableUI;
+    bool enableDepth;
+    bool vsync;
     MFWindow* window;
     const char* appName;
 } VulkanBackendConfig;
@@ -23,8 +23,8 @@ typedef struct VulkanBackend_s {
     VulkanBackendCtx ctx;
     u32 swapchainImageIndex, frameIndex;
     VkClearValue clearColor;
-    b8 enableUI;
-    b8 enableDepth;
+    bool enableUI;
+    bool enableDepth;
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
 

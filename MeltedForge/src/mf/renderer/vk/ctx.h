@@ -45,7 +45,7 @@ typedef struct VulkanBackendCtx_s {
     VkImage* swapchainImages;
     VkImageView* swapchainImageViews;
     
-    b8 vsync, enableDepth;
+    bool vsync, enableDepth;
 
     VkFormat depthFormat;
     VulkanImage depthImage;
@@ -54,7 +54,7 @@ typedef struct VulkanBackendCtx_s {
     VkCommandPool commandPool;
 } VulkanBackendCtx;
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync, bool enableDepth, MFWindow* window);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);

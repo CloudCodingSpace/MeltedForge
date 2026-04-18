@@ -54,14 +54,14 @@ static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysica
     return data;
 }
 
-static b8 IsQueueDataComplete(VulkanBackendQueueData data) {
+static bool IsQueueDataComplete(VulkanBackendQueueData data) {
     return data.computeQueueIdx != -1 && data.graphicsQueueIdx != -1 && data.presentQueueIdx != -1 && data.transferQueueIdx != -1;
 }
 
-static b8 IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
+static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
     VulkanBackendQueueData data = GetDeviceQueueData(surface, device);
 
-    b8 extSupport = false;
+    bool extSupport = false;
     {
         const char* deviceExts[] = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -214,7 +214,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
         // Checking for duplicate queues
         {
             for(u32 i = 0; i < 4; i++) {
-                b8 isUnique = true;
+                bool isUnique = true;
     
                 for(u32 j = 0; j < queueCount; j++) {
                     if(qs[i] == queues[j]) {
@@ -307,7 +307,7 @@ void GetDepthFormat(VulkanBackendCtx* ctx) {
     MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
 }
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, b8 enableDepth, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync, bool enableDepth, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->vsync = vsync;
     ctx->enableDepth = enableDepth;
@@ -458,7 +458,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, b8 vsync, 
             };
 
             for(u32 i = 0; i < 4; i++) {
-                b8 isUnique = true;
+                bool isUnique = true;
     
                 for(u32 j = 0; j < queueCount; j++) {
                     if(qs[i] == queues[j]) {

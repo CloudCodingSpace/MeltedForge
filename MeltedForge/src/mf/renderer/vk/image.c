@@ -151,7 +151,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
     // Copy staging buffer to image and transitioning to the appropriate layout
     {
-        b8 explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
+        bool explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
         VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
         VulkanCommandBufferBegin(buff);
         

@@ -19,14 +19,14 @@ typedef struct {
 } Entry;
 
 typedef struct MFMaterialSystemState_s {
-    b8 init;
+    bool init;
     MFArray array;
 } MFMaterialSystemState;
 
 static MFMaterialSystemState s_State = {0};
 
 static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer);
-static b8 compareEntry(Entry* entry, const char* path, u32 rgba);
+static bool compareEntry(Entry* entry, const char* path, u32 rgba);
 static Entry* findEntry(MFArray* array, const char* path, u32 rgba, u64 descHash);
 static u32 arrayToU32(f32* data);
 
@@ -71,7 +71,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(basePath == mfnull, mfGetLogger(), "The base path provided shouldn't be null!");
     
-    b8 allocated = false;
+    bool allocated = false;
     const char* bPath = basePath;
     char lastChar = basePath[mfStringLen(basePath) - 1];
     if(lastChar != '\\' && lastChar != '/') {
@@ -138,7 +138,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                     mfArraySetElement(arr, MFGpuImage*, j, entry->image);
                     MF_FREEMEM(description.path);
                 } else {
-                    b8 inserted = false;
+                    bool inserted = false;
 
                     for(u64 k = 0; k < s_State.array.len; k++) {
                         Entry* e = &mfArrayGetElement(s_State.array, Entry, k);
@@ -229,7 +229,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     MFMeshMaterial* mat = &model->meshes[meshIdx].mat;
 
     f32 colorF[3] = {0};
-    b8 validColor = true;
+    bool validColor = true;
 
     switch(type) {
         case MF_MODEL_MAT_TEXTURE_DIFFUSE:
@@ -308,7 +308,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         .image = img
     };
 
-    b8 inserted = false;
+    bool inserted = false;
     for(u64 k = 0; k < s_State.array.len; k++) {
         Entry* e = &mfArrayGetElement(s_State.array, Entry, k);
 
@@ -399,7 +399,7 @@ error_return:
     return tex;
 }
 
-static b8 compareEntry(Entry* entry, const char* path, u32 rgba) {
+static bool compareEntry(Entry* entry, const char* path, u32 rgba) {
     u64 h = path ? mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger()) : 0;
     if((entry->description.path_hash == h) &&
         (entry->description.rgba == rgba) && 

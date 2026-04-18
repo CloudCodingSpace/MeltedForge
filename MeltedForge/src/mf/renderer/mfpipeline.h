@@ -25,7 +25,7 @@ typedef struct MFPipelineConfig_s {
     MFPushConstantRange* pushConstRanges;
     MFResourceSetLayout** resourceLayouts;
     MFCompareOp depthCompareOp;
-    b8 hasDepth, transparent;
+    bool hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
     MFRenderTarget* renderTarget;

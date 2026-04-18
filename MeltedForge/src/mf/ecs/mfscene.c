@@ -417,7 +417,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         }
     }
 
-    b8 success = mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
+    bool success = mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
     if(!success) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't write to file '%s'!", fileName);
     }
@@ -425,13 +425,13 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     mfSerializerDestroy(&s);
 }
 
-b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
+bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
 
     u64 fileSize = 0;
-    b8 success = false;
+    bool success = false;
     u8* content = mfReadFile(mfGetLogger(), &fileSize, &success, fileName, "rb");
     if(!success) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Failed to open file '%s'!", fileName);

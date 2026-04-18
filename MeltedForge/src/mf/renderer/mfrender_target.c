@@ -17,7 +17,7 @@ extern "C" {
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, b8 hasDepth) {
+void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, bool hasDepth) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(renderTarget->init, mfGetLogger(), "The render target is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");

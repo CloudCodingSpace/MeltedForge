@@ -14,7 +14,7 @@ struct MFGpuBuffer_s {
     VulkanBackendCtx* ctx;
     VulkanBuffer buffer[FRAMES_IN_FLIGHT];
     MFGpuBufferConfig config;
-    b8 init;
+    bool init;
 };
 
 void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer) {

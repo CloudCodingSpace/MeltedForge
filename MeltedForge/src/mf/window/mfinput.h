@@ -141,10 +141,10 @@ extern "C" {
 #define MF_MOUSE_BUTTON_RIGHT     MF_MOUSE_BUTTON_2
 #define MF_MOUSE_BUTTON_MIDDLE    MF_MOUSE_BUTTON_3
 
-b8 mfInputIsKeyPressed(MFWindow* window, i32 key);
-b8 mfInputIsKeyReleased(MFWindow* window, i32 key);
-b8 mfInputIsMBPressed(MFWindow* window, i32 button);
-b8 mfInputIsMBReleased(MFWindow* window, i32 button);
+bool mfInputIsKeyPressed(MFWindow* window, i32 key);
+bool mfInputIsKeyReleased(MFWindow* window, i32 key);
+bool mfInputIsMBPressed(MFWindow* window, i32 button);
+bool mfInputIsMBReleased(MFWindow* window, i32 button);
 
 void mfInputGetMousePos(MFWindow* window, f64* x, f64* y);
 void mfInputSetMousePos(MFWindow* window, f64 x, f64 y);

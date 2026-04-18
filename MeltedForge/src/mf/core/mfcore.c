@@ -16,7 +16,7 @@ extern "C" {
 
 typedef struct MFContext_s {
     SLogger logger;
-    b8 init;
+    bool init;
     // UUID Generator
     u64 counter;
 
@@ -38,7 +38,7 @@ void mfInitialize(void) {
 
     // Deserializing
     {
-        b8 success = false;
+        bool success = false;
         u64 size;
         char* content = mfReadFile(mfGetLogger(), &size, &success, "mfcore_cache.bin", "rb");
         if(success) {
@@ -101,7 +101,7 @@ void mfShutdown(void) {
         mfSerializeU32(&serializer, MF_SIGNATURE_CORE_CACHE_FILE);
         mfSerializeU64(&serializer, s_Ctx.counter);
 
-        b8 success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
+        bool success = mfWriteFile(mfGetLogger(), serializer.bufferSize, "mfcore_cache.bin", serializer.buffer, "wb");
 
         if(success) {
             mfSerializerDestroy(&serializer);

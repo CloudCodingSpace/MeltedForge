@@ -149,7 +149,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .specularFactor = 128,
         .lightIntensity = 100,
-        .isPoint = 1.0f
+        .isPoint = true
     };
     
     state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
@@ -160,7 +160,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
 static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
     MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
     char* basePath = mfnull;
-    b8 noBasePath = false;
+    bool noBasePath = false;
     {
         i32 idx = mfStringFindLast(&state->logger, component->path, '\\');
         if(idx == -1) {
@@ -362,13 +362,11 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
-            
-            bool isPoint = state->lightData.isPoint;
-            igCheckbox("Point lighting", &isPoint);
+
+            igCheckbox("Point lighting", &state->lightData.isPoint);
 
             state->lightData.lightPos = mfFloatArrToVec3(posData);
             state->lightData.lightColor = mfFloatArrToVec3(colorData);
-            state->lightData.isPoint = isPoint;
         }
 
         igDummy((ImVec2){ 0.0f, 50.0f });

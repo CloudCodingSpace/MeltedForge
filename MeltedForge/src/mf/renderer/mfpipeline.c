@@ -17,7 +17,7 @@ struct MFPipeline_s {
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
-    b8 init;
+    bool init;
 };
 
 void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {

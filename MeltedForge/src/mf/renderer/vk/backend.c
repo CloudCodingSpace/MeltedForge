@@ -123,7 +123,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
         };
 
         size_t size = 0;
-        b8 success = false;
+        bool success = false;
         initialData = mfReadFile(mfGetLogger(), &size, &success, backend->pipelineCacheFilePath, "rb");
         if(success) {
             cacheInfo.initialDataSize = size;

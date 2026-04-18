@@ -13,7 +13,7 @@ extern "C" {
 struct MFWindow_s {
     GLFWwindow* handle;
     MFWindowConfig config;
-    b8 init;
+    bool init;
 };
 
 static void size_callback(GLFWwindow* window, int x, int y) {
@@ -131,7 +131,7 @@ void mfWindowHide(MFWindow* window) {
     glfwHideWindow(window->handle);
 }
 
-b8 mfIsWindowOpen(MFWindow* window) {
+bool mfIsWindowOpen(MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     MF_PANIC_IF(!window->init, mfGetLogger(), "The window handle should be initialized!");
 

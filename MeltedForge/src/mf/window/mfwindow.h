@@ -11,7 +11,7 @@ typedef struct GLFWwindow GLFWwindow;
 typedef struct MFWindowConfig_s {
     f64 x, y;
     i32 width, height;
-    b8 fullscreen, resizable, centered;
+    bool fullscreen, resizable, centered;
     const char* title;
 } MFWindowConfig;
 
@@ -29,7 +29,7 @@ void mfWindowClose(MFWindow* window);
 
 void mfWindowShow(MFWindow* window);
 void mfWindowHide(MFWindow* window);
-b8 mfIsWindowOpen(MFWindow* window);
+bool mfIsWindowOpen(MFWindow* window);
 
 const char* mfWindowGetTitle(MFWindow* window);
 void mfWindowSetTitle(MFWindow* window, const char* title);

@@ -63,14 +63,13 @@ typedef int8_t i8;
 typedef uint8_t u8;
 typedef int16_t i16;
 typedef uint16_t u16;
-typedef uint8_t b8;
 
 #pragma endregion
 
 #pragma region file_funcs
 
 // @note The returned const char* must be freed since it is allocated on the heap
-MF_INLINE char* mfReadFile(SLogger* logger, u64* size, b8* success, const char* path, const char* mode) {
+MF_INLINE char* mfReadFile(SLogger* logger, u64* size, bool* success, const char* path, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
     MF_PANIC_IF(mode == 0, logger, "The file reading mode provided shouldn't be null!");
     MF_PANIC_IF(size == 0, logger, "The size pointer provided shouldn't be null!");
@@ -96,7 +95,7 @@ MF_INLINE char* mfReadFile(SLogger* logger, u64* size, b8* success, const char* 
     return buffer;
 }
 
-MF_INLINE b8 mfWriteFile(SLogger* logger, u64 size, const char* path, const char* data, const char* mode) {
+MF_INLINE bool mfWriteFile(SLogger* logger, u64 size, const char* path, const char* data, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
     MF_PANIC_IF(mode == 0, logger, "The file reading mode provided shouldn't be null!");
     MF_PANIC_IF(data == 0, logger, "The data pointer provided shouldn't be null!");
@@ -202,7 +201,7 @@ MF_INLINE i32 mfStringFindLast(SLogger* logger, const char* s, const char a) {
     }
 }
 
-MF_INLINE b8 mfStringEndsWith(SLogger* logger, const char* a, const char* b) {
+MF_INLINE bool mfStringEndsWith(SLogger* logger, const char* a, const char* b) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
     MF_PANIC_IF(b == mfnull, logger, "The string provided shouldn't be null!");
 
@@ -281,7 +280,7 @@ typedef struct MFArray_s {
     u64 capacity;
     u64 elementSize;
     void* data;
-    b8 init;
+    bool init;
 } MFArray;
 
 MF_INLINE MFArray mfArrayCreate(SLogger* logger, u64 capacity, u64 elementSize) {

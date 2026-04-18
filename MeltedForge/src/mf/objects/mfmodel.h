@@ -24,7 +24,7 @@ typedef struct MFModel_s {
     MFModelVertexBuilder builder;
     MFRenderer* renderer;
     
-    b8 init;
+    bool init;
 } MFModel;
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder);

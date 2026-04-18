@@ -23,7 +23,7 @@ void VulkanCommandPoolDestroy(VulkanBackendCtx* ctx, VkCommandPool pool) {
     vkDestroyCommandPool(ctx->device, pool, ctx->allocator);
 }
 
-VkCommandBuffer VulkanCommandBufferAllocate(VulkanBackendCtx* ctx, VkCommandPool pool, b8 isPrimary) {
+VkCommandBuffer VulkanCommandBufferAllocate(VulkanBackendCtx* ctx, VkCommandPool pool, bool isPrimary) {
     VkCommandBufferAllocateInfo info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandBufferCount = 1,

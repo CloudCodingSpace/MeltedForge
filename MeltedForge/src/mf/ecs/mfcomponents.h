@@ -18,7 +18,7 @@ typedef struct MFTransformComponent_s {
     MFVec3 scale;
     MFVec3 position;
     MFVec3 rotationXYZ;
-    b8 valid;
+    bool valid;
 } MFTransformComponent;
 
 typedef struct MFMeshComponent_s {
@@ -26,13 +26,13 @@ typedef struct MFMeshComponent_s {
     const char* path;
     u64 perVertSize;
     MFModelVertexBuilder vertBuilder;
-    b8 valid;
+    bool valid;
 } MFMeshComponent;
 
 typedef struct MFComponentGroup_s {
     u64 meshIdx;
     u64 transformIdx;
-    b8 valid;
+    bool valid;
 } MFComponentGroup;
 
 #ifdef __cplusplus

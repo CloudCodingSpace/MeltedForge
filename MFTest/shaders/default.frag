@@ -17,7 +17,7 @@ layout (binding = 1, scalar) uniform LightUBO {
     float ambientFactor;
     float specularFactor;
     float lightIntensity;
-    float isPoint;
+    bool isPoint;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
@@ -38,7 +38,7 @@ void main() {
     info.lightIntensity = ubo.lightIntensity;
     info.ambientFactor = ubo.ambientFactor;
     info.specularFactor = ubo.specularFactor;
-    info.isPoint = (ubo.isPoint == 1.0) ? true : false;
+    info.isPoint = ubo.isPoint;
 
     outColor = pow(texture(u_DiffuseTex, oUv), vec4(2.2)) * vec4(mfComputePhongLighting(info), 1.0);
 

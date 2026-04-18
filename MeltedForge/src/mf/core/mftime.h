@@ -10,7 +10,7 @@ typedef struct MFTimer_s {
     f64 start;
     f64 end;
     f64 delta;
-    b8 started;
+    bool started;
 } MFTimer;
 
 void mfTimerStart(MFTimer* timer);

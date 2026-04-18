@@ -12,7 +12,7 @@ struct VulkanBackendCtx_s;
 
 typedef struct VulkanImageInfo_s {
     u32 width, height;
-    b8 gpuResource;
+    bool gpuResource;
     u8* pixels;
     
     struct VulkanBackendCtx_s* ctx;

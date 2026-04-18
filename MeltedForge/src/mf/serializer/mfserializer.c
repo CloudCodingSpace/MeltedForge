@@ -7,7 +7,7 @@ extern "C" {
 #include "core/mfcore.h"
 #include "slog/slog.h"
 
-void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize, b8 deserializer) {
+void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize, bool deserializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(bufferSize == 0, mfGetLogger(), "The serializer's bufferSize provided shouldn't be 0!");
    
@@ -51,7 +51,7 @@ void mfSerializerRewind(MFSerializer* serializer) {
     serializer->offset = sizeof(u32) * 2; //* For skipping past the signatures while deserializing!
 }
 
-b8 mfSerializerIfValid(MFSerializer* serializer) {
+bool mfSerializerIfValid(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_DO_IF(serializer->bufferSize < (sizeof(u32)*2), {
@@ -62,13 +62,13 @@ b8 mfSerializerIfValid(MFSerializer* serializer) {
     serializer->offset = 0;
     u32 header = 0;
     memcpy(&header, serializer->buffer + serializer->offset, sizeof(u32));
-    b8 b = header == MF_SIGNATURE_HEADER;
+    bool b = header == MF_SIGNATURE_HEADER;
     serializer->offset = offset;
 
     return b;
 }
 
-b8 mfSerializerIfSameVersion(MFSerializer* serializer) {
+bool mfSerializerIfSameVersion(MFSerializer* serializer) {
     MF_PANIC_IF(serializer == mfnull, mfGetLogger(), "The serializer handle provided shouldn't be null!");
     MF_PANIC_IF(serializer->buffer == mfnull, mfGetLogger(), "The serializer handle provided should be created!");
     MF_DO_IF(serializer->bufferSize < (sizeof(u32) * 2), {
@@ -79,7 +79,7 @@ b8 mfSerializerIfSameVersion(MFSerializer* serializer) {
     serializer->offset = sizeof(u32); //* NOTE: For the header signature
     u32 ver = 0;
     memcpy(&ver, serializer->buffer + serializer->offset, sizeof(u32));
-    b8 b = ver == MF_SIGNATURE_VERSION;
+    bool b = ver == MF_SIGNATURE_VERSION;
     serializer->offset = offset;
     return b;
 }
@@ -219,7 +219,7 @@ void mfSerializeF64(MFSerializer* serializer, f64 value) {
     serializer->offset += sizeof(f64);
 }
 
-void mfSerializeB8(MFSerializer* serializer, b8 value) {
+void mfSerializeB8(MFSerializer* serializer, bool value) {
     mfSerializeU8(serializer, (u8)value);
 }
 
@@ -417,8 +417,8 @@ f64 mfDeserializeF64(MFSerializer* serializer) {
     return value;
 }
 
-b8 mfDeserializeB8(MFSerializer* serializer) {
-    return (b8)mfDeserializeU8(serializer);
+bool mfDeserializeB8(MFSerializer* serializer) {
+    return (bool)mfDeserializeU8(serializer);
 }
 
 char mfDeserializeChar(MFSerializer* serializer) {

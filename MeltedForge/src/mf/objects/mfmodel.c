@@ -49,7 +49,7 @@ const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat,
             u64 idx = strtoull(path.data + 1, mfnull, 10);
             const char* texPath = ToString(scene->mTextures[idx]->mFilename);
             u64 texLen = strlen(texPath);
-            b8 hasFormat = false;
+            bool hasFormat = false;
 
             u64 size = strlen(texPath) + 1;
             if(strchr(texPath, '.') != 0) {

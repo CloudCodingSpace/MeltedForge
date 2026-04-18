@@ -14,12 +14,12 @@ typedef struct MFSerializer_s {
     u64 offset;
 } MFSerializer;
 
-void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize, b8 deserializer);
+void mfSerializerCreate(MFSerializer* serializer, u64 bufferSize, bool deserializer);
 void mfSerializerDestroy(MFSerializer* serializer);
 void mfSerializerRewind(MFSerializer* serializer);
 
-b8 mfSerializerIfValid(MFSerializer* serializer);
-b8 mfSerializerIfSameVersion(MFSerializer* serializer);
+bool mfSerializerIfValid(MFSerializer* serializer);
+bool mfSerializerIfSameVersion(MFSerializer* serializer);
 
 void mfSerializeI8(MFSerializer* serializer, i8 value);
 void mfSerializeU8(MFSerializer* serializer, u8 value);
@@ -33,7 +33,7 @@ void mfSerializeU64(MFSerializer* serializer, u64 value);
 void mfSerializeF32(MFSerializer* serializer, f32 value);
 void mfSerializeF64(MFSerializer* serializer, f64 value);
 
-void mfSerializeB8(MFSerializer* serializer, b8 value);
+void mfSerializeB8(MFSerializer* serializer, bool value);
 
 void mfSerializeChar(MFSerializer* serializer, char value);
 void mfSerializeString(MFSerializer* serializer, const char* value);
@@ -50,7 +50,7 @@ u64 mfDeserializeU64(MFSerializer* serializer);
 f32 mfDeserializeF32(MFSerializer* serializer);
 f64 mfDeserializeF64(MFSerializer* serializer);
 
-b8 mfDeserializeB8(MFSerializer* serializer);
+bool mfDeserializeB8(MFSerializer* serializer);
 
 char mfDeserializeChar(MFSerializer* serializer);
 // @note The returned char* must be freed since it is allocated on the heap

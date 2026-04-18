@@ -121,7 +121,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
     // Modules
     {
         size_t vertSize, fragSize;
-        b8 success = false;
+        bool success = false;
         char* vertCode = mfReadFile(mfGetLogger(), &vertSize, &success, info->vertPath, "rb");
         MF_PANIC_IF(!success, mfGetLogger(), "Failed to open the file! Most probably because the file doesn't exist or the reading mode is wrong!");
         char* fragCode = mfReadFile(mfGetLogger(), &fragSize, &success, info->fragPath, "rb");

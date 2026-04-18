@@ -40,7 +40,7 @@ typedef struct MFMesh_s {
 
     MFMat4 transform;
     MFMeshMaterial mat;
-    b8 init;
+    bool init;
 } MFMesh;
 
 void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indCount, u32* indices);

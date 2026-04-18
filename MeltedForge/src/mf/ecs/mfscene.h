@@ -32,7 +32,7 @@ typedef struct MFScene_s {
 
     MFCamera camera;
     MFRenderer* renderer;
-    b8 init;
+    bool init;
 } MFScene;
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer);
@@ -58,7 +58,7 @@ void mfSceneGetValidEntities(MFScene* scene, u64* validEntityCount, MFEntity* en
 void mfSceneSerialize(MFScene* scene, const char* fileName);
 // @note Returns false if the scene file doesnt exists or if the file isn't a scene file!
 //       Else it returns true.
-b8 mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertBuilder);
+bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertBuilder);
 
 #ifdef __cplusplus
 }
