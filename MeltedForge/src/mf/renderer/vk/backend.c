@@ -232,11 +232,12 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
 
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        return;
+        
+        VK_CHECK(vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex));
     }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    else if (result != VK_SUCCESS) {
         VK_CHECK(result);
     }
 
