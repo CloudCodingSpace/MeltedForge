@@ -316,9 +316,8 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         .pWaitSemaphores = waitSemas
     };
 
-    if((backend->renderTarget != mfnull) && backend->renderTarget->begun) {
+    if((backend->renderTarget != mfnull)) {
         waitSemas[0] = backend->renderTarget->renderFinishedSemas[backend->swapchainImageIndex];
-        backend->renderTarget->begun = false;
     }
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
