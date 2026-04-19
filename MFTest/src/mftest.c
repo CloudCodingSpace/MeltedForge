@@ -315,6 +315,12 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
+    state->cameraUboData.proj = state->scene.camera.proj;
+    state->cameraUboData.view = state->scene.camera.view;
+    state->lightData.camPos = state->scene.camera.pos;
+    mfGpuBufferUploadData(state->lightUbo, &state->lightData);
+    mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
+
     if((state->sceneViewport.x != mfRenderTargetGetWidth(state->renderTarget)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->renderTarget))) {
         if(state->enableRenderTarget)
             mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
@@ -362,10 +368,6 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         bool enableRenderTarget = state->enableRenderTarget;
         igCheckbox("Render to ImGui window", &enableRenderTarget);
         if(enableRenderTarget != state->enableRenderTarget) {
-            if(enableRenderTarget)
-                mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
-            else
-                mfRendererSetRenderTarget(appState->renderer, mfnull);
             state->enableRenderTarget = enableRenderTarget;
         }
 
@@ -418,9 +420,14 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 void MFTOnUpdate(void* pstate, void* pappState) {
     MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest update");
 
-    MFDefaultAppState* aState = (MFDefaultAppState*)pappState;
+    MFDefaultAppState* appState = (MFDefaultAppState*)pappState;
     MFTState* state = (MFTState*)pstate;
-    const MFWindowConfig* winConfig = mfWindowGetConfig(aState->window);
+    const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
+
+    if(state->enableRenderTarget)
+        mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
+    else
+        mfRendererSetRenderTarget(appState->renderer, mfnull);
 
     if(state->enableRenderTarget) {
         state->scene.camera.width = state->sceneViewport.x;
@@ -429,16 +436,10 @@ void MFTOnUpdate(void* pstate, void* pappState) {
         state->scene.camera.width = winConfig->width;
         state->scene.camera.height = winConfig->height;
     }
-    state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(aState->renderer), mfnull);
+    state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
 
-    state->cameraUboData.proj = state->scene.camera.proj;
-    state->cameraUboData.view = state->scene.camera.view;
-    state->lightData.camPos = state->scene.camera.pos;
-    mfGpuBufferUploadData(state->lightUbo, &state->lightData);
-    mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
-
-    if(mfInputIsKeyPressed(aState->window, MF_KEY_ESCAPE)) {
-        mfWindowClose(aState->window);
+    if(mfInputIsKeyPressed(appState->window, MF_KEY_ESCAPE)) {
+        mfWindowClose(appState->window);
     }
     
     MF_PROFILE_ZONE_END(__temp);

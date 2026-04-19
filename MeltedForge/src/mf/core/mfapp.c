@@ -62,13 +62,12 @@ static void runApp(void* st, MFAppConfig* config) {
 
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
+        for(u32 i = 0; i < config->layers.len; i++) {
+            MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
+            if(layer->onUpdate)
+                layer->onUpdate(layer->state, st);
+        }
         if(mfRendererBeginframe(state->renderer, state->window)) {
-            for(u32 i = 0; i < config->layers.len; i++) {
-                MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
-                if(layer->onUpdate)
-                    layer->onUpdate(layer->state, st);
-            }
-
             for(u32 i = 0; i < config->layers.len; i++) {
                 MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
                 if(layer->onRender)
