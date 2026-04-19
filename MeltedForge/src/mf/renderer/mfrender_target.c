@@ -107,6 +107,7 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, bo
         VK_CHECK(vkCreateSemaphore(renderTarget->backend->ctx.device, &semaInfo, renderTarget->backend->ctx.allocator, &renderTarget->renderFinishedSemas[i]));
     }
 
+    renderTarget->begun = false;
     renderTarget->init = true;
 }
 
@@ -333,11 +334,17 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     }; 
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    renderTarget->begun = true;
 }
 
 void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
+    if(!renderTarget->begun) {
+        return;
+    }
 
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 

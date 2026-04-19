@@ -23,7 +23,7 @@ struct MFRenderTarget_s {
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkSemaphore* renderFinishedSemas;
 
-    bool hasDepth, init;
+    bool hasDepth, init, begun;
 };
 
 #ifdef __cplusplus

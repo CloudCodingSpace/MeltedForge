@@ -19,7 +19,7 @@ typedef struct MFRenderer_s MFRenderer;
 void mfRendererInit(MFRenderer* renderer, const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window);
 void mfRendererShutdown(MFRenderer* renderer);
 
-void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
+bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 
 void mfRendererWaitForGPU(MFRenderer* renderer);

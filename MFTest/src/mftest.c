@@ -7,6 +7,7 @@
 
 static void CreatePipeline(MFTState* state) {
     u32 attributeCount = 0, bindingCount = 1;
+    const MFWindowConfig* config = mfWindowGetConfig(state->window);
     MFVertexInputAttributeDescription* attributes = getVertAttribDescs(&attributeCount);
     MFVertexInputBindingDescription bindings = getVertBindingDesc();
 
@@ -17,7 +18,8 @@ static void CreatePipeline(MFTState* state) {
     };
 
     MFPipelineConfig info = {
-        .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
+        // .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
+        .extent = (MFVec2){ .x = config->width, .y = config->height },
         .hasDepth = true,
         .depthCompareOp = MF_COMPARE_OP_LESS,
         .transparent = false,
@@ -29,7 +31,7 @@ static void CreatePipeline(MFTState* state) {
         .bindings = &bindings,
         .resourceLayoutCount = 1,
         .resourceLayouts = &state->layout,
-        .renderTarget = state->renderTarget,
+        // .renderTarget = state->renderTarget,
         .pushConstRangeCount = 1,
         .pushConstRanges = &range
     };
@@ -42,9 +44,12 @@ static void ResizeCallback(void* pstate) {
     MF_PROFILE_ZONE_START_NAMED(__temp, "Resize callback");
 
     MFTState* state = (MFTState*)pstate;
+    const MFWindowConfig* config = mfWindowGetConfig(state->window);
     
-    state->scene.camera.width = state->sceneViewport.x;
-    state->scene.camera.height = state->sceneViewport.y;
+    state->scene.camera.width = config->width;
+    state->scene.camera.height = config->height;
+    // state->scene.camera.width = state->sceneViewport.x;
+    // state->scene.camera.height = state->sceneViewport.y;
     state->scene.camera.constructMatrices(&state->scene.camera);
 
     MF_PROFILE_ZONE_END(__temp);
@@ -234,12 +239,15 @@ void MFTOnInit(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
+
+    state->enableRenderTarget = true;
+    state->renderer = appState->renderer;
+    state->window = appState->window;
    
     slogLoggerCreate(&state->logger, "MFTest", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE);
     slogLoggerSetName(&state->logger, "MFTest");
     INFO(&state->logger, "MFTest init");
 
-    state->renderer = appState->renderer;
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0, 0, 0.01f));
     mfRendererSetResizeCallback(appState->renderer, state, &ResizeCallback);
 
@@ -248,7 +256,8 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
         mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
-        mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
+        if(state->enableRenderTarget)
+            mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
 
         state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);
         state->sceneViewport.y = mfRenderTargetGetHeight(state->renderTarget);
@@ -307,7 +316,8 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
     if((state->sceneViewport.x != mfRenderTargetGetWidth(state->renderTarget)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->renderTarget))) {
-        mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
+        if(state->enableRenderTarget)
+            mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
     }
 
     MFSceneRenderConfig config = {
@@ -328,7 +338,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
 
     // Scene window
-    {
+    if(state->enableRenderTarget) {
         igBegin("Scene", mfnull, ImGuiWindowFlags_None);
         igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderTargetGetImGuiTextureID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
@@ -348,6 +358,18 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     // Settings window
     {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
+
+        bool enableRenderTarget = state->enableRenderTarget;
+        igCheckbox("Render to ImGui window", &enableRenderTarget);
+        if(enableRenderTarget != state->enableRenderTarget) {
+            if(enableRenderTarget)
+                mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
+            else
+                mfRendererSetRenderTarget(appState->renderer, mfnull);
+            state->enableRenderTarget = enableRenderTarget;
+        }
+
+        igDummy((ImVec2){ 0.0f, 50.0f });
 
         if(igCollapsingHeader_BoolPtr("Light settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             f32 posData[3] = {0};
@@ -400,8 +422,13 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfWindowGetConfig(aState->window);
 
-    state->scene.camera.width = state->sceneViewport.x;
-    state->scene.camera.height = state->sceneViewport.y;
+    if(state->enableRenderTarget) {
+        state->scene.camera.width = state->sceneViewport.x;
+        state->scene.camera.height = state->sceneViewport.y;
+    } else {
+        state->scene.camera.width = winConfig->width;
+        state->scene.camera.height = winConfig->height;
+    }
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(aState->renderer), mfnull);
 
     state->cameraUboData.proj = state->scene.camera.proj;

@@ -227,17 +227,16 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     MF_SETMEM(backend, 0, sizeof(VulkanBackend));
 }
 
-void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
+bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
 
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        
-        VK_CHECK(vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex));
+        return false;
     }
-    else if (result != VK_SUCCESS) {
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         VK_CHECK(result);
     }
 
@@ -268,11 +267,13 @@ void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     vkCmdBeginRenderPass(backend->commandBuffers[backend->frameIndex], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     if(!backend->enableUI)
-        return;
+        return true;
 
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     igNewFrame();
+
+    return true;
 }
 
 void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
@@ -315,8 +316,9 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         .pWaitSemaphores = waitSemas
     };
 
-    if(backend->renderTarget != mfnull) {
+    if((backend->renderTarget != mfnull) && backend->renderTarget->begun) {
         waitSemas[0] = backend->renderTarget->renderFinishedSemas[backend->swapchainImageIndex];
+        backend->renderTarget->begun = false;
     }
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));

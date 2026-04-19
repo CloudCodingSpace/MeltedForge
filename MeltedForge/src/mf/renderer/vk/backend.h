@@ -47,7 +47,7 @@ typedef struct VulkanBackend_s {
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config);
 void VulkanBackendShutdown(VulkanBackend* backend);
 
-void VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window);
+bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window);
 void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window);
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);

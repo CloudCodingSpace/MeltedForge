@@ -43,7 +43,7 @@ void mfRendererShutdown(MFRenderer* renderer) {
     MF_SETMEM(renderer, 0, sizeof(MFRenderer));
 }
 
-void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
+bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
@@ -51,7 +51,7 @@ void mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     renderer->deltaTime = crntTime - renderer->lastTime;
     renderer->lastTime = crntTime;
 
-    VulkanBackendBeginframe(&renderer->backend, window);
+    return VulkanBackendBeginframe(&renderer->backend, window);
 }
 
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
