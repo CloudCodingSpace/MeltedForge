@@ -18,7 +18,6 @@ static void CreatePipeline(MFTState* state) {
     };
 
     MFPipelineConfig info = {
-        // .extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y },
         .extent = (MFVec2){ .x = config->width, .y = config->height },
         .hasDepth = true,
         .depthCompareOp = MF_COMPARE_OP_LESS,
@@ -31,10 +30,15 @@ static void CreatePipeline(MFTState* state) {
         .bindings = &bindings,
         .resourceLayoutCount = 1,
         .resourceLayouts = &state->layout,
-        // .renderTarget = state->renderTarget,
         .pushConstRangeCount = 1,
         .pushConstRanges = &range
     };
+
+    if(state->enableRenderTarget) {
+        info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
+        info.renderTarget = state->renderTarget;
+    }
+
     mfPipelineInit(state->pipeline, state->renderer, &info);
 
     MF_FREEMEM(attributes);
@@ -46,10 +50,14 @@ static void ResizeCallback(void* pstate) {
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* config = mfWindowGetConfig(state->window);
     
-    state->scene.camera.width = config->width;
-    state->scene.camera.height = config->height;
-    // state->scene.camera.width = state->sceneViewport.x;
-    // state->scene.camera.height = state->sceneViewport.y;
+    if(state->enableRenderTarget) {
+        state->scene.camera.width = state->sceneViewport.x;
+        state->scene.camera.height = state->sceneViewport.y;
+    } else {
+        state->scene.camera.width = config->width;
+        state->scene.camera.height = config->height;
+    }
+
     state->scene.camera.constructMatrices(&state->scene.camera);
 
     MF_PROFILE_ZONE_END(__temp);
@@ -240,7 +248,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
 
-    state->enableRenderTarget = true;
+    state->enableRenderTarget = false;
     state->renderer = appState->renderer;
     state->window = appState->window;
    
@@ -341,10 +349,10 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
-    igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
-
     // Scene window
     if(state->enableRenderTarget) {
+        igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
+
         igBegin("Scene", mfnull, ImGuiWindowFlags_None);
         igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderTargetGetImGuiTextureID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
