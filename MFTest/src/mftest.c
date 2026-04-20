@@ -34,12 +34,12 @@ static void CreatePipeline(MFTState* state) {
         .pushConstRanges = &range
     };
 
-    if(state->enableRenderTarget) {
-        info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
-        info.renderTarget = state->renderTarget;
-    }
-
     mfPipelineInit(state->pipeline, state->renderer, &info);
+
+    info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
+    info.renderTarget = state->renderTarget;
+
+    mfPipelineInit(state->pipeline2, state->renderer, &info);
 
     MF_FREEMEM(attributes);
 }
@@ -277,6 +277,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     CreateResourceHandles(state, appState);
 
     state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
+    state->pipeline2 = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
     CreatePipeline(state);
 
     SetUiStyle();
@@ -307,6 +308,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfRenderTargetDestroy(state->renderTarget);
 
     mfPipelineDestroy(state->pipeline);
+    mfPipelineDestroy(state->pipeline2);
 
     for(u64 i = 0; i < state->setCount; i++) {
         MF_FREEMEM(state->sets[i]);
@@ -317,6 +319,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     MF_FREEMEM(state->lightUbo);
     MF_FREEMEM(state->renderTarget);
     MF_FREEMEM(state->pipeline);
+    MF_FREEMEM(state->pipeline2);
 }
 
 void MFTOnRender(void* pstate, void* pappState) {
@@ -336,12 +339,13 @@ void MFTOnRender(void* pstate, void* pappState) {
 
     MFSceneRenderConfig config = {
         .state = state,
-        .entityPipeline = state->pipeline,
+        .entityPipeline = (state->enableRenderTarget) ? state->pipeline2 : state->pipeline,
         .scissor = mfRendererGetScissor(state->renderer),
         .viewport = mfRendererGetViewport(state->renderer),
         .perMeshDrawCallback = &MeshCallback,
         .computeModelMatrix = &ComputeModelMatrix
     };
+
     mfSceneRender(&state->scene, &config);
 }
 
