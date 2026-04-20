@@ -36,10 +36,9 @@ function(EnableFlags target)
     )
 endfunction()
 
-function(CompileShader shader flags)
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
+function(CompileShader shader flags output_dir)
     get_filename_component(FILE_NAME ${shader} NAME)
-    set(SPIRV_NAME "${CMAKE_BINARY_DIR}/shaders/${FILE_NAME}.spv")
+    set(SPIRV_NAME "${output_dir}/${FILE_NAME}.spv")
 
     add_custom_command(
         OUTPUT ${SPIRV_NAME}

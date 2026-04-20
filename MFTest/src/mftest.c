@@ -22,8 +22,8 @@ static void CreatePipeline(MFTState* state) {
         .hasDepth = true,
         .depthCompareOp = MF_COMPARE_OP_LESS,
         .transparent = false,
-        .vertPath = "shaders/default.vert.spv",
-        .fragPath = "shaders/default.frag.spv",
+        .vertPath = "mftshaders/default.vert.spv",
+        .fragPath = "mftshaders/default.frag.spv",
         .attributesCount = attributeCount,
         .attributes = attributes,
         .bindingsCount = bindingCount,
@@ -211,7 +211,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "meshes/Sponza/glTF/Sponza.gltf",
+            .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };

@@ -11,9 +11,9 @@
 	path = MeltedForge/libs/assimp
 	url = https://github.com/assimp/assimp
 	branch = bugfix/change_mail
-[submodule "deccer-cubes"]
-	path = MFTest/meshes/deccer-cubes
-	url = https://github.com/GraphicsProgramming/deccer-cubes
 [submodule "tracy"]
 	path = MeltedForge/libs/tracy
 	url = https://github.com/wolfpld/tracy/
+[submodule "deccer-cubes"]
+	path = MFTest/mftmeshes/deccer-cubes
+	url = https://github.com/GraphicsProgramming/deccer-cubes
