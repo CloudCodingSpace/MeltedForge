@@ -397,7 +397,7 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
     return renderTarget->images[0].info.height;
 }
 
-ImTextureID mfRenderTargetGetImGuiTextureID(MFRenderTarget* renderTarget) {
+ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 

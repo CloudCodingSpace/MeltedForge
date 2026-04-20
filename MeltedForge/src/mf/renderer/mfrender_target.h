@@ -27,7 +27,7 @@ void* mfRenderTargetGetPass(MFRenderTarget* renderTarget);
 u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget);
 u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget);
 
-ImTextureID mfRenderTargetGetImGuiTextureID(MFRenderTarget* renderTarget);
+ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget);
 size_t mfRenderTargetGetSizeInBytes(void);
 
 #ifdef __cplusplus
