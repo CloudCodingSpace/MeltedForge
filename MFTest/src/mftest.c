@@ -357,10 +357,13 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     if(state->enableRenderTarget) {
         igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
 
+        igPushStyleColor_Vec4(ImGuiCol_WindowBg, (ImVec4){0.0f, 0.0f, 0.0f, 1.0f});
         igBegin("Scene", mfnull, ImGuiWindowFlags_None);
         igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderTargetGetColorAttachmentImTexID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
         igEnd();
+        // igPopStyleVar_Float(ImGuiStyleVar_Alpha, 0.0f);
+        igPopStyleColor(1);
     }
 
     // Perf window

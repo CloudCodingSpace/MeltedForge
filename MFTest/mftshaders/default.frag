@@ -40,8 +40,10 @@ void main() {
     info.specularFactor = ubo.specularFactor;
     info.isPoint = ubo.isPoint;
 
-    outColor = pow(texture(u_DiffuseTex, oUv), vec4(2.2)) * vec4(mfComputePhongLighting(info), 1.0);
+    vec4 albedo = texture(u_DiffuseTex, oUv);
+    albedo = pow(albedo, vec4(2.2));
+    outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
 
-    outColor = outColor / (outColor + 1);
-    outColor = pow(outColor, vec4(1.0/2.2));
+    outColor.rgb = outColor.rgb / (outColor.rgb + 1);
+    outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));
 }
