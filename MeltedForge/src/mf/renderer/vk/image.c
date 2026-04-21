@@ -157,7 +157,6 @@ void VulkanImageDestroy(VulkanImage* image) {
     MF_SETMEM(image, 0, sizeof(VulkanImage));
 }
 
-//! FIXME: Make this function readable T-T
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     image->info.pixels = pixels;
     VulkanBackendCtx* ctx = image->info.ctx;
@@ -251,7 +250,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     VulkanBufferFree(&staging, ctx);
 
     if(image->info.generateMipmaps && (image->info.mipLevels > 1)) {
-        // checking if image blit is supported or not!
+        // Checking if image blit is supported or not!
         {
             VkFormatProperties props = {0};
             vkGetPhysicalDeviceFormatProperties(ctx->physicalDevice, image->info.format, &props);
@@ -282,13 +281,8 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
                 .levelCount = 1,
                 .baseMipLevel = 0
             },
-            .image = image->image,
-            // .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            // .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT
+            .image = image->image
         };
-
-        // vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        //                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
 
         barrier.subresourceRange.levelCount = 1;
 
