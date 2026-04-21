@@ -357,7 +357,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
 
         vkDestroyFence(ctx->device, fence, ctx->allocator);
-        VulkanCommandBufferEnd(cmd);
+        VulkanCommandBufferFree(ctx, cmd, ctx->commandPool);
     }
 }
 
