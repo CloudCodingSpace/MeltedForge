@@ -36,7 +36,8 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
         .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         .arrayLayers = 1,
         .type = VK_IMAGE_TYPE_2D,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .generateMipmaps = config.generateMipmaps
     };
     
     VulkanImageCreate(&image->image, info);
@@ -82,7 +83,8 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
         .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .generateMipmaps = image->config.generateMipmaps
     };
     
     VulkanImageCreate(&image->image, info);

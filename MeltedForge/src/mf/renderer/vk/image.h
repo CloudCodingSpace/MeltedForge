@@ -11,8 +11,8 @@ extern "C" {
 struct VulkanBackendCtx_s;
 
 typedef struct VulkanImageInfo_s {
-    u32 width, height;
-    bool gpuResource;
+    u32 width, height, mipLevels;
+    bool gpuResource, generateMipmaps;
     u8* pixels;
     
     struct VulkanBackendCtx_s* ctx;
