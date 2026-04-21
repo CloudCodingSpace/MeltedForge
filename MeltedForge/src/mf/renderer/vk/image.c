@@ -217,7 +217,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 			vkCmdCopyBufferToImage(buff, staging.handle, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
         }
 
-        {
+        if(!image->info.generateMipmaps && (image->info.mipLevels == 1)) {
             VkImageMemoryBarrier use_barrier[1] = {};
 			use_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			use_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -279,18 +279,16 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
                 .aspectMask = image->info.aspectFlags,
                 .baseArrayLayer = 0,
                 .layerCount = 1,
-                .levelCount = image->info.mipLevels,
+                .levelCount = 1,
                 .baseMipLevel = 0
             },
             .image = image->image,
-            .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT
+            // .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            // .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT
         };
 
-        vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
+        // vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        //                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
 
         barrier.subresourceRange.levelCount = 1;
 
@@ -328,8 +326,10 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
             vkCmdBlitImage(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                 0, 0, mfnull, 0, mfnull, 1, &barrier);
             
@@ -341,7 +341,9 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
         barrier.subresourceRange.baseMipLevel = image->info.mipLevels - 1;
         barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                 0, 0, mfnull, 0, mfnull, 1, &barrier);
         
