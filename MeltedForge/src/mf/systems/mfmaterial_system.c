@@ -405,9 +405,17 @@ error_return:
 static bool compareEntry(Entry* entry, const char* path, u32 rgba) {
     u64 h = path ? mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger()) : 0;
     if((entry->description.path_hash == h) &&
-        (entry->description.rgba == rgba) && 
-        (mfStringCompare(entry->description.path, path) == 0)) {
-        return true;
+        (entry->description.rgba == rgba)) {
+        if(path && entry->description.path) {
+            if(mfStringCompare(entry->description.path, path) == 0) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        } else {
+            return true;
+        }
     }
 
     return false;
