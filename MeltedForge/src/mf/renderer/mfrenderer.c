@@ -83,6 +83,14 @@ void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
     renderer->backend.clearColor = (VkClearValue){.color = { color.r, color.g, color.b, 1.0f }};
 }
 
+MFVec3 mfRendererGetClearColor(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+    
+    float* color = renderer->backend.clearColor.color.float32;
+    return (MFVec3){ color[0], color[1], color[2] };
+}
+
 void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");

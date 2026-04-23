@@ -22,6 +22,8 @@ struct MFRenderTarget_s {
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkSemaphore* renderFinishedSemas;
+    
+    VkClearValue clearValue;
 
     bool hasDepth, init, begun;
 };

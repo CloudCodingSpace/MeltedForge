@@ -367,7 +367,7 @@ static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMa
                 buff[2] = (u8)mat->emission[2] * 255;
                 break;
 error_return:
-            if(type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT && type != MF_MODEL_MAT_TEXTURE_NORMAL)
+            if((type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT) && (type != MF_MODEL_MAT_TEXTURE_NORMAL))
                 return mfCreateErrorGpuImage(renderer);
             else {
                 MF_FATAL_ABORT(mfGetLogger(), "Failed to load the normal/displacement material image!");

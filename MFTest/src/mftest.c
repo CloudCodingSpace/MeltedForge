@@ -264,6 +264,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
+        mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.05f));
         mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
 
         state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);

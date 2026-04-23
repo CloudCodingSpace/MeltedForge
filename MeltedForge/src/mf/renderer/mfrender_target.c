@@ -24,9 +24,10 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, bo
 
     renderTarget->hasDepth = hasDepth;
     renderTarget->resizeCallback = mfnull;
-
+    
     renderTarget->renderer = renderer;
     renderTarget->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+    renderTarget->clearValue = renderTarget->backend->clearColor;
 
     renderTarget->begun = false;
     
@@ -305,6 +306,22 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     }
 }
 
+void mfRenderTargetSetClearColor(MFRenderTarget* renderTarget, MFVec3 color) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
+    renderTarget->clearValue = (VkClearValue){.color = {color.r, color.g, color.b, 1.0f}};
+}
+
+MFVec3 mfRenderTargetGetClearColor(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
+    float* color = renderTarget->clearValue.color.float32;
+
+    return (MFVec3){ color[0], color[1], color[2] };
+}
+
 void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
@@ -317,7 +334,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
 
     u32 count = 1;
     VkClearValue values[2] = {
-        renderTarget->backend->clearColor
+        renderTarget->clearValue
     };
     
     if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {

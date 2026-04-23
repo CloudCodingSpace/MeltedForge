@@ -18,6 +18,9 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget);
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent);
 
+void mfRenderTargetSetClearColor(MFRenderTarget* renderTarget, MFVec3 color);
+MFVec3 mfRenderTargetGetClearColor(MFRenderTarget* renderTarget);
+
 void mfRenderTargetBegin(MFRenderTarget* renderTarget);
 void mfRenderTargetEnd(MFRenderTarget* renderTarget);
 
