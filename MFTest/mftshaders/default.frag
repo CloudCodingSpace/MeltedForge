@@ -24,6 +24,11 @@ layout (binding = 2) uniform sampler2D u_DiffuseTex;
 layout (binding = 3) uniform sampler2D u_NormalTex;
 
 void main() {
+    vec4 albedo = texture(u_DiffuseTex, oUv);
+    if(albedo.a < 0.5)
+        discard;
+    albedo.rgb = pow(albedo.rgb, vec3(2.2));
+
     vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
     vec3 bitangent = normalize(cross(oNormal, oTangent));
     mat3 TBN = mat3(oTangent, bitangent, oNormal);
@@ -40,8 +45,6 @@ void main() {
     info.specularFactor = ubo.specularFactor;
     info.isPoint = ubo.isPoint;
 
-    vec4 albedo = texture(u_DiffuseTex, oUv);
-    albedo.rgb = pow(albedo.rgb, vec3(2.2));
     outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
 
     outColor.rgb = outColor.rgb / (outColor.rgb + 1);
