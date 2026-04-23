@@ -21,7 +21,7 @@ static void CreatePipeline(MFTState* state) {
         .extent = (MFVec2){ .x = config->width, .y = config->height },
         .hasDepth = true,
         .depthCompareOp = MF_COMPARE_OP_LESS,
-        .transparent = false,
+        .transparent = true,
         .vertPath = "mftshaders/default.vert.spv",
         .fragPath = "mftshaders/default.frag.spv",
         .attributesCount = attributeCount,
@@ -265,8 +265,6 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
         mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
-        if(state->enableRenderTarget)
-            mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
 
         state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);
         state->sceneViewport.y = mfRenderTargetGetHeight(state->renderTarget);
@@ -338,6 +336,9 @@ void MFTOnRender(void* pstate, void* pappState) {
             mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
     }
 
+    if(state->enableRenderTarget)
+        mfRenderTargetBegin(state->renderTarget);
+
     MFSceneRenderConfig config = {
         .state = state,
         .entityPipeline = (state->enableRenderTarget) ? state->pipeline2 : state->pipeline,
@@ -348,6 +349,8 @@ void MFTOnRender(void* pstate, void* pappState) {
     };
 
     mfSceneRender(&state->scene, &config);
+    if(state->enableRenderTarget)
+        mfRenderTargetEnd(state->renderTarget);
 }
 
 void MFTOnUIRender(void* pstate, void* pappState) {
@@ -438,11 +441,6 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*)pappState;
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
-
-    if(state->enableRenderTarget)
-        mfRendererSetRenderTarget(appState->renderer, state->renderTarget);
-    else
-        mfRendererSetRenderTarget(appState->renderer, mfnull);
 
     if(state->enableRenderTarget) {
         state->scene.camera.width = state->sceneViewport.x;

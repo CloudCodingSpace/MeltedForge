@@ -76,13 +76,6 @@ void mfRendererSetResizeCallback(MFRenderer* renderer, void* state, void (*callb
     renderer->backend.resizeCallback = callback;
 }
 
-void mfRendererSetRenderTarget(MFRenderer* renderer, MFRenderTarget* rt) {
-    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
-
-    renderer->backend.renderTarget = rt;
-}
-
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");

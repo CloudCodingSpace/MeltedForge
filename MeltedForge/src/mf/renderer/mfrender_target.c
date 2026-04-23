@@ -27,6 +27,8 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, bo
 
     renderTarget->renderer = renderer;
     renderTarget->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+
+    renderTarget->begun = false;
     
     if(hasDepth && renderTarget->backend->enableDepth) {
         VulkanImageInfo info = {
@@ -306,6 +308,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(renderTarget->begun, mfGetLogger(), "The render target has already begun!");
 
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
@@ -333,11 +336,25 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     }; 
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    renderTarget->backend->renderTarget = renderTarget;
+    bool exists = false;
+    for(u64 i = 0; i < renderTarget->backend->renderTargets.len; i++) {
+        if(mfArrayGetElement(renderTarget->backend->renderTargets, MFRenderTarget*, i) == renderTarget) {
+            exists = true;
+        }
+    }
+    if(!exists) {
+        mfArrayAddElement(renderTarget->backend->renderTargets, MFRenderTarget*, mfGetLogger(), renderTarget);
+    }
+
+    renderTarget->begun = true;
 }
 
 void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->begun, mfGetLogger(), "The render target hasn't begun yet!");
 
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
@@ -364,6 +381,9 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
     };
 
     VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, VK_NULL_HANDLE));
+
+    renderTarget->backend->renderTarget = mfnull;
+    renderTarget->begun = false;
 }
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {

@@ -20,6 +20,8 @@ typedef struct VulkanBackendConfig_s {
 } VulkanBackendConfig;
 
 typedef struct VulkanBackend_s {
+    MFArray renderTargets;
+
     VulkanBackendCtx ctx;
     u32 swapchainImageIndex, frameIndex;
     VkClearValue clearColor;
@@ -41,7 +43,7 @@ typedef struct VulkanBackend_s {
     struct MFRenderTarget_s* renderTarget;
 
     void* callbackState;
-     void (*resizeCallback)(void* state);
+    void (*resizeCallback)(void* state);
 } VulkanBackend;
 
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config);
