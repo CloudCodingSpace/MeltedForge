@@ -41,7 +41,7 @@ void main() {
     info.isPoint = ubo.isPoint;
 
     vec4 albedo = texture(u_DiffuseTex, oUv);
-    albedo = pow(albedo, vec4(2.2));
+    albedo.rgb = pow(albedo.rgb, vec3(2.2));
     outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
 
     outColor.rgb = outColor.rgb / (outColor.rgb + 1);

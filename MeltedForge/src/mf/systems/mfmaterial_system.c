@@ -387,13 +387,11 @@ error_return:
         .height = height,
         .pixels = pixels,
         .binding = MF_INFINITY,
-        .imageFormat = MF_FORMAT_R8G8B8A8_SRGB,
+        .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
         .generateMipmaps = true
     };
 
-    if(type == MF_MODEL_MAT_TEXTURE_NORMAL) {
-        config.imageFormat = MF_FORMAT_R8G8B8A8_UNORM;
-    } else {
+    if(type == MF_MODEL_MAT_TEXTURE_DIFFUSE) {
         config.generateMipmaps = true;
     }
 
