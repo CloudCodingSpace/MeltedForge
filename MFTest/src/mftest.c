@@ -212,6 +212,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 
         MFMeshComponent mComp = {
             .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
+            // .path = "mftmeshes/Bistro/Interior/scene.gltf",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
@@ -362,7 +363,6 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderTargetGetColorAttachmentImTexID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
         igEnd();
-        // igPopStyleVar_Float(ImGuiStyleVar_Alpha, 0.0f);
         igPopStyleColor(1);
     }
 

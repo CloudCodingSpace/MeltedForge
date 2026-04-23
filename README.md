@@ -14,7 +14,7 @@
    - Material system
    - Basic scene management
  - Model loading along with the material data
-    - Can load complex models (Tested with Sponza)
+    - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
     - UI customization (Using Dear ImGui's styles)
  - Render targets
@@ -131,6 +131,7 @@ This project may not have been possible if not for some of these sources and com
  - Graphics programming discord server's community. [Link](https://discord.gg/graphicsprogramming)
  - [Polyhaven](https://polyhaven.com/) for free, 3D assets
  - [Khronos's glTF Samples](https://github.com/KhronosGroup/glTF-Sample-Models) for 3D assets
+ - NVidia's Bistro scenes.
 
 ---
 

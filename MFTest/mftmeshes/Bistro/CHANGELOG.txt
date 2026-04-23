@@ -1,0 +1,41 @@
+Amazon Lumberyard Bistro
+
+v5.2:
+- Replaced .py scene files with .pyscene scene files
+- Updated BistroInterior_Wine.fbx with a newer version that utilizes additional material properties
+- Changed env map intensity of BistroExterior to 10
+- Updated BistroInterior_Wine.pyscene with roughness and metallic material properties and an emissive factor of 1000 to brighten the scene
+
+v5.1:
+- Fixed absorption coefficients in BistroInterior_Wine to work with scene units in meters
+
+v5:
+- Optimized for Falcor 4.0
+- Embedded camera path and lights into FBX file
+- Removed fscene files
+- Added BistroInterior_Wine with py scene file.
+
+v4:
+- Added emissive area lights and emitters throughout the scene
+- Updated .fscenes with env_map binding for Falcor 3.1
+- Improved road and curb geometry
+- Merged /Bistro_Night into /Bistro
+- Removed unused files 
+- Fixed paths to FBX files, added missing interior FBX
+- Fixed roughness on Vespa tires, fixed position of all street lamp glass 
+- Fixed string lights clipping into walls when using wind effect
+
+v3a:
+- Added DoubleSided flag to foliage materials for Falcor 3.0
+
+v3:
+- Removed absolute paths to textures in FBX files
+
+v2:
+- Added improved Metal/Rough textures for Falcor 3.0
+- Fixed holes in Bistro interior walls
+- New environment probes for interior and exterior scenes
+- Tweaked lighting in .fscenes
+
+v1: Initial release
+
