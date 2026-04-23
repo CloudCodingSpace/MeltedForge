@@ -161,7 +161,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .lightPos = (MFVec3){0.0f, 2.0f, 0.0f},
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .specularFactor = 128,
-        .lightIntensity = 100,
+        .lightIntensity = 30,
         .isPoint = true
     };
     
