@@ -31,15 +31,23 @@ extern "C" {
 #define MF_MS_TO_SEC_MULTIPLIER 0.001f
 
 #define MF_INFINITY (1e30f * 1e30f)
-#define MF_f32_EPSILON 1.192092896e-07f
-#define MF_f32_MIN -3.40282e+38F
-#define MF_f32_MAX 3.40282e+38F
+#define MF_FLOAT_EPSILON 1.192092896e-07f
+#define MF_FLOAT_MIN -3.40282e+38F
+#define MF_FLOAT_MAX 3.40282e+38F
 
 typedef union {
     struct { f32 x, y; };
     struct { f32 r, g; };
     struct { f32 s, t; };
     struct { f32 u, v; };
+#ifdef __cplusplus
+    MFVec2(f32 x = 0, f32 y = 0);
+    MFVec2 operator+(const MFVec2& v) const;
+    MFVec2 operator-(const MFVec2& v) const; 
+    MFVec2 operator*(const MFVec2& v) const;
+    MFVec2 operator*(const f32 s) const;
+    MFVec2 operator/(const MFVec2& v) const;
+#endif
 } MFVec2;
 
 typedef union {
@@ -47,24 +55,64 @@ typedef union {
     struct { f32 r, g, b; };
     struct { f32 s, t, p; };
     struct { f32 u, v, w; };
+#ifdef __cplusplus
+    MFVec3(f32 x = 0, f32 y = 0, f32 z = 0);
+    MFVec3 operator+(const MFVec3& v) const;
+    MFVec3 operator-(const MFVec3& v) const; 
+    MFVec3 operator*(const MFVec3& v) const;
+    MFVec3 operator*(const f32 s) const;
+    MFVec3 operator/(const MFVec3& v) const;
+#endif
 } MFVec3;
 
 typedef union {
     struct { f32 x, y, z, w; };
     struct { f32 r, g, b, a; };
     struct { f32 s, t, width, height; };
+#ifdef __cplusplus
+    MFVec4(f32 x = 0, f32 y = 0, f32 z = 0, f32 w = 0);
+    MFVec4 operator+(const MFVec4& v) const;
+    MFVec4 operator-(const MFVec4& v) const; 
+    MFVec4 operator*(const MFVec4& v) const;
+    MFVec4 operator*(const f32 s) const;
+    MFVec4 operator/(const MFVec4& v) const;
+#endif
 } MFVec4;
 
 typedef struct MFMat2_s {
     alignas(16) f32 data[4];
+#ifdef __cplusplus
+    MFMat2();
+    MFMat2 operator+(const MFMat2& mat) const;
+    MFMat2 operator-(const MFMat2& mat) const;
+    MFMat2 operator*(const MFMat2& mat) const;
+    MFMat2 operator*(const f32 s) const;
+    MFMat2 operator*(const MFVec2& vec) const;
+#endif
 } MFMat2;
 
 typedef struct MFMat3_s {
     alignas(16) f32 data[9];
+#ifdef __cplusplus
+    MFMat3();
+    MFMat3 operator+(const MFMat3& mat) const;
+    MFMat3 operator-(const MFMat3& mat) const;
+    MFMat3 operator*(const MFMat3& mat) const;
+    MFMat3 operator*(const f32 s) const;
+    MFMat3 operator*(const MFVec3& vec) const;
+#endif
 } MFMat3;
 
 typedef struct MFMat4_s {
     alignas(16) f32 data[16];
+#ifdef __cplusplus
+    MFMat4();
+    MFMat4 operator+(const MFMat4& mat) const;
+    MFMat4 operator-(const MFMat4& mat) const;
+    MFMat4 operator*(const MFMat4& mat) const;
+    MFMat4 operator*(const f32 s) const;
+    MFMat4 operator*(const MFVec4& vec) const;
+#endif
 } MFMat4;
 
 /*     Vec2      */
@@ -107,9 +155,9 @@ MF_INLINE f32 mfVec2Dot(MFVec2 a, MFVec2 b) {
 
 MF_INLINE MFVec2 mfVec2Normalize(MFVec2 a) {
     f32 len = mfVec2Length(a);
-    if(len == 0.0f)
+    if(len < MF_FLOAT_EPSILON)
         return mfVec2Create(0, 0);
-    return mfVec2Div(a, mfVec2Create(len, len));
+    return mfVec2MulScalar(a, 1.0f / len);
 }
 
 /*     Vec3      */
@@ -160,9 +208,9 @@ MF_INLINE MFVec3 mfVec3Cross(MFVec3 a, MFVec3 b) {
 
 MF_INLINE MFVec3 mfVec3Normalize(MFVec3 a) {
     f32 len = mfVec3Length(a);
-    if(len == 0.0f)
+    if(len < MF_FLOAT_EPSILON)
         return mfVec3Create(0, 0, 0);
-    return mfVec3Div(a, mfVec3Create(len, len, len));
+    return mfVec3MulScalar(a, 1.0f / len);
 }
 
 MF_INLINE MFVec3 mfVec3Reflect(MFVec3 I, MFVec3 N) {
@@ -209,9 +257,9 @@ MF_INLINE f32 mfVec4Dot(MFVec4 a, MFVec4 b) {
 
 MF_INLINE MFVec4 mfVec4Normalize(MFVec4 a) {
     f32 len = mfVec4Length(a);
-    if(len == 0.0f)
+    if(len < MF_FLOAT_EPSILON)
         return mfVec4Create(0, 0, 0, 0);
-    return mfVec4Div(a, mfVec4Create(len, len, len, len));
+    return mfVec4MulScalar(a, 1.0f / len);
 }
 
 /*  Mat2  */
@@ -319,7 +367,7 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
 
     f32 d = mat.data[0] * mat.data[3] - mat.data[1] * mat.data[2];
 
-    if(fabsf(d) < 1e-6f) {
+    if(fabsf(d) < MF_FLOAT_EPSILON) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
@@ -423,21 +471,21 @@ MF_INLINE MFMat3 mfMat3Scale(f32 x, f32 y, f32 z) {
 }
 
 MF_INLINE MFMat3 mfMat3Transpose(MFMat3 mat) {
-    MFMat3 result;
+    MFMat3 r;
 
-    result.data[0] = mat.data[0];
-    result.data[4] = mat.data[4];
-    result.data[8] = mat.data[8];
+    r.data[0] = mat.data[0];
+    r.data[1] = mat.data[3];
+    r.data[2] = mat.data[6];
 
-    result.data[1] = mat.data[3];
-    result.data[2] = mat.data[6];
-    result.data[3] = mat.data[1];
+    r.data[3] = mat.data[1];
+    r.data[4] = mat.data[4];
+    r.data[5] = mat.data[7];
 
-    result.data[5] = mat.data[7];
-    result.data[6] = mat.data[2];
-    result.data[7] = mat.data[5];
+    r.data[6] = mat.data[2];
+    r.data[7] = mat.data[5];
+    r.data[8] = mat.data[8];
 
-    return result;
+    return r;
 }
 
 MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
@@ -445,7 +493,7 @@ MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
     f32 c = m.data[3], d = m.data[4], ty = m.data[5];
 
     f32 det = a * d - b * c;
-    if (fabsf(det) < 1e-6f) {
+    if (fabsf(det) < MF_FLOAT_EPSILON) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
@@ -492,6 +540,22 @@ MF_INLINE MFMat4 mfMat4Identity(void) {
             0, 0, 0, 1
         }
     };
+}
+
+MF_INLINE MFMat4 mfMat4Add(MFMat4 a, MFMat4 b) {
+    MFMat4 result = {0};
+    for(u32 i = 0; i < 16; i++) {
+        result.data[i] = a.data[i] + b.data[i];
+    }
+    return result;
+}
+
+MF_INLINE MFMat4 mfMat4Sub(MFMat4 a, MFMat4 b) {
+    MFMat4 result = {0};
+    for(u32 i = 0; i < 16; i++) {
+        result.data[i] = a.data[i] - b.data[i];
+    }
+    return result;
 }
 
 MF_INLINE MFMat4 mfMat4Mul(MFMat4 a, MFMat4 b) {
@@ -674,7 +738,7 @@ MF_INLINE MFMat4 mfMat4Inverse(MFMat4 m) {
     o[15] = a[0]*a[5]*a[10] - a[0]*a[6]*a[9] - a[4]*a[1]*a[10] + a[4]*a[2]*a[9] + a[8]*a[1]*a[6] - a[8]*a[2]*a[5];
 
     f32 det = a[0]*o[0] + a[1]*o[4] + a[2]*o[8] + a[3]*o[12];
-    if (det == 0.0f) {
+    if (det < MF_FLOAT_EPSILON) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
@@ -748,5 +812,145 @@ MF_INLINE MFVec4 mfCopyFloatArrToVec4(f32* in) {
 }
 
 #ifdef __cplusplus
+}
+
+inline MFVec2::MFVec2(f32 x = 0, f32 y = 0) : r{x}, g{y} {}
+
+inline MFVec2 MFVec2::operator+(const MFVec2& v) const {
+    return mfVec2Add(*this, v);
+}
+
+inline MFVec2 MFVec2::operator-(const MFVec2& v) const {
+    return mfVec2Sub(*this, v);
+}
+
+inline MFVec2 MFVec2::operator*(const MFVec2& v) const {
+    return mfVec2Mul(*this, v);
+}
+
+inline MFVec2 MFVec2::operator*(const f32 s) const {
+    return mfVec2MulScalar(*this, s);
+}
+
+inline MFVec2 MFVec2::operator/(const MFVec2& v) const {
+    return mfVec2Div(*this, v);
+}
+
+inline MFVec3::MFVec3(f32 x = 0, f32 y = 0, f32 z = 0) : r{x}, g{y}, b{z} {}
+
+inline MFVec3 MFVec3::operator+(const MFVec3& v) const {
+    return mfVec3Add(*this, v);
+}
+
+inline MFVec3 MFVec3::operator-(const MFVec3& v) const {
+    return mfVec3Sub(*this, v);
+}
+
+inline MFVec3 MFVec3::operator*(const MFVec3& v) const {
+    return mfVec3Mul(*this, v);
+}
+
+inline MFVec3 MFVec3::operator*(const f32 s) const {
+    return mfVec3MulScalar(*this, s);
+}
+
+inline MFVec3 MFVec3::operator/(const MFVec3& v) const {
+    return mfVec3Div(*this, v);
+}
+
+inline MFVec4::MFVec4(f32 x = 0, f32 y = 0, f32 z = 0, f32 w = 0) : r{x}, g{y}, b{z}, a{w} {}
+
+inline MFVec4 MFVec4::operator+(const MFVec4& v) const {
+    return mfVec4Add(*this, v);
+}
+
+inline MFVec4 MFVec4::operator-(const MFVec4& v) const {
+    return mfVec4Sub(*this, v);
+}
+
+inline MFVec4 MFVec4::operator*(const MFVec4& v) const {
+    return mfVec4Mul(*this, v);
+}
+
+inline MFVec4 MFVec4::operator*(const f32 v) const {
+    return mfVec4MulScalar(*this, v);
+}
+
+inline MFVec4 MFVec4::operator/(const MFVec4& v) const {
+    return mfVec4Div(*this, v);
+}
+
+inline MFMat2::MFMat2() {
+    *this = mfMat2Identity();
+}
+
+inline MFMat2 MFMat2::operator+(const MFMat2& mat) const {
+    return mfMat2Add(*this, mat);
+}
+
+inline MFMat2 MFMat2::operator-(const MFMat2& mat) const {
+    return mfMat2Sub(*this, mat);
+}
+
+inline MFMat2 MFMat2::operator*(const MFMat2& mat) const {
+    return mfMat2Mul(*this, mat);
+}
+
+inline MFMat2 MFMat2::operator*(const f32 s) const {
+    return mfMat2MulScalar(*this, s);
+}
+
+inline MFMat2 MFMat2::operator*(const MFVec2& vec) const {
+    return mfMat2MulVec2(*this, vec);
+}
+
+inline MFMat3::MFMat3() {
+    *this = mfMat3Identity();
+}
+
+inline MFMat3 MFMat3::operator+(const MFMat3& mat) const {
+    return mfMat3Add(*this, mat);
+}
+
+inline MFMat3 MFMat3::operator-(const MFMat3& mat) const {
+    return mfMat3Sub(*this, mat);
+}
+
+inline MFMat3 MFMat3::operator*(const MFMat3& mat) const {
+    return mfMat3Mul(*this, mat);
+}
+
+inline MFMat3 MFMat3::operator*(const f32 s) const {
+    return mfMat3MulScalar(*this, s);
+}
+
+inline MFMat3 MFMat3::operator*(const MFVec3& vec) const {
+    return mfMat3MulVec3(*this, vec);
+}
+
+inline MFMat4::MFMat4() {
+    *this = mfMat4Identity();
+}
+
+inline MFMat4 MFMat4::operator+(const MFMat4& mat) const {
+    return mfMat4Add(*this, mat);
+}
+
+inline MFMat4 MFMat4::operator-(const MFMat4& mat) const {
+    return mfMat4Sub(*this, mat);
+}
+
+inline MFMat4 MFMat4::operator*(const MFMat4& mat) const {
+    return mfMat4Mul(*this, mat);
+}
+
+inline MFMat4 MFMat4::operator*(const f32 s) const {
+    return mfMat4MulScalar(*this, s);
+}
+
+inline MFMat4 MFMat4::operator*(const MFVec4& vec) const {
+    return mfMat4MulVec4(*this, vec);
+}
+
 }
 #endif
