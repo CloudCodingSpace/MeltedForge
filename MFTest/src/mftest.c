@@ -64,6 +64,7 @@ static void ResizeCallback(void* pstate) {
 }
 
 static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest Mesh callback");
     MFTState* state = (MFTState*)_state;
 
     PushConstantData modelData = {
@@ -74,6 +75,8 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
 
     mfResourceSetBind(state->sets[meshIdx], state->pipeline);
     mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
@@ -212,7 +215,6 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 
         MFMeshComponent mComp = {
             .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
-            // .path = "mftmeshes/Bistro/Interior/scene.gltf",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
@@ -264,7 +266,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     {
         state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
         mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
-        mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.05f));
+        mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.01f));
         mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
 
         state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);
@@ -323,6 +325,8 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 }
 
 void MFTOnRender(void* pstate, void* pappState) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest render");
+
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
@@ -352,9 +356,13 @@ void MFTOnRender(void* pstate, void* pappState) {
     mfSceneRender(&state->scene, &config);
     if(state->enableRenderTarget)
         mfRenderTargetEnd(state->renderTarget);
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 void MFTOnUIRender(void* pstate, void* pappState) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest update");
+
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
@@ -362,12 +370,10 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     if(state->enableRenderTarget) {
         igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
 
-        igPushStyleColor_Vec4(ImGuiCol_WindowBg, (ImVec4){0.0f, 0.0f, 0.0f, 1.0f});
         igBegin("Scene", mfnull, ImGuiWindowFlags_None);
         igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderTargetGetColorAttachmentImTexID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
         igEnd();
-        igPopStyleColor(1);
     }
 
     // Perf window
@@ -434,6 +440,8 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
         igEnd();
     }
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 void MFTOnUpdate(void* pstate, void* pappState) {
