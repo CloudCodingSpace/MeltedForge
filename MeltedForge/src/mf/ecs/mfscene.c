@@ -358,10 +358,43 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
         size += sizeof(char) * mfStringLen(comp->path);
     }
 
+    // Camera size
+    size += sizeof(f32) * 3 * 4;
+    size += sizeof(f32) * 7;
+
     MFSerializer s = {};
     mfSerializerCreate(&s, size, false);
 
     mfSerializeU32(&s, MF_SIGNATURE_SCENE_FILE);
+
+    // Camera
+    {
+        MFCamera* camera = &scene->camera;
+
+        mfSerializeF32(&s, camera->front.x);
+        mfSerializeF32(&s, camera->front.y);
+        mfSerializeF32(&s, camera->front.z);
+
+        mfSerializeF32(&s, camera->up.x);
+        mfSerializeF32(&s, camera->up.y);
+        mfSerializeF32(&s, camera->up.z);
+
+        mfSerializeF32(&s, camera->right.x);
+        mfSerializeF32(&s, camera->right.y);
+        mfSerializeF32(&s, camera->right.z);
+
+        mfSerializeF32(&s, camera->pos.x);
+        mfSerializeF32(&s, camera->pos.y);
+        mfSerializeF32(&s, camera->pos.z);
+    
+        mfSerializeF32(&s, camera->yaw);
+        mfSerializeF32(&s, camera->pitch);
+        mfSerializeF32(&s, camera->fov);
+        mfSerializeF32(&s, camera->nearPlane);
+        mfSerializeF32(&s, camera->farPlane);
+        mfSerializeF32(&s, camera->speed);
+        mfSerializeF32(&s, camera->sensitivity);
+    }
 
     // Entity array 
     {
@@ -453,6 +486,37 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
     mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
     mfArrayDestroy(&scene->meshCompPool, mfGetLogger());
     mfArrayDestroy(&scene->transformCompPool, mfGetLogger());
+
+    // Camera
+    {
+        MFCamera* camera = &scene->camera;
+
+        camera->front.x = mfDeserializeF32(&s);
+        camera->front.y = mfDeserializeF32(&s);
+        camera->front.z = mfDeserializeF32(&s);
+
+        camera->up.x = mfDeserializeF32(&s);
+        camera->up.y = mfDeserializeF32(&s);
+        camera->up.z = mfDeserializeF32(&s);
+        
+        camera->right.x = mfDeserializeF32(&s);
+        camera->right.y = mfDeserializeF32(&s);
+        camera->right.z = mfDeserializeF32(&s);
+        
+        camera->pos.x = mfDeserializeF32(&s);
+        camera->pos.y = mfDeserializeF32(&s);
+        camera->pos.z = mfDeserializeF32(&s);
+
+        camera->yaw = mfDeserializeF32(&s);
+        camera->pitch = mfDeserializeF32(&s);
+        camera->fov = mfDeserializeF32(&s);
+        camera->nearPlane = mfDeserializeF32(&s);
+        camera->farPlane = mfDeserializeF32(&s);
+        camera->speed = mfDeserializeF32(&s);
+        camera->sensitivity = mfDeserializeF32(&s);
+
+        camera->constructMatrices(camera);
+    }
 
     u64 eLen = mfDeserializeU64(&s);
     scene->entities = mfArrayCreate(mfGetLogger(), eLen, sizeof(MFEntity));
