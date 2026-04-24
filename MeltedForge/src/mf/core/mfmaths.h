@@ -35,19 +35,80 @@ extern "C" {
 #define MF_FLOAT_MIN -3.40282e+38F
 #define MF_FLOAT_MAX 3.40282e+38F
 
-typedef union {
+#ifdef __cplusplus
+union MFVec2 {
     struct { f32 x, y; };
     struct { f32 r, g; };
     struct { f32 s, t; };
     struct { f32 u, v; };
-#ifdef __cplusplus
     MFVec2(f32 x = 0, f32 y = 0);
     MFVec2 operator+(const MFVec2& v) const;
     MFVec2 operator-(const MFVec2& v) const; 
     MFVec2 operator*(const MFVec2& v) const;
     MFVec2 operator*(const f32 s) const;
     MFVec2 operator/(const MFVec2& v) const;
-#endif
+};
+
+union MFVec3 {
+    struct { f32 x, y, z; };
+    struct { f32 r, g, b; };
+    struct { f32 s, t, p; };
+    struct { f32 u, v, w; };
+    MFVec3(f32 x = 0, f32 y = 0, f32 z = 0);
+    MFVec3 operator+(const MFVec3& v) const;
+    MFVec3 operator-(const MFVec3& v) const; 
+    MFVec3 operator*(const MFVec3& v) const;
+    MFVec3 operator*(const f32 s) const;
+    MFVec3 operator/(const MFVec3& v) const;
+};
+
+union MFVec4 {
+    struct { f32 x, y, z, w; };
+    struct { f32 r, g, b, a; };
+    struct { f32 s, t, width, height; };
+    MFVec4(f32 x = 0, f32 y = 0, f32 z = 0, f32 w = 0);
+    MFVec4 operator+(const MFVec4& v) const;
+    MFVec4 operator-(const MFVec4& v) const; 
+    MFVec4 operator*(const MFVec4& v) const;
+    MFVec4 operator*(const f32 s) const;
+    MFVec4 operator/(const MFVec4& v) const;
+};
+
+struct MFMat2 {
+    alignas(16) f32 data[4];
+    MFMat2();
+    MFMat2 operator+(const MFMat2& mat) const;
+    MFMat2 operator-(const MFMat2& mat) const;
+    MFMat2 operator*(const MFMat2& mat) const;
+    MFMat2 operator*(const f32 s) const;
+    MFVec2 operator*(const MFVec2& vec) const;
+};
+
+struct MFMat3 {
+    alignas(16) f32 data[9];
+    MFMat3();
+    MFMat3 operator+(const MFMat3& mat) const;
+    MFMat3 operator-(const MFMat3& mat) const;
+    MFMat3 operator*(const MFMat3& mat) const;
+    MFMat3 operator*(const f32 s) const;
+    MFVec3 operator*(const MFVec3& vec) const;
+};
+
+struct MFMat4 {
+    alignas(16) f32 data[16];
+    MFMat4();
+    MFMat4 operator+(const MFMat4& mat) const;
+    MFMat4 operator-(const MFMat4& mat) const;
+    MFMat4 operator*(const MFMat4& mat) const;
+    MFMat4 operator*(const f32 s) const;
+    MFVec4 operator*(const MFVec4& vec) const;
+};
+#else
+typedef union {
+    struct { f32 x, y; };
+    struct { f32 r, g; };
+    struct { f32 s, t; };
+    struct { f32 u, v; };
 } MFVec2;
 
 typedef union {
@@ -55,65 +116,27 @@ typedef union {
     struct { f32 r, g, b; };
     struct { f32 s, t, p; };
     struct { f32 u, v, w; };
-#ifdef __cplusplus
-    MFVec3(f32 x = 0, f32 y = 0, f32 z = 0);
-    MFVec3 operator+(const MFVec3& v) const;
-    MFVec3 operator-(const MFVec3& v) const; 
-    MFVec3 operator*(const MFVec3& v) const;
-    MFVec3 operator*(const f32 s) const;
-    MFVec3 operator/(const MFVec3& v) const;
-#endif
 } MFVec3;
 
 typedef union {
     struct { f32 x, y, z, w; };
     struct { f32 r, g, b, a; };
     struct { f32 s, t, width, height; };
-#ifdef __cplusplus
-    MFVec4(f32 x = 0, f32 y = 0, f32 z = 0, f32 w = 0);
-    MFVec4 operator+(const MFVec4& v) const;
-    MFVec4 operator-(const MFVec4& v) const; 
-    MFVec4 operator*(const MFVec4& v) const;
-    MFVec4 operator*(const f32 s) const;
-    MFVec4 operator/(const MFVec4& v) const;
-#endif
 } MFVec4;
 
 typedef struct MFMat2_s {
     alignas(16) f32 data[4];
-#ifdef __cplusplus
-    MFMat2();
-    MFMat2 operator+(const MFMat2& mat) const;
-    MFMat2 operator-(const MFMat2& mat) const;
-    MFMat2 operator*(const MFMat2& mat) const;
-    MFMat2 operator*(const f32 s) const;
-    MFMat2 operator*(const MFVec2& vec) const;
-#endif
 } MFMat2;
 
 typedef struct MFMat3_s {
     alignas(16) f32 data[9];
-#ifdef __cplusplus
-    MFMat3();
-    MFMat3 operator+(const MFMat3& mat) const;
-    MFMat3 operator-(const MFMat3& mat) const;
-    MFMat3 operator*(const MFMat3& mat) const;
-    MFMat3 operator*(const f32 s) const;
-    MFMat3 operator*(const MFVec3& vec) const;
-#endif
 } MFMat3;
 
 typedef struct MFMat4_s {
     alignas(16) f32 data[16];
-#ifdef __cplusplus
-    MFMat4();
-    MFMat4 operator+(const MFMat4& mat) const;
-    MFMat4 operator-(const MFMat4& mat) const;
-    MFMat4 operator*(const MFMat4& mat) const;
-    MFMat4 operator*(const f32 s) const;
-    MFMat4 operator*(const MFVec4& vec) const;
-#endif
 } MFMat4;
+
+#endif
 
 /*     Vec2      */
 
@@ -265,12 +288,12 @@ MF_INLINE MFVec4 mfVec4Normalize(MFVec4 a) {
 /*  Mat2  */
 
 MF_INLINE MFMat2 mfMat2Identity() {
-    return (MFMat2) {
-        .data = {
-            1, 0,
-            0, 1
-        }
-    };
+    MFMat2 result;
+    MF_SETMEM(&result, 0, sizeof(MFMat2));
+    result.data[0] = 1;
+    result.data[3] = 1;
+
+    return result;
 }
 
 MF_INLINE MFMat2 mfMat2Add(MFMat2 a, MFMat2 b) {
@@ -328,12 +351,11 @@ MF_INLINE void mfMat2Rotate(MFMat2* mat, f32 theta_rad) {
     f32 c = cosf(theta_rad);
     f32 s = sinf(theta_rad);
     
-    MFMat2 rotation = {
-        .data = {
-            c, -s,
-            s,  c
-        }
-    };
+    MFMat2 rotation;
+    rotation.data[0] = c;
+    rotation.data[1] = -s;
+    rotation.data[2] = s;
+    rotation.data[3] = c;
 
     *mat = mfMat2Mul(rotation, *mat);
 }
@@ -380,13 +402,14 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
 
 /*  Mat3  */
 MF_INLINE MFMat3 mfMat3Identity() {
-    return (MFMat3) {
-        .data = {
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1,
-        }
-    };
+    MFMat3 result;
+    MF_SETMEM(&result, 0, sizeof(MFMat3));
+
+    result.data[0] = 1;
+    result.data[4] = 1;
+    result.data[8] = 1;
+
+    return result;
 }
 
 MF_INLINE MFMat3 mfMat3Add(MFMat3 a, MFMat3 b) {
@@ -451,13 +474,11 @@ MF_INLINE void mfMat3Rotate(MFMat3* mat, f32 theta_rad) {
     f32 c = cosf(theta_rad);
     f32 s = sinf(theta_rad);
 
-    MFMat3 rotation = {
-        .data = {
-            c, -s, 0,
-            s,  c, 0,
-            0,  0, 1
-        }
-    };
+    MFMat3 rotation = mfMat3Identity();
+    rotation.data[0] = c;
+    rotation.data[1] = -s;
+    rotation.data[3] = s;
+    rotation.data[4] = c;
 
     *mat = mfMat3Mul(rotation, *mat);
 }
@@ -507,43 +528,50 @@ MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
     f32 itx = -(ia * tx + ib * ty);
     f32 ity = -(ic * tx + id * ty);
 
-    MFMat3 inv = {
-        .data = {
-            ia, ib, itx,
-            ic, id, ity,
-            0,  0,  1
-        }
-    };
+    MFMat3 inv = mfMat3Identity();
+    inv.data[0] = ia;
+    inv.data[1] = ib;
+    inv.data[2] = itx;
+    inv.data[3] = ic;
+    inv.data[4] = id;
+    inv.data[5] = ity;
 
     return inv;
 }
 
 MF_INLINE MFMat3 mfMat4ToMat3(MFMat4 mat) {
     f32* data = mat.data;
-    return (MFMat3){
-        .data = {
-            data[0], data[1], data[2],
-            data[4], data[5], data[6],
-            data[8], data[9], data[10]
-        }
-    };
+
+    MFMat3 m;
+    m.data[0] = data[0];
+    m.data[1] = data[1];
+    m.data[2] = data[2];
+    m.data[3] = data[4];
+    m.data[4] = data[5];
+    m.data[5] = data[6];
+    m.data[6] = data[8];
+    m.data[7] = data[9];
+    m.data[8] = data[10];
+
+    return m;
 };
 
 /*   Mat4   */
 
 MF_INLINE MFMat4 mfMat4Identity(void) {
-    return (MFMat4){
-        .data = {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        }
-    };
+    MFMat4 result;
+    MF_SETMEM(&result, 0, sizeof(MFMat4));
+
+    result.data[0] = 1;
+    result.data[5] = 1;
+    result.data[10] = 1;
+    result.data[15] = 1;
+    
+    return result;
 }
 
 MF_INLINE MFMat4 mfMat4Add(MFMat4 a, MFMat4 b) {
-    MFMat4 result = {0};
+    MFMat4 result = mfMat4Identity();
     for(u32 i = 0; i < 16; i++) {
         result.data[i] = a.data[i] + b.data[i];
     }
@@ -551,7 +579,7 @@ MF_INLINE MFMat4 mfMat4Add(MFMat4 a, MFMat4 b) {
 }
 
 MF_INLINE MFMat4 mfMat4Sub(MFMat4 a, MFMat4 b) {
-    MFMat4 result = {0};
+    MFMat4 result = mfMat4Identity();
     for(u32 i = 0; i < 16; i++) {
         result.data[i] = a.data[i] - b.data[i];
     }
@@ -559,7 +587,7 @@ MF_INLINE MFMat4 mfMat4Sub(MFMat4 a, MFMat4 b) {
 }
 
 MF_INLINE MFMat4 mfMat4Mul(MFMat4 a, MFMat4 b) {
-    MFMat4 result = {0};
+    MFMat4 result = mfMat4Identity();
     for (u32 col = 0; col < 4; ++col) {
         for (u32 row = 0; row < 4; ++row) {
             f32 sum = 0.0f;
@@ -649,7 +677,8 @@ MF_INLINE MFMat4 mfMat4RotateXYZ(f32 radiansX, f32 radiansY, f32 radiansZ) {
 MF_INLINE MFMat4 mfMat4Perspective(f32 fovYRadians, f32 aspect, f32 nearZ, f32 farZ) {
     f32 f = 1.0f / tanf(fovYRadians / 2.0f);
     f32 nf = 1.0f / (nearZ - farZ);
-    MFMat4 mat = {0};
+    MFMat4 mat;
+    MF_SETMEM(&mat, 0, sizeof(MFMat4));
     mat.data[0] = f / aspect;
     mat.data[5] = f;
     mat.data[10] = (farZ + nearZ) * nf;
@@ -659,7 +688,8 @@ MF_INLINE MFMat4 mfMat4Perspective(f32 fovYRadians, f32 aspect, f32 nearZ, f32 f
 }
 
 MF_INLINE MFMat4 mfMat4Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 nearZ, f32 farZ) {
-    MFMat4 mat = {0};
+    MFMat4 mat;
+    MF_SETMEM(&mat, 0, sizeof(MFMat4));
     mat.data[0] = 2.0f / (right - left);
     mat.data[5] = 2.0f / (top - bottom);
     mat.data[10] = -2.0f / (farZ - nearZ);
@@ -814,7 +844,7 @@ MF_INLINE MFVec4 mfCopyFloatArrToVec4(f32* in) {
 #ifdef __cplusplus
 }
 
-inline MFVec2::MFVec2(f32 x = 0, f32 y = 0) : r{x}, g{y} {}
+inline MFVec2::MFVec2(f32 x, f32 y) : r{x}, g{y} {}
 
 inline MFVec2 MFVec2::operator+(const MFVec2& v) const {
     return mfVec2Add(*this, v);
@@ -836,7 +866,7 @@ inline MFVec2 MFVec2::operator/(const MFVec2& v) const {
     return mfVec2Div(*this, v);
 }
 
-inline MFVec3::MFVec3(f32 x = 0, f32 y = 0, f32 z = 0) : r{x}, g{y}, b{z} {}
+inline MFVec3::MFVec3(f32 x, f32 y, f32 z) : r{x}, g{y}, b{z} {}
 
 inline MFVec3 MFVec3::operator+(const MFVec3& v) const {
     return mfVec3Add(*this, v);
@@ -858,7 +888,7 @@ inline MFVec3 MFVec3::operator/(const MFVec3& v) const {
     return mfVec3Div(*this, v);
 }
 
-inline MFVec4::MFVec4(f32 x = 0, f32 y = 0, f32 z = 0, f32 w = 0) : r{x}, g{y}, b{z}, a{w} {}
+inline MFVec4::MFVec4(f32 x, f32 y, f32 z, f32 w) : r{x}, g{y}, b{z}, a{w} {}
 
 inline MFVec4 MFVec4::operator+(const MFVec4& v) const {
     return mfVec4Add(*this, v);
@@ -900,7 +930,7 @@ inline MFMat2 MFMat2::operator*(const f32 s) const {
     return mfMat2MulScalar(*this, s);
 }
 
-inline MFMat2 MFMat2::operator*(const MFVec2& vec) const {
+inline MFVec2 MFMat2::operator*(const MFVec2& vec) const {
     return mfMat2MulVec2(*this, vec);
 }
 
@@ -924,7 +954,7 @@ inline MFMat3 MFMat3::operator*(const f32 s) const {
     return mfMat3MulScalar(*this, s);
 }
 
-inline MFMat3 MFMat3::operator*(const MFVec3& vec) const {
+inline MFVec3 MFMat3::operator*(const MFVec3& vec) const {
     return mfMat3MulVec3(*this, vec);
 }
 
@@ -948,9 +978,8 @@ inline MFMat4 MFMat4::operator*(const f32 s) const {
     return mfMat4MulScalar(*this, s);
 }
 
-inline MFMat4 MFMat4::operator*(const MFVec4& vec) const {
+inline MFVec4 MFMat4::operator*(const MFVec4& vec) const {
     return mfMat4MulVec4(*this, vec);
 }
 
-}
 #endif
