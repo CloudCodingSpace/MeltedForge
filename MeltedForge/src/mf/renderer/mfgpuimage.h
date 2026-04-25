@@ -20,7 +20,7 @@ typedef struct MFGpuImageConfig_s {
     bool generateMipmaps;
 } MFGpuImageConfig;
 
-void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig config);
+MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config);
 void mfGpuImageDestroy(MFGpuImage* image);
 
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels);

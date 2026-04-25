@@ -14,12 +14,11 @@ struct MFRenderer_s {
     bool init;
 };
 
-void mfRendererInit(MFRenderer* renderer, const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window) {
-    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_PANIC_IF(renderer->init, mfGetLogger(), "The renderer is already initialised!");
+MFRenderer* mfRendererCreate(const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
-
     MF_INFO(mfGetLogger(), "Creating the renderer");
+
+    MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
 
     VulkanBackendConfig config = {
         .appName = appName,
@@ -31,6 +30,8 @@ void mfRendererInit(MFRenderer* renderer, const char* appName, bool enableDepth,
 
     VulkanBackendInit(&renderer->backend, &config);
     renderer->init = true;
+
+    return renderer;
 }
 
 void mfRendererShutdown(MFRenderer* renderer) {
@@ -41,6 +42,7 @@ void mfRendererShutdown(MFRenderer* renderer) {
     VulkanBackendShutdown(&renderer->backend);
 
     MF_SETMEM(renderer, 0, sizeof(MFRenderer));
+    MF_FREEMEM(renderer);
 }
 
 bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {

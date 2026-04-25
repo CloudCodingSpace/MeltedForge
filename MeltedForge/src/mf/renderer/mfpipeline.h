@@ -31,7 +31,7 @@ typedef struct MFPipelineConfig_s {
     MFRenderTarget* renderTarget;
 } MFPipelineConfig;
 
-void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info);
+MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig* info);
 void mfPipelineDestroy(MFPipeline* pipeline);
 
 void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data);

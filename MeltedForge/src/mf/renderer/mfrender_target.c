@@ -17,10 +17,10 @@ extern "C" {
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, bool hasDepth) {
-    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(renderTarget->init, mfGetLogger(), "The render target is already initialised!");
+MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    MFRenderTarget* renderTarget = MF_ALLOCMEM(MFRenderTarget, sizeof(MFRenderTarget));
 
     renderTarget->hasDepth = hasDepth;
     renderTarget->resizeCallback = mfnull;
@@ -111,6 +111,7 @@ void mfRenderTargetCreate(MFRenderTarget* renderTarget, MFRenderer* renderer, bo
     }
 
     renderTarget->init = true;
+    return renderTarget;
 }
 
 void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
@@ -139,6 +140,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     
     MF_FREEMEM(renderTarget->renderFinishedSemas);    
     MF_SETMEM(renderTarget, 0, sizeof(MFRenderTarget));
+    MF_FREEMEM(renderTarget);
 }
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {

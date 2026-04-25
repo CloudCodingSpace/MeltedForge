@@ -13,7 +13,7 @@ struct MFRenderer_s;
 
 typedef struct MFRenderTarget_s MFRenderTarget;
 
-void mfRenderTargetCreate(MFRenderTarget* renderTarget, struct MFRenderer_s* renderer, bool hasDepth);
+MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDepth);
 void mfRenderTargetDestroy(MFRenderTarget* renderTarget);
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent);

@@ -299,7 +299,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
             .height = 1,
             .pixels = color
         };
-        mfGpuImageCreate(img, renderer, config);
+        img = mfGpuImageCreate(renderer, config);
     }
 
     Entry newEntry = {
@@ -395,9 +395,7 @@ error_return:
         config.generateMipmaps = true;
     }
 
-    mfGpuImageCreate(tex, renderer, config);
-
-    return tex;
+    return mfGpuImageCreate(renderer, config);
 }
 
 static bool compareEntry(Entry* entry, const char* path, u32 rgba) {

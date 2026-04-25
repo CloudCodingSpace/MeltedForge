@@ -34,12 +34,12 @@ static void CreatePipeline(MFTState* state) {
         .pushConstRanges = &range
     };
 
-    mfPipelineInit(state->pipeline, state->renderer, &info);
+    state->pipeline = mfPipelineCreate(state->renderer, &info);
 
     info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
     info.renderTarget = state->renderTarget;
 
-    mfPipelineInit(state->pipeline2, state->renderer, &info);
+    state->pipeline2 = mfPipelineCreate(state->renderer, &info);
 
     MF_FREEMEM(attributes);
 }
@@ -93,9 +93,7 @@ static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
 
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
     // Resource layouts
-    {
-        state->layout = MF_ALLOCMEM(MFResourceSetLayout, mfResourceSetLayoutGetSizeInBytes());
-        
+    {   
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
         MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
         MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, 0, appState->renderer);
@@ -107,7 +105,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             mfGpuBufferGetDescription(state->lightUbo)
         };
         
-        mfResourceSetLayoutCreate(state->layout, MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
+        state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
     }
     // Resource sets
     {
@@ -120,8 +118,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
 
         for(u64 i = 0; i < state->setCount; i++) {
-            state->sets[i] = MF_ALLOCMEM(MFResourceSet, mfResourceSetGetSizeInBytes());
-            mfResourceSetCreate(state->sets[i], state->layout, appState->renderer);
+            state->sets[i] = mfResourceSetCreate(state->layout, appState->renderer);
 
             MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
@@ -150,8 +147,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     state->cameraUboData.proj = state->scene.camera.proj;
     state->cameraUboData.view = state->scene.camera.view;
 
-    state->cameraUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-    mfGpuBufferAllocate(state->cameraUbo, config, appState->renderer);
+    state->cameraUbo = mfGpuBufferAllocate(config, appState->renderer);
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
     
     config.size = sizeof(LightUBOData);
@@ -168,8 +164,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .isPoint = true
     };
     
-    state->lightUbo = MF_ALLOCMEM(MFGpuBuffer, mfGpuBufferGetSizeInBytes());
-    mfGpuBufferAllocate(state->lightUbo, config, appState->renderer);
+    state->lightUbo = mfGpuBufferAllocate(config, appState->renderer);
     mfGpuBufferUploadData(state->lightUbo, &state->lightData);
 }
 
@@ -264,8 +259,7 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     // Viewport and render target
     {
-        state->renderTarget = MF_ALLOCMEM(MFRenderTarget, mfRenderTargetGetSizeInBytes());
-        mfRenderTargetCreate(state->renderTarget, appState->renderer, true);
+        state->renderTarget = mfRenderTargetCreate(appState->renderer, true);
         mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.01f));
         mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
 
@@ -277,9 +271,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     ConfigModelImages(state, appState);
     CreateUBOs(state, appState);
     CreateResourceHandles(state, appState);
-
-    state->pipeline = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
-    state->pipeline2 = MF_ALLOCMEM(MFPipeline, mfPipelineGetSizeInBytes());
     CreatePipeline(state);
 
     SetUiStyle();
@@ -312,16 +303,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfPipelineDestroy(state->pipeline);
     mfPipelineDestroy(state->pipeline2);
 
-    for(u64 i = 0; i < state->setCount; i++) {
-        MF_FREEMEM(state->sets[i]);
-    }
     MF_FREEMEM(state->sets);
-    MF_FREEMEM(state->layout);
-    MF_FREEMEM(state->cameraUbo);
-    MF_FREEMEM(state->lightUbo);
-    MF_FREEMEM(state->renderTarget);
-    MF_FREEMEM(state->pipeline);
-    MF_FREEMEM(state->pipeline2);
 }
 
 void MFTOnRender(void* pstate, void* pappState) {

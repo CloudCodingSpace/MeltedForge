@@ -11,8 +11,7 @@ extern "C" {
 static void initApp(void* st, MFAppConfig* config) {
     MFDefaultAppState* state = (MFDefaultAppState*) st;
 
-    state->window = MF_ALLOCMEM(MFWindow, mfWindowGetSizeInBytes());
-    mfWindowInit(state->window, config->winConfig);
+    state->window = mfWindowCreate(config->winConfig);
 
     // Setting icon
     {
@@ -22,8 +21,7 @@ static void initApp(void* st, MFAppConfig* config) {
         stbi_image_free(data);
     }
 
-    state->renderer = MF_ALLOCMEM(MFRenderer, mfRendererGetSizeInBytes());
-    mfRendererInit(state->renderer, config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
+    state->renderer = mfRendererCreate(config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
 
     mfMaterialSystemInitialize();
 
@@ -53,8 +51,6 @@ static void deinitApp(void* st, MFAppConfig* config) {
 
     mfRendererShutdown(state->renderer);
     mfWindowDestroy(state->window);
-    MF_FREEMEM(state->renderer);
-    MF_FREEMEM(state->window);
 }
 
 static void runApp(void* st, MFAppConfig* config) {

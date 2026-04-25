@@ -15,10 +15,10 @@ struct MFGpuImage_s {
     bool init;
 };
 
-void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig config) {
-    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
-    MF_PANIC_IF(image->init, mfGetLogger(), "The gpu image is already initialised!");
+MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    MFGpuImage* image = MF_ALLOCMEM(MFGpuImage, sizeof(MFGpuImage));
     
     image->config = config;
     image->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
@@ -43,6 +43,7 @@ void mfGpuImageCreate(MFGpuImage* image, MFRenderer* renderer, MFGpuImageConfig 
     VulkanImageCreate(&image->image, info);
 
     image->init = true;
+    return image;
 }
 
 void mfGpuImageDestroy(MFGpuImage* image) {
@@ -52,6 +53,7 @@ void mfGpuImageDestroy(MFGpuImage* image) {
     VulkanImageDestroy(&image->image);
 
     MF_SETMEM(image, 0, sizeof(MFGpuImage));
+    MF_FREEMEM(image);
 }
 
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
@@ -141,9 +143,7 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
         .imageFormat = MF_FORMAT_R8G8B8A8_SRGB
     };
 
-    mfGpuImageCreate(tex, renderer, config);
-
-    return tex;
+    return mfGpuImageCreate(renderer, config);
 }
 
 #ifdef __cplusplus

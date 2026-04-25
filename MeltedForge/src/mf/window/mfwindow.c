@@ -30,10 +30,10 @@ static void pos_callback(GLFWwindow* window, double x, double y) {
     win->config.y = y;
 }
 
-void mfWindowInit(MFWindow* window, MFWindowConfig config) {
-    MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
-    MF_PANIC_IF(window->init, mfGetLogger(), "The window handle is already initialized!");
+MFWindow* mfWindowCreate(MFWindowConfig config) {
     MF_PANIC_IF(!glfwInit(), mfGetLogger(), "Failed to initialize the system for creating the window!");
+
+    MFWindow* window = MF_ALLOCMEM(MFWindow, sizeof(MFWindow));
 
     glfwWindowHint(GLFW_RESIZABLE, config.resizable);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -70,6 +70,7 @@ void mfWindowInit(MFWindow* window, MFWindowConfig config) {
     window->init = true;
 
     MF_INFO(mfGetLogger(), "Creating MFWindow");
+    return window;
 }
 
 void mfWindowDestroy(MFWindow* window) {
@@ -80,6 +81,7 @@ void mfWindowDestroy(MFWindow* window) {
 
     glfwDestroyWindow(window->handle);
     MF_SETMEM(window, 0, sizeof(MFWindow));
+    MF_FREEMEM(window);
 
     MF_INFO(mfGetLogger(), "Destroying MFWindow");
 }

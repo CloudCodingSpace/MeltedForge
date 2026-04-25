@@ -17,24 +17,25 @@ struct MFGpuBuffer_s {
     bool init;
 };
 
-void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer) {
-    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
-    MF_PANIC_IF(buffer->init, mfGetLogger(), "The gpu buffer is already initialised!");
+MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(config.type == MF_GPU_BUFFER_TYPE_NONE, mfGetLogger(), "The gpu buffer type can't be none!");
+
+    MFGpuBuffer* buffer = MF_ALLOCMEM(MFGpuBuffer, sizeof(MFGpuBuffer));
 
     buffer->config = config;
     buffer->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     buffer->ctx = &buffer->backend->ctx;
 
     if(config.size == 0)
-        return;
+        return buffer;
     else {
         for(i32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
             VulkanBufferAllocate(&buffer->buffer[i], buffer->ctx, buffer->ctx->commandPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
     }
 
     buffer->init = true;
+    return buffer;
 }
 
 void mfGpuBufferFree(MFGpuBuffer* buffer) {
@@ -45,6 +46,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
         VulkanBufferFree(&buffer->buffer[i], buffer->ctx);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
+    MF_FREEMEM(buffer);
 }
 
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {

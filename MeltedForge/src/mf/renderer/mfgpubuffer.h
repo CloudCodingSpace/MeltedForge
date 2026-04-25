@@ -27,7 +27,7 @@ typedef struct MFGpuBufferConfig_s {
 
 typedef struct MFGpuBuffer_s MFGpuBuffer;
 
-void mfGpuBufferAllocate(MFGpuBuffer* buffer, MFGpuBufferConfig config, MFRenderer* renderer);
+MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer);
 void mfGpuBufferFree(MFGpuBuffer* buffer);
 
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data);

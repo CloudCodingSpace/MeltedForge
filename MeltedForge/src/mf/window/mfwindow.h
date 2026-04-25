@@ -19,7 +19,7 @@ typedef struct MFWindowConfig_s {
 
 typedef struct MFWindow_s MFWindow;
 
-void mfWindowInit(MFWindow* window, MFWindowConfig config);
+MFWindow* mfWindowCreate(MFWindowConfig config);
 void mfWindowDestroy(MFWindow* window);
 
 void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels);

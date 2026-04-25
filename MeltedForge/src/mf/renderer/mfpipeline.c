@@ -20,11 +20,11 @@ struct MFPipeline_s {
     bool init;
 };
 
-void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig* info) {
-    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
-    MF_PANIC_IF(pipeline->init, mfGetLogger(), "The pipeline is already initialised!");
+MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig* info) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(info == mfnull, mfGetLogger(), "The pipeline info handle provided shouldn't be null!");
+
+    MFPipeline* pipeline = MF_ALLOCMEM(MFPipeline, sizeof(MFPipeline));
 
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
@@ -99,6 +99,7 @@ void mfPipelineInit(MFPipeline* pipeline, MFRenderer* renderer, MFPipelineConfig
     MF_FREEMEM(attribs);
 
     pipeline->init = true;
+    return pipeline;
 }
 
 void mfPipelineDestroy(MFPipeline* pipeline) {
@@ -108,6 +109,7 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
     
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));
+    MF_FREEMEM(pipeline);
 }
 
 void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data) {

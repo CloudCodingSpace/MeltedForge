@@ -32,14 +32,14 @@ struct MFResourceSet_s {
     bool init;
 };
 
-void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, u64 maxSets, MFRenderer* renderer) {
-    MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
-    MF_PANIC_IF(layout->init, mfGetLogger(), "The resource set layout is already initialised");
+MFResourceSetLayout* mfResourceSetLayoutCreate(u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, u64 maxSets, MFRenderer* renderer) {
     MF_PANIC_IF(maxSets == 0, mfGetLogger(), "The provided maxSet count shouldn't be 0!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The provided renderer handle shouldn't be null!");
     MF_PANIC_IF(reourceDescriptionLen == 0, mfGetLogger(), "The provided resource description count shouldn't be 0!");
     MF_PANIC_IF(resourceDescriptions == mfnull, mfGetLogger(), "The provided resource descriptions shouldn't be null!");
-    
+
+    MFResourceSetLayout* layout = MF_ALLOCMEM(MFResourceSetLayout, sizeof(MFResourceSetLayout));
+
     layout->renderer = renderer;
     layout->resourceDescriptions = mfArrayCreate(mfGetLogger(), reourceDescriptionLen, sizeof(MFResourceDescription));
     layout->resourceDescriptions.len = reourceDescriptionLen;
@@ -126,6 +126,7 @@ void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 reourceDescripti
     }
 
     layout->init = true;
+    return layout;
 }
 
 void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
@@ -141,14 +142,15 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
     mfArrayDestroy(&layout->resourceDescriptions, mfGetLogger());
 
     MF_SETMEM(layout, 0, sizeof(MFResourceSetLayout));
+    MF_FREEMEM(layout);
 }
 
-void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRenderer* renderer) {
-    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
-    MF_PANIC_IF(set->init, mfGetLogger(), "The resource set is already initialised!");
+MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* renderer) {
     MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The resource set layout handle provided shoudln't be null!");
     MF_PANIC_IF(!layout->init, mfGetLogger(), "The resource set layout isn't initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+
+    MFResourceSet* set = MF_ALLOCMEM(MFResourceSet, sizeof(MFResourceSet));
 
     set->layout = layout;
     set->renderer = renderer;
@@ -167,6 +169,7 @@ void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRend
         VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, &set->sets[i]));
     
     set->init = true;
+    return set;
 }
 
 void mfResourceSetDestroy(MFResourceSet* set) {
@@ -179,6 +182,7 @@ void mfResourceSetDestroy(MFResourceSet* set) {
     VK_CHECK(vkFreeDescriptorSets(ctx->device, set->layout->pool, FRAMES_IN_FLIGHT, set->sets));
 
     MF_SETMEM(set, 0, sizeof(MFResourceSet));
+    MF_FREEMEM(set);
 }
 
 void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {

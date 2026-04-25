@@ -14,10 +14,10 @@ typedef struct MFResourceSetLayout_s MFResourceSetLayout;
 typedef struct MFResourceSet_s MFResourceSet;
 struct MFPipeline_s;
 
-void mfResourceSetLayoutCreate(MFResourceSetLayout* layout, u64 resDescLen, MFResourceDescription* resDescs, u64 maxSets, MFRenderer* renderer);
+MFResourceSetLayout* mfResourceSetLayoutCreate(u64 resDescLen, MFResourceDescription* resDescs, u64 maxSets, MFRenderer* renderer);
 void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout);
 
-void mfResourceSetCreate(MFResourceSet* set, MFResourceSetLayout* layout, MFRenderer* renderer);
+MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* renderer);
 void mfResourceSetDestroy(MFResourceSet* set);
 
 void mfResourceSetBind(MFResourceSet* set, struct MFPipeline_s* pipeline);
