@@ -163,12 +163,12 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
     //! FIXME: Get the channel count as input
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, image->info.width * image->info.height * 4, pixels, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), pixels, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
     void* mem;
-    vkMapMemory(ctx->device, staging.mem, 0, image->info.width * image->info.height * 4, 0, &mem);
-    memcpy(mem, pixels, image->info.width * image->info.height * 4);
+    vkMapMemory(ctx->device, staging.mem, 0, image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), 0, &mem);
+    memcpy(mem, pixels, image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format));
     vkUnmapMemory(ctx->device, staging.mem);
 
     // Copy staging buffer to image and transitioning to the appropriate layout
