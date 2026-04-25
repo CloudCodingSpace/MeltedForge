@@ -15,7 +15,7 @@ extern "C" {
 
 #include <math.h>
 
-#define MAX(x, y) ((x > y) ? x : ((x == y) ? x : y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
     image->info = pinfo;
@@ -87,7 +87,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
                 .aspectMask = pinfo.aspectFlags,
                 .baseArrayLayer = 0,
                 .baseMipLevel = 0,
-                .layerCount = 1,
+                .layerCount = pinfo.arrayLayers,
                 .levelCount = pinfo.mipLevels
             },
             .viewType = pinfo.viewType
@@ -121,8 +121,8 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
             .compareEnable = VK_FALSE,
             .compareOp = VK_COMPARE_OP_ALWAYS,
-            .maxLod = 100,
-            .minLod = -100,
+            .maxLod = 1.0f,
+            .minLod = 0.0f,
             .mipLodBias = 0.0f,
             .unnormalizedCoordinates = VK_FALSE,
             .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR
@@ -144,9 +144,9 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
 
 void VulkanImageDestroy(VulkanImage* image) {
     VulkanBackendCtx* ctx = image->info.ctx;
-    vkFreeMemory(ctx->device, image->mem, ctx->allocator);
     vkDestroyImageView(ctx->device, image->view, ctx->allocator);
     vkDestroyImage(ctx->device, image->image, ctx->allocator);
+    vkFreeMemory(ctx->device, image->mem, ctx->allocator);
 
     if(image->info.gpuResource)
         vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
@@ -163,22 +163,20 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
     //! FIXME: Get the channel count as input
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), pixels, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), mfnull, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
     void* mem;
-    vkMapMemory(ctx->device, staging.mem, 0, image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), 0, &mem);
-    memcpy(mem, pixels, image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format));
+    vkMapMemory(ctx->device, staging.mem, 0, image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), 0, &mem);
+    memcpy(mem, pixels, image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format));
     vkUnmapMemory(ctx->device, staging.mem);
 
     // Copy staging buffer to image and transitioning to the appropriate layout
     {
-        bool explicitOwnership = ctx->queueData.graphicsQueueIdx != ctx->queueData.transferQueueIdx;
         VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
         VulkanCommandBufferBegin(buff);
         
         VkFence fence = VK_NULL_HANDLE;
-        VkSemaphore semaphore = VK_NULL_HANDLE;
         {
             VkFenceCreateInfo fenceInfo = {
                 .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
@@ -197,7 +195,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 			copy_barrier[0].image = image->image;
 			copy_barrier[0].subresourceRange.aspectMask = image->info.aspectFlags;
 			copy_barrier[0].subresourceRange.levelCount = image->info.mipLevels;
-			copy_barrier[0].subresourceRange.layerCount = 1;
+			copy_barrier[0].subresourceRange.layerCount = image->info.arrayLayers;
 			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, copy_barrier);
         }
 
@@ -207,7 +205,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
                 .imageSubresource.mipLevel = 0,
                 .imageSubresource.aspectMask = image->info.aspectFlags,
                 .imageSubresource.baseArrayLayer = 0,
-                .imageSubresource.layerCount = 1,
+                .imageSubresource.layerCount = image->info.arrayLayers,
                 .imageExtent = (VkExtent3D){ (uint32_t)image->info.width, (uint32_t)image->info.height, 1 },
                 .bufferImageHeight = 0,
                 .bufferOffset = 0,
@@ -228,7 +226,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 			use_barrier[0].image = image->image;
 			use_barrier[0].subresourceRange.aspectMask = image->info.aspectFlags;
 			use_barrier[0].subresourceRange.levelCount = image->info.mipLevels;
-			use_barrier[0].subresourceRange.layerCount = 1;
+			use_barrier[0].subresourceRange.layerCount = image->info.arrayLayers;
 			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, use_barrier);
         }
 
@@ -277,14 +275,12 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
             .subresourceRange = {
                 .aspectMask = image->info.aspectFlags,
                 .baseArrayLayer = 0,
-                .layerCount = 1,
+                .layerCount = image->info.arrayLayers,
                 .levelCount = 1,
                 .baseMipLevel = 0
             },
             .image = image->image
         };
-
-        barrier.subresourceRange.levelCount = 1;
 
         u32 w = image->info.width;
         u32 h = image->info.height;
@@ -307,13 +303,13 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
                 .srcSubresource = {
                     .aspectMask = image->info.aspectFlags,
                     .baseArrayLayer = 0,
-                    .layerCount = 1,
+                    .layerCount = image->info.arrayLayers,
                     .mipLevel = i - 1,
                 },
                 .dstSubresource = {
                     .aspectMask = image->info.aspectFlags,
                     .baseArrayLayer = 0,
-                    .layerCount = 1,
+                    .layerCount = image->info.arrayLayers,
                     .mipLevel = i,
                 }
             };
