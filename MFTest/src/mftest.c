@@ -20,7 +20,7 @@ static void CreatePipeline(MFTState* state) {
     MFPipelineConfig info = {
         .extent = (MFVec2){ .x = config->width, .y = config->height },
         .hasDepth = true,
-        .depthCompareOp = MF_COMPARE_OP_LESS,
+        .depthCompareOp = MF_COMPARE_OP_DEFAULT,
         .transparent = true,
         .vertPath = "mftshaders/default.vert.spv",
         .fragPath = "mftshaders/default.frag.spv",
