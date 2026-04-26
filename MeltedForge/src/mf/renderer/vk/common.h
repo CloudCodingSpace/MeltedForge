@@ -35,30 +35,24 @@ MF_INLINE u32 FindMemoryType(VkPhysicalDevice device, uint32_t typeFilter, VkMem
 
 MF_INLINE u32 VulkanFormatBytesPerPixel(VkFormat format) {
     switch(format) {
-        case VK_FORMAT_D32_SFLOAT: return 4;
-        case VK_FORMAT_D24_UNORM_S8_UINT: return 4;
+        case VK_FORMAT_D32_SFLOAT: return 4; break;
+        case VK_FORMAT_D24_UNORM_S8_UINT: return 4; break;
+        case VK_FORMAT_R8G8B8_SINT:
+        case VK_FORMAT_R8G8B8_SNORM:
+        case VK_FORMAT_R8G8B8_SRGB:
+        case VK_FORMAT_R8G8B8_UINT:
+        case VK_FORMAT_R8G8B8_UNORM:
+        case VK_FORMAT_R8G8B8_USCALED: return 3; break;
+        case VK_FORMAT_R8G8B8A8_SINT:
+        case VK_FORMAT_R8G8B8A8_SNORM:
+        case VK_FORMAT_R8G8B8A8_SRGB:
+        case VK_FORMAT_R8G8B8A8_SSCALED:
+        case VK_FORMAT_R8G8B8A8_UINT:
+        case VK_FORMAT_R8G8B8A8_UNORM:
+        case VK_FORMAT_R8G8B8A8_USCALED: return 4; break;
+        default:
+            MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) The format provided isn't supported or is invalid! VkFormat is %s", string_VkFormat(format));
     }
-
-    const char* name = string_VkFormat(format);
-
-    u32 bytes = 0;
-
-    if(strstr(name, "R8")) bytes += 1;
-    if(strstr(name, "G8")) bytes += 1;
-    if(strstr(name, "B8")) bytes += 1;
-    if(strstr(name, "A8")) bytes += 1;
-
-    if(strstr(name, "R16")) bytes += 2;
-    if(strstr(name, "G16")) bytes += 2;
-    if(strstr(name, "B16")) bytes += 2;
-    if(strstr(name, "A16")) bytes += 2;
-
-    if(strstr(name, "R32")) bytes += 4;
-    if(strstr(name, "G32")) bytes += 4;
-    if(strstr(name, "B32")) bytes += 4;
-    if(strstr(name, "A32")) bytes += 4;
-
-    return bytes;
 }
 
 #define VK_CHECK(result) check_vk_result(result, __LINE__, __func__, __FILE__)
