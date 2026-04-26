@@ -151,7 +151,7 @@ void VulkanImageDestroy(VulkanImage* image) {
     if(image->info.gpuResource)
         vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
 
-    MF_INFO(mfGetLogger(), "(From the vulkan backend) Destroyed an image of  resolution: %dx%d",
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Destroyed an image of resolution: %dx%d",
                         image->info.width, image->info.height);
 
     MF_SETMEM(image, 0, sizeof(VulkanImage));

@@ -83,8 +83,6 @@ void mfInitialize(void) {
             }
         }
     }
-
-    
 }
 
 void mfShutdown(void) {

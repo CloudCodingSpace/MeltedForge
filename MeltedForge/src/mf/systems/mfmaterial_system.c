@@ -261,7 +261,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
             break;
     }
 
-    u32 rgba = validColor ? arrayToU32(colorF) : 0xff00ffff;
+    u32 rgba = validColor ? arrayToU32(colorF) : 0xffffffff;
 
     TextureDescription desc = {
         .rgba = rgba,
@@ -282,25 +282,24 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     MFGpuImage* img;
 
     if(!validColor) {
-        img = mfCreateErrorGpuImage(renderer);
-    } else {
-        u8 color[4] = {
-            (u8)(colorF[0] * 255),
-            (u8)(colorF[1] * 255),
-            (u8)(colorF[2] * 255),
-            255
-        };
-
-        img = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
-
-        MFGpuImageConfig config = {
-            .binding = MF_INFINITY,
-            .width = 1,
-            .height = 1,
-            .pixels = color
-        };
-        img = mfGpuImageCreate(renderer, config);
+        for(u32 i = 0; i < 3; i++)
+            colorF[i] = 1.0f;
     }
+    u8 color[4] = {
+        (u8)(colorF[0] * 255),
+        (u8)(colorF[1] * 255),
+        (u8)(colorF[2] * 255),
+        255
+    };
+
+    MFGpuImageConfig config = {
+        .binding = MF_INFINITY,
+        .width = 1,
+        .height = 1,
+        .pixels = color,
+        .imageFormat = MF_FORMAT_R8G8B8A8_UNORM
+    };
+    img = mfGpuImageCreate(renderer, config);
 
     Entry newEntry = {
         .descHash = hash,
@@ -366,13 +365,14 @@ static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMa
                 buff[1] = (u8)mat->emission[1] * 255;
                 buff[2] = (u8)mat->emission[2] * 255;
                 break;
+            };
 error_return:
-            if((type != MF_MODEL_MAT_TEXTURE_DISPLACEMENT) && (type != MF_MODEL_MAT_TEXTURE_NORMAL))
-                return mfCreateErrorGpuImage(renderer);
-            else {
-                MF_FATAL_ABORT(mfGetLogger(), "Failed to load the normal/displacement material image!");
-            }
-        };
+        if(type != MF_MODEL_MAT_TEXTURE_NORMAL)
+            return mfCreateErrorGpuImage(renderer);
+        else {
+            for(u32 i = 0; i < 4; i++)
+                buff[i] = 0xff;
+        }
         pixels = buff;
         width = 1;
         height = 1;
