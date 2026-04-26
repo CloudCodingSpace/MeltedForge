@@ -128,7 +128,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
 
                 TextureDescription description = {
                     .rgba = arrayToU32(color),
-                    .path = mfStringDuplicate(path),
+                    .path = path ? mfStringDuplicate(path) : mfnull,
                     .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger())
                 };
                 u64 hashData[2] = { description.path_hash, description.rgba };
@@ -261,7 +261,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
             break;
     }
 
-    u32 rgba = validColor ? arrayToU32(colorF) : 0xffffffff;
+    u32 rgba = arrayToU32(colorF);
 
     TextureDescription desc = {
         .rgba = rgba,
