@@ -7,6 +7,7 @@
 #include "mf/renderer/mfpipeline.h"
 #include "mf/renderer/mfgpubuffer.h"
 #include "mf/renderer/mfgpuimage.h"
+#include "mf/renderer/mfskybox.h"
 #include "mf/renderer/mfgpu_res.h"
 
 #include "mf/objects/mfcamera.h"

@@ -267,6 +267,16 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->sceneViewport.y = mfRenderTargetGetHeight(state->renderTarget);
     }
 
+    // SKybox
+    {
+        MFSkyboxConfig config = {
+            .binding = 0,
+            .faceSize = 512,
+            .hdrEnvironmentPath = "mftskyboxes/1.hdr"
+        };
+        state->skybox = mfSkyboxCreate(config, appState->renderer);
+    }
+
     CreateScene(state, appState);
     ConfigModelImages(state, appState);
     CreateUBOs(state, appState);
@@ -297,6 +307,8 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfSceneSerialize(&state->scene, "./mftscene.bin");
     mfSceneDeleteEntity(&state->scene, &state->entity);
     mfSceneDestroy(&state->scene);
+
+    mfSkyboxDestroy(state->skybox);
 
     mfRenderTargetDestroy(state->renderTarget);
 

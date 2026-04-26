@@ -35,6 +35,7 @@ typedef struct MFTState_s {
     MFPipeline* pipeline2;
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
+    MFSkybox* skybox;
 
     MFScene scene;
     u64 entity;
