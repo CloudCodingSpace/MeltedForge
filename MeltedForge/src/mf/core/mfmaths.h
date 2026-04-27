@@ -539,23 +539,6 @@ MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
     return inv;
 }
 
-MF_INLINE MFMat3 mfMat4ToMat3(MFMat4 mat) {
-    f32* data = mat.data;
-
-    MFMat3 m;
-    m.data[0] = data[0];
-    m.data[1] = data[1];
-    m.data[2] = data[2];
-    m.data[3] = data[4];
-    m.data[4] = data[5];
-    m.data[5] = data[6];
-    m.data[6] = data[8];
-    m.data[7] = data[9];
-    m.data[8] = data[10];
-
-    return m;
-};
-
 /*   Mat4   */
 
 MF_INLINE MFMat4 mfMat4Identity(void) {
@@ -805,6 +788,42 @@ MF_INLINE MFMat4 mfMat4Transpose(MFMat4 mat) {
 }
 
 /*   Utils   */
+
+MF_INLINE MFMat3 mfMat4ToMat3(MFMat4 mat) {
+    f32* data = mat.data;
+
+    MFMat3 m;
+    m.data[0] = data[0];
+    m.data[1] = data[1];
+    m.data[2] = data[2];
+    m.data[3] = data[4];
+    m.data[4] = data[5];
+    m.data[5] = data[6];
+    m.data[6] = data[8];
+    m.data[7] = data[9];
+    m.data[8] = data[10];
+
+    return m;
+};
+
+MF_INLINE MFMat4 mfMat3ToMat4(MFMat3 mat) {
+    f32* data = mat.data;
+
+    MFMat4 m;
+    m.data[0] = data[0];
+    m.data[1] = data[1];
+    m.data[2] = data[2];
+    m.data[4] = data[3];
+    m.data[5] = data[4];
+    m.data[6] = data[5];
+    m.data[8] = data[6];
+    m.data[9] = data[7];
+    m.data[10] = data[8];
+    m.data[15] = 1.0f;
+
+    return m;
+};
+
 MF_INLINE void mfCopyVec2ToFloatArr(f32* out, MFVec2 v) {
     MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     out[0] = v.x;
