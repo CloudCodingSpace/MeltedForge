@@ -39,6 +39,12 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .generateMipmaps = config.generateMipmaps
     };
+
+    if(config.isCubemap) {
+        info.arrayLayers = 6;
+        info.imageFlags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    }
     
     VulkanImageCreate(&image->image, info);
 

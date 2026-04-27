@@ -15,9 +15,10 @@ typedef struct MFGpuImageConfig_s {
     u32 width;
     u32 height;
     u32 binding;
-    u8* pixels;
+    void* pixels;
     MFFormat imageFormat;
     bool generateMipmaps;
+    bool isCubemap;
 } MFGpuImageConfig;
 
 MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config);

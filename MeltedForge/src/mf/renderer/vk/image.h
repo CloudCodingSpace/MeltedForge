@@ -13,7 +13,7 @@ struct VulkanBackendCtx_s;
 typedef struct VulkanImageInfo_s {
     u32 width, height, mipLevels;
     bool gpuResource, generateMipmaps;
-    u8* pixels;
+    void* pixels;
     
     struct VulkanBackendCtx_s* ctx;
     VkFormat format;
