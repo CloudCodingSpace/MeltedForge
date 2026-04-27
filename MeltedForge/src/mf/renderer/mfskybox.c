@@ -51,7 +51,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         .width = config.faceSize,
         .height = config.faceSize,
         .isCubemap = true,
-        .imageFormat = MF_FORMAT_R16G16B16A16_SFLOAT,
+        .imageFormat = MF_FORMAT_R32G32B32A32_SFLOAT,
         .binding = 0
     };
     skybox->image = mfGpuImageCreate(renderer, info);
@@ -213,7 +213,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .format = MF_FORMAT_R16G16B16A16_SFLOAT,
+            .format = MF_FORMAT_R32G32B32A32_SFLOAT,
             .hasDepth = true
         };
         pass = VulkanRenderPassCreate(ctx, info);
@@ -230,8 +230,8 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         MFGpuImageConfig info = {
             .width = width,
             .height = height,
-            .generateMipmaps = true,
-            .imageFormat = MF_FORMAT_R16G16B16A16_SFLOAT,
+            .generateMipmaps = false,
+            .imageFormat = MF_FORMAT_R32G32B32A32_SFLOAT,
             .isCubemap = false,
             .pixels = data,
             .binding = 0
@@ -262,7 +262,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanImageCreate(&depthImage, info);
 
         info.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-        info.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        info.format = MF_FORMAT_R32G32B32A32_SFLOAT;
         info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         VulkanImageCreate(&tempImage, info);
     }
@@ -333,7 +333,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                 .b = VK_COMPONENT_SWIZZLE_IDENTITY,
                 .a = VK_COMPONENT_SWIZZLE_IDENTITY
             },
-            .format = MF_FORMAT_R16G16B16A16_SFLOAT,
+            .format = MF_FORMAT_R32G32B32A32_SFLOAT,
             .image = tempImage.image,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .subresourceRange = {
