@@ -21,6 +21,7 @@
     - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
  - A binary serialization/deserialization api
  - Explicit shader resource management control for resources like UBOs and image samplers.
+ - Skybox support (HDR equirectangular map to cubemap)
 
 ---
 
