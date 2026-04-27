@@ -57,6 +57,21 @@ target_compile_definitions(cimgui PUBLIC "CIMGUI_NO_EXPORT")
 target_compile_definitions(cimgui PUBLIC "IMGUI_IMPL_API=extern \"C\"")
 target_link_libraries(cimgui PRIVATE glfw Vulkan::Vulkan)
 
+# Shaders
+file(GLOB_RECURSE MF_SHADERS_VERT CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/mfassets/shaders/*.vert")
+file(GLOB_RECURSE MF_SHADERS_FRAG CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/mfassets/shaders/*.frag")
+
+set(SPIRV_SHADERS "")
+foreach(SHADER ${MF_SHADERS_VERT})
+    CompileShader(${SHADER} "" ${CMAKE_BINARY_DIR}/mfassets/shaders)
+endforeach()
+
+foreach(SHADER ${MF_SHADERS_FRAG})
+    CompileShader(${SHADER} "" ${CMAKE_BINARY_DIR}/mfassets/shaders)
+endforeach()
+
+add_custom_target(MFShaders ALL DEPENDS ${SPIRV_SHADERS})
+
 add_library(mf ${CSRCS})
 target_compile_definitions(mf PUBLIC "CIMGUI_DEFINE_ENUMS_AND_STRUCTS")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")

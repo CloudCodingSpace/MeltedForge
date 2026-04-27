@@ -7,8 +7,6 @@ extern "C" {
 #include "core/mfcore.h"
 #include "core/mfutils.h"
 
-#include "objects/mfmesh.h"
-
 #include "mfrenderer.h"
 #include "mfgpuimage.h"
 #include "mfutil_types.h"

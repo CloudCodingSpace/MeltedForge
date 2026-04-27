@@ -4,6 +4,8 @@ extern "C" {
 
 #include "mfskybox.h"
 
+#include "objects/mfmesh.h"
+
 #include "mfpipeline.h"
 #include "mfgpu_res.h"
 
