@@ -7,7 +7,10 @@ extern "C" {
 #include "core/mfcore.h"
 #include "core/mfutils.h"
 
+#include "objects/mfmesh.h"
+
 #include "mfrenderer.h"
+#include "mfgpuimage.h"
 #include "mfutil_types.h"
 
 typedef struct MFSkybox_s MFSkybox;
@@ -21,10 +24,10 @@ typedef struct MFSkyboxConfig_s {
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);
 void mfSkyboxDestroy(MFSkybox* skybox);
 
-MFResourceDescription mfSkyboxGetDescription(MFSkybox* skybox);
-void mfSkyboxSetBinding(MFSkybox* skybox, u64 binding);
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model);
 
-void* mfSkyboxGetBackend(MFSkybox* skybox);
+// @note The returned MFGpuImage* is read only!
+MFGpuImage* mfSkyboxGetCubemapImage(MFSkybox* skybox);
 size_t mfSkyboxGetSizeInBytes(void);
 
 #ifdef __cplusplus

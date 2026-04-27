@@ -14,7 +14,7 @@ extern "C" {
 #include "vk/command_buffer.h"
 
 struct MFSkybox_s {
-    VulkanImage image;
+    MFGpuImage* image;
     MFSkyboxConfig config;
     VulkanBackend* backend;
     bool init;
@@ -30,25 +30,15 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     skybox->config = config;
     skybox->config.hdrEnvironmentPath = mfStringDuplicate(config.hdrEnvironmentPath);
 
-    VulkanImageInfo info = {
-        .ctx = &skybox->backend->ctx,
-        .arrayLayers = 6,
-        .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-        .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-        .generateMipmaps = false,
-        .gpuResource = true,
+    MFGpuImageConfig info = {
+        .binding = config.binding,
+        .generateMipmaps = true,
         .width = config.faceSize,
         .height = config.faceSize,
-        .imageFlags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
-        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        .mipLevels = 1,
-        .pixels = mfnull,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
-        .type = VK_IMAGE_TYPE_2D,
-        .viewType = VK_IMAGE_VIEW_TYPE_CUBE
+        .isCubemap = true,
+        .imageFormat = MF_FORMAT_R16G16B16A16_SFLOAT
     };
-    VulkanImageCreate(&skybox->image, info);
+    skybox->image = mfGpuImageCreate(renderer, info);
 
     skybox->init = true;
     return skybox;
@@ -58,41 +48,29 @@ void mfSkyboxDestroy(MFSkybox* skybox) {
     MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
     MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
     
-    VulkanImageDestroy(&skybox->image);
-
+    mfGpuImageDestroy(skybox->image);
+    
     MF_FREEMEM(skybox->config.hdrEnvironmentPath);
     MF_SETMEM(skybox, 0, sizeof(MFSkybox));
     MF_FREEMEM(skybox);
 }
 
-MFResourceDescription mfSkyboxGetDescription(MFSkybox* skybox) {
-    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
-    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
-    
-    return (MFResourceDescription){
-        .binding = skybox->config.binding,
-        .descriptorCount = 1,
-        .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
-        .stageFlags = MF_SHADER_STAGE_FRAGMENT
-    };
-}
-
-void mfSkyboxSetBinding(MFSkybox* skybox, u64 binding) {
-    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
-    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
-    
-    skybox->config.binding = binding;
-}
-
-void* mfSkyboxGetBackend(MFSkybox* skybox) {
-    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
-    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
-    
-    return (void*)&skybox->image;
-}
-
 size_t mfSkyboxGetSizeInBytes(void) {
     return sizeof(MFSkybox);
+}
+
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model) {
+    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
+    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
+
+    // TODO: Implement this function
+}
+
+MFGpuImage* mfSkyboxGetCubemapImage(MFSkybox* skybox) {
+    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
+    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
+
+    return skybox->image;
 }
 
 #ifdef __cpluscplus
