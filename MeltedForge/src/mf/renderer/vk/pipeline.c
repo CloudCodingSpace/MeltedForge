@@ -75,7 +75,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineRasterizationStateCreateInfo rasState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .cullMode = VK_CULL_MODE_BACK_BIT, // NOTE: Make it configurable
+        .cullMode = info->cullMode,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, // NOTE: Make it configurable
         .depthBiasEnable = VK_FALSE, // NOTE: Make it configurable
         .depthClampEnable = VK_FALSE, // NOTE: Make it configurable

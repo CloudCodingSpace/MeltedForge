@@ -24,6 +24,7 @@ void mfResourceSetBind(MFResourceSet* set, struct MFPipeline_s* pipeline);
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers);
 
 void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout);
+void** mfResourceSetGetBackend(MFResourceSet* set);
 
 size_t mfResourceSetLayoutGetSizeInBytes(void);
 size_t mfResourceSetGetSizeInBytes(void);

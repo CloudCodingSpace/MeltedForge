@@ -19,6 +19,7 @@ typedef struct MFPipeline_s MFPipeline;
 
 typedef struct MFPipelineConfig_s {
     MFVec2 extent;
+    MFCullModeFlags cullMode;
     u32 bindingsCount, attributesCount, resourceLayoutCount, pushConstRangeCount;
     MFVertexInputBindingDescription* bindings;
     MFVertexInputAttributeDescription* attributes;

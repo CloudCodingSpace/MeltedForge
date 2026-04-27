@@ -31,7 +31,8 @@ static void CreatePipeline(MFTState* state) {
         .resourceLayoutCount = 1,
         .resourceLayouts = &state->layout,
         .pushConstRangeCount = 1,
-        .pushConstRanges = &range
+        .pushConstRanges = &range,
+        .cullMode = MF_CULL_MODE_BACK_BIT
     };
 
     state->pipeline = mfPipelineCreate(state->renderer, &info);
@@ -348,6 +349,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     };
 
     mfSceneRender(&state->scene, &config);
+    mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view);
     if(state->enableRenderTarget)
         mfRenderTargetEnd(state->renderTarget);
 

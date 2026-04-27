@@ -84,7 +84,8 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig* info) {
         .setLayouts = setLayouts,
         .pushConstRangesCount = info->pushConstRangeCount,
         .pushConstRanges = ranges,
-        .cache = pipeline->backend->pipelineCache
+        .cache = pipeline->backend->pipelineCache,
+        .cullMode = (VkCullModeFlags)(int)info->cullMode
     };
 
     if(info->renderTarget != mfnull) {

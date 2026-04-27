@@ -293,6 +293,13 @@ void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout) {
     return layout->layout;
 }
 
+void** mfResourceSetGetBackend(MFResourceSet* set) {
+    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
+
+    return (void**)set->sets;
+}
+
 size_t mfResourceSetLayoutGetSizeInBytes(void) {
     return sizeof(MFResourceSetLayout);
 }
