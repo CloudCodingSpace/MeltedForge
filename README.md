@@ -21,7 +21,7 @@
     - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
  - A binary serialization/deserialization api
  - Explicit shader resource management control for resources like UBOs and image samplers.
- - Skybox support (HDR equirectangular map to cubemap)
+ - Skybox support (Equirectangular image as input only. HDR format also supported!)
 
 ---
 
@@ -42,7 +42,7 @@
 ## Goals
 
  - Beginner-friendly setup and usage
- - Low-end devices friendly
+ - Low-end device friendly
  - Cross-platform (Only on desktop platforms)
  - Realistic graphics
  - Sound system support
@@ -73,12 +73,10 @@ It is hosted on trello. It can be found [here](https://trello.com/b/Zt1Azhtg/mel
 
 > **Note:** The following are the **important conditions** met by the PC for **building/running** MeltedForge
 
- - Vulkan SDK (Get from [LunarG](https://vulkan.lunarg.com/))
- - A GPU driver with **modern Vulkan support** (Vulkan 1.2.000+)
- - A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries**
-    (Preferably GCC & G++ or MSVC, but currently clang is not tested and is not supported)
+ - Vulkan SDK (Get from [here](https://vulkan.lunarg.com/))
+ - A GPU driver with **modern Vulkan support** (Vulkan 1.2+)
+ - A modern **C & C++** compiler with the support of **latest language standards** with **the corresponding runtime libraries** and build toolchain (Preferably GCC & G++ or MSVC, but currently clang is not tested and is not supported)
  - CMake (Get from [here](https://cmake.org/download/))
- - Make if using GCC & G++
 
 ---
 
@@ -114,10 +112,12 @@ cmake --build <path-to-build-dir> --parallel
 
 The third party libraries used in this engine are :-
 
- - [Stb image](http://github.com/nothings/stb)
- - [Assimp](https://github.com/assimp/assimp/)
- - [Glfw](https://github.com/glfw/glfw)
- - [Slog](https://github.com/CloudCodingSpace/slog)
+ - [Stb](http://github.com/nothings/stb) (For image loading)
+ - [Assimp](https://github.com/assimp/assimp/) (For loading models)
+ - [Glfw](https://github.com/glfw/glfw) (For cross-platform windowing and input handling)
+ - [Slog](https://github.com/CloudCodingSpace/slog) (For logging)
+ - [Tracy](https://github.com/wolfpld/tracy/tree/v0.13.1) (For profiling, only in debug mode with the MSVC compiler)
+ - [CImGui](https://github.com/cimgui/cimgui/tree/094a55523a40fdb309f48b971a583ef02aeb56ab) (C bindings for ImGUi, used for editor UI)
 
 Licenses for these libraries are included. (In MeltedForge/libs, in their own respective folders)
 
@@ -138,4 +138,4 @@ This project may not have been possible if not for some of these sources and com
 
 ## License
 
-This project is licensed under Zlib license. More details in [LICENSE.txt](./LICENSE.txt).
+This project is licensed under the Zlib license. More details in [LICENSE.txt](./LICENSE.txt).
