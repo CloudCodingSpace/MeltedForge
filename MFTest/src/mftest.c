@@ -158,10 +158,10 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     state->lightData = (LightUBOData) {
         .ambientFactor = 0.01f,
         .camPos = state->scene.camera.pos,
-        .lightPos = (MFVec3){0.0f, 2.0f, 0.0f},
+        .lightPos = (MFVec3){0.0f, 20.0f, 10.0f},
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .specularFactor = 128,
-        .lightIntensity = 30,
+        .lightIntensity = 100,
         .isPoint = true
     };
     
@@ -210,7 +210,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
+            .path = "mftmeshes/pistol/service_pistol.gltf",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
@@ -273,7 +273,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFSkyboxConfig config = {
             .binding = 0,
             .faceSize = 512,
-            .hdrEnvironmentPath = "mftskyboxes/1.hdr"
+            .hdrEnvironmentPath = "mftskyboxes/3.hdr"
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
     }
