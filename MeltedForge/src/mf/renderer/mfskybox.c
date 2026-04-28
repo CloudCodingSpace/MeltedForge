@@ -29,21 +29,22 @@ struct MFSkybox_s {
     MFSkyboxConfig config;
     VulkanBackend* backend;
     MFRenderer* renderer;
-    bool init;
+    bool init, isHdr;
 };
 
 static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer);
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
-    MF_PANIC_IF(config.hdrEnvironmentPath == mfnull, mfGetLogger(), "The hdr environment map path shouldn't be null!");
+    MF_PANIC_IF(config.environmentPath == mfnull, mfGetLogger(), "The hdr environment map path shouldn't be null!");
     MF_PANIC_IF(config.faceSize == 0, mfGetLogger(), "The face size of the skybox provided shouldn't be null!");
 
     MFSkybox* skybox = MF_ALLOCMEM(MFSkybox, sizeof(MFSkybox));
 
     skybox->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     skybox->config = config;
-    skybox->config.hdrEnvironmentPath = mfStringDuplicate(config.hdrEnvironmentPath);
+    skybox->config.environmentPath = mfStringDuplicate(config.environmentPath);
     skybox->renderer = renderer;
+    skybox->isHdr = mfStringEndsWith(mfGetLogger(), config.environmentPath, ".hdr");
 
     MFGpuImageConfig info = {
         .binding = config.binding,
@@ -51,7 +52,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         .width = config.faceSize,
         .height = config.faceSize,
         .isCubemap = true,
-        .imageFormat = MF_FORMAT_R32G32B32A32_SFLOAT,
+        .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
         .binding = 0
     };
     skybox->image = mfGpuImageCreate(renderer, info);
@@ -162,7 +163,7 @@ void mfSkyboxDestroy(MFSkybox* skybox) {
     mfResourceSetLayoutDestroy(skybox->layout);
     mfGpuImageDestroy(skybox->image);
     
-    MF_FREEMEM(skybox->config.hdrEnvironmentPath);
+    MF_FREEMEM(skybox->config.environmentPath);
     MF_SETMEM(skybox, 0, sizeof(MFSkybox));
     MF_FREEMEM(skybox);
 }
@@ -213,7 +214,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .format = MF_FORMAT_R32G32B32A32_SFLOAT,
+            .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
         pass = VulkanRenderPassCreate(ctx, info);
@@ -222,7 +223,11 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
     {
         stbi_set_flip_vertically_on_load(true);
         i32 width, height, channels;
-        float* data = stbi_loadf(config.hdrEnvironmentPath, &width, &height, &channels, 4);
+        void* data = mfnull;
+        if(skybox->isHdr)
+            data = stbi_loadf(config.environmentPath, &width, &height, &channels, 4);
+        else
+            data = stbi_load(config.environmentPath, &width, &height, &channels, 4);
         if(data == mfnull) {
             MF_FATAL_ABORT(mfGetLogger(), "Failed to load hdr image. More reasons by image loader :- %s", stbi_failure_reason());
         }
@@ -231,7 +236,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .width = width,
             .height = height,
             .generateMipmaps = false,
-            .imageFormat = MF_FORMAT_R32G32B32A32_SFLOAT,
+            .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .isCubemap = false,
             .pixels = data,
             .binding = 0
@@ -262,7 +267,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanImageCreate(&depthImage, info);
 
         info.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-        info.format = MF_FORMAT_R32G32B32A32_SFLOAT;
+        info.format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM;
         info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         VulkanImageCreate(&tempImage, info);
     }
@@ -333,7 +338,7 @@ static void convertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                 .b = VK_COMPONENT_SWIZZLE_IDENTITY,
                 .a = VK_COMPONENT_SWIZZLE_IDENTITY
             },
-            .format = MF_FORMAT_R32G32B32A32_SFLOAT,
+            .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .image = tempImage.image,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .subresourceRange = {

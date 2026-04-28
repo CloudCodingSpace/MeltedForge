@@ -14,10 +14,9 @@ extern "C" {
 typedef struct MFSkybox_s MFSkybox;
 
 typedef struct MFSkyboxConfig_s {
-    const char* hdrEnvironmentPath;
+    const char* environmentPath;
     u32 binding;
     u64 faceSize;
-    
 } MFSkyboxConfig;
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);
