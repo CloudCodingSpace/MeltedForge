@@ -14,6 +14,3 @@
 [submodule "tracy"]
 	path = MeltedForge/libs/tracy
 	url = https://github.com/wolfpld/tracy/
-[submodule "deccer-cubes"]
-	path = MFTest/mftmeshes/deccer-cubes
-	url = https://github.com/GraphicsProgramming/deccer-cubes
