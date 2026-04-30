@@ -186,9 +186,9 @@ void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, bool irrad
     };
 
     if(irradiance && skybox->config.generateIrradiance) {
-        mfResourceSetBind(skybox->set2, skybox->pipeline);
+        mfResourceSetsBind(0, 1, &skybox->set2, skybox->pipeline);
     } else {
-        mfResourceSetBind(skybox->set, skybox->pipeline);
+        mfResourceSetsBind(0, 1, &skybox->set, skybox->pipeline);
     }
     mfPipelinePushConstant(skybox->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(MFMat4) * 2, data);
     mfMeshRender(&skybox->mesh);

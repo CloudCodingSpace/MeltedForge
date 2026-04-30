@@ -185,12 +185,16 @@ void mfResourceSetDestroy(MFResourceSet* set) {
     MF_FREEMEM(set);
 }
 
-void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
-    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
-    MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
+void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, struct MFPipeline_s* pipeline) {
+    MF_PANIC_IF(setCount == 0, mfGetLogger(), "The resource set array length provided shouldn't be 0!");
+    MF_PANIC_IF(sets == mfnull, mfGetLogger(), "The resource set array provided shouldn't be null!");
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
 
-    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
+    for(u64 i = 0; i < setCount; i++) {
+        MF_PANIC_IF(!sets[i]->init, mfGetLogger(), "The resource set isn't initialised!");
+    }
+
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(sets[0]->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
     VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
@@ -200,9 +204,17 @@ void mfResourceSetBind(MFResourceSet* set, MFPipeline* pipeline) {
 
     VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
 
+    // TODO: Later fix this by figuring out a way to not allocate this list in the heap and freeing it per bind
+    VkDescriptorSet* handles = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * setCount);
+    for(u64 i = 0; i < setCount; i++) {
+        handles[i] = sets[i]->sets[backend->frameIndex];
+    }
+
     vkCmdBindDescriptorSets(buff, pipelineBackend->bindPoint, pipelineBackend->layout, 
-                                    0, 1, &set->sets[backend->frameIndex], 
+                                    firstSetIndex, setCount, handles, 
                                     0, mfnull);
+
+    MF_FREEMEM(handles);
 }
 
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {

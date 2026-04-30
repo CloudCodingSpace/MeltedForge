@@ -20,7 +20,7 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout);
 MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* renderer);
 void mfResourceSetDestroy(MFResourceSet* set);
 
-void mfResourceSetBind(MFResourceSet* set, struct MFPipeline_s* pipeline);
+void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, struct MFPipeline_s* pipeline);
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers);
 
 void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout);
