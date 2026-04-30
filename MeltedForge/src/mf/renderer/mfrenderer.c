@@ -20,7 +20,6 @@ struct MFRenderer_s {
 
 MFRenderer* mfRendererCreate(const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
-    MF_INFO(mfGetLogger(), "Creating the renderer");
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
 
@@ -41,7 +40,6 @@ MFRenderer* mfRendererCreate(const char* appName, bool enableDepth, bool vsync, 
 void mfRendererShutdown(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
-    MF_INFO(mfGetLogger(), "Shutting down the renderer");
     
     VulkanBackendShutdown(&renderer->backend);
 

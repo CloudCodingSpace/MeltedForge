@@ -69,7 +69,6 @@ MFWindow* mfWindowCreate(MFWindowConfig config) {
     window->config = config;
     window->init = true;
 
-    MF_INFO(mfGetLogger(), "Creating MFWindow");
     return window;
 }
 
@@ -82,8 +81,6 @@ void mfWindowDestroy(MFWindow* window) {
     glfwDestroyWindow(window->handle);
     MF_SETMEM(window, 0, sizeof(MFWindow));
     MF_FREEMEM(window);
-
-    MF_INFO(mfGetLogger(), "Destroying MFWindow");
 }
 
 void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels) {
@@ -100,8 +97,6 @@ void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels) {
     img->width = width;
     img->height = height;
     glfwSetWindowIcon(window->handle, 1, img);
-
-    MF_INFO(mfGetLogger(), "Set an icon to MFWindow");
 }
 
 void mfWindowUpdate(MFWindow* window) {
@@ -116,7 +111,6 @@ void mfWindowClose(MFWindow* window) {
     MF_PANIC_IF(!window->init, mfGetLogger(), "The window handle should be initialized!");
 
     glfwSetWindowShouldClose(window->handle, true);
-    MF_INFO(mfGetLogger(), "Closed MFWindow");
 }
 
 void mfWindowShow(MFWindow* window) {
