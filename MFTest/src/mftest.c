@@ -355,11 +355,11 @@ void MFTOnRender(void* pstate, void* pappState) {
     mfSceneRender(&state->scene, &config);
 
     if(state->enableRenderTarget) {
-        mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view, true);
+        mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view, state->showIrradiance);
         mfRenderTargetEnd(state->renderTarget);
     }
     else {
-        mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, false);
+        mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, state->showIrradiance);
     }
 
     MF_PROFILE_ZONE_END(__temp);
@@ -417,6 +417,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
             igCheckbox("Point lighting", &state->lightData.isPoint);
+            igCheckbox("Show irradiance map", &state->showIrradiance);
 
             state->lightData.lightPos = mfFloatArrToVec3(posData);
             state->lightData.lightColor = mfFloatArrToVec3(colorData);
