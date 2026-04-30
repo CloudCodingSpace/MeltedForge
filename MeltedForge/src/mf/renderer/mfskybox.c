@@ -1,4 +1,4 @@
-#ifdef __cpluscplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -208,6 +208,6 @@ MFGpuImage* mfSkyboxGetIrradianceCubemapImage(MFSkybox* skybox) {
     return skybox->irradiance;
 }
 
-#ifdef __cpluscplus
+#ifdef __cplusplus
 }
 #endif
