@@ -37,7 +37,12 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         .arrayLayers = 1,
         .type = VK_IMAGE_TYPE_2D,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .generateMipmaps = config.generateMipmaps
+        .generateMipmaps = config.generateMipmaps,
+        .addressModes = {
+            VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            VK_SAMPLER_ADDRESS_MODE_REPEAT
+        }
     };
 
     if(config.isCubemap) {
