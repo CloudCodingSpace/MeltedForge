@@ -8,9 +8,13 @@ extern "C" {
 #include "vk/backend.h"
 #include "vk/render_target.h"
 
+#define DT_SAMPLES 10
+
 struct MFRenderer_s {
     VulkanBackend backend;
-    f64 lastTime, deltaTime;;
+    f64 lastTime;
+    u8 currentDtIndex;
+    f64 deltas[DT_SAMPLES];
     bool init;
 };
 
@@ -49,9 +53,10 @@ bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
-    f64 crntTime = mfGetTimeElapsed() * 1000; // s -> ms
-    renderer->deltaTime = crntTime - renderer->lastTime;
-    renderer->lastTime = crntTime;
+    f64 currentTime = mfGetTimeElapsed() * 1000;
+    renderer->deltas[renderer->currentDtIndex] = currentTime - renderer->lastTime;
+    renderer->lastTime = currentTime;
+    renderer->currentDtIndex = (renderer->currentDtIndex + 1) % DT_SAMPLES;
 
     return VulkanBackendBeginframe(&renderer->backend, window);
 }
@@ -172,10 +177,15 @@ f64 mfRendererGetDeltaTime(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");    
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
-    return renderer->deltaTime;
+    f64 avg = 0;
+    for(u8 i = 0; i < DT_SAMPLES; i++) {
+        avg += renderer->deltas[i];
+    }
+    avg /= DT_SAMPLES;
+    return avg;
 }
 
-u8 mfRendererGetFramesInFlightCount(void) {
+u8 mfRendererGetBufferingCount(void) {
     return FRAMES_IN_FLIGHT;
 }
 

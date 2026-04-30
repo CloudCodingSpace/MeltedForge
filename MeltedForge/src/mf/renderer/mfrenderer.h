@@ -24,12 +24,13 @@ void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
 
 void mfRendererWaitForGPU(MFRenderer* renderer);
 
+void mfRendererDrawVerticesIndexed(MFRenderer* renderer, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance);
+void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
+
 void mfRendererSetResizeCallback(MFRenderer* renderer, void* state, void (*callback)(void* state));
 
 void mfRendererSetClearColor(MFRenderer* renderer, MFVec3 color);
 MFVec3 mfRendererGetClearColor(MFRenderer* renderer);
-void mfRendererDrawVertices(MFRenderer* renderer, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
-void mfRendererDrawVerticesIndexed(MFRenderer* renderer, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance);
 
 MFViewport mfRendererGetViewport(MFRenderer* renderer);
 MFRect2D mfRendererGetScissor(MFRenderer* renderer);
@@ -41,7 +42,7 @@ u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
 f64 mfRendererGetDeltaTime(MFRenderer* renderer);
 
 size_t mfRendererGetSizeInBytes(void);
-u8 mfRendererGetFramesInFlightCount(void);
+u8 mfRendererGetBufferingCount(void);
 
 #ifdef __cplusplus
 }
