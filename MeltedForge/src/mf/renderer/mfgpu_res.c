@@ -175,6 +175,12 @@ MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* rend
 void mfResourceSetDestroy(MFResourceSet* set) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
     MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
+
+    if(set->layout == mfnull) {
+        return;
+    } else if (!set->layout->init) {
+        return;
+    }
     
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;

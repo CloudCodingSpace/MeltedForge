@@ -298,10 +298,10 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     INFO(&state->logger, "MFTest deinit");
     slogLoggerDestroy(&state->logger);
 
+    mfResourceSetLayoutDestroy(state->layout);
     for(u64 i = 0; i < state->setCount; i++) {
         mfResourceSetDestroy(state->sets[i]);
     }
-    mfResourceSetLayoutDestroy(state->layout);
 
     mfMaterialSystemDestroyModelMatImages(&state->materialImages);
     
