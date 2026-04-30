@@ -111,9 +111,9 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
 
         VkSamplerCreateInfo sinfo = {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-            .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeU = pinfo.addressModes[0],
+            .addressModeV = pinfo.addressModes[1],
+            .addressModeW = pinfo.addressModes[2],
             .anisotropyEnable = features.samplerAnisotropy,
             .maxAnisotropy = props.limits.maxSamplerAnisotropy,
             .magFilter = VK_FILTER_LINEAR,

@@ -25,6 +25,7 @@ typedef struct VulkanImageInfo_s {
     VkImageType type;
     VkImageViewType viewType;
     VkImageCreateFlags imageFlags;
+    VkSamplerAddressMode addressModes[3];
 } VulkanImageInfo;
 
 typedef struct VulkanImage_s {

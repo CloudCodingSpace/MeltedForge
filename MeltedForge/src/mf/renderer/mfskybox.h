@@ -18,15 +18,17 @@ typedef struct MFSkyboxConfig_s {
     u32 binding;
     u64 faceSize;
     MFRenderTarget* renderTarget;
+    bool generateIrradiance;
 } MFSkyboxConfig;
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);
 void mfSkyboxDestroy(MFSkybox* skybox);
 
-void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view);
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, bool irradiance);
 
 // @note The returned MFGpuImage* is read only!
 MFGpuImage* mfSkyboxGetCubemapImage(MFSkybox* skybox);
+MFGpuImage* mfSkyboxGetIrradianceCubemapImage(MFSkybox* skybox);
 size_t mfSkyboxGetSizeInBytes(void);
 
 #ifdef __cplusplus

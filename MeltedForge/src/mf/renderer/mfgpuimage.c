@@ -44,6 +44,9 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         info.arrayLayers = 6;
         info.imageFlags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
         info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        info.addressModes[0] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.addressModes[1] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.addressModes[2] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     }
     
     VulkanImageCreate(&image->image, info);
