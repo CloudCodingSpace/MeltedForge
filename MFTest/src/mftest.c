@@ -247,7 +247,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
 
-    state->enableRenderTarget = false;
+    state->enableRenderTarget = true;
     state->renderer = appState->renderer;
     state->window = appState->window;
    
@@ -276,6 +276,8 @@ void MFTOnInit(void* pstate, void* pappState) {
             .environmentPath = "mftskyboxes/4.png"
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
+        config.renderTarget = state->renderTarget;
+        state->skybox2 = mfSkyboxCreate(config, appState->renderer);
     }
 
     CreateScene(state, appState);
@@ -309,6 +311,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfSceneDeleteEntity(&state->scene, &state->entity);
     mfSceneDestroy(&state->scene);
 
+    mfSkyboxDestroy(state->skybox2);
     mfSkyboxDestroy(state->skybox);
 
     mfRenderTargetDestroy(state->renderTarget);
@@ -349,9 +352,14 @@ void MFTOnRender(void* pstate, void* pappState) {
     };
 
     mfSceneRender(&state->scene, &config);
-    mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view);
-    if(state->enableRenderTarget)
+
+    if(state->enableRenderTarget) {
+        mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view);
         mfRenderTargetEnd(state->renderTarget);
+    }
+    else {
+        mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view);
+    }
 
     MF_PROFILE_ZONE_END(__temp);
 }

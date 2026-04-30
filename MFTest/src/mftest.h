@@ -36,6 +36,7 @@ typedef struct MFTState_s {
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
     MFSkybox* skybox;
+    MFSkybox* skybox2;
 
     MFScene scene;
     u64 entity;

@@ -17,6 +17,7 @@ typedef struct MFSkyboxConfig_s {
     const char* environmentPath;
     u32 binding;
     u64 faceSize;
+    MFRenderTarget* renderTarget;
 } MFSkyboxConfig;
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);

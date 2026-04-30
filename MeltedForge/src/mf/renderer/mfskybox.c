@@ -141,7 +141,8 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             .depthCompareOp = MF_COMPARE_OP_LESS_OR_EQUAL,
             .resourceLayoutCount = 1,
             .resourceLayouts = &skybox->layout,
-            .cullMode = MF_CULL_MODE_NONE
+            .cullMode = MF_CULL_MODE_NONE,
+            .renderTarget = config.renderTarget
         };
 
         skybox->pipeline = mfPipelineCreate(renderer, &info);
