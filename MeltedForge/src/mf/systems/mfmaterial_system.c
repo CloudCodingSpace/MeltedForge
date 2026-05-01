@@ -10,6 +10,7 @@ typedef struct {
     u64 path_hash;
     u32 rgba;
     char* path;
+    u8 type;
 } TextureDescription;
 
 typedef struct {
@@ -129,9 +130,10 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                 TextureDescription description = {
                     .rgba = arrayToU32(color),
                     .path = path ? mfStringDuplicate(path) : mfnull,
-                    .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger())
+                    .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger()),
+                    .type = (u8)j
                 };
-                u64 hashData[2] = { description.path_hash, description.rgba };
+                u64 hashData[3] = { description.path_hash, description.rgba, description.type };
                 u64 hash = mfHash_FNV1A(hashData, sizeof(hashData), mfGetLogger());
                 Entry* entry = findEntry(&s_State.array, path, description.rgba, hash);
                 if(entry) {
@@ -266,10 +268,11 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     TextureDescription desc = {
         .rgba = rgba,
         .path = mfnull,
-        .path_hash = 0
+        .path_hash = 0,
+        .type = (u8)type
     };
 
-    u64 hashData[2] = { desc.path_hash, desc.rgba };
+    u64 hashData[3] = { desc.path_hash, desc.rgba, desc.type };
     u64 hash = mfHash_FNV1A(hashData, sizeof(hashData), mfGetLogger());
 
     Entry* entry = findEntry(&s_State.array, mfnull, rgba, hash);
@@ -379,8 +382,6 @@ error_return:
     } else {
         pixels = img_pixels;
     }
-
-    MFGpuImage* tex = MF_ALLOCMEM(MFGpuImage, mfGpuImageGetSizeInBytes());
     
     MFGpuImageConfig config = {
         .width = width,

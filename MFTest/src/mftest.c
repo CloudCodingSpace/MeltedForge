@@ -74,7 +74,8 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
 
     modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
 
-    mfResourceSetsBind(0, 1, &state->sets[meshIdx], state->pipeline);
+    MFResourceSet** set = &state->sets[meshIdx];
+    mfResourceSetsBind(0, 1, set, state->pipeline);
     mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
 
     MF_PROFILE_ZONE_END(__temp);
@@ -123,7 +124,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
 
             MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
-            
+
             MFArray images = mfArrayCreate(&state->logger, 2, sizeof(MFGpuImage*));
             mfArrayAddElement(images, MFGpuImage*, &state->logger, diffuseImage);
             mfArrayAddElement(images, MFGpuImage*, &state->logger, normalImage);
@@ -210,7 +211,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "mftmeshes/tomaso_p900/scene.gltf",
+            .path = "mftmeshes/Cerberus/scene.fbx",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
@@ -223,7 +224,6 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 
         mfSceneEntityAddMeshComponent(&state->scene, &state->entity, mComp);
         mfSceneEntityAddTransformComponent(&state->scene, &state->entity, tComp);
-
     } else {
         u64 entityCount = 0;
         mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
@@ -268,7 +268,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->sceneViewport.y = mfRenderTargetGetHeight(state->renderTarget);
     }
 
-    // SKybox
+    // Skybox
     {
         MFSkyboxConfig config = {
             .binding = 0,
