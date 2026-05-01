@@ -17,7 +17,8 @@ layout (binding = 1, scalar) uniform LightUBO {
     float ambientFactor;
     float specularFactor;
     float lightIntensity;
-    bool isPoint;
+    int isPoint;
+    int useNormalMap;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
@@ -35,7 +36,6 @@ void main() {
     vec3 normal = normalize(TBN * texel);
 
     MFPhongLightingInfo info;
-    info.normal = normal;
     info.camPos = ubo.camPos;
     info.fragPos = oFragPos;
     info.lightColor = ubo.lightColor;
@@ -43,7 +43,13 @@ void main() {
     info.lightIntensity = ubo.lightIntensity;
     info.ambientFactor = ubo.ambientFactor;
     info.specularFactor = ubo.specularFactor;
-    info.isPoint = ubo.isPoint;
+    info.isPoint = ubo.isPoint == 1;
+
+    if(ubo.useNormalMap == 1) {
+        info.normal = normal;
+    } else {
+        info.normal = oNormal;
+    }
 
     outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
 

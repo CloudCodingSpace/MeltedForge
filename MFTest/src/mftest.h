@@ -21,7 +21,8 @@ typedef struct LightUBOData_s {
     f32 ambientFactor;
     f32 specularFactor;
     f32 lightIntensity;
-    bool isPoint;
+    int isPoint;
+    int useNormalMap;
 } LightUBOData;
 
 typedef struct MFTState_s {

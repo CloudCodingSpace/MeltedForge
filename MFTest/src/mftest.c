@@ -163,7 +163,8 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .specularFactor = 128,
         .lightIntensity = 100,
-        .isPoint = true
+        .isPoint = true,
+        .useNormalMap = true
     };
     
     state->lightUbo = mfGpuBufferAllocate(config, appState->renderer);
@@ -329,12 +330,6 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
-    state->cameraUboData.proj = state->scene.camera.proj;
-    state->cameraUboData.view = state->scene.camera.view;
-    state->lightData.camPos = state->scene.camera.pos;
-    mfGpuBufferUploadData(state->lightUbo, &state->lightData);
-    mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
-
     if((state->sceneViewport.x != mfRenderTargetGetWidth(state->renderTarget)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->renderTarget))) {
         if(state->enableRenderTarget)
             mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
@@ -416,9 +411,14 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-            igCheckbox("Point lighting", &state->lightData.isPoint);
+            bool isPoint = state->lightData.isPoint;
+            bool useNormalMap = state->lightData.useNormalMap;
+            igCheckbox("Point lighting", &isPoint);
+            igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Show irradiance map", &state->showIrradiance);
 
+            state->lightData.isPoint = isPoint;
+            state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);
             state->lightData.lightColor = mfFloatArrToVec3(colorData);
         }
@@ -465,6 +465,12 @@ void MFTOnUpdate(void* pstate, void* pappState) {
         state->scene.camera.height = winConfig->height;
     }
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
+
+    state->cameraUboData.proj = state->scene.camera.proj;
+    state->cameraUboData.view = state->scene.camera.view;
+    state->lightData.camPos = state->scene.camera.pos;
+    mfGpuBufferUploadData(state->lightUbo, &state->lightData);
+    mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
 
     if(mfInputIsKeyPressed(appState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(appState->window);
