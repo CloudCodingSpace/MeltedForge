@@ -210,7 +210,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "mftmeshes/pistol/service_pistol.gltf",
+            .path = "mftmeshes/tomaso_p900/scene.gltf",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
