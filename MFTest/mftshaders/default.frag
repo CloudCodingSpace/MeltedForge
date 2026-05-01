@@ -19,10 +19,13 @@ layout (binding = 1, scalar) uniform LightUBO {
     float lightIntensity;
     int isPoint;
     int useNormalMap;
+    int showGlassMat;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
 layout (binding = 3) uniform sampler2D u_NormalTex;
+
+layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 
 void main() {
     vec4 albedo = texture(u_DiffuseTex, oUv);
@@ -51,7 +54,11 @@ void main() {
         info.normal = oNormal;
     }
 
-    outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
+    if(ubo.showGlassMat == 1) {
+        outColor = vec4(texture(u_Skybox, refract(normalize(oFragPos - ubo.camPos), oNormal, 1.0/1.52)).rgb, 1.0);
+    } else {
+        outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
+    }
 
     outColor.rgb = outColor.rgb / (outColor.rgb + 1);
     outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));

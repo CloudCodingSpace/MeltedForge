@@ -23,14 +23,16 @@ typedef struct LightUBOData_s {
     f32 lightIntensity;
     int isPoint;
     int useNormalMap;
+    int showGlassMat;
 } LightUBOData;
 
 typedef struct MFTState_s {
     SLogger logger;
 
-    MFResourceSetLayout* layout;
+    MFResourceSetLayout* layout, *layout2;
     u64 setCount;
     MFResourceSet** sets;
+    MFResourceSet* set2;
 
     MFPipeline* pipeline;
     MFPipeline* pipeline2;

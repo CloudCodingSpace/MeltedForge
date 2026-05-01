@@ -17,6 +17,11 @@ static void CreatePipeline(MFTState* state) {
         .stage = MF_SHADER_STAGE_VERTEX
     };
 
+    MFResourceSetLayout* layouts[] = {
+        state->layout,
+        state->layout2
+    };
+
     MFPipelineConfig info = {
         .extent = (MFVec2){ .x = config->width, .y = config->height },
         .hasDepth = true,
@@ -28,8 +33,8 @@ static void CreatePipeline(MFTState* state) {
         .attributes = attributes,
         .bindingsCount = bindingCount,
         .bindings = &bindings,
-        .resourceLayoutCount = 1,
-        .resourceLayouts = &state->layout,
+        .resourceLayoutCount = MF_ARRAYLEN(layouts, MFResourceSetLayout*),
+        .resourceLayouts = layouts,
         .pushConstRangeCount = 1,
         .pushConstRanges = &range,
         .cullMode = MF_CULL_MODE_BACK_BIT
@@ -94,8 +99,9 @@ static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
 }
 
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
+    MFGpuImage* skyboxImage = mfSkyboxGetCubemapImage(state->skybox);
     // Resource layouts
-    {   
+    {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
         MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
         MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, 0, appState->renderer);
@@ -108,6 +114,13 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         };
         
         state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
+    
+        // Skybox layout
+        {
+            mfGpuImageSetBinding(skyboxImage, 0);
+            descs[0] = mfGpuImageGetDescription(skyboxImage);
+            state->layout2 = mfResourceSetLayoutCreate(1, descs, 1, state->renderer);
+        }
     }
     // Resource sets
     {
@@ -135,6 +148,16 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         }
         
         mfArrayDestroy(&buffers, &state->logger);
+
+        // Skybox set
+        {
+            state->set2 = mfResourceSetCreate(state->layout2, state->renderer);
+
+            MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
+            mfArrayAddElement(images, MFGpuImage*, &state->logger, skyboxImage);
+            mfResourceSetUpdate(state->set2, &images, mfnull);
+            mfArrayDestroy(&images, &state->logger);
+        }
     }
 }
 
@@ -164,7 +187,8 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .specularFactor = 128,
         .lightIntensity = 100,
         .isPoint = true,
-        .useNormalMap = true
+        .useNormalMap = true,
+        .showGlassMat = false
     };
     
     state->lightUbo = mfGpuBufferAllocate(config, appState->renderer);
@@ -274,7 +298,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFSkyboxConfig config = {
             .binding = 0,
             .faceSize = 512,
-            .environmentPath = "mftskyboxes/4.png",
+            .environmentPath = "mftskyboxes/2.hdr",
             .generateIrradiance = true
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
@@ -302,7 +326,10 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     for(u64 i = 0; i < state->setCount; i++) {
         mfResourceSetDestroy(state->sets[i]);
     }
+    mfResourceSetDestroy(state->set2);
+
     mfResourceSetLayoutDestroy(state->layout);
+    mfResourceSetLayoutDestroy(state->layout2);
 
     mfMaterialSystemDestroyModelMatImages(&state->materialImages);
     
@@ -347,6 +374,7 @@ void MFTOnRender(void* pstate, void* pappState) {
         .computeModelMatrix = &ComputeModelMatrix
     };
 
+    mfResourceSetsBind(1, 1, &state->set2, config.entityPipeline);
     mfSceneRender(&state->scene, &config);
 
     if(state->enableRenderTarget) {
@@ -413,10 +441,13 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
             bool isPoint = state->lightData.isPoint;
             bool useNormalMap = state->lightData.useNormalMap;
+            bool showGlassMat = state->lightData.showGlassMat;
             igCheckbox("Point lighting", &isPoint);
             igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Show irradiance map", &state->showIrradiance);
+            igCheckbox("Show glass material", &showGlassMat);
 
+            state->lightData.showGlassMat = showGlassMat;
             state->lightData.isPoint = isPoint;
             state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);
