@@ -36,10 +36,10 @@ void main() {
     vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
     vec3 bitangent = normalize(cross(oNormal, oTangent));
     mat3 TBN = mat3(oTangent, bitangent, oNormal);
-    vec3 normal = normalize(TBN * texel);
+    vec3 normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : oNormal;
 
     MFPhongLightingInfo info;
-    info.normal = (ubo.useNormalMap == 1) ? normal : oNormal;
+    info.normal = normal;
     info.camPos = ubo.camPos;
     info.fragPos = oFragPos;
     info.lightColor = ubo.lightColor;
@@ -49,7 +49,7 @@ void main() {
     info.specularFactor = ubo.specularFactor;
     info.isPoint = ubo.isPoint == 1;
 
-    outColor = (ubo.showGlassMat == 1) ? vec4(texture(u_Skybox, refract(normalize(oFragPos - ubo.camPos), oNormal, 1.0/1.52)).rgb, 1.0) : 
+    outColor = (ubo.showGlassMat == 1) ? vec4(texture(u_Skybox, refract(normalize(oFragPos - ubo.camPos), normal, 1.0/1.52)).rgb, 1.0) : 
                         albedo * vec4(mfComputePhongLighting(info), 1.0);
 
     outColor.rgb = outColor.rgb / (outColor.rgb + 1);
