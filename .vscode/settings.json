@@ -1,0 +1,6 @@
+{
+    "shader-validator.includes": [
+        "${workspaceFolder}/MeltedForge/mfassets/shaders"
+    ],
+    "shader-validator.glsl.targetClient": "Vulkan1_2"
+}

@@ -6,5 +6,4 @@ out
 .vs
 vkconfig.txt
 *.spv
-.vscode/settings.json
 build-tracy
