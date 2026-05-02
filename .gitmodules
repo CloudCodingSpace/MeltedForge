@@ -14,3 +14,6 @@
 [submodule "tracy"]
 	path = MeltedForge/libs/tracy
 	url = https://github.com/wolfpld/tracy/
+[submodule "vma"]
+	path = MeltedForge/libs/vma
+	url = https://github.com/CloudCodingSpace/VMA

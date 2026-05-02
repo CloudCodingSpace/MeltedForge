@@ -4,9 +4,10 @@
 extern "C" {
 #endif
 
-#include <vulkan/vulkan.h>
-
 #include "window/mfwindow.h"
+
+#include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 #include "image.h"
 
@@ -36,6 +37,7 @@ typedef struct VulkanBackendCtx_s {
     VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
+    VmaAllocator vmaAllocator;
 
     VkExtent2D swapchainExtent;
     VkPresentModeKHR swapchainMode;

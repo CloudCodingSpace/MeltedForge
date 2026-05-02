@@ -568,6 +568,19 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
     {
         ctx->commandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
     }
+    // Vam Allocator
+    {
+        VmaAllocatorCreateInfo info = {
+            .instance = ctx->instance,
+            .pAllocationCallbacks = ctx->allocator,
+            .physicalDevice = ctx->physicalDevice,
+            .device = ctx->device,
+            .vulkanApiVersion = VK_API_VERSION_1_2,
+            .pDeviceMemoryCallbacks = 0,
+            .flags = 0
+        };
+        vmaCreateAllocator(&info, &ctx->vmaAllocator);
+    }
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
@@ -581,6 +594,7 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
         vkDestroyImageView(ctx->device, ctx->swapchainImageViews[i], ctx->allocator);
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
+    vmaDestroyAllocator(ctx->vmaAllocator);
     vkDestroyDevice(ctx->device, ctx->allocator);
 
 #ifdef MF_DEBUG
