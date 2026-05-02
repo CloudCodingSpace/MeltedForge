@@ -236,7 +236,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "mftmeshes/Cerberus/scene.fbx",
+            .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
             .perVertSize = sizeof(Vertex),
             .vertBuilder = vertBuilder
         };
