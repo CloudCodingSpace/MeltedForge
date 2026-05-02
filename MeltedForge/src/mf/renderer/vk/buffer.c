@@ -14,19 +14,11 @@ void staging_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
         .size = buffer->size
     };
 
-    VK_CHECK(vkCreateBuffer(ctx->device, &info, ctx->allocator, &buffer->handle));
-
-    VkMemoryRequirements req = {};
-    vkGetBufferMemoryRequirements(ctx->device, buffer->handle, &req);
-
-    VkMemoryAllocateInfo memInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = req.size,
-        .memoryTypeIndex = FindMemoryType(ctx->physicalDevice, req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+    VmaAllocationCreateInfo allocInfo = {
+        .usage = VMA_MEMORY_USAGE_CPU_ONLY
     };
 
-    VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
+    VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
 }
 
 void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
@@ -37,21 +29,12 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
         .size = buffer->size
     };
 
-    VK_CHECK(vkCreateBuffer(ctx->device, &info, ctx->allocator, &buffer->handle));
-
-    VkMemoryRequirements req = {};
-    vkGetBufferMemoryRequirements(ctx->device, buffer->handle, &req);
-
-    VkMemoryAllocateInfo memInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = req.size,
-        .memoryTypeIndex = FindMemoryType(ctx->physicalDevice, req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+    VmaAllocationCreateInfo allocInfo = {
+        .usage = VMA_MEMORY_USAGE_CPU_TO_GPU
     };
+    VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
+    VK_CHECK(vmaMapMemory(ctx->vmaAllocator, buffer->allocation, &buffer->mappedMem));
 
-    VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
-
-    VK_CHECK(vkMapMemory(ctx->device, buffer->mem, 0, buffer->size, 0, &buffer->mappedMem)); // NOTE: Make the offset configurable if necessary
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
 }
 
@@ -63,19 +46,10 @@ void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool
         .size = buffer->size
     };
 
-    VK_CHECK(vkCreateBuffer(ctx->device, &info, ctx->allocator, &buffer->handle));
-
-    VkMemoryRequirements req = {};
-    vkGetBufferMemoryRequirements(ctx->device, buffer->handle, &req);
-
-    VkMemoryAllocateInfo memInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = req.size,
-        .memoryTypeIndex = FindMemoryType(ctx->physicalDevice, req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    VmaAllocationCreateInfo allocInfo = {
+        .usage = VMA_MEMORY_USAGE_GPU_ONLY
     };
-
-    VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
+    VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
 
     if(buffer->data) {
         VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
@@ -91,19 +65,10 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
         .size = buffer->size
     };
 
-    VK_CHECK(vkCreateBuffer(ctx->device, &info, ctx->allocator, &buffer->handle));
-
-    VkMemoryRequirements req = {};
-    vkGetBufferMemoryRequirements(ctx->device, buffer->handle, &req);
-
-    VkMemoryAllocateInfo memInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = req.size,
-        .memoryTypeIndex = FindMemoryType(ctx->physicalDevice, req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    VmaAllocationCreateInfo allocInfo = {
+        .usage = VMA_MEMORY_USAGE_GPU_ONLY
     };
-
-    VK_CHECK(vkAllocateMemory(ctx->device, &memInfo, ctx->allocator, &buffer->mem));
-    VK_CHECK(vkBindBufferMemory(ctx->device, buffer->handle, buffer->mem, 0)); // NOTE: Make the offset configurable if necessary
+    VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
 
     if(buffer->data) {
         VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
@@ -133,16 +98,14 @@ void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommand
 
 void VulkanBufferFree(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     if(buffer->type == VULKAN_BUFFER_TYPE_UBO)
-        vkUnmapMemory(ctx->device, buffer->mem);
+        vmaUnmapMemory(ctx->vmaAllocator, buffer->allocation);
 
-    vkDestroyBuffer(ctx->device, buffer->handle, ctx->allocator);
-    vkFreeMemory(ctx->device, buffer->mem, ctx->allocator);
-
-    buffer->handle = 0;
-    buffer->mem = 0;
+    vmaDestroyBuffer(ctx->vmaAllocator, buffer->handle, buffer->allocation);
 
     if(buffer->type != VULKAN_BUFFER_TYPE_STAGING)
         MF_INFO(mfGetLogger(), "(From the vulkan backend) Freed a buffer of size: %zu bytes", buffer->size);
+
+    MF_SETMEM(buffer, 0, sizeof(VulkanBuffer));
 }
 
 void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, void* data) {
@@ -162,11 +125,9 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
     staging_buff(&staging, ctx);
 
     void* mappedMem = mfnull;
-    VK_CHECK(vkMapMemory(ctx->device, staging.mem, 0, buffer->size, 0, &mappedMem));
-
+    VK_CHECK(vmaMapMemory(ctx->vmaAllocator, staging.allocation, &mappedMem));
     memcpy(mappedMem, staging.data, staging.size);
-
-    vkUnmapMemory(ctx->device, staging.mem);
+    vmaUnmapMemory(ctx->vmaAllocator, staging.allocation);
 
     // Copy
     {

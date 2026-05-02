@@ -76,7 +76,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D
@@ -411,7 +411,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D

@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 #include "core/mfutils.h"
 
@@ -20,7 +21,7 @@ typedef struct VulkanImageInfo_s {
     VkImageTiling tiling;
     VkImageUsageFlagBits usage;
     VkImageAspectFlags aspectFlags;
-    VkMemoryPropertyFlags memFlags;
+    VmaMemoryUsage memFlags;
     u32 arrayLayers;
     VkImageType type;
     VkImageViewType viewType;
@@ -31,8 +32,8 @@ typedef struct VulkanImageInfo_s {
 typedef struct VulkanImage_s {
     VkImage image;
     VkImageView view;
-    VkDeviceMemory mem;
     VkSampler sampler;
+    VmaAllocation allocation;
 
     VulkanImageInfo info;
 } VulkanImage;

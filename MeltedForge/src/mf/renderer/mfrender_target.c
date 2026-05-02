@@ -42,7 +42,7 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .type = VK_IMAGE_TYPE_2D,
             .arrayLayers = 1,
             .viewType = VK_IMAGE_VIEW_TYPE_2D
@@ -75,7 +75,7 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
                 .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-                .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                 .type = VK_IMAGE_TYPE_2D,
                 .arrayLayers = 1,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D
@@ -184,7 +184,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
                 .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-                .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                 .type = VK_IMAGE_TYPE_2D,
                 .arrayLayers = 1,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D
@@ -205,7 +205,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                     .tiling = VK_IMAGE_TILING_OPTIMAL,
                     .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                     .type = VK_IMAGE_TYPE_2D,
                     .arrayLayers = 1,
                     .viewType = VK_IMAGE_VIEW_TYPE_2D

@@ -25,7 +25,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
         image->info.mipLevels = pinfo.mipLevels = floor(log2(MAX(pinfo.width, pinfo.height))) + 1;
     }
 
-    // Image
+    // Image & Memory
     {
         VkImageCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -54,22 +54,11 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
         if(pinfo.gpuResource)
             info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-        VK_CHECK(vkCreateImage(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->image));
-    }
-    // Memory
-    {
-        VkMemoryRequirements req = {0};
-        vkGetImageMemoryRequirements(pinfo.ctx->device, image->image, &req);
-    
-        VkMemoryAllocateInfo info = {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = req.size,
-            .memoryTypeIndex = FindMemoryType(pinfo.ctx->physicalDevice, req.memoryTypeBits, pinfo.memFlags)
+        VmaAllocationCreateInfo allocInfo = {
+            .usage = pinfo.memFlags
         };
 
-        VK_CHECK(vkAllocateMemory(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->mem));
-
-        VK_CHECK(vkBindImageMemory(pinfo.ctx->device, image->image, image->mem, 0));
+        VK_CHECK(vmaCreateImage(image->info.ctx->vmaAllocator, &info, &allocInfo, &image->image, &image->allocation, mfnull));
     }
     // Image View
     {
@@ -145,8 +134,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
 void VulkanImageDestroy(VulkanImage* image) {
     VulkanBackendCtx* ctx = image->info.ctx;
     vkDestroyImageView(ctx->device, image->view, ctx->allocator);
-    vkDestroyImage(ctx->device, image->image, ctx->allocator);
-    vkFreeMemory(ctx->device, image->mem, ctx->allocator);
+    vmaDestroyImage(ctx->vmaAllocator, image->image, image->allocation);
 
     if(image->info.gpuResource)
         vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
@@ -160,16 +148,16 @@ void VulkanImageDestroy(VulkanImage* image) {
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     image->info.pixels = pixels;
     VulkanBackendCtx* ctx = image->info.ctx;
+    VkDeviceSize size = image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format);
 
-    //! FIXME: Get the channel count as input
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), mfnull, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, size, mfnull, VULKAN_BUFFER_TYPE_STAGING);
 
     // Upload to staging buffer
     void* mem;
-    vkMapMemory(ctx->device, staging.mem, 0, image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format), 0, &mem);
-    memcpy(mem, pixels, image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format));
-    vkUnmapMemory(ctx->device, staging.mem);
+    VK_CHECK(vmaMapMemory(ctx->vmaAllocator, staging.allocation, &mem));
+    memcpy(mem, pixels, size);
+    vmaUnmapMemory(ctx->vmaAllocator, staging.allocation);
 
     // Copy staging buffer to image and transitioning to the appropriate layout
     {

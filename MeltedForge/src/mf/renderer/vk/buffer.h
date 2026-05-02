@@ -19,7 +19,7 @@ typedef enum VulkanBufferTypes_e {
 
 typedef struct VulkanBuffer_s {
     VkBuffer handle;
-    VkDeviceMemory mem;
+    VmaAllocation allocation;
     u64 size;
     void* data;
     void* mappedMem;

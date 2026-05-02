@@ -516,6 +516,19 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
     }
     // Swapchain
     CreateSwapchain(ctx, mfWindowGetHandle(window));
+    // Vma Allocator
+    {
+        VmaAllocatorCreateInfo info = {
+            .instance = ctx->instance,
+            .pAllocationCallbacks = ctx->allocator,
+            .physicalDevice = ctx->physicalDevice,
+            .device = ctx->device,
+            .vulkanApiVersion = VK_API_VERSION_1_2,
+            .pDeviceMemoryCallbacks = 0,
+            .flags = 0
+        };
+        VK_CHECK(vmaCreateAllocator(&info, &ctx->vmaAllocator));
+    }
     // Depth
     if(enableDepth) {
         GetDepthFormat(ctx);
@@ -530,7 +543,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D
@@ -567,19 +580,6 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
     // Command Pool
     {
         ctx->commandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
-    }
-    // Vam Allocator
-    {
-        VmaAllocatorCreateInfo info = {
-            .instance = ctx->instance,
-            .pAllocationCallbacks = ctx->allocator,
-            .physicalDevice = ctx->physicalDevice,
-            .device = ctx->device,
-            .vulkanApiVersion = VK_API_VERSION_1_2,
-            .pDeviceMemoryCallbacks = 0,
-            .flags = 0
-        };
-        vmaCreateAllocator(&info, &ctx->vmaAllocator);
     }
 }
 
@@ -632,7 +632,7 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .type = VK_IMAGE_TYPE_2D,
             .arrayLayers = 1,
             .viewType = VK_IMAGE_VIEW_TYPE_2D
