@@ -333,7 +333,11 @@ error_return:
         config.generateMipmaps = true;
     }
 
-    return mfGpuImageCreate(renderer, config);
+    MFGpuImage* image = mfGpuImageCreate(renderer, config);
+    if(pixels == img_pixels)
+        stbi_image_free(pixels);
+
+    return image;
 }
 
 static u32 arrayToU32(f32* data) {
