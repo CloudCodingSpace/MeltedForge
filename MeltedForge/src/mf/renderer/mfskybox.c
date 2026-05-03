@@ -85,7 +85,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
 
         {
             MFArray array = mfArrayCreate(mfGetLogger(), 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(array, MFGpuImage*, mfGetLogger(), skybox->image);
+            mfArrayAddElement(&array, MFGpuImage*, mfGetLogger(), skybox->image);
             mfResourceSetUpdate(skybox->set, &array, mfnull);
             mfArrayDestroy(&array, mfGetLogger());
         }
@@ -94,7 +94,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             skybox->set2 = mfResourceSetCreate(skybox->layout, renderer);
 
             MFArray array = mfArrayCreate(mfGetLogger(), 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(array, MFGpuImage*, mfGetLogger(), skybox->irradiance);
+            mfArrayAddElement(&array, MFGpuImage*, mfGetLogger(), skybox->irradiance);
             mfResourceSetUpdate(skybox->set2, &array, mfnull);
             mfArrayDestroy(&array, mfGetLogger());
         }

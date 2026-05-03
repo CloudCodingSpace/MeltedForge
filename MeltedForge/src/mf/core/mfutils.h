@@ -273,25 +273,6 @@ MF_INLINE void mfNormalizePath(char* path, SLogger* logger) {
 
 #pragma endregion
 
-// @note A little modified version of FNV-1a-64
-MF_INLINE u64 mfHash_FNV1A(const void* data, u64 size, SLogger* logger) {
-    MF_PANIC_IF(data == mfnull, logger, "The data provided for hashing shouldn't be null!");
-    if(size == 0) {
-        return 0;
-    }
-
-    const u8 *p = (const u8*)data;
-
-    u64 hash = 1469598103934665603ULL;
-
-    for (u64 i = 0; i < size; i++) {
-        hash ^= p[i];
-        hash *= 1099511628211ULL;
-    }
-
-    return hash;
-}
-
 #ifdef __cplusplus
 }
 #endif

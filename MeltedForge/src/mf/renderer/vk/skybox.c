@@ -97,7 +97,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         set = mfResourceSetCreate(layout, renderer);
 
         MFArray array = mfArrayCreate(mfGetLogger(), 1, sizeof(MFGpuImage*));
-        mfArrayAddElement(array, MFGpuImage*, mfGetLogger(), image);
+        mfArrayAddElement(&array, MFGpuImage*, mfGetLogger(), image);
         mfResourceSetUpdate(set, &array, mfnull);
         mfArrayDestroy(&array, mfGetLogger());
     }

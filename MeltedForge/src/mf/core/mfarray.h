@@ -24,13 +24,13 @@ void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger);
 #define mfArraySetElement(arr, type, index, element) (mfArrayGetElement(arr, type, index) = element)
 #define mfArrayAddElement(arr, type, logger, element) \
     do { \
-        if ((arr).len == (arr).capacity) { \
-            u64 newCap = (arr).capacity == 0 ? 1 : (arr).capacity * 2; \
-            mfArrayResize(&(arr), newCap, (logger)); \
+        if ((arr)->len == (arr)->capacity) { \
+            u64 newCap = (arr)->capacity == 0 ? 1 : (arr)->capacity * 2; \
+            mfArrayResize((arr), newCap, (logger)); \
         } \
         type tmp = (element); \
-        memcpy(&mfArrayGetElement((arr), type, (arr).len), &tmp, sizeof(type)); \
-        (arr).len++; \
+        memcpy(&mfArrayGetElement(*(arr), type, (arr)->len), &tmp, sizeof(type)); \
+        (arr)->len++; \
     } while(0)
 
 #ifdef __cplusplus

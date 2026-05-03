@@ -5,6 +5,7 @@ extern "C" {
 #include "mfmaterial_system.h"
 
 #include <stb/stb_image.h>
+#include "core/mfhashmap.h"
 
 typedef struct {
     u64 path_hash;
@@ -166,7 +167,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                             .image = loadImage(path, j, &mat, renderer)
                         };
 
-                        mfArrayAddElement(s_State.array, Entry, mfGetLogger(), newEntry);
+                        mfArrayAddElement(&s_State.array, Entry, mfGetLogger(), newEntry);
                         mfArraySetElement(arr, MFGpuImage*, j, newEntry.image);
                     }
                 }
@@ -322,7 +323,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     }
 
     if(!inserted) {
-        mfArrayAddElement(s_State.array, Entry, mfGetLogger(), newEntry);
+        mfArrayAddElement(&s_State.array, Entry, mfGetLogger(), newEntry);
     }
 
     mfArraySetElement(meshArray, MFGpuImage*, type, img);

@@ -112,8 +112,8 @@ u64 mfSceneCreateEntity(MFScene* scene) {
     entity.ownerScene = (void*)scene;
     entity.valid = true;
 
-    mfArrayAddElement(scene->compGrpTable, MFComponentGroup, mfGetLogger(), grp);
-    mfArrayAddElement(scene->entities, MFEntity, mfGetLogger(), entity);
+    mfArrayAddElement(&scene->compGrpTable, MFComponentGroup, mfGetLogger(), grp);
+    mfArrayAddElement(&scene->entities, MFEntity, mfGetLogger(), entity);
 
     return scene->entities.len - 1;
 }
@@ -170,7 +170,7 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp
         return;
     
     comp.valid = true;
-    mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
+    mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
     
     MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->meshIdx = scene->meshCompPool.len - 1;
@@ -199,7 +199,7 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComp
         return;
    
     comp.valid = true;
-    mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
+    mfArrayAddElement(&scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
     MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->transformIdx = scene->transformCompPool.len - 1;
 
@@ -531,7 +531,7 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         e.id = mfDeserializeU64(&s);
         e.compGrpId = mfDeserializeU64(&s);
         e.components = mfDeserializeU64(&s);
-        mfArrayAddElement(scene->entities, MFEntity, mfGetLogger(), e);
+        mfArrayAddElement(&scene->entities, MFEntity, mfGetLogger(), e);
     }
 
     u64 mLen = mfDeserializeU64(&s);
@@ -544,7 +544,7 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         c.vertBuilder = vertexBuilder;
         c.valid = true;
         mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, c.vertBuilder);
-        mfArrayAddElement(scene->meshCompPool, MFMeshComponent, mfGetLogger(), c);
+        mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, mfGetLogger(), c);
     }
 
     u64 tLen = mfDeserializeU64(&s);
@@ -561,7 +561,7 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         t.scale.x = mfDeserializeF32(&s);
         t.scale.y = mfDeserializeF32(&s);
         t.scale.z = mfDeserializeF32(&s);
-        mfArrayAddElement(scene->transformCompPool, MFTransformComponent, mfGetLogger(), t);
+        mfArrayAddElement(&scene->transformCompPool, MFTransformComponent, mfGetLogger(), t);
     }
 
     u64 gLen = mfDeserializeU64(&s);
@@ -571,7 +571,7 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         g.valid = true;
         g.meshIdx = mfDeserializeU64(&s);
         g.transformIdx = mfDeserializeU64(&s);
-        mfArrayAddElement(scene->compGrpTable, MFComponentGroup, mfGetLogger(), g);
+        mfArrayAddElement(&scene->compGrpTable, MFComponentGroup, mfGetLogger(), g);
     }
 
     mfSerializerDestroy(&s);

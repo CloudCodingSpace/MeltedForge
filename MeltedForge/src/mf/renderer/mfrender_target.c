@@ -364,7 +364,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
         }
     }
     if(!exists) {
-        mfArrayAddElement(renderTarget->backend->renderTargets, MFRenderTarget*, mfGetLogger(), renderTarget);
+        mfArrayAddElement(&renderTarget->backend->renderTargets, MFRenderTarget*, mfGetLogger(), renderTarget);
     }
 
     renderTarget->begun = true;

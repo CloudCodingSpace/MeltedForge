@@ -135,8 +135,8 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
 
         state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*) * state->setCount);
         MFArray buffers = mfArrayCreate(&state->logger, 2, sizeof(MFGpuBuffer*));
-        mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->cameraUbo);
-        mfArrayAddElement(buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
+        mfArrayAddElement(&buffers, MFGpuBuffer*, &state->logger, state->cameraUbo);
+        mfArrayAddElement(&buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
 
         for(u64 i = 0; i < state->setCount; i++) {
             state->sets[i] = mfResourceSetCreate(state->layout, appState->renderer);
@@ -145,8 +145,8 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
 
             MFArray images = mfArrayCreate(&state->logger, 2, sizeof(MFGpuImage*));
-            mfArrayAddElement(images, MFGpuImage*, &state->logger, diffuseImage);
-            mfArrayAddElement(images, MFGpuImage*, &state->logger, normalImage);
+            mfArrayAddElement(&images, MFGpuImage*, &state->logger, diffuseImage);
+            mfArrayAddElement(&images, MFGpuImage*, &state->logger, normalImage);
 
             mfResourceSetUpdate(state->sets[i], &images, &buffers);
             
@@ -160,7 +160,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             state->set2 = mfResourceSetCreate(state->layout2, state->renderer);
 
             MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(images, MFGpuImage*, &state->logger, skyboxImage);
+            mfArrayAddElement(&images, MFGpuImage*, &state->logger, skyboxImage);
             mfResourceSetUpdate(state->set2, &images, mfnull);
             mfArrayDestroy(&images, &state->logger);
         }
