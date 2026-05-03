@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 #include "core/mfcore.h"
-#include "core/mfutils.h"
+#include "core/mfarray.h"
 
 #include "mfutil_types.h"
 #include "mfrenderer.h"

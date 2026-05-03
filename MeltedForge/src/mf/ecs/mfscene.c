@@ -63,6 +63,9 @@ void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
     MF_PANIC_IF(config == mfnull, mfGetLogger(), "The scene render config function pointer shouldn't be null!");
 
     mfPipelineBind(config->entityPipeline, config->viewport, config->scissor);
+    if(config->pipelineBindCallback)
+        config->pipelineBindCallback(config->state, config->entityPipeline);
+
     for(u64 i = 0; i < scene->entities.len; i++) {
         MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
 

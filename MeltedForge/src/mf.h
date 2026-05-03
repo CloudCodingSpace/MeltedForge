@@ -21,9 +21,10 @@
 #include "mf/core/mfcore.h"
 #include "mf/core/mfapp.h"
 #include "mf/core/mfprofiler.h"
-#include "mf/core/mfutils.h"
 #include "mf/core/mfmaths.h"
 #include "mf/core/mftime.h"
+#include "mf/core/mfutils.h"
+#include "mf/core/mfarray.h"
 
 #ifdef MF_INCLUDE_ENTRY
     #include "mf/core/mfentry.h"

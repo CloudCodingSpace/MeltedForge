@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include "window/mfwindow.h"
+#include "core/mfarray.h"
 
 #include "ctx.h"
 #include "common.h"

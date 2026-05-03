@@ -23,7 +23,6 @@ typedef struct LightUBOData_s {
     f32 lightIntensity;
     int isPoint;
     int useNormalMap;
-    int showGlassMat;
 } LightUBOData;
 
 typedef struct MFTState_s {

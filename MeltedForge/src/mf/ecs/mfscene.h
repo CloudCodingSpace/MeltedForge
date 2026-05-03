@@ -4,7 +4,8 @@
 extern "C" {
 #endif
 
-#include "core/mfutils.h"
+#include "core/mfarray.h"
+
 #include "mfentity.h"
 #include "mfcomponents.h"
 
@@ -22,6 +23,7 @@ typedef struct MFSceneRenderConfig_s {
 
     MFMat4 (*computeModelMatrix)(const MFTransformComponent* component);
     void (*perMeshDrawCallback)(void* state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline);
+    void (*pipelineBindCallback)(void* state, MFPipeline* pipeline);
 } MFSceneRenderConfig;
 
 typedef struct MFScene_s {

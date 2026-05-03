@@ -98,6 +98,12 @@ static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
     return model;
 }
 
+static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
+    MFTState* state = (MFTState*)_state;
+
+    mfResourceSetsBind(1, 1, &state->set2, pipeline);
+}
+
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
     MFGpuImage* skyboxImage = mfSkyboxGetCubemapImage(state->skybox);
     // Resource layouts
@@ -187,8 +193,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .specularFactor = 128,
         .lightIntensity = 100,
         .isPoint = true,
-        .useNormalMap = true,
-        .showGlassMat = false
+        .useNormalMap = true
     };
     
     state->lightUbo = mfGpuBufferAllocate(config, appState->renderer);
@@ -371,10 +376,10 @@ void MFTOnRender(void* pstate, void* pappState) {
         .scissor = mfRendererGetScissor(state->renderer),
         .viewport = mfRendererGetViewport(state->renderer),
         .perMeshDrawCallback = &MeshCallback,
-        .computeModelMatrix = &ComputeModelMatrix
+        .computeModelMatrix = &ComputeModelMatrix,
+        .pipelineBindCallback = &PipelineBindCallback
     };
 
-    mfResourceSetsBind(1, 1, &state->set2, config.entityPipeline);
     mfSceneRender(&state->scene, &config);
 
     if(state->enableRenderTarget) {
@@ -441,13 +446,11 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
             bool isPoint = state->lightData.isPoint;
             bool useNormalMap = state->lightData.useNormalMap;
-            bool showGlassMat = state->lightData.showGlassMat;
+
             igCheckbox("Point lighting", &isPoint);
             igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Show irradiance map", &state->showIrradiance);
-            igCheckbox("Show glass material", &showGlassMat);
 
-            state->lightData.showGlassMat = showGlassMat;
             state->lightData.isPoint = isPoint;
             state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);

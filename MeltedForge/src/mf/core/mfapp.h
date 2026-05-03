@@ -7,6 +7,8 @@ extern "C" {
 #include "window/mfwindow.h"
 #include "renderer/mfrenderer.h"
 
+#include "mfarray.h"
+
 typedef struct MFLayer_s {
     void* state;
     void (*onInit)(void* state, void* appState);

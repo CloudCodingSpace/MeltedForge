@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#include "core/mfutils.h"
+#include "core/mfarray.h"
 #include "objects/mfmodel.h"
 
 #include "renderer/mfgpuimage.h"

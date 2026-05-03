@@ -21,7 +21,6 @@ layout (binding = 1, scalar) uniform LightUBO {
     float lightIntensity;
     int isPoint;
     int useNormalMap;
-    int showGlassMat;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
@@ -51,8 +50,7 @@ void main() {
     info.specularFactor = ubo.specularFactor;
     info.isPoint = ubo.isPoint == 1;
 
-    outColor = (ubo.showGlassMat == 1) ? vec4(texture(u_Skybox, refract(normalize(oFragPos - ubo.camPos), normal, 1.0/1.52)).rgb, 1.0) : 
-                        albedo * vec4(mfComputePhongLighting(info), 1.0);
+    outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
 
     outColor.rgb = outColor.rgb / (outColor.rgb + 1);
     outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));
