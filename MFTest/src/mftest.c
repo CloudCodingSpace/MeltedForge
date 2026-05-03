@@ -134,9 +134,9 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         state->setCount = component->model.meshCount;
 
         state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*) * state->setCount);
-        MFArray buffers = mfArrayCreate(&state->logger, 2, sizeof(MFGpuBuffer*));
-        mfArrayAddElement(&buffers, MFGpuBuffer*, &state->logger, state->cameraUbo);
-        mfArrayAddElement(&buffers, MFGpuBuffer*, &state->logger, state->lightUbo);
+        MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
+        mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
+        mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
 
         for(u64 i = 0; i < state->setCount; i++) {
             state->sets[i] = mfResourceSetCreate(state->layout, appState->renderer);
@@ -144,25 +144,25 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
 
-            MFArray images = mfArrayCreate(&state->logger, 2, sizeof(MFGpuImage*));
-            mfArrayAddElement(&images, MFGpuImage*, &state->logger, diffuseImage);
-            mfArrayAddElement(&images, MFGpuImage*, &state->logger, normalImage);
+            MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
+            mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
+            mfArrayAddElement(&images, MFGpuImage*, normalImage);
 
             mfResourceSetUpdate(state->sets[i], &images, &buffers);
             
-            mfArrayDestroy(&images, &state->logger);
+            mfArrayDestroy(&images);
         }
         
-        mfArrayDestroy(&buffers, &state->logger);
+        mfArrayDestroy(&buffers);
 
         // Skybox set
         {
             state->set2 = mfResourceSetCreate(state->layout2, state->renderer);
 
-            MFArray images = mfArrayCreate(&state->logger, 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(&images, MFGpuImage*, &state->logger, skyboxImage);
+            MFArray images = mfArrayCreate(1, sizeof(MFGpuImage*));
+            mfArrayAddElement(&images, MFGpuImage*, skyboxImage);
             mfResourceSetUpdate(state->set2, &images, mfnull);
-            mfArrayDestroy(&images, &state->logger);
+            mfArrayDestroy(&images);
         }
     }
 }

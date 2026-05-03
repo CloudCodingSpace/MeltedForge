@@ -14,19 +14,19 @@ typedef struct MFArray_s {
     bool init;
 } MFArray;
 
-MFArray mfArrayCreate(SLogger* logger, u64 capacity, u64 elementSize);
-void mfArrayDestroy(MFArray* array, SLogger* logger);
-void mfArrayResize(MFArray* array, u64 newCapacity, SLogger* logger);
-void mfArrayInsertAt(MFArray* array, u64 index, void* element, SLogger* logger);
-void mfArrayDeleteAt(MFArray* array, u64 index, SLogger* logger);
+MFArray mfArrayCreate(u64 capacity, u64 elementSize);
+void mfArrayDestroy(MFArray* array);
+void mfArrayResize(MFArray* array, u64 newCapacity);
+void mfArrayInsertAt(MFArray* array, u64 index, void* element);
+void mfArrayDeleteAt(MFArray* array, u64 index);
 
 #define mfArrayGetElement(arr, type, index) (((type*)(arr).data)[(index)])
 #define mfArraySetElement(arr, type, index, element) (mfArrayGetElement(arr, type, index) = element)
-#define mfArrayAddElement(arr, type, logger, element) \
+#define mfArrayAddElement(arr, type, element) \
     do { \
         if ((arr)->len == (arr)->capacity) { \
             u64 newCap = (arr)->capacity == 0 ? 1 : (arr)->capacity * 2; \
-            mfArrayResize((arr), newCap, (logger)); \
+            mfArrayResize((arr), newCap); \
         } \
         type tmp = (element); \
         memcpy(&mfArrayGetElement(*(arr), type, (arr)->len), &tmp, sizeof(type)); \

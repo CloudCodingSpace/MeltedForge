@@ -37,7 +37,7 @@ void mfMaterialSystemInitialize(void) {
         MF_FATAL_ABORT(mfGetLogger(), "The material system is already initialised!");
     }
 
-    s_State.array = mfArrayCreate(mfGetLogger(), 2, sizeof(Entry));
+    s_State.array = mfArrayCreate(2, sizeof(Entry));
 
     s_State.init = true;
 }
@@ -56,7 +56,7 @@ void mfMaterialSystemShutdown(void) {
         MF_SETMEM(entry, 0, sizeof(Entry));
     }
 
-    mfArrayDestroy(&s_State.array, mfGetLogger());
+    mfArrayDestroy(&s_State.array);
 
     s_State.init = false;
     MF_SETMEM(&s_State, 0, sizeof(MFMaterialSystemState));
@@ -81,11 +81,11 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
         allocated = true;
     }
 
-    MFArray list = mfArrayCreate(mfGetLogger(), model->meshCount, sizeof(MFArray));
+    MFArray list = mfArrayCreate(model->meshCount, sizeof(MFArray));
     list.len = model->meshCount;
 
     for(u64 i = 0; i < model->meshCount; i++) {
-        MFArray arr = mfArrayCreate(mfGetLogger(), MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
+        MFArray arr = mfArrayCreate(MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
         arr.len = MF_MODEL_MAT_TEXTURE_MAX;
 
         MFMeshMaterial mat = model->meshes[i].mat;
@@ -131,11 +131,11 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                 TextureDescription description = {
                     .rgba = arrayToU32(color),
                     .path = path ? mfStringDuplicate(path) : mfnull,
-                    .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger()),
+                    .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path)),
                     .type = (u8)j
                 };
                 u64 hashData[3] = { description.path_hash, description.rgba, description.type };
-                u64 hash = mfHash_FNV1A(hashData, sizeof(hashData), mfGetLogger());
+                u64 hash = mfHash_FNV1A(hashData, sizeof(hashData));
                 Entry* entry = findEntry(&s_State.array, path, description.rgba, hash);
                 if(entry) {
                     mfArraySetElement(arr, MFGpuImage*, j, entry->image);
@@ -153,7 +153,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                                 .image = loadImage(path, j, &mat, renderer)
                             };
 
-                            mfArrayInsertAt(&s_State.array, k, &newEntry, mfGetLogger());
+                            mfArrayInsertAt(&s_State.array, k, &newEntry);
                             mfArraySetElement(arr, MFGpuImage*, j, newEntry.image);
                             inserted = true;
                             break;
@@ -167,7 +167,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                             .image = loadImage(path, j, &mat, renderer)
                         };
 
-                        mfArrayAddElement(&s_State.array, Entry, mfGetLogger(), newEntry);
+                        mfArrayAddElement(&s_State.array, Entry, newEntry);
                         mfArraySetElement(arr, MFGpuImage*, j, newEntry.image);
                     }
                 }
@@ -193,10 +193,10 @@ void mfMaterialSystemDestroyModelMatImages(MFArray* array) {
 
     for(u64 i = 0; i < array->len; i++) {
         MFArray arr = mfArrayGetElement(*array, MFArray, i);
-        mfArrayDestroy(&arr, mfGetLogger());
+        mfArrayDestroy(&arr);
     }
 
-    mfArrayDestroy(array, mfGetLogger());
+    mfArrayDestroy(array);
 }
 
 MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* array, MFModel* model, u64 meshIdx, MFRenderer* renderer) {
@@ -274,7 +274,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     };
 
     u64 hashData[3] = { desc.path_hash, desc.rgba, desc.type };
-    u64 hash = mfHash_FNV1A(hashData, sizeof(hashData), mfGetLogger());
+    u64 hash = mfHash_FNV1A(hashData, sizeof(hashData));
 
     Entry* entry = findEntry(&s_State.array, mfnull, rgba, hash);
 
@@ -316,14 +316,14 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         Entry* e = &mfArrayGetElement(s_State.array, Entry, k);
 
         if(hash < e->descHash) {
-            mfArrayInsertAt(&s_State.array, k, &newEntry, mfGetLogger());
+            mfArrayInsertAt(&s_State.array, k, &newEntry);
             inserted = true;
             break;
         }
     }
 
     if(!inserted) {
-        mfArrayAddElement(&s_State.array, Entry, mfGetLogger(), newEntry);
+        mfArrayAddElement(&s_State.array, Entry, newEntry);
     }
 
     mfArraySetElement(meshArray, MFGpuImage*, type, img);
@@ -401,7 +401,7 @@ error_return:
 }
 
 static bool compareEntry(Entry* entry, const char* path, u32 rgba) {
-    u64 h = path ? mfHash_FNV1A(path, sizeof(char) * mfStringLen(path), mfGetLogger()) : 0;
+    u64 h = path ? mfHash_FNV1A(path, sizeof(char) * mfStringLen(path)) : 0;
     if((entry->description.path_hash == h) &&
         (entry->description.rgba == rgba)) {
         if(path && entry->description.path) {

@@ -15,8 +15,8 @@ MFAppConfig mfClientCreateAppConfig() {
         .onUIRender = &MFTOnUIRender
     };
 
-    MFArray layers = mfArrayCreate(mfGetLogger(), 1, sizeof(MFLayer));
-    mfArrayAddElement(&layers, MFLayer, mfGetLogger(), testLayer);
+    MFArray layers = mfArrayCreate(1, sizeof(MFLayer));
+    mfArrayAddElement(&layers, MFLayer, testLayer);
 
     config.layers = layers;
     config.winConfig.resizable = true;

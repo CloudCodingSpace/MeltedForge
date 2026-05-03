@@ -54,7 +54,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     backend->enableUI = config->enableUI;
     backend->enableDepth = config->enableDepth;
 
-    backend->renderTargets = mfArrayCreate(mfGetLogger(), 2, sizeof(MFRenderTarget*));
+    backend->renderTargets = mfArrayCreate(2, sizeof(MFRenderTarget*));
 
     VulkanBackendCtxInit(&backend->ctx, config->appName, config->vsync, config->enableDepth, config->window);
 
@@ -184,7 +184,7 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
         igDestroyContext(igGetCurrentContext());
     }
 
-    mfArrayDestroy(&backend->renderTargets, mfGetLogger());
+    mfArrayDestroy(&backend->renderTargets);
 
     if(backend->pipelineCache) {
         size_t size = 0;

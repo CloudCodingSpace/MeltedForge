@@ -24,10 +24,10 @@ void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
     
     scene->camera = camera;
     scene->renderer = renderer;
-    scene->entities = mfArrayCreate(mfGetLogger(), 4, sizeof(MFEntity));
-    scene->meshCompPool = mfArrayCreate(mfGetLogger(), 4, sizeof(MFMeshComponent));
-    scene->transformCompPool = mfArrayCreate(mfGetLogger(), 4, sizeof(MFTransformComponent));
-    scene->compGrpTable = mfArrayCreate(mfGetLogger(), 4, sizeof(MFComponentGroup));
+    scene->entities = mfArrayCreate(4, sizeof(MFEntity));
+    scene->meshCompPool = mfArrayCreate(4, sizeof(MFMeshComponent));
+    scene->transformCompPool = mfArrayCreate(4, sizeof(MFTransformComponent));
+    scene->compGrpTable = mfArrayCreate(4, sizeof(MFComponentGroup));
     scene->init = true;
 }
 
@@ -47,10 +47,10 @@ void mfSceneDestroy(MFScene* scene) {
         mfModelDestroy(&comp->model);
     }
     
-    mfArrayDestroy(&scene->entities, mfGetLogger());
-    mfArrayDestroy(&scene->transformCompPool, mfGetLogger());
-    mfArrayDestroy(&scene->meshCompPool, mfGetLogger());
-    mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
+    mfArrayDestroy(&scene->entities);
+    mfArrayDestroy(&scene->transformCompPool);
+    mfArrayDestroy(&scene->meshCompPool);
+    mfArrayDestroy(&scene->compGrpTable);
 
     mfCameraDestroy(&scene->camera);
 
@@ -112,8 +112,8 @@ u64 mfSceneCreateEntity(MFScene* scene) {
     entity.ownerScene = (void*)scene;
     entity.valid = true;
 
-    mfArrayAddElement(&scene->compGrpTable, MFComponentGroup, mfGetLogger(), grp);
-    mfArrayAddElement(&scene->entities, MFEntity, mfGetLogger(), entity);
+    mfArrayAddElement(&scene->compGrpTable, MFComponentGroup, grp);
+    mfArrayAddElement(&scene->entities, MFEntity, entity);
 
     return scene->entities.len - 1;
 }
@@ -170,7 +170,7 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp
         return;
     
     comp.valid = true;
-    mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, mfGetLogger(), comp);
+    mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, comp);
     
     MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->meshIdx = scene->meshCompPool.len - 1;
@@ -199,7 +199,7 @@ void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComp
         return;
    
     comp.valid = true;
-    mfArrayAddElement(&scene->transformCompPool, MFTransformComponent, mfGetLogger(), comp);
+    mfArrayAddElement(&scene->transformCompPool, MFTransformComponent, comp);
     MFComponentGroup* grp = &mfArrayGetElement(scene->compGrpTable, MFComponentGroup, entity->compGrpId);
     grp->transformIdx = scene->transformCompPool.len - 1;
 
@@ -485,10 +485,10 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         return false;
     }
 
-    mfArrayDestroy(&scene->entities, mfGetLogger());
-    mfArrayDestroy(&scene->compGrpTable, mfGetLogger());
-    mfArrayDestroy(&scene->meshCompPool, mfGetLogger());
-    mfArrayDestroy(&scene->transformCompPool, mfGetLogger());
+    mfArrayDestroy(&scene->entities);
+    mfArrayDestroy(&scene->compGrpTable);
+    mfArrayDestroy(&scene->meshCompPool);
+    mfArrayDestroy(&scene->transformCompPool);
 
     // Camera
     {
@@ -522,7 +522,7 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
     }
 
     u64 eLen = mfDeserializeU64(&s);
-    scene->entities = mfArrayCreate(mfGetLogger(), eLen, sizeof(MFEntity));
+    scene->entities = mfArrayCreate(eLen, sizeof(MFEntity));
     for(u64 i = 0; i < eLen; i++) {
         MFEntity e = {0};
         e.ownerScene = scene;
@@ -531,11 +531,11 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         e.id = mfDeserializeU64(&s);
         e.compGrpId = mfDeserializeU64(&s);
         e.components = mfDeserializeU64(&s);
-        mfArrayAddElement(&scene->entities, MFEntity, mfGetLogger(), e);
+        mfArrayAddElement(&scene->entities, MFEntity, e);
     }
 
     u64 mLen = mfDeserializeU64(&s);
-    scene->meshCompPool = mfArrayCreate(mfGetLogger(), mLen, sizeof(MFMeshComponent));
+    scene->meshCompPool = mfArrayCreate(mLen, sizeof(MFMeshComponent));
 
     for(u64 i = 0; i < mLen; i++) {
         MFMeshComponent c = {0};
@@ -544,11 +544,11 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         c.vertBuilder = vertexBuilder;
         c.valid = true;
         mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, c.vertBuilder);
-        mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, mfGetLogger(), c);
+        mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, c);
     }
 
     u64 tLen = mfDeserializeU64(&s);
-    scene->transformCompPool = mfArrayCreate(mfGetLogger(), tLen, sizeof(MFTransformComponent));
+    scene->transformCompPool = mfArrayCreate(tLen, sizeof(MFTransformComponent));
     for(u64 i = 0; i < tLen; i++) {
         MFTransformComponent t = {0};
         t.valid = true;
@@ -561,17 +561,17 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         t.scale.x = mfDeserializeF32(&s);
         t.scale.y = mfDeserializeF32(&s);
         t.scale.z = mfDeserializeF32(&s);
-        mfArrayAddElement(&scene->transformCompPool, MFTransformComponent, mfGetLogger(), t);
+        mfArrayAddElement(&scene->transformCompPool, MFTransformComponent, t);
     }
 
     u64 gLen = mfDeserializeU64(&s);
-    scene->compGrpTable = mfArrayCreate(mfGetLogger(), gLen, sizeof(MFComponentGroup));
+    scene->compGrpTable = mfArrayCreate(gLen, sizeof(MFComponentGroup));
     for(u64 i = 0; i < gLen; i++) {
         MFComponentGroup g = {0};
         g.valid = true;
         g.meshIdx = mfDeserializeU64(&s);
         g.transformIdx = mfDeserializeU64(&s);
-        mfArrayAddElement(&scene->compGrpTable, MFComponentGroup, mfGetLogger(), g);
+        mfArrayAddElement(&scene->compGrpTable, MFComponentGroup, g);
     }
 
     mfSerializerDestroy(&s);

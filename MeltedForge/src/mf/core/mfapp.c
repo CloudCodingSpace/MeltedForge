@@ -47,7 +47,7 @@ static void deinitApp(void* st, MFAppConfig* config) {
     mfMaterialSystemShutdown();
 
     if(config->layers.data && config->layers.len > 0)
-        mfArrayDestroy(&config->layers, mfGetLogger());
+        mfArrayDestroy(&config->layers);
 
     mfRendererShutdown(state->renderer);
     mfWindowDestroy(state->window);

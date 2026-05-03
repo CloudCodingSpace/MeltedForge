@@ -41,7 +41,7 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 reourceDescriptionLen, MFReso
     MFResourceSetLayout* layout = MF_ALLOCMEM(MFResourceSetLayout, sizeof(MFResourceSetLayout));
 
     layout->renderer = renderer;
-    layout->resourceDescriptions = mfArrayCreate(mfGetLogger(), reourceDescriptionLen, sizeof(MFResourceDescription));
+    layout->resourceDescriptions = mfArrayCreate(reourceDescriptionLen, sizeof(MFResourceDescription));
     layout->resourceDescriptions.len = reourceDescriptionLen;
 
     for(u64 i = 0; i < reourceDescriptionLen; i++) {
@@ -139,7 +139,7 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
     vkDestroyDescriptorPool(ctx->device, layout->pool, ctx->allocator);
     vkDestroyDescriptorSetLayout(ctx->device, layout->layout, ctx->allocator);
 
-    mfArrayDestroy(&layout->resourceDescriptions, mfGetLogger());
+    mfArrayDestroy(&layout->resourceDescriptions);
 
     MF_SETMEM(layout, 0, sizeof(MFResourceSetLayout));
     MF_FREEMEM(layout);

@@ -84,19 +84,19 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         skybox->set = mfResourceSetCreate(skybox->layout, renderer);
 
         {
-            MFArray array = mfArrayCreate(mfGetLogger(), 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(&array, MFGpuImage*, mfGetLogger(), skybox->image);
+            MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
+            mfArrayAddElement(&array, MFGpuImage*, skybox->image);
             mfResourceSetUpdate(skybox->set, &array, mfnull);
-            mfArrayDestroy(&array, mfGetLogger());
+            mfArrayDestroy(&array);
         }
         
         if(config.generateIrradiance) {
             skybox->set2 = mfResourceSetCreate(skybox->layout, renderer);
 
-            MFArray array = mfArrayCreate(mfGetLogger(), 1, sizeof(MFGpuImage*));
-            mfArrayAddElement(&array, MFGpuImage*, mfGetLogger(), skybox->irradiance);
+            MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
+            mfArrayAddElement(&array, MFGpuImage*, skybox->irradiance);
             mfResourceSetUpdate(skybox->set2, &array, mfnull);
-            mfArrayDestroy(&array, mfGetLogger());
+            mfArrayDestroy(&array);
         }
     }
     // Pipeline
