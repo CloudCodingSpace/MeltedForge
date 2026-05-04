@@ -28,7 +28,7 @@ void mfMaterialSystemInitialize(void) {
         MF_FATAL_ABORT(mfGetLogger(), "The material system is already initialised!");
     }
 
-    s_State.map = mfHashMapCreate(5, mfGpuImageGetSizeInBytes());
+    s_State.map = mfHashMapCreate(5, sizeof(MFGpuImage*));
 
     s_State.init = true;
 }
@@ -42,9 +42,8 @@ void mfMaterialSystemShutdown(void) {
         MFArray* bucket = &mfArrayGetElement(s_State.map.buckets, MFArray, i);
         for(u64 j = 0; j < bucket->len; j++) {
             MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, j);
-            MFGpuImage* image = (MFGpuImage*)entry->value;
-            mfGpuImageDestroy(image);
-            entry->value = malloc(1); // NOTE: Just so mfHashMapDestroy doesnt crash! FIXME: Figure how to avoid doing this manually
+            MFGpuImage** image = (MFGpuImage**)entry->value;
+            mfGpuImageDestroy(*image);
         }
     }
 
@@ -128,7 +127,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                 MFGpuImage* image = (MFGpuImage*)mfHashMapGetValue(&s_State.map, sizeof(description), &description);
                 if(image == mfnull) {
                     image = loadImage(path, j, &mat, renderer);
-                    mfHashMapAddElement(&s_State.map, sizeof(description), &description, image);
+                    mfHashMapAddElement(&s_State.map, sizeof(description), &description, &image);
                 }
                 mfArraySetElement(arr, MFGpuImage*, j, image);
 
@@ -260,7 +259,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     };
     img = mfGpuImageCreate(renderer, config);
 
-    mfHashMapAddElement(&s_State.map, sizeof(desc), &desc, img);
+    mfHashMapAddElement(&s_State.map, sizeof(desc), &desc, &img);
 
     mfArraySetElement(meshArray, MFGpuImage*, type, img);
     return img;
