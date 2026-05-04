@@ -227,7 +227,7 @@ void mfSceneEntityRemoveMeshComponent(MFScene* scene, u64* id) {
     mfModelDestroy(&comp->model);
     MF_SETMEM(comp, 0, sizeof(*comp));
 
-    entity->components &= MF_COMPONENT_TYPE_MESH;
+    entity->components &= ~MF_COMPONENT_TYPE_MESH;
 }
 
 void mfSceneEntityRemoveTransformComponent(MFScene* scene, u64* id) {
@@ -250,7 +250,7 @@ void mfSceneEntityRemoveTransformComponent(MFScene* scene, u64* id) {
     MFTransformComponent* comp = mfSceneEntityGetTransformComponent(scene, id);
     MF_SETMEM(comp, 0, sizeof(*comp));
     
-    entity->components &= MF_COMPONENT_TYPE_TRANSFORM;
+    entity->components &= ~MF_COMPONENT_TYPE_TRANSFORM;
 }
 
 MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id) {
