@@ -85,7 +85,7 @@ void mfArrayDeleteAt(MFArray* array, u64 index) {
         return;
     });
 
-    u64 left = array->len - index + 1;
+    u64 left = array->len - index - 1;
     void* leftData = MF_ALLOCMEM(void, array->elementSize * left);
     u8* data = (u8*)array->data;
     memcpy(leftData, data + (array->elementSize * (index + 1)), left * array->elementSize);
