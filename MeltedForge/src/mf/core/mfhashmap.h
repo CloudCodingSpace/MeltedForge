@@ -7,12 +7,6 @@ extern "C" {
 #include "mfutils.h"
 #include "mfarray.h"
 
-typedef struct MFHashMapEntry_s {
-    u64 hash;
-    void* key;
-    void* value;
-} MFHashMapEntry;
-
 typedef struct MFHashMap_s {
     MFArray buckets;
     u64 valueSize, keySize, count;

@@ -41,9 +41,10 @@ void mfMaterialSystemShutdown(void) {
     for(u64 i = 0; i < s_State.map.buckets.len; i++) {
         MFArray* bucket = &mfArrayGetElement(s_State.map.buckets, MFArray, i);
         for(u64 j = 0; j < bucket->len; j++) {
-            MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, j);
-            MFGpuImage** image = (MFGpuImage**)entry->value;
-            mfGpuImageDestroy(*image);
+            u8* entry = &mfArrayGetElement(*bucket, u8, j * bucket->elementSize);
+            void* entry_value = entry + sizeof(u64) + s_State.map.keySize;
+            MFGpuImage* image = *(MFGpuImage**)entry_value;
+            mfGpuImageDestroy(image);
         }
     }
 

@@ -19,7 +19,7 @@ MFHashMap mfHashMapCreate(u64 capacity, u64 keySize, u64 valueSize) {
 
     hashmap.buckets.len = capacity;
     for(u64 i = 0; i < hashmap.buckets.len; i++) {
-        mfArraySetElement(hashmap.buckets, MFArray, i, mfArrayCreate(1, sizeof(MFHashMapEntry)));
+        mfArraySetElement(hashmap.buckets, MFArray, i, mfArrayCreate(1, sizeof(u64) + keySize + valueSize));
     }
 
     return hashmap;
@@ -31,11 +31,6 @@ void mfHashMapDestroy(MFHashMap* hashMap) {
 
     for(u64 i = 0; i < hashMap->buckets.len; i++) {
         MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, i);
-        for(u64 j = 0; j < bucket->len; j++) {
-            MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, j);
-            MF_FREEMEM(entry->key);
-            MF_FREEMEM(entry->value);
-        }
         mfArrayDestroy(bucket);
     }
 
@@ -56,25 +51,36 @@ void mfHashMapResize(MFHashMap* hashMap, u64 newCapacity) {
     newBuckets.len = newCapacity;
 
     for (u64 i = 0; i < newCapacity; i++) {
-        mfArraySetElement(newBuckets, MFArray, i, mfArrayCreate(1, sizeof(MFHashMapEntry)));
+        mfArraySetElement(newBuckets, MFArray, i, mfArrayCreate(1, sizeof(u64) + hashMap->keySize + hashMap->valueSize));
     }
 
     for (u64 i = 0; i < hashMap->buckets.len; i++) {
         MFArray* oldBucket = &mfArrayGetElement(hashMap->buckets, MFArray, i);
 
         for (u64 j = 0; j < oldBucket->len; j++) {
-            MFHashMapEntry* entry = &mfArrayGetElement(*oldBucket, MFHashMapEntry, j);
+            u8* entry = &mfArrayGetElement(*oldBucket, u8, j * oldBucket->elementSize);
+            u64* entry_hash = (u64*)entry;
+            void* entry_key = entry + sizeof(u64);
+            void* entry_value = ((u8*)entry_key) + hashMap->keySize;
 
-            u64 newIndex = entry->hash % newCapacity;
+            u64 newIndex = *entry_hash % newCapacity;
             MFArray* newBucket = &mfArrayGetElement(newBuckets, MFArray, newIndex);
 
-            mfArrayAddElement(newBucket, MFHashMapEntry, *entry);
+            if (newBucket->len == newBucket->capacity) {
+                mfArrayResize(newBucket, newBucket->capacity * 2);
+            }
+
+            memcpy((u8*)newBucket->data + newBucket->len * newBucket->elementSize,
+                entry,
+                newBucket->elementSize);
+
+            newBucket->len++;
         }
 
-        MF_FREEMEM(oldBucket->data);
+        mfArrayDestroy(oldBucket);
     }
 
-    MF_FREEMEM(hashMap->buckets.data);
+    mfArrayDestroy(&hashMap->buckets);
     hashMap->buckets = newBuckets;
 }
 
@@ -94,27 +100,33 @@ void mfHashMapAddElement(MFHashMap* hashMap, void* key, void* value) {
     MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, index);
 
     for (u64 i = 0; i < bucket->len; i++) {
-        MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, i);
+        u8* entry = &mfArrayGetElement(*bucket, u8, i * bucket->elementSize);
+        u64* entry_hash = (u64*)entry;
+        void* entry_key = entry + sizeof(u64);
+        void* entry_value = ((u8*)entry_key) + hashMap->keySize;
 
-        if(entry->hash != hash)
+        if(*entry_hash != hash)
             continue;
-        if (memcmp(entry->key, key, hashMap->keySize) == 0) {
-            memcpy(entry->value, value, hashMap->valueSize);
+        if (memcmp(entry_key, key, hashMap->keySize) == 0) {
+            memcpy(entry_value, value, hashMap->valueSize);
             return;
         }
     }
 
-    MFHashMapEntry newEntry = {
-        .hash = hash,
-        .key = MF_ALLOCMEM(void, hashMap->keySize),
-        .value = MF_ALLOCMEM(void, hashMap->valueSize)
-    };
+    u8* newEntry = MF_ALLOCMEM(u8, bucket->elementSize);
+    memcpy(newEntry, &hash, sizeof(u64));
+    memcpy(newEntry + sizeof(u64), key, hashMap->keySize);
+    memcpy(newEntry + sizeof(u64) + hashMap->keySize, value, hashMap->valueSize);
 
-    memcpy(newEntry.key, key, hashMap->keySize);
-    memcpy(newEntry.value, value, hashMap->valueSize);
+    if (bucket->len == bucket->capacity) {
+        mfArrayResize(bucket, bucket->capacity * 2);
+    }
 
-    mfArrayAddElement(bucket, MFHashMapEntry, newEntry);
+    memcpy(&mfArrayGetElement(*bucket, u8, bucket->len * bucket->elementSize), newEntry, bucket->elementSize);
+    bucket->len++;
+
     hashMap->count++;
+    MF_FREEMEM(newEntry);
 }
 
 void mfHashMapRemoveElement(MFHashMap* hashMap, void* key) {
@@ -127,16 +139,17 @@ void mfHashMapRemoveElement(MFHashMap* hashMap, void* key) {
 
     MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, index);
     for(u64 i = 0; i < bucket->len; i++) {
-        MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, i);
+        u8* entry = &mfArrayGetElement(*bucket, u8, i * bucket->elementSize);
+        u64* entry_hash = (u64*)entry;
+        void* entry_key = entry + sizeof(u64);
+        void* entry_value = ((u8*)entry_key) + hashMap->keySize;
 
-        if(entry->hash != hash)
+        if(*entry_hash != hash)
             continue;
-        if(memcmp(entry->key, key, hashMap->keySize) == 0) {
-            MF_FREEMEM(entry->key);
-            MF_FREEMEM(entry->value);
+        if(memcmp(entry_key, key, hashMap->keySize) == 0) {
             if(bucket->len > 1) {
-                MFHashMapEntry* last = &mfArrayGetElement(*bucket, MFHashMapEntry, bucket->len - 1);
-                *entry = *last;
+                u8* last = &mfArrayGetElement(*bucket, u8, (bucket->len - 1) * bucket->elementSize);
+                memcpy(entry, last, bucket->elementSize);
             }
             hashMap->count--;
             bucket->len--;
@@ -155,11 +168,15 @@ void* mfHashMapGetValue(MFHashMap* hashMap, void* key) {
 
     MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, index);
     for(u64 i = 0; i < bucket->len; i++) {
-        MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, i);
-        if(entry->hash != hash)
+        u8* entry = &mfArrayGetElement(*bucket, u8, i * bucket->elementSize);
+        u64* entry_hash = (u64*)entry;
+        void* entry_key = entry + sizeof(u64);
+        void* entry_value = ((u8*)entry_key) + hashMap->keySize;
+
+        if(*entry_hash != hash)
             continue;
-        if(memcmp(entry->key, key, hashMap->keySize) == 0)
-            return entry->value;
+        if(memcmp(entry_key, key, hashMap->keySize) == 0)
+            return entry_value;
     }
 
     return mfnull;
