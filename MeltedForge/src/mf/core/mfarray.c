@@ -65,15 +65,10 @@ void mfArrayInsertAt(MFArray* array, u64 index, void* element) {
         mfArrayResize(array, (array->capacity == 0) ? 1 : (array->capacity * 2));
     }
 
-    u64 left = array->len - index;
-    void* leftData = MF_ALLOCMEM(void, array->elementSize * left);
-    u8* data = (u8*)array->data;
-    memcpy(leftData, data + (array->elementSize * index), left * array->elementSize);
-    MF_SETMEM(data + (array->elementSize * index), 0, left * array->elementSize);
-    memcpy(data + (array->elementSize * index), element, array->elementSize);
-    memcpy(data + (array->elementSize * (index + 1)), leftData, left * array->elementSize);
+    u8* base = (u8*)array->data;
+    memmove(base + (index + 1) * array->elementSize, base + index * array->elementSize, (array->len - index) * array->elementSize);
 
-    MF_FREEMEM(leftData);
+    memcpy(base + index * array->elementSize, element, array->elementSize);
     array->len++;
 }
 
@@ -85,14 +80,8 @@ void mfArrayDeleteAt(MFArray* array, u64 index) {
         return;
     });
 
-    u64 left = array->len - index - 1;
-    void* leftData = MF_ALLOCMEM(void, array->elementSize * left);
-    u8* data = (u8*)array->data;
-    memcpy(leftData, data + (array->elementSize * (index + 1)), left * array->elementSize);
-    MF_SETMEM(data + (array->elementSize * index), 0, array->elementSize);
-    memcpy(data + (array->elementSize * index), leftData, left * array->elementSize);
+    memmove((u8*)array->data + index * array->elementSize, (u8*)array->data + (index + 1) * array->elementSize, (array->len - index - 1) * array->elementSize);
 
-    MF_FREEMEM(leftData);
     array->len--;
 }
 
