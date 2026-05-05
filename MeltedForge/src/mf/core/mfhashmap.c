@@ -5,14 +5,16 @@ extern "C" {
 #include "mfhashmap.h"
 #include "mfcore.h"
 
-MFHashMap mfHashMapCreate(u64 capacity, u64 valueSize) {
+MFHashMap mfHashMapCreate(u64 capacity, u64 keySize, u64 valueSize) {
     MF_PANIC_IF(capacity == 0, mfGetLogger(), "The capacity of the hashmap provided can't be 0!");
+    MF_PANIC_IF(keySize == 0, mfGetLogger(), "The key size of the hashmap provided can't be 0!");
     MF_PANIC_IF(valueSize == 0, mfGetLogger(), "The value size of the hashmap provided can't be 0!");
 
     MFHashMap hashmap = {
         .init = true,
         .buckets = mfArrayCreate(capacity, sizeof(MFArray)),
-        .valueSize = valueSize
+        .valueSize = valueSize,
+        .keySize = keySize
     };
 
     hashmap.buckets.len = capacity;
@@ -76,10 +78,9 @@ void mfHashMapResize(MFHashMap* hashMap, u64 newCapacity) {
     hashMap->buckets = newBuckets;
 }
 
-void mfHashMapAddElement(MFHashMap* hashMap, u64 keySize, void* key, void* value) {
+void mfHashMapAddElement(MFHashMap* hashMap, void* key, void* value) {
     MF_PANIC_IF(hashMap == mfnull, mfGetLogger(), "The hash map handle provided shouldn't be null!");
     MF_PANIC_IF(!hashMap->init, mfGetLogger(), "The hash map provided isn't intialised!");
-    MF_PANIC_IF(keySize == 0, mfGetLogger(), "The key size of the hashmap provided can't be 0!");
     MF_PANIC_IF(key == mfnull, mfGetLogger(), "The key provided for the hashmap shouldn't be null!");
     MF_PANIC_IF(value == mfnull, mfGetLogger(), "The value provided for the hashmap shouldn't be null!");
 
@@ -87,7 +88,7 @@ void mfHashMapAddElement(MFHashMap* hashMap, u64 keySize, void* key, void* value
         mfHashMapResize(hashMap, hashMap->buckets.len * 2);
     }
 
-    u64 hash = mfHash_FNV1A(key, keySize);
+    u64 hash = mfHash_FNV1A(key, hashMap->keySize);
     u64 index = hash % hashMap->buckets.len;
 
     MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, index);
@@ -97,9 +98,7 @@ void mfHashMapAddElement(MFHashMap* hashMap, u64 keySize, void* key, void* value
 
         if(entry->hash != hash)
             continue;
-        if(entry->keySize != keySize)
-            continue;
-        if (memcmp(entry->key, key, keySize) == 0) {
+        if (memcmp(entry->key, key, hashMap->keySize) == 0) {
             memcpy(entry->value, value, hashMap->valueSize);
             return;
         }
@@ -107,25 +106,23 @@ void mfHashMapAddElement(MFHashMap* hashMap, u64 keySize, void* key, void* value
 
     MFHashMapEntry newEntry = {
         .hash = hash,
-        .key = MF_ALLOCMEM(void, keySize),
-        .value = MF_ALLOCMEM(void, hashMap->valueSize),
-        .keySize = keySize
+        .key = MF_ALLOCMEM(void, hashMap->keySize),
+        .value = MF_ALLOCMEM(void, hashMap->valueSize)
     };
 
-    memcpy(newEntry.key, key, keySize);
+    memcpy(newEntry.key, key, hashMap->keySize);
     memcpy(newEntry.value, value, hashMap->valueSize);
 
     mfArrayAddElement(bucket, MFHashMapEntry, newEntry);
     hashMap->count++;
 }
 
-void mfHashMapRemoveElement(MFHashMap* hashMap, u64 keySize, void* key) {
+void mfHashMapRemoveElement(MFHashMap* hashMap, void* key) {
     MF_PANIC_IF(hashMap == mfnull, mfGetLogger(), "The hash map handle provided shouldn't be null!");
     MF_PANIC_IF(!hashMap->init, mfGetLogger(), "The hash map provided isn't intialised!");
-    MF_PANIC_IF(keySize == 0, mfGetLogger(), "The key size of the hashmap provided can't be 0!");
     MF_PANIC_IF(key == mfnull, mfGetLogger(), "The key provided for the hashmap shouldn't be null!");
     
-    u64 hash = mfHash_FNV1A(key, keySize);
+    u64 hash = mfHash_FNV1A(key, hashMap->keySize);
     u64 index = hash % hashMap->buckets.len;
 
     MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, index);
@@ -134,9 +131,7 @@ void mfHashMapRemoveElement(MFHashMap* hashMap, u64 keySize, void* key) {
 
         if(entry->hash != hash)
             continue;
-        if(entry->keySize != keySize)
-            continue;
-        if(memcmp(entry->key, key, keySize) == 0) {
+        if(memcmp(entry->key, key, hashMap->keySize) == 0) {
             MF_FREEMEM(entry->key);
             MF_FREEMEM(entry->value);
             if(bucket->len > 1) {
@@ -150,13 +145,12 @@ void mfHashMapRemoveElement(MFHashMap* hashMap, u64 keySize, void* key) {
     }
 }
 
-void* mfHashMapGetValue(MFHashMap* hashMap, u64 keySize, void* key) {
+void* mfHashMapGetValue(MFHashMap* hashMap, void* key) {
     MF_PANIC_IF(hashMap == mfnull, mfGetLogger(), "The hash map handle provided shouldn't be null!");
     MF_PANIC_IF(!hashMap->init, mfGetLogger(), "The hash map provided isn't intialised!");
-    MF_PANIC_IF(keySize == 0, mfGetLogger(), "The key size of the hashmap provided can't be 0!");
     MF_PANIC_IF(key == mfnull, mfGetLogger(), "The key provided for the hashmap shouldn't be null!");
 
-    u64 hash = mfHash_FNV1A(key, keySize);
+    u64 hash = mfHash_FNV1A(key, hashMap->keySize);
     u64 index = hash % hashMap->buckets.len;
 
     MFArray* bucket = &mfArrayGetElement(hashMap->buckets, MFArray, index);
@@ -164,9 +158,7 @@ void* mfHashMapGetValue(MFHashMap* hashMap, u64 keySize, void* key) {
         MFHashMapEntry* entry = &mfArrayGetElement(*bucket, MFHashMapEntry, i);
         if(entry->hash != hash)
             continue;
-        if(entry->keySize != keySize)
-            continue;
-        if(memcmp(entry->key, key, keySize) == 0)
+        if(memcmp(entry->key, key, hashMap->keySize) == 0)
             return entry->value;
     }
 

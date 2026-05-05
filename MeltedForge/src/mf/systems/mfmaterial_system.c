@@ -28,7 +28,7 @@ void mfMaterialSystemInitialize(void) {
         MF_FATAL_ABORT(mfGetLogger(), "The material system is already initialised!");
     }
 
-    s_State.map = mfHashMapCreate(5, sizeof(MFGpuImage*));
+    s_State.map = mfHashMapCreate(5, sizeof(TextureDescription), sizeof(MFGpuImage*));
 
     s_State.init = true;
 }
@@ -124,10 +124,10 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                     .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path)),
                     .type = (u8)j
                 };
-                MFGpuImage* image = (MFGpuImage*)mfHashMapGetValue(&s_State.map, sizeof(description), &description);
+                MFGpuImage* image = (MFGpuImage*)mfHashMapGetValue(&s_State.map, &description);
                 if(image == mfnull) {
                     image = loadImage(path, j, &mat, renderer);
-                    mfHashMapAddElement(&s_State.map, sizeof(description), &description, &image);
+                    mfHashMapAddElement(&s_State.map, &description, &image);
                 }
                 mfArraySetElement(arr, MFGpuImage*, j, image);
 
@@ -231,7 +231,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         .type = (u8)type
     };
 
-    MFGpuImage* entry = (MFGpuImage*)mfHashMapGetValue(&s_State.map, sizeof(desc), &desc);
+    MFGpuImage* entry = (MFGpuImage*)mfHashMapGetValue(&s_State.map, &desc);
     if(entry != mfnull) {
         mfArraySetElement(meshArray, MFGpuImage*, type, entry);
         return entry;
@@ -259,7 +259,7 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     };
     img = mfGpuImageCreate(renderer, config);
 
-    mfHashMapAddElement(&s_State.map, sizeof(desc), &desc, &img);
+    mfHashMapAddElement(&s_State.map, &desc, &img);
 
     mfArraySetElement(meshArray, MFGpuImage*, type, img);
     return img;
