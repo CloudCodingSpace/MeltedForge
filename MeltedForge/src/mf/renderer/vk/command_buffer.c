@@ -41,9 +41,10 @@ void VulkanCommandBufferFree(VulkanBackendCtx* ctx, VkCommandBuffer buffer, VkCo
     vkFreeCommandBuffers(ctx->device, pool, 1, &buffer);
 }
 
-void VulkanCommandBufferBegin(VkCommandBuffer buffer) {
+void VulkanCommandBufferBegin(VkCommandBuffer buffer, bool oneTimeSubmit) {
     VkCommandBufferBeginInfo info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = oneTimeSubmit ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0
     };
     
     VK_CHECK(vkBeginCommandBuffer(buffer, &info));

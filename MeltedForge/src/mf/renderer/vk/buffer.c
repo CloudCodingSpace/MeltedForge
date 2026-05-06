@@ -134,7 +134,7 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
         VkSemaphore semaphore = VK_NULL_HANDLE;
         VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, pool, true);
 
-        VulkanCommandBufferBegin(buff);
+        VulkanCommandBufferBegin(buff, true);
 
         VkBufferCopy region = {
             .size = staging.size,

@@ -7,7 +7,7 @@ extern "C" {
 #include "mfscene.h"
 
 void mfSceneSerialize(MFScene* scene, const char* fileName);
-bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertBuilder);
+bool mfSceneDeserialize(MFScene* scene, const char* fileName);
 
 #ifdef __cplusplus
 }

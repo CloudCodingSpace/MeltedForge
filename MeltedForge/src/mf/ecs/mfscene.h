@@ -32,12 +32,13 @@ typedef struct MFScene_s {
     MFArray transformCompPool;
     MFArray compGrpTable;
 
+    MFModelVertexBuilder vertBuilder;
     MFCamera camera;
     MFRenderer* renderer;
     bool init;
 } MFScene;
 
-void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer);
+void mfSceneCreate(MFScene* scene, MFCamera camera, MFModelVertexBuilder vertBuilder, MFRenderer* renderer);
 void mfSceneDestroy(MFScene* scene);
 
 void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config);

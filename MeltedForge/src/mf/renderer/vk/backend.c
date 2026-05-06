@@ -247,7 +247,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     }
 
     VK_CHECK(vkResetCommandBuffer(backend->commandBuffers[backend->frameIndex], 0));
-    VulkanCommandBufferBegin(backend->commandBuffers[backend->frameIndex]);
+    VulkanCommandBufferBegin(backend->commandBuffers[backend->frameIndex], true);
 
     u32 clearCount = 1;
     VkClearValue values[2] = {

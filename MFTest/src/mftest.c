@@ -236,15 +236,14 @@ static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
 static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     MFCamera camera = {};
     mfCameraCreate(&camera, appState->window, mfWindowGetConfig(appState->window)->width, mfWindowGetConfig(appState->window)->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
-    mfSceneCreate(&state->scene, camera, appState->renderer);
-    if(!mfSceneDeserialize(&state->scene, "./mftscene.bin", &vertBuilder)) {
+    mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
+    if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
         state->entity = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
             .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
             // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
-            .perVertSize = sizeof(Vertex),
-            .vertBuilder = vertBuilder
+            .perVertSize = sizeof(Vertex)
         };
 
         MFTransformComponent tComp = {

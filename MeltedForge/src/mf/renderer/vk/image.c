@@ -162,7 +162,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     // Copy staging buffer to image and transitioning to the appropriate layout
     {
         VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
-        VulkanCommandBufferBegin(buff);
+        VulkanCommandBufferBegin(buff, true);
         
         VkFence fence = VK_NULL_HANDLE;
         {
@@ -256,7 +256,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
             VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &fence));
         }
 
-        VulkanCommandBufferBegin(cmd);
+        VulkanCommandBufferBegin(cmd, true);
 
         VkImageMemoryBarrier barrier = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,

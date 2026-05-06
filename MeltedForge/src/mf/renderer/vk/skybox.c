@@ -194,7 +194,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
 
     // Main recording
     {
-        VulkanCommandBufferBegin(cmdBuff);
+        VulkanCommandBufferBegin(cmdBuff, true);
 
         // Transitioning cubemap to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         {
@@ -517,7 +517,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
 
     // Main recording
     {
-        VulkanCommandBufferBegin(cmdBuff);
+        VulkanCommandBufferBegin(cmdBuff, true);
 
         // Transitioning cubemap to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         {

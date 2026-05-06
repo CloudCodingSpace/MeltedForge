@@ -17,11 +17,13 @@ extern "C" {
 
 #include <slog/slog.h>
 
-void mfSceneCreate(MFScene* scene, MFCamera camera, MFRenderer* renderer) {
+void mfSceneCreate(MFScene* scene, MFCamera camera, MFModelVertexBuilder vertBuilder, MFRenderer* renderer) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(scene->init, mfGetLogger(), "The scene handle provided is already initialised!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle shouldn't be null!");
+    MF_PANIC_IF(vertBuilder == mfnull, mfGetLogger(), "The vertex builder function pointer shouldn't be null!");
     
+    scene->vertBuilder = vertBuilder;
     scene->camera = camera;
     scene->renderer = renderer;
     scene->entities = mfArrayCreate(4, sizeof(MFEntity));
@@ -154,7 +156,6 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(comp.path == mfnull, mfGetLogger(), "The path for the mesh component shouldn't be null!");
     MF_PANIC_IF(comp.perVertSize == 0, mfGetLogger(), "The perVertSize for the mesh component shouldn't be 0!");
-    MF_PANIC_IF(comp.vertBuilder == mfnull, mfGetLogger(), "The vertBuilder for the mesh component shouldn't be null!");
     MF_PANIC_IF(id == mfnull, mfGetLogger(), "The entity id provided shouldn't be null!");
     MF_PANIC_IF(*id > scene->entities.len, mfGetLogger(), "The entity's id provided isn't valid!");
     
@@ -176,7 +177,7 @@ void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp
     grp->meshIdx = scene->meshCompPool.len - 1;
 
     MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, grp->meshIdx);
-    mfModelLoadAndCreate(&c->model, comp.path, scene->renderer, comp.perVertSize, comp.vertBuilder);
+    mfModelLoadAndCreate(&c->model, comp.path, scene->renderer, comp.perVertSize, scene->vertBuilder);
 
     entity->components |= MF_COMPONENT_TYPE_MESH;
 }

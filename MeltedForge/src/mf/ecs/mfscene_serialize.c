@@ -152,7 +152,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
     mfSerializerDestroy(&s);
 }
 
-bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuilder vertexBuilder) {
+bool mfSceneDeserialize(MFScene* scene, const char* fileName) {
     MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
     MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
     MF_PANIC_IF(fileName == mfnull, mfGetLogger(), "The file name shouldn't be null!");
@@ -232,9 +232,8 @@ bool mfSceneDeserialize(MFScene* scene, const char* fileName, MFModelVertexBuild
         MFMeshComponent c = {0};
         c.path = mfDeserializeString(&s);
         c.perVertSize = mfDeserializeU64(&s);
-        c.vertBuilder = vertexBuilder;
         c.valid = true;
-        mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, c.vertBuilder);
+        mfModelLoadAndCreate(&c.model, c.path, scene->renderer, c.perVertSize, scene->vertBuilder);
         mfArrayAddElement(&scene->meshCompPool, MFMeshComponent, c);
     }
 

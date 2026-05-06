@@ -11,7 +11,7 @@ void VulkanCommandPoolDestroy(VulkanBackendCtx* ctx, VkCommandPool pool);
 
 VkCommandBuffer VulkanCommandBufferAllocate(VulkanBackendCtx* ctx, VkCommandPool pool, bool isPrimary);
 void VulkanCommandBufferFree(VulkanBackendCtx* ctx, VkCommandBuffer buffer, VkCommandPool pool);
-void VulkanCommandBufferBegin(VkCommandBuffer buffer);
+void VulkanCommandBufferBegin(VkCommandBuffer buffer, bool oneTimeSubmit);
 void VulkanCommandBufferEnd(VkCommandBuffer buffer);
 
 #ifdef __cplusplus

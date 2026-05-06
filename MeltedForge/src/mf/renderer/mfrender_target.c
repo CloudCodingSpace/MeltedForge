@@ -234,7 +234,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     {
         VkCommandBuffer cmd = renderTarget->commandBuffers[0];
         VK_CHECK(vkResetCommandBuffer(cmd, 0));
-        VulkanCommandBufferBegin(cmd);
+        VulkanCommandBufferBegin(cmd, true);
 
         for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             VkImageMemoryBarrier barrier = {
@@ -275,7 +275,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VK_CHECK(vkResetCommandBuffer(renderTarget->commandBuffers[i], 0));
-        VulkanCommandBufferBegin(renderTarget->commandBuffers[i]);
+        VulkanCommandBufferBegin(renderTarget->commandBuffers[i], true);
     }
 
     // Begin the renderPass
@@ -332,7 +332,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
     VK_CHECK(vkResetCommandBuffer(commandBuffer, 0));
-    VulkanCommandBufferBegin(commandBuffer);
+    VulkanCommandBufferBegin(commandBuffer, true);
 
     u32 count = 1;
     VkClearValue values[2] = {
