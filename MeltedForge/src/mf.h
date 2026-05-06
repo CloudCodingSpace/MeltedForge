@@ -1,4 +1,4 @@
-// @note: Only to be included by other projects
+// @note Only to be included by other projects
 
 #include "mf/window/mfwindow.h"
 #include "mf/window/mfinput.h"

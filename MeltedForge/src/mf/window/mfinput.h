@@ -141,15 +141,44 @@ extern "C" {
 #define MF_MOUSE_BUTTON_RIGHT     MF_MOUSE_BUTTON_2
 #define MF_MOUSE_BUTTON_MIDDLE    MF_MOUSE_BUTTON_3
 
+// @brief Informs whether a key is pressed
+// @return Returns `true` if the key is pressed, else `false`
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 bool mfInputIsKeyPressed(MFWindow* window, i32 key);
+
+// @brief Informs whether a key is released
+// @return Returns `true` if the key is released, else `false`
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 bool mfInputIsKeyReleased(MFWindow* window, i32 key);
+
+// @brief Informs whether a mouse button is pressed
+// @return Returns `true` if the mouse button is pressed, else `false`
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 bool mfInputIsMBPressed(MFWindow* window, i32 button);
+
+// @brief Informs whether a mouse button is released
+// @return Returns `true` if the mouse button is released, else `false`
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 bool mfInputIsMBReleased(MFWindow* window, i32 button);
 
+// @brief Informs whether the mouse position
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 void mfInputGetMousePos(MFWindow* window, f64* x, f64* y);
+
+// @brief Sets the mouse position
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 void mfInputSetMousePos(MFWindow* window, f64 x, f64 y);
+
+// @brief Disables the mouse
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 void mfInputDisableMouse(MFWindow* window);
+
+// @brief Hides the mouse
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 void mfInputHideMouse(MFWindow* window);
+
+// @brief Sets the mouse to the normal, usable state
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 void mfInputNormalMouse(MFWindow* window);
 
 #ifdef __cplusplus
