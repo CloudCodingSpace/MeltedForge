@@ -17,6 +17,7 @@
 #include "mf/ecs/mfcomponents.h"
 #include "mf/ecs/mfentity.h"
 #include "mf/ecs/mfscene.h"
+#include "mf/ecs/mfscene_serialize.h"
 
 #include "mf/core/mfcore.h"
 #include "mf/core/mfapp.h"
