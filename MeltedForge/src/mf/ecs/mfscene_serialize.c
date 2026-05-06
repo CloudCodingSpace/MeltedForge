@@ -146,7 +146,7 @@ void mfSceneSerialize(MFScene* scene, const char* fileName) {
 
     bool success = mfWriteFile(mfGetLogger(), s.bufferSize, fileName, (const char*)s.buffer, "wb");
     if(!success) {
-        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't write to file '%s'!", fileName);
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't write to file '%s'!", fileName);
     }
 
     mfSerializerDestroy(&s);
