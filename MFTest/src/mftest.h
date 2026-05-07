@@ -30,7 +30,6 @@ typedef struct MFTState_s {
 
     MFResourceSetLayout* layout, *layout2;
     u64 setCount;
-    MFResourceSet** sets;
     MFResourceSet* set2;
 
     MFPipeline* pipeline;

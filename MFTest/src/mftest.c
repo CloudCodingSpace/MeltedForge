@@ -79,7 +79,7 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
 
     modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
 
-    MFResourceSet** set = &state->sets[meshIdx];
+    MFResourceSet** set = &component->model.meshes[meshIdx].mat.set;
     mfResourceSetsBind(0, 1, set, state->pipeline);
     mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
 
@@ -133,13 +133,12 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
         state->setCount = component->model.meshCount;
 
-        state->sets = MF_ALLOCMEM(MFResourceSet*, sizeof(MFResourceSet*) * state->setCount);
         MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
         mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
         mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
 
         for(u64 i = 0; i < state->setCount; i++) {
-            state->sets[i] = mfResourceSetCreate(state->layout, appState->renderer);
+            MFResourceSet* set = mfResourceSetCreate(state->layout, appState->renderer);
 
             MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
@@ -148,9 +147,10 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
             mfArrayAddElement(&images, MFGpuImage*, normalImage);
 
-            mfResourceSetUpdate(state->sets[i], &images, &buffers);
-            
+            mfResourceSetUpdate(set, &images, &buffers);
+
             mfArrayDestroy(&images);
+            component->model.meshes[i].mat.set = set;
         }
         
         mfArrayDestroy(&buffers);
@@ -329,8 +329,11 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     INFO(&state->logger, "MFTest deinit");
     slogLoggerDestroy(&state->logger);
 
-    for(u64 i = 0; i < state->setCount; i++) {
-        mfResourceSetDestroy(state->sets[i]);
+    for(u64 i = 0; i < state->scene.meshCompPool.len; i++) {
+        MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, i);
+        for(u64 j = 0; j < component->model.meshCount; j++) {
+            mfResourceSetDestroy(component->model.meshes[j].mat.set);
+        }
     }
     mfResourceSetDestroy(state->set2);
 
@@ -351,8 +354,6 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     mfPipelineDestroy(state->pipeline);
     mfPipelineDestroy(state->pipeline2);
-
-    MF_FREEMEM(state->sets);
 }
 
 void MFTOnRender(void* pstate, void* pappState) {
