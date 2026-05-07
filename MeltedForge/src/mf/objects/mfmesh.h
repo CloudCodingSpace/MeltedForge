@@ -6,6 +6,7 @@ extern "C" {
 
 #include "renderer/mfrenderer.h"
 #include "renderer/mfgpubuffer.h"
+#include "renderer/mfgpu_res.h"
 
 #include "core/mfutils.h"
 
@@ -28,6 +29,7 @@ typedef struct MFMeshMaterial_s {
     const char* emission_texpath;
     const char* metalness_texpath;
     const char* alpha_texpath;
+    MFResourceSet* set; // TODO: Baked resource set manually by client for now. So change this later by using a resource set helper system
 } MFMeshMaterial;
 
 typedef struct MFMesh_s {

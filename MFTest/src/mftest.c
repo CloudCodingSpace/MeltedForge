@@ -165,6 +165,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             mfArrayDestroy(&images);
         }
     }
+    mfMaterialSystemDestroyModelMatImages(&state->materialImages);
 }
 
 static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
@@ -335,8 +336,6 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     mfResourceSetLayoutDestroy(state->layout);
     mfResourceSetLayoutDestroy(state->layout2);
-
-    mfMaterialSystemDestroyModelMatImages(&state->materialImages);
     
     mfGpuBufferFree(state->cameraUbo);
     mfGpuBufferFree(state->lightUbo);
