@@ -51,7 +51,11 @@ void mfArrayDeleteAt(MFArray* array, u64 index);
 // @param type Datatype of the element
 // @param index The index of the element
 // @param element The element which needs to be set
-#define mfArraySetElement(arr, type, index, element) (mfArrayGetElement(arr, type, index) = element)
+#define mfArraySetElement(arr, type, index, element) \
+        do { \
+            type e = (element); \
+            memcpy(&mfArrayGetElement(arr, type, index), &e, sizeof(type)); \
+        } while(0)
 
 // @brief Adds an element to the array
 // @param arr A valid pointer to MFArray returned by `mfArrayCreate`
