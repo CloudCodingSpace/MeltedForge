@@ -227,10 +227,10 @@ static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
         }
 
         state->materialImages[i] = mfMaterialSystemLoadModelMatImages(&component->model, basePath, state->renderer);
-        for(u64 i = 0; i < component->model.meshCount; i++) {
-            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[i], &component->model, i, appState->renderer);
+        for(u64 k = 0; k < component->model.meshCount; k++) {
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[i], &component->model, k, appState->renderer);
             mfGpuImageSetBinding(image, 2);
-            image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[i], &component->model, i, appState->renderer);
+            image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[i], &component->model, k, appState->renderer);
             mfGpuImageSetBinding(image, 3);
         }
 
@@ -377,6 +377,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfPipelineDestroy(state->pipeline2);
 
     MF_FREEMEM(state->entities);
+    MF_FREEMEM(state->materialImages);
 }
 
 void MFTOnRender(void* pstate, void* pappState) {

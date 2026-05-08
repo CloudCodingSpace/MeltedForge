@@ -11,6 +11,7 @@ typedef struct {
     u64 path_hash;
     u32 rgba;
     u8 type;
+    u8 padding[3];
 } TextureDescription;
 
 typedef struct MFMaterialSystemState_s {
@@ -186,8 +187,10 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     MFArray meshArray = mfArrayGetElement(*array, MFArray, meshIdx);
     MFGpuImage* image = mfArrayGetElement(meshArray, MFGpuImage*, type);
 
-    if(image)
-        return image;
+    if(image) {
+        if(mfGpuImageIsValid(image))
+            return image;
+    }
 
     MFMeshMaterial* mat = &model->meshes[meshIdx].mat;
 

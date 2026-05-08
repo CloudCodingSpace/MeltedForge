@@ -28,6 +28,7 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels);
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height);
 
 const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image);
+bool mfGpuImageIsValid(MFGpuImage* image);
 size_t mfGpuImageGetSizeInBytes(void);
 
 void mfGpuImageSetBinding(MFGpuImage* image, u32 binding);

@@ -117,6 +117,12 @@ size_t mfGpuImageGetSizeInBytes(void) {
     return sizeof(MFGpuImage);
 }
 
+bool mfGpuImageIsValid(MFGpuImage* image) {
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+
+    return image->init;
+}
+
 void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(binding < 0 || binding > 100, mfGetLogger(), "The binding slot provided should be valid!");
