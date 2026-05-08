@@ -253,8 +253,10 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
             .scale = (MFVec3){1, 1, 1}
         };
 
-        mfSceneEntityAddMeshComponent(&state->scene, &state->entity, mComp);
-        mfSceneEntityAddTransformComponent(&state->scene, &state->entity, tComp);
+        mfSceneAddMeshComponent(&state->scene, &mComp);
+        mfSceneAddTransformComponent(&state->scene, &tComp);
+        mfSceneEntityAttachMeshComponent(&state->scene, &state->entity, &mComp);
+        mfSceneEntityAttachTransformComponent(&state->scene, &state->entity, &tComp);
     } else {
         u64 entityCount = 0;
         mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);

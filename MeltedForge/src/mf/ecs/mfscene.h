@@ -47,11 +47,16 @@ void mfSceneUpdate(MFScene* scene);
 u64 mfSceneCreateEntity(MFScene* scene);
 void mfSceneDeleteEntity(MFScene* scene, u64* id);
 
-void mfSceneEntityAddMeshComponent(MFScene* scene, u64* id, MFMeshComponent comp);
-void mfSceneEntityAddTransformComponent(MFScene* scene, u64* id, MFTransformComponent comp);
+void mfSceneAddMeshComponent(MFScene* scene, MFMeshComponent* comp);
+void mfSceneAddTransformComponent(MFScene* scene, MFTransformComponent* comp);
+void mfSceneRemoveMeshComponent(MFScene* scene, MFMeshComponent* comp);
+void mfSceneRemoveTransformComponent(MFScene* scene, MFTransformComponent* comp);
 
-void mfSceneEntityRemoveMeshComponent(MFScene* scene, u64* id);
-void mfSceneEntityRemoveTransformComponent(MFScene* scene, u64* id);
+void mfSceneEntityAttachMeshComponent(MFScene* scene, u64* id, MFMeshComponent* comp);
+void mfSceneEntityAttachTransformComponent(MFScene* scene, u64* id, MFTransformComponent* comp);
+
+void mfSceneEntityDetachMeshComponent(MFScene* scene, u64* id);
+void mfSceneEntityDetachTransformComponent(MFScene* scene, u64* id);
 
 MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id);
 MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64* id);

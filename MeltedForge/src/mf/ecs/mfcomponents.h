@@ -18,13 +18,14 @@ typedef struct MFTransformComponent_s {
     MFVec3 scale;
     MFVec3 position;
     MFVec3 rotationXYZ;
+    u64 id;
     bool valid;
 } MFTransformComponent;
 
 typedef struct MFMeshComponent_s {
     MFModel model;
     const char* path;
-    u64 perVertSize;
+    u64 perVertSize, id;
     bool valid;
 } MFMeshComponent;
 
