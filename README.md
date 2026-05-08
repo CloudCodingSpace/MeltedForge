@@ -11,8 +11,11 @@
 ## Features
 
  - A Basic ECS
-   - Material system
+   - Multiple entities support
+   - Can add/remove components to/from a scene
+   - Can attach/detach components from entities
    - Basic scene management
+   - Material system
  - Model loading along with the material data
     - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
