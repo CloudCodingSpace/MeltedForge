@@ -130,27 +130,27 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
     }
     // Resource sets
     {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
-        state->setCount = component->model.meshCount;
-
         MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
         mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
         mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
 
-        for(u64 i = 0; i < state->setCount; i++) {
-            MFResourceSet* set = mfResourceSetCreate(state->layout, appState->renderer);
+        for(u64 k = 0; k < state->scene.meshCompPool.len; k++) {
+            MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, k);
+            for(u64 i = 0; i < component->model.meshCount; i++) {
+                MFResourceSet* set = mfResourceSetCreate(state->layout, appState->renderer);
 
-            MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, i, appState->renderer);
-            MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, i, appState->renderer);
+                MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[k], &component->model, i, appState->renderer);
+                MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[k], &component->model, i, appState->renderer);
 
-            MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
-            mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
-            mfArrayAddElement(&images, MFGpuImage*, normalImage);
+                MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
+                mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
+                mfArrayAddElement(&images, MFGpuImage*, normalImage);
 
-            mfResourceSetUpdate(set, &images, &buffers);
+                mfResourceSetUpdate(set, &images, &buffers);
 
-            mfArrayDestroy(&images);
-            component->model.meshes[i].mat.set = set;
+                mfArrayDestroy(&images);
+                component->model.meshes[i].mat.set = set;
+            }
         }
         
         mfArrayDestroy(&buffers);
@@ -266,7 +266,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[0], &mComp);
         mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[0], &tComp);
 
-        tComp.position = (MFVec3){ 5, 20, 0 };
+        tComp.position = (MFVec3){5, 0, 0};
         mfSceneAddTransformComponent(&state->scene, &tComp);
 
         mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp);
@@ -324,7 +324,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFSkyboxConfig config = {
             .binding = 0,
             .faceSize = 512,
-            .environmentPath = "mftskyboxes/2.hdr",
+            .environmentPath = "mftskyboxes/1.hdr",
             .generateIrradiance = true
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
@@ -483,22 +483,30 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igDummy((ImVec2){ 0.0f, 50.0f });
 
         if(igCollapsingHeader_BoolPtr("Model transform settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
-            MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entities[0]);
-            
-            f32 scale[3] = {0};
-            mfCopyVec3ToFloatArr(scale, transformComponent->scale);
-            f32 position[3] = {0};
-            mfCopyVec3ToFloatArr(position, transformComponent->position);
-            f32 rotation[3] = {0};
-            mfCopyVec3ToFloatArr(rotation, transformComponent->rotationXYZ);
-            
-            igDragFloat3("Postion", position, 0.1f, -1e6f, 1e6f, mfnull, ImGuiSliderFlags_None);
-            igDragFloat3("Scale", scale, 0.1f, 1.0f, 1e6f, mfnull, ImGuiSliderFlags_None);
-            igDragFloat3("Rotation (In degrees)", rotation, 0.1f, 0.0f, 360.0f, mfnull, ImGuiSliderFlags_None);
-        
-            transformComponent->position = mfFloatArrToVec3(position);
-            transformComponent->scale = mfFloatArrToVec3(scale);
-            transformComponent->rotationXYZ = mfFloatArrToVec3(rotation);
+            for(u64 i = 0; i < state->entityCount; i++) {
+                igPushID_Int((int)i);
+                char name[50];
+                sprintf(name, "Entity #%d ###%d", i, i);
+                if(igCollapsingHeader_BoolPtr(name, mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
+                    MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entities[i]);
+
+                    f32 scale[3] = {0};
+                    mfCopyVec3ToFloatArr(scale, transformComponent->scale);
+                    f32 position[3] = {0};
+                    mfCopyVec3ToFloatArr(position, transformComponent->position);
+                    f32 rotation[3] = {0};
+                    mfCopyVec3ToFloatArr(rotation, transformComponent->rotationXYZ);
+                    
+                    igDragFloat3("Postion", position, 0.1f, -1e6f, 1e6f, mfnull, ImGuiSliderFlags_None);
+                    igDragFloat3("Scale", scale, 0.1f, 1.0f, 1e6f, mfnull, ImGuiSliderFlags_None);
+                    igDragFloat3("Rotation (In degrees)", rotation, 0.1f, 0.0f, 360.0f, mfnull, ImGuiSliderFlags_None);
+                
+                    transformComponent->position = mfFloatArrToVec3(position);
+                    transformComponent->scale = mfFloatArrToVec3(scale);
+                    transformComponent->rotationXYZ = mfFloatArrToVec3(rotation);
+                }
+                igPopID();
+            }
         }
 
         igEnd();

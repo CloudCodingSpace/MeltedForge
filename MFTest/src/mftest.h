@@ -29,7 +29,6 @@ typedef struct MFTState_s {
     SLogger logger;
 
     MFResourceSetLayout* layout, *layout2;
-    u64 setCount;
     MFResourceSet* set2;
 
     MFPipeline* pipeline;
