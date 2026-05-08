@@ -13,8 +13,8 @@ MFArray mfArrayCreate(u64 capacity, u64 elementSize) {
     array.elementSize = elementSize;
     array.capacity = capacity;
 
-    array.data = malloc(elementSize * capacity);
-    memset(array.data, 0, elementSize * capacity);
+    array.data = calloc(capacity, elementSize);
+    MF_PANIC_IF(array.data == mfnull, mfGetLogger(), "Array allocation failed or size overflowed!");
 
     array.init = true;
     return array;
@@ -56,7 +56,7 @@ void mfArrayResize(MFArray* array, u64 newCapacity) {
 void mfArrayInsertAt(MFArray* array, u64 index, void* element) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be 0!");
     MF_PANIC_IF(!array->init, mfGetLogger(), "The array provided isn't initialised!");
-    MF_DO_IF(index >= array->len, {
+    MF_DO_IF(index > array->len, {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The index provided to MFArray is invalid!");
         return;
     });
