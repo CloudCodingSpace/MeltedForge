@@ -108,9 +108,9 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
     MFGpuImage* skyboxImage = mfSkyboxGetCubemapImage(state->skybox);
     // Resource layouts
     {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
-        MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, 0, appState->renderer);
-        MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, 0, appState->renderer);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
+        MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, 0, appState->renderer);
+        MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
         
         MFResourceDescription descs[] = {
             mfGpuImageGetDescription(diffuseImage), // NOTE: Description for one image is enough since they have the same bindings 
@@ -130,7 +130,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
     }
     // Resource sets
     {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
         state->setCount = component->model.meshCount;
 
         MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
@@ -140,8 +140,8 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         for(u64 i = 0; i < state->setCount; i++) {
             MFResourceSet* set = mfResourceSetCreate(state->layout, appState->renderer);
 
-            MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
-            MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
+            MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, i, appState->renderer);
+            MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, i, appState->renderer);
 
             MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
             mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
@@ -165,7 +165,8 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             mfArrayDestroy(&images);
         }
     }
-    mfMaterialSystemDestroyModelMatImages(&state->materialImages);
+    for(u64 i = 0; i < state->entityCount; i++)
+        mfMaterialSystemDestroyModelMatImages(&state->materialImages[i]);
 }
 
 static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
@@ -202,36 +203,39 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
 }
 
 static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
-    MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entity);
-    char* basePath = mfnull;
-    bool noBasePath = false;
-    {
-        i32 idx = mfStringFindLast(&state->logger, component->path, '\\');
-        if(idx == -1) {
-            idx = mfStringFindLast(&state->logger, component->path, '/');
+    state->materialImages = MF_ALLOCMEM(MFArray, sizeof(MFArray) * state->entityCount);
+    for(u64 i = 0; i < state->entityCount; i++) {
+        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[i]);
+        char* basePath = mfnull;
+        bool noBasePath = false;
+        {
+            i32 idx = mfStringFindLast(&state->logger, component->path, '\\');
             if(idx == -1) {
-                noBasePath = true;
-                basePath = MF_ALLOCMEM(char, sizeof(char) * 3);
-                basePath[0] = '.';
-                basePath[1] = '/';
-                basePath[2] = '\0';
+                idx = mfStringFindLast(&state->logger, component->path, '/');
+                if(idx == -1) {
+                    noBasePath = true;
+                    basePath = MF_ALLOCMEM(char, sizeof(char) * 3);
+                    basePath[0] = '.';
+                    basePath[1] = '/';
+                    basePath[2] = '\0';
+                }
+            }
+
+            if(!noBasePath) {
+                basePath = mfStringSliceRight(&state->logger, component->path, idx);
             }
         }
 
-        if(!noBasePath) {
-            basePath = mfStringSliceRight(&state->logger, component->path, idx);
+        state->materialImages[i] = mfMaterialSystemLoadModelMatImages(&component->model, basePath, state->renderer);
+        for(u64 i = 0; i < component->model.meshCount; i++) {
+            MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[i], &component->model, i, appState->renderer);
+            mfGpuImageSetBinding(image, 2);
+            image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[i], &component->model, i, appState->renderer);
+            mfGpuImageSetBinding(image, 3);
         }
-    }
 
-    state->materialImages = mfMaterialSystemLoadModelMatImages(&component->model, basePath, state->renderer);
-    for(u64 i = 0; i < component->model.meshCount; i++) {
-        MFGpuImage* image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages, &component->model, i, appState->renderer);
-        mfGpuImageSetBinding(image, 2);
-        image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages, &component->model, i, appState->renderer);
-        mfGpuImageSetBinding(image, 3);
+        MF_FREEMEM(basePath);
     }
-
-    MF_FREEMEM(basePath);
 }
 
 static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
@@ -239,7 +243,10 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     mfCameraCreate(&camera, appState->window, mfWindowGetConfig(appState->window)->width, mfWindowGetConfig(appState->window)->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
     mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
     if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
-        state->entity = mfSceneCreateEntity(&state->scene);
+        state->entities = MF_ALLOCMEM(u64, sizeof(u64) * 2);
+        state->entities[0] = mfSceneCreateEntity(&state->scene);
+        state->entities[1] = mfSceneCreateEntity(&state->scene);
+        state->entityCount = 2;
 
         MFMeshComponent mComp = {
             .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
@@ -255,15 +262,26 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 
         mfSceneAddMeshComponent(&state->scene, &mComp);
         mfSceneAddTransformComponent(&state->scene, &tComp);
-        mfSceneEntityAttachMeshComponent(&state->scene, &state->entity, &mComp);
-        mfSceneEntityAttachTransformComponent(&state->scene, &state->entity, &tComp);
+
+        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[0], &mComp);
+        mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[0], &tComp);
+
+        tComp.position = (MFVec3){ 5, 20, 0 };
+        mfSceneAddTransformComponent(&state->scene, &tComp);
+
+        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp);
+        mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[1], &tComp);
     } else {
         u64 entityCount = 0;
         mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
         MFEntity* entities = MF_ALLOCMEM(MFEntity, sizeof(MFEntity) * entityCount);
         mfSceneGetValidEntities(&state->scene, &entityCount, entities);
 
-        state->entity = entities[0].id;
+        state->entities = MF_ALLOCMEM(u64, sizeof(u64) * entityCount);
+        for(u64 i = 0; i < entityCount; i++) {
+            state->entities[i] = entities[i].id;
+        }
+        state->entityCount = entityCount;
 
         MF_FREEMEM(entities);
     }
@@ -346,7 +364,8 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfGpuBufferFree(state->lightUbo);
 
     mfSceneSerialize(&state->scene, "./mftscene.bin");
-    mfSceneDeleteEntity(&state->scene, &state->entity);
+    for(u64 i = 0; i < state->entityCount; i++)
+        mfSceneDeleteEntity(&state->scene, &state->entities[i]);
     mfSceneDestroy(&state->scene);
 
     mfSkyboxDestroy(state->skybox2);
@@ -356,6 +375,8 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     mfPipelineDestroy(state->pipeline);
     mfPipelineDestroy(state->pipeline2);
+
+    MF_FREEMEM(state->entities);
 }
 
 void MFTOnRender(void* pstate, void* pappState) {
@@ -462,7 +483,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igDummy((ImVec2){ 0.0f, 50.0f });
 
         if(igCollapsingHeader_BoolPtr("Model transform settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
-            MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entity);
+            MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entities[0]);
             
             f32 scale[3] = {0};
             mfCopyVec3ToFloatArr(scale, transformComponent->scale);

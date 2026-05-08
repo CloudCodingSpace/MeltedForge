@@ -40,8 +40,9 @@ typedef struct MFTState_s {
     MFSkybox* skybox2;
 
     MFScene scene;
-    u64 entity;
-    MFArray materialImages;
+    u64 entityCount;
+    u64* entities;
+    MFArray* materialImages;
     
     LightUBOData lightData;
     UBOData cameraUboData;
