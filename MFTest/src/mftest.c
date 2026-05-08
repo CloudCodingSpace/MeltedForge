@@ -80,8 +80,8 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
     modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
 
     MFResourceSet** set = &component->model.meshes[meshIdx].mat.set;
-    mfResourceSetsBind(0, 1, set, state->pipeline);
-    mfPipelinePushConstant(state->pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
+    mfResourceSetsBind(0, 1, set, pipeline);
+    mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
 
     MF_PROFILE_ZONE_END(__temp);
 }

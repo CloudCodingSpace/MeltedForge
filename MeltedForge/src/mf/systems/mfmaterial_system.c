@@ -80,6 +80,10 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
     for(u64 i = 0; i < model->meshCount; i++) {
         MFArray arr = mfArrayCreate(MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
         arr.len = MF_MODEL_MAT_TEXTURE_MAX;
+        for (u32 i = 0; i < MF_MODEL_MAT_TEXTURE_MAX; i++) {
+            MFGpuImage* nullImg = mfnull;
+            mfArraySetElement(arr, MFGpuImage*, i, nullImg);
+        }
 
         MFMeshMaterial mat = model->meshes[i].mat;
 
