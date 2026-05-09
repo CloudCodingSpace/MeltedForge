@@ -39,18 +39,18 @@ void main() {
     mat3 TBN = mat3(oTangent, bitangent, oNormal);
     vec3 normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : oNormal;
 
-    MFPhongLightingInfo info;
+    MFPbrLightingInfo info;
     info.normal = normal;
     info.camPos = ubo.camPos;
     info.fragPos = oFragPos;
     info.lightColor = ubo.lightColor;
-    info.lightDir = ubo.lightPos - oFragPos;
+    info.lightPos = ubo.lightPos;
+    info.roughness = 0.5;
+    info.metalness = 0.2;
     info.lightIntensity = ubo.lightIntensity;
-    info.ambientFactor = ubo.ambientFactor;
-    info.specularFactor = ubo.specularFactor;
-    info.isPoint = ubo.isPoint == 1;
+    info.albedoColor = albedo.rgb;
 
-    outColor = albedo * vec4(mfComputePhongLighting(info), 1.0);
+    outColor = vec4(mfComputePbrLighting(info), 1.0);
 
     outColor.rgb = outColor.rgb / (outColor.rgb + 1);
     outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));

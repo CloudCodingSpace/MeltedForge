@@ -1,6 +1,7 @@
 #ifndef MFSHADER_UTILS
 #define MFSHADER_UTILS
 
+////////////////////////             Phong lighting                /////////////////////////////////
 struct MFPhongLightingInfo {
     vec3 normal;
     vec3 fragPos;
@@ -13,7 +14,7 @@ struct MFPhongLightingInfo {
     bool isPoint;
 };
 
-vec3 mfComputePhongLighting(MFPhongLightingInfo info) {
+vec3 mfComputePhongLighting(in MFPhongLightingInfo info) {
     vec3 norm = normalize(info.normal);
     vec3 dir = normalize(info.lightDir);
 
@@ -35,6 +36,64 @@ vec3 mfComputePhongLighting(MFPhongLightingInfo info) {
         color *= attenuation;
     }
     return color * info.lightIntensity;
+}
+
+////////////////////////             Pbr lighting                /////////////////////////////////
+const float PI = 3.14159265358979323846;
+
+struct MFPbrLightingInfo {
+    vec3 normal;
+    float roughness, metalness, lightIntensity;
+    vec3 lightColor;
+    vec4 diffuseIrradianceSample;
+    vec3 albedoColor;
+    vec3 camPos;
+    vec3 fragPos;
+    vec3 lightPos;
+};
+
+float _mfGeoSmithApprox(float x, float roughness) {
+    float k = pow(roughness + 1, 2) / 8.0;
+    return x / (x * (1 - k) + k);
+}
+
+vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
+    float roughness = max(info.roughness, 0.03);
+
+    vec3 N = normalize(info.normal);
+    vec3 V = normalize(info.camPos - info.fragPos);
+    vec3 L = normalize(info.lightPos - info.fragPos);
+    vec3 H = normalize(V + L);
+
+    float NdotL = max(dot(N, L), 0.0);
+	float NdotV = max(dot(N, V), 0.0);
+	float NdotH = max(dot(N, H), 0.0);
+	float VdotH = max(dot(V, H), 0.0);
+
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, info.albedoColor, info.metalness);
+    vec3 F = F0 + (1.0 - F0) * pow(1- VdotH, 5);
+
+    float a = pow(roughness, 2);
+    float a2 = a * a;
+    float D = a2 / (PI * pow(pow(NdotH, 2) * (a2 - 1.0) + 1, 2));
+    float G = _mfGeoSmithApprox(NdotL, roughness) * _mfGeoSmithApprox(NdotV, roughness);
+
+    vec3 specular = (D * F * G) / (4 * NdotL * NdotV + 1e-3);
+
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - info.metalness;
+
+    float distance2 = dot(info.lightPos - info.fragPos, info.lightPos - info.fragPos);
+    float attenuation = 1.0 / distance2;
+    vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
+
+    vec3 diffuse = info.albedoColor / PI;
+    vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
+    vec3 ambient = 0.01 * info.albedoColor;
+
+    return vec3(LO + ambient);
 }
 
 #endif
