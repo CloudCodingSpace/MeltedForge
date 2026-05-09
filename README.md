@@ -16,7 +16,7 @@
    - Can attach/detach components from entities
    - Basic scene management
    - Material system
- - Model loading along with the material data
+ - GLTF 2.0 model loading along with the material data
     - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
     - UI customization (Using Dear ImGui's styles)
@@ -25,6 +25,7 @@
  - A binary serialization/deserialization api
  - Explicit shader resource management control for resources like UBOs and image samplers.
  - Skybox support (Equirectangular image as input only. HDR format also supported!)
+ - Basic PBR support
 
 ---
 
@@ -52,6 +53,7 @@
  - Animation system
  - Multithreading
  - Async resource handling
+ - IBL (Diffuse + Specular)
 
  ---
 
