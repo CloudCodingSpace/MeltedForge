@@ -111,10 +111,12 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
         MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, 0, appState->renderer);
         MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
-        
+        MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[0], &component->model, 0, appState->renderer);
+
         MFResourceDescription descs[] = {
             mfGpuImageGetDescription(diffuseImage), // NOTE: Description for one image is enough since they have the same bindings 
             mfGpuImageGetDescription(normalImage), // NOTE: Description for one image is enough since they have the same bindings 
+            mfGpuImageGetDescription(metallicRoughnessImage), // NOTE: Description for one image is enough since they have the same bindings 
             mfGpuBufferGetDescription(state->cameraUbo),
             mfGpuBufferGetDescription(state->lightUbo)
         };
@@ -141,10 +143,12 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
 
                 MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[k], &component->model, i, appState->renderer);
                 MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[k], &component->model, i, appState->renderer);
+                MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[0], &component->model, 0, appState->renderer);
 
                 MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
                 mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
                 mfArrayAddElement(&images, MFGpuImage*, normalImage);
+                mfArrayAddElement(&images, MFGpuImage*, metallicRoughnessImage);
 
                 mfResourceSetUpdate(set, &images, &buffers);
 
@@ -232,6 +236,8 @@ static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
             mfGpuImageSetBinding(image, 2);
             image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[i], &component->model, k, appState->renderer);
             mfGpuImageSetBinding(image, 3);
+            image = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[i], &component->model, k, appState->renderer);
+            mfGpuImageSetBinding(image, 4);
         }
 
         MF_FREEMEM(basePath);

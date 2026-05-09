@@ -25,6 +25,7 @@ layout (binding = 1, scalar) uniform LightUBO {
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
 layout (binding = 3) uniform sampler2D u_NormalTex;
+layout (binding = 4) uniform sampler2D u_MetallicRoughness;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 
@@ -34,10 +35,15 @@ void main() {
         discard;
     albedo.rgb = pow(albedo.rgb, vec3(2.2));
 
-    vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
-    vec3 bitangent = normalize(cross(oNormal, oTangent));
-    mat3 TBN = mat3(oTangent, bitangent, oNormal);
-    vec3 normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : oNormal;
+    vec3 normal;
+    {
+        vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
+        vec3 bitangent = normalize(cross(oNormal, oTangent));
+        mat3 TBN = mat3(oTangent, bitangent, oNormal);
+        normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : oNormal;
+    }
+
+    vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
 
     MFPbrLightingInfo info;
     info.normal = normal;
@@ -45,8 +51,8 @@ void main() {
     info.fragPos = oFragPos;
     info.lightColor = ubo.lightColor;
     info.lightPos = ubo.lightPos;
-    info.roughness = 0.5;
-    info.metalness = 0.2;
+    info.roughness = metallicRoughness.g;
+    info.metalness = metallicRoughness.b;
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
 
