@@ -26,6 +26,7 @@
  - Explicit shader resource management control for resources like UBOs and image samplers.
  - Skybox support (Equirectangular image as input only. HDR format also supported!)
  - Basic PBR support
+    - Diffuse IBL support
 
 ---
 
@@ -53,7 +54,6 @@
  - Animation system
  - Multithreading
  - Async resource handling
- - IBL (Diffuse + Specular)
 
  ---
 

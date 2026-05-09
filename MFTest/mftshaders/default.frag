@@ -28,6 +28,7 @@ layout (binding = 3) uniform sampler2D u_NormalTex;
 layout (binding = 4) uniform sampler2D u_MetallicRoughness;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
+layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
 
 void main() {
     vec4 albedo = texture(u_DiffuseTex, oUv);
@@ -55,6 +56,8 @@ void main() {
     info.metalness = metallicRoughness.b;
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
+    info.diffuseIrradianceSample = texture(u_IrradianceMap, normal);
+    info.useIrradianceSample = true;
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 

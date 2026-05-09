@@ -31,7 +31,7 @@ vec3 mfComputePhongLighting(in MFPhongLightingInfo info) {
     vec3 color = info.lightColor * (diffuse + spec + info.ambientFactor);
 
     if(info.isPoint) {
-        float dist = dot(info.lightDir,info. lightDir);
+        float dist = dot(info.lightDir, info.lightDir);
         float attenuation = 1.0 / dist;
         color *= attenuation;
     }
@@ -50,12 +50,17 @@ struct MFPbrLightingInfo {
     vec3 camPos;
     vec3 fragPos;
     vec3 lightPos;
+    bool useIrradianceSample;
 };
 
 float _mfGeoSmithApprox(float x, float roughness) {
     float k = pow(roughness + 1, 2) / 8.0;
     return x / (x * (1 - k) + k);
 }
+
+vec3 _mfFresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+} 
 
 vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     float roughness = max(info.roughness, 0.03);
@@ -72,7 +77,7 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, info.albedoColor, info.metalness);
-    vec3 F = F0 + (1.0 - F0) * pow(1- VdotH, 5);
+    vec3 F = info.useIrradianceSample ? _mfFresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness) : (F0 + (1.0 - F0) * pow(1- VdotH, 5));
 
     float a = pow(roughness, 2);
     float a2 = a * a;
@@ -89,9 +94,11 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     float attenuation = 1.0 / distance2;
     vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
 
+    vec3 irradiance = info.useIrradianceSample ? info.diffuseIrradianceSample.rgb : vec3(1.0);
     vec3 diffuse = info.albedoColor / PI;
+    diffuse *= irradiance;
     vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
-    vec3 ambient = 0.01 * info.albedoColor;
+    vec3 ambient = kD * diffuse;
 
     return vec3(LO + ambient);
 }
