@@ -18,10 +18,7 @@ typedef struct LightUBOData_s {
     MFVec3 lightPos;
     MFVec3 camPos;
     MFVec3 lightColor;
-    f32 ambientFactor;
-    f32 specularFactor;
     f32 lightIntensity;
-    int isPoint;
     int useNormalMap;
 } LightUBOData;
 

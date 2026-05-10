@@ -202,13 +202,10 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     config.stage = MF_SHADER_STAGE_FRAGMENT;
     
     state->lightData = (LightUBOData) {
-        .ambientFactor = 0.01f,
         .camPos = state->scene.camera.pos,
         .lightPos = (MFVec3){0.0f, 20.0f, 10.0f},
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
-        .specularFactor = 128,
         .lightIntensity = 100,
-        .isPoint = true,
         .useNormalMap = true
     };
     
@@ -481,19 +478,14 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             mfCopyVec3ToFloatArr(colorData, state->lightData.lightColor);
 
             igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
-            igDragFloat("Ambient Factor", &state->lightData.ambientFactor, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
-            igDragFloat("Specular Factor", &state->lightData.specularFactor, 0.1f, 2.0f, 512.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
 
-            bool isPoint = state->lightData.isPoint;
             bool useNormalMap = state->lightData.useNormalMap;
 
-            igCheckbox("Point lighting", &isPoint);
             igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Show irradiance map", &state->showIrradiance);
 
-            state->lightData.isPoint = isPoint;
             state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);
             state->lightData.lightColor = mfFloatArrToVec3(colorData);

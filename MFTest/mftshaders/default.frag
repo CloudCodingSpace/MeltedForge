@@ -16,10 +16,7 @@ layout (binding = 1, scalar) uniform LightUBO {
     vec3 lightPos;
     vec3 camPos;
     vec3 lightColor;
-    float ambientFactor;
-    float specularFactor;
     float lightIntensity;
-    int isPoint;
     int useNormalMap;
 } ubo;
 
