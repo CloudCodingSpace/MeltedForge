@@ -21,11 +21,11 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mftskyboxes" DESTINATION "${CMAKE_BINARY_
 
 set(SPIRV_SHADERS "")
 foreach(SHADER ${SHADERS_VERT})
-    CompileShader(${SHADER} -I${CMAKE_CURRENT_SOURCE_DIR}/../MeltedForge/mfassets/shaders ${CMAKE_BINARY_DIR}/mftshaders)
+    CompileShader(${SHADER} -I${CMAKE_CURRENT_SOURCE_DIR}/../MeltedForge/mfassets/shaders ${CMAKE_BINARY_DIR}/mftshaders SPIRV_SHADERS)
 endforeach()
 
 foreach(SHADER ${SHADERS_FRAG})
-    CompileShader(${SHADER} -I${CMAKE_CURRENT_SOURCE_DIR}/../MeltedForge/mfassets/shaders ${CMAKE_BINARY_DIR}/mftshaders)
+    CompileShader(${SHADER} -I${CMAKE_CURRENT_SOURCE_DIR}/../MeltedForge/mfassets/shaders ${CMAKE_BINARY_DIR}/mftshaders SPIRV_SHADERS)
 endforeach()
 
 add_custom_target(Shaders ALL DEPENDS ${SPIRV_SHADERS})

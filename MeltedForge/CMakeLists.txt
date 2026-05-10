@@ -62,16 +62,17 @@ file(GLOB_RECURSE MF_SHADERS_FRAG CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}
 
 set(SPIRV_SHADERS "")
 foreach(SHADER ${MF_SHADERS_VERT})
-    CompileShader(${SHADER} "" ${CMAKE_BINARY_DIR}/mfassets/shaders)
+    CompileShader(${SHADER} "" ${CMAKE_BINARY_DIR}/mfassets/shaders SPIRV_SHADERS)
 endforeach()
 
 foreach(SHADER ${MF_SHADERS_FRAG})
-    CompileShader(${SHADER} "" ${CMAKE_BINARY_DIR}/mfassets/shaders)
+    CompileShader(${SHADER} "" ${CMAKE_BINARY_DIR}/mfassets/shaders SPIRV_SHADERS)
 endforeach()
 
 add_custom_target(MFShaders ALL DEPENDS ${SPIRV_SHADERS})
 
 add_library(mf ${CSRCS})
+add_dependencies(mf MFShaders)
 target_compile_definitions(mf PUBLIC "CIMGUI_DEFINE_ENUMS_AND_STRUCTS")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")

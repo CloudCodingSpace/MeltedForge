@@ -36,7 +36,9 @@ function(EnableFlags target)
     )
 endfunction()
 
-function(CompileShader shader flags output_dir)
+set(SPIRV_SHADERS "")
+
+function(CompileShader shader flags output_dir OUT_LIST)
     get_filename_component(FILE_NAME ${shader} NAME)
     set(SPIRV_NAME "${output_dir}/${FILE_NAME}.spv")
 
@@ -44,9 +46,9 @@ function(CompileShader shader flags output_dir)
         OUTPUT ${SPIRV_NAME}
         COMMAND ${GLSLC_EXECUTABLE} ${flags} ${shader} -o ${SPIRV_NAME}
         DEPENDS ${shader}
-        COMMENT "Compiling ${shader} to ${SPIRV_NAME}"
+        BYPRODUCTS ${SPIRV_NAME}
         VERBATIM
     )
 
-    set(SPIRV_SHADERS ${SPIRV_SHADERS} ${SPIRV_NAME} PARENT_SCOPE)
+    set(${OUT_LIST} ${${OUT_LIST}} ${SPIRV_NAME} PARENT_SCOPE)
 endfunction()
