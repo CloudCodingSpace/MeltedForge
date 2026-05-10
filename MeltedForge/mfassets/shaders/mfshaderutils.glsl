@@ -8,6 +8,7 @@ struct MFPhongLightingInfo {
     vec3 lightDir;
     vec3 camPos;
     vec3 lightColor;
+    vec3 albedo;
     float specularFactor;
     float ambientFactor;
     float lightIntensity;
@@ -35,7 +36,7 @@ vec3 mfComputePhongLighting(in MFPhongLightingInfo info) {
         float attenuation = 1.0 / dist;
         color *= attenuation;
     }
-    return color * info.lightIntensity;
+    return color * info.lightIntensity * info.albedo;
 }
 
 ////////////////////////             Pbr lighting                /////////////////////////////////
