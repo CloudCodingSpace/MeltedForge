@@ -43,6 +43,7 @@ void main() {
     }
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
+    vec4 emission = pow(texture(u_EmissionTex, oUv), vec4(2.2));
 
     MFPbrLightingInfo info;
     info.normal = normal;
@@ -56,7 +57,7 @@ void main() {
     info.albedoColor = albedo.rgb;
     info.diffuseIrradianceSample = texture(u_IrradianceMap, normal);
     info.useIrradianceSample = true;
-    info.emissionColor = texture(u_EmissionTex, oUv).rgb;
+    info.emissionColor = emission.rgb;
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 
