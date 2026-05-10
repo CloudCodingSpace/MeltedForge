@@ -26,6 +26,7 @@ layout (binding = 1, scalar) uniform LightUBO {
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
 layout (binding = 3) uniform sampler2D u_NormalTex;
 layout (binding = 4) uniform sampler2D u_MetallicRoughness;
+layout (binding = 5) uniform sampler2D u_EmissionTex;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
@@ -58,6 +59,7 @@ void main() {
     info.albedoColor = albedo.rgb;
     info.diffuseIrradianceSample = texture(u_IrradianceMap, normal);
     info.useIrradianceSample = true;
+    info.emissionColor = texture(u_EmissionTex, oUv).rgb;
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 

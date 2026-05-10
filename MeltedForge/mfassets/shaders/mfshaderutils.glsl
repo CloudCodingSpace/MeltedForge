@@ -47,6 +47,7 @@ struct MFPbrLightingInfo {
     vec3 lightColor;
     vec4 diffuseIrradianceSample;
     vec3 albedoColor;
+    vec3 emissionColor;
     vec3 camPos;
     vec3 fragPos;
     vec3 lightPos;
@@ -100,7 +101,7 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
     vec3 ambient = kD * diffuse;
 
-    return vec3(LO + ambient);
+    return vec3(LO + ambient + info.emissionColor);
 }
 
 #endif
