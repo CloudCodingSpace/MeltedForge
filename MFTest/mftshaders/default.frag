@@ -43,7 +43,8 @@ void main() {
     }
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
-    vec4 emission = pow(texture(u_EmissionTex, oUv), vec4(2.2));
+    vec4 emission = texture(u_EmissionTex, oUv);
+    emission.rgb = pow(emission.rgb, vec3(2.2));
 
     MFPbrLightingInfo info;
     info.normal = normal;
