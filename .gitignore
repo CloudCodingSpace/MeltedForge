@@ -5,5 +5,4 @@ build
 out
 .vs
 vkconfig.txt
-*.spv
 build-tracy
