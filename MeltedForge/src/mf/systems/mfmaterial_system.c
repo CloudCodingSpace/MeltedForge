@@ -10,18 +10,26 @@ extern "C" {
 typedef struct {
     u64 path_hash;
     u32 rgba;
+    char* path;
     u8 type;
-    u8 padding[3];
 } TextureDescription;
+
+typedef struct {
+    u64 descHash;
+    TextureDescription description;
+    MFGpuImage* image;
+} Entry;
 
 typedef struct MFMaterialSystemState_s {
     bool init;
-    MFHashMap map;
+    MFArray array;
 } MFMaterialSystemState;
 
 static MFMaterialSystemState s_State = {0};
 
 static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMaterial* mat, void* renderer);
+static bool compareEntry(Entry* entry, const char* path, u32 rgba);
+static Entry* findEntry(MFArray* array, const char* path, u32 rgba, u64 descHash);
 static u32 arrayToU32(f32* data);
 
 void mfMaterialSystemInitialize(void) {
@@ -29,7 +37,7 @@ void mfMaterialSystemInitialize(void) {
         MF_FATAL_ABORT(mfGetLogger(), "The material system is already initialised!");
     }
 
-    s_State.map = mfHashMapCreate(5, sizeof(TextureDescription), sizeof(MFGpuImage*));
+    s_State.array = mfArrayCreate(2, sizeof(Entry));
 
     s_State.init = true;
 }
@@ -39,17 +47,16 @@ void mfMaterialSystemShutdown(void) {
         MF_FATAL_ABORT(mfGetLogger(), "The material system isn't initialised!");
     }
 
-    for(u64 i = 0; i < s_State.map.buckets.len; i++) {
-        MFArray* bucket = &mfArrayGetElement(s_State.map.buckets, MFArray, i);
-        for(u64 j = 0; j < bucket->len; j++) {
-            u8* entry = &mfArrayGetElement(*bucket, u8, j * bucket->elementSize);
-            void* entry_value = entry + sizeof(u64) + s_State.map.keySize;
-            MFGpuImage* image = *(MFGpuImage**)entry_value;
-            mfGpuImageDestroy(image);
-        }
+    for(u64 i = 0; i < s_State.array.len; i++) {
+        Entry* entry = &mfArrayGetElement(s_State.array, Entry, i);
+        if(entry->description.path)
+            MF_FREEMEM(entry->description.path);
+        if(entry->image)
+            mfGpuImageDestroy(entry->image);
+        MF_SETMEM(entry, 0, sizeof(Entry));
     }
 
-    mfHashMapDestroy(&s_State.map);
+    mfArrayDestroy(&s_State.array);
 
     s_State.init = false;
     MF_SETMEM(&s_State, 0, sizeof(MFMaterialSystemState));
@@ -80,10 +87,6 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
     for(u64 i = 0; i < model->meshCount; i++) {
         MFArray arr = mfArrayCreate(MF_MODEL_MAT_TEXTURE_MAX, sizeof(MFGpuImage*));
         arr.len = MF_MODEL_MAT_TEXTURE_MAX;
-        for (u32 i = 0; i < MF_MODEL_MAT_TEXTURE_MAX; i++) {
-            MFGpuImage* nullImg = mfnull;
-            mfArraySetElement(arr, MFGpuImage*, i, nullImg);
-        }
 
         MFMeshMaterial mat = model->meshes[i].mat;
 
@@ -127,15 +130,47 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
 
                 TextureDescription description = {
                     .rgba = arrayToU32(color),
+                    .path = path ? mfStringDuplicate(path) : mfnull,
                     .path_hash = mfHash_FNV1A(path, sizeof(char) * mfStringLen(path)),
                     .type = (u8)j
                 };
-                MFGpuImage* image = (MFGpuImage*)mfHashMapGetValue(&s_State.map, &description);
-                if(image == mfnull) {
-                    image = loadImage(path, j, &mat, renderer);
-                    mfHashMapAddElement(&s_State.map, &description, &image);
+                u64 hashData[3] = { description.path_hash, description.rgba, description.type };
+                u64 hash = mfHash_FNV1A(hashData, sizeof(hashData));
+                Entry* entry = findEntry(&s_State.array, path, description.rgba, hash);
+                if(entry) {
+                    mfArraySetElement(arr, MFGpuImage*, j, entry->image);
+                    MF_FREEMEM(description.path);
+                } else {
+                    bool inserted = false;
+
+                    for(u64 k = 0; k < s_State.array.len; k++) {
+                        Entry* e = &mfArrayGetElement(s_State.array, Entry, k);
+
+                        if(hash < e->descHash) {
+                            Entry newEntry = {
+                                .description = description,
+                                .descHash = hash,
+                                .image = loadImage(path, j, &mat, renderer)
+                            };
+
+                            mfArrayInsertAt(&s_State.array, k, &newEntry);
+                            mfArraySetElement(arr, MFGpuImage*, j, newEntry.image);
+                            inserted = true;
+                            break;
+                        }
+                    }
+
+                    if(!inserted) {
+                        Entry newEntry = {
+                            .description = description,
+                            .descHash = hash,
+                            .image = loadImage(path, j, &mat, renderer)
+                        };
+
+                        mfArrayAddElement(&s_State.array, Entry, newEntry);
+                        mfArraySetElement(arr, MFGpuImage*, j, newEntry.image);
+                    }
                 }
-                mfArraySetElement(arr, MFGpuImage*, j, image);
 
                 MF_FREEMEM(path);
             }
@@ -195,7 +230,6 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         if(mfGpuImageIsValid(image))
             return image;
     }
-
     MFMeshMaterial* mat = &model->meshes[meshIdx].mat;
 
     f32 colorF[3] = {0};
@@ -235,14 +269,19 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
 
     TextureDescription desc = {
         .rgba = rgba,
+        .path = mfnull,
         .path_hash = 0,
         .type = (u8)type
     };
 
-    MFGpuImage* entry = (MFGpuImage*)mfHashMapGetValue(&s_State.map, &desc);
-    if(entry != mfnull) {
-        mfArraySetElement(meshArray, MFGpuImage*, type, entry);
-        return entry;
+    u64 hashData[3] = { desc.path_hash, desc.rgba, desc.type };
+    u64 hash = mfHash_FNV1A(hashData, sizeof(hashData));
+
+    Entry* entry = findEntry(&s_State.array, mfnull, rgba, hash);
+
+    if(entry) {
+        mfArraySetElement(meshArray, MFGpuImage*, type, entry->image);
+        return entry->image;
     }
 
     MFGpuImage* img;
@@ -267,7 +306,26 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     };
     img = mfGpuImageCreate(renderer, config);
 
-    mfHashMapAddElement(&s_State.map, &desc, &img);
+    Entry newEntry = {
+        .descHash = hash,
+        .description = desc,
+        .image = img
+    };
+
+    bool inserted = false;
+    for(u64 k = 0; k < s_State.array.len; k++) {
+        Entry* e = &mfArrayGetElement(s_State.array, Entry, k);
+
+        if(hash < e->descHash) {
+            mfArrayInsertAt(&s_State.array, k, &newEntry);
+            inserted = true;
+            break;
+        }
+    }
+
+    if(!inserted) {
+        mfArrayAddElement(&s_State.array, Entry, newEntry);
+    }
 
     mfArraySetElement(meshArray, MFGpuImage*, type, img);
     return img;
@@ -345,6 +403,68 @@ error_return:
         stbi_image_free(pixels);
 
     return image;
+}
+
+static bool compareEntry(Entry* entry, const char* path, u32 rgba) {
+    u64 h = path ? mfHash_FNV1A(path, sizeof(char) * mfStringLen(path)) : 0;
+    if((entry->description.path_hash == h) &&
+        (entry->description.rgba == rgba)) {
+        if(path && entry->description.path) {
+            if(mfStringCompare(entry->description.path, path) == 0) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static Entry* findEntry(MFArray* array, const char* path, u32 rgba, u64 descHash) {
+    if(array->len == 0) 
+        return mfnull;
+
+    u64 low = 0;
+    u64 high = array->len - 1;
+
+    while(low <= high) {
+        u64 mid = low + ((high - low) / 2);
+        Entry* entry = &mfArrayGetElement(*array, Entry, mid);
+
+        if(entry->descHash == descHash) {
+            for(i64 i = (i64)mid; i >= 0; i--) {
+                Entry* e = &mfArrayGetElement(*array, Entry, i);
+                if(e->descHash != descHash) 
+                    break;
+                if(compareEntry(e, path, rgba)) 
+                    return e;
+            }
+
+            for(u64 i = mid + 1; i < array->len; i++) {
+                Entry* e = &mfArrayGetElement(*array, Entry, i);
+                if(e->descHash != descHash) 
+                    break;
+                if(compareEntry(e, path, rgba)) 
+                    return e;
+            }
+
+            return mfnull;
+        }
+        else if(entry->descHash < descHash) {
+            low = mid + 1;
+        }
+        else {
+            if(mid == 0)
+                break;
+            high = mid - 1;
+        }
+    }
+
+    return mfnull;
 }
 
 static u32 arrayToU32(f32* data) {
