@@ -510,7 +510,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
                     
                     igDragFloat3("Postion", position, 0.1f, -1e6f, 1e6f, mfnull, ImGuiSliderFlags_None);
                     igDragFloat3("Scale", scale, 0.1f, 1.0f, 1e6f, mfnull, ImGuiSliderFlags_None);
-                    igDragFloat3("Rotation (In degrees)", rotation, 0.1f, 0.0f, 360.0f, mfnull, ImGuiSliderFlags_None);
+                    igDragFloat3("Rotation (In degrees)", rotation, 0.1f, 360 * -1e5f, 360 * 1e5f, mfnull, ImGuiSliderFlags_None);
                 
                     transformComponent->position = mfFloatArrToVec3(position);
                     transformComponent->scale = mfFloatArrToVec3(scale);

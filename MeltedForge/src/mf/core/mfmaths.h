@@ -832,7 +832,7 @@ MF_INLINE void mfCopyVec2ToFloatArr(f32* out, MFVec2 v) {
 
 MF_INLINE MFVec2 mfCopyFloatArrToVec2(f32* in) {
     MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
-    return mfVec2Create(in[0], in[1]);
+    return (MFVec2) { in[0], in[1] };
 }
 
 MF_INLINE void mfCopyVec3ToFloatArr(f32* out, MFVec3 v) {
@@ -844,7 +844,7 @@ MF_INLINE void mfCopyVec3ToFloatArr(f32* out, MFVec3 v) {
 
 MF_INLINE MFVec3 mfFloatArrToVec3(f32* in) {
     MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
-    return mfVec3Create(in[0], in[1], in[2]);
+    return (MFVec3) { in[0], in[1], in[2] };
 }
 
 MF_INLINE void mfCopyVec4ToFloatArr(f32* out, MFVec4 v) {
@@ -857,7 +857,7 @@ MF_INLINE void mfCopyVec4ToFloatArr(f32* out, MFVec4 v) {
 
 MF_INLINE MFVec4 mfCopyFloatArrToVec4(f32* in) {
     MF_PANIC_IF(in == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
-    return mfVec4Create(in[0], in[1], in[2], in[3]);
+    return (MFVec4) { in[0], in[1], in[2], in[3] };
 }
 
 #ifdef __cplusplus
