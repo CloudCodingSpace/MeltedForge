@@ -42,6 +42,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo info);
 void VulkanImageDestroy(VulkanImage* image);
 
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels);
+void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkAccessFlagBits srcAccess, VkPipelineStageFlagBits srcStage);
 
 #ifdef __cplusplus
 }

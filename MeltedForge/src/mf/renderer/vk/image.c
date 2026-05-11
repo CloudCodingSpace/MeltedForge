@@ -235,35 +235,42 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
     VulkanBufferFree(&staging, ctx);
 
-    if(image->info.generateMipmaps && (image->info.mipLevels > 1)) {
-        // Checking if image blit is supported or not!
-        {
-            VkFormatProperties props = {0};
-            vkGetPhysicalDeviceFormatProperties(ctx->physicalDevice, image->info.format, &props);
-            if(!(props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
-                slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "(From the vulkan backend) VkFormat %s doesn't support blits, which is required for generating mipmaps!", string_VkFormat(image->info.format));
-                return;
-            }
+    if(image->info.generateMipmaps && (image->info.mipLevels > 1))
+        VulkanImageGenerateMipmaps(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+}
+
+void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkAccessFlagBits srcAccess, VkPipelineStageFlagBits srcStage) {
+    VulkanBackendCtx* ctx = image->info.ctx;
+    
+    // Checking if image blit is supported or not!
+    {
+        VkFormatProperties props = {0};
+        vkGetPhysicalDeviceFormatProperties(ctx->physicalDevice, image->info.format, &props);
+        if(!(props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "(From the vulkan backend) VkFormat %s doesn't support blits, which is required for generating mipmaps!", string_VkFormat(image->info.format));
+            return;
         }
+    }
 
-        VkCommandBuffer cmd = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
-        VkFence fence;
-        {
-            VkFenceCreateInfo info = {
-                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
-            };
+    VkCommandBuffer cmd = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
+    VkFence fence;
+    {
+        VkFenceCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+        };
 
-            VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &fence));
-        }
+        VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &fence));
+    }
 
-        VulkanCommandBufferBegin(cmd, true);
+    VulkanCommandBufferBegin(cmd, true);
 
+    for(u32 layer = 0; layer < image->info.arrayLayers; layer++) {
         VkImageMemoryBarrier barrier = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             .subresourceRange = {
                 .aspectMask = image->info.aspectFlags,
-                .baseArrayLayer = 0,
-                .layerCount = image->info.arrayLayers,
+                .baseArrayLayer = layer,
+                .layerCount = 1,
                 .levelCount = 1,
                 .baseMipLevel = 0
             },
@@ -275,12 +282,12 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
         for(i32 i = 1; i < image->info.mipLevels; i++) {
             barrier.subresourceRange.baseMipLevel = i - 1;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.oldLayout = oldLayout;
             barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.srcAccessMask = srcAccess;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            vkCmdPipelineBarrier(cmd, srcStage, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                 0, 0, mfnull, 0, mfnull, 1, &barrier);
         
             VkImageBlit blit = {
@@ -290,14 +297,14 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
                 .dstOffsets[1] = { (w > 1) ? w/2 : 1, (h > 1) ? h/2 : 1, 1},
                 .srcSubresource = {
                     .aspectMask = image->info.aspectFlags,
-                    .baseArrayLayer = 0,
-                    .layerCount = image->info.arrayLayers,
+                    .baseArrayLayer = layer,
+                    .layerCount = 1,
                     .mipLevel = i - 1,
                 },
                 .dstSubresource = {
                     .aspectMask = image->info.aspectFlags,
-                    .baseArrayLayer = 0,
-                    .layerCount = image->info.arrayLayers,
+                    .baseArrayLayer = layer,
+                    .layerCount = 1,
                     .mipLevel = i,
                 }
             };
@@ -318,27 +325,27 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         }
 
         barrier.subresourceRange.baseMipLevel = image->info.mipLevels - 1;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.oldLayout = oldLayout;
         barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.srcAccessMask = srcAccess;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        vkCmdPipelineBarrier(cmd, srcStage, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                 0, 0, mfnull, 0, mfnull, 1, &barrier);
-        
-        VkSubmitInfo submit = {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &cmd
-        };
-
-        VulkanCommandBufferEnd(cmd);
-
-        VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &submit, fence));
-        VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
-
-        vkDestroyFence(ctx->device, fence, ctx->allocator);
-        VulkanCommandBufferFree(ctx, cmd, ctx->commandPool);
     }
+    
+    VkSubmitInfo submit = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmd
+    };
+
+    VulkanCommandBufferEnd(cmd);
+
+    VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &submit, fence));
+    VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+    vkDestroyFence(ctx->device, fence, ctx->allocator);
+    VulkanCommandBufferFree(ctx, cmd, ctx->commandPool);
 }
 
 #ifdef __cplusplus
