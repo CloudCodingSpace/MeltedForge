@@ -50,7 +50,10 @@ extern "C" {
     #define MF_INLINE static inline
 #endif
 
-//* @note Only works if arr is an array, and not if it is a pointer to the array!
+// @brief Find the size of an array
+// @param arr The stack allocated array
+// @param T Type of the array
+// @note Only works if `arr` is an array, and not if it is a pointer to the array!
 #define MF_ARRAYLEN(arr, T) (sizeof(arr) / sizeof(T))
 
 typedef float f32;
@@ -68,7 +71,13 @@ typedef uint16_t u16;
 
 #pragma region file_funcs
 
-// @note The returned const char* must be freed since it is allocated on the heap
+// @brief Reads a file
+// @return Returns a heap allocated `char*` buffer which needs to be explicitly freed after using
+// @param logger The logger to which errors/warnings will be logged to
+// @param size A pointer to a u64 where the function writes the size of the file content in bytes
+// @param success A pointer to a bool which tells whether the read was successful or not
+// @param path The path to the file
+// @param mode The reading mode of the file, based on C standard's `fopen` function
 MF_INLINE char* mfReadFile(SLogger* logger, u64* size, bool* success, const char* path, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
     MF_PANIC_IF(mode == 0, logger, "The file reading mode provided shouldn't be null!");
@@ -95,6 +104,13 @@ MF_INLINE char* mfReadFile(SLogger* logger, u64* size, bool* success, const char
     return buffer;
 }
 
+// @brief Writes to a file
+// @return Returns a bool indicating if the write to the file was successful or not!
+// @param logger The logger to which errors/warnings will be logged to
+// @param size The size in bytes of the content that is to be written to the file
+// @param path Path of the file which needs to be written to
+// @param data The contents of the file
+// @param mode The writing mode of the file, based on C standard's `fopen` function
 MF_INLINE bool mfWriteFile(SLogger* logger, u64 size, const char* path, const char* data, const char* mode) {
     MF_PANIC_IF(path == 0, logger, "The file path provided shouldn't be null!");
     MF_PANIC_IF(mode == 0, logger, "The file reading mode provided shouldn't be null!");
@@ -121,7 +137,11 @@ MF_INLINE bool mfWriteFile(SLogger* logger, u64 size, const char* path, const ch
 #define mfStringLen(a) strlen(a)
 #define mfStringCompare(a, b) strcmp(a, b)
 
-// @note The returned char* must be freed since it is allocated on the heap
+// @brief Concatenates two non-null and terminating strings
+// @return Returns a heap allocated char* which needs to be explicitly freed after using
+// @param a The first string
+// @param b The second string
+// @note Also, the order of strings `a` and `b` matters. The concatenated string will be like: `<content of a><content of b>`
 MF_INLINE char* mfStringConcatenate(SLogger* logger, const char* a, const char* b) {
     MF_PANIC_IF(a == mfnull, logger, "The first string provided shouldn't be null!");
     MF_PANIC_IF(b == mfnull, logger, "The second string provided shouldn't be null!");
