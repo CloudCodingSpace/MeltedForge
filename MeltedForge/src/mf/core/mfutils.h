@@ -163,7 +163,7 @@ MF_INLINE char* mfStringConcatenate(SLogger* logger, const char* a, const char* 
 }
 
 // @note The returned char* must be freed since it is allocated on the heap
-MF_INLINE char* mfStringSliceLeft(SLogger* logger, const char* a, i32 idx) {
+MF_INLINE char* mfStringSliceRight(SLogger* logger, const char* a, i32 idx) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
     MF_PANIC_IF((idx < 0) || (idx >= mfStringLen(a)), logger, "The string index provided should be valid!");
     
@@ -179,16 +179,15 @@ MF_INLINE char* mfStringSliceLeft(SLogger* logger, const char* a, i32 idx) {
 }
 
 // @note The returned char* must be freed since it is allocated on the heap
-MF_INLINE char* mfStringSliceRight(SLogger* logger, const char* a, i32 idx) {
+MF_INLINE char* mfStringSliceLeft(SLogger* logger, const char* a, i32 idx) {
     MF_PANIC_IF(a == mfnull, logger, "The string provided shouldn't be null!");
     MF_PANIC_IF((idx < 0) || (idx >= mfStringLen(a)), logger, "The string index provided should be valid!");
     
-    char* str = MF_ALLOCMEM(char, (idx + 3) * sizeof(char));
+    char* str = MF_ALLOCMEM(char, (idx + 2) * sizeof(char));
     u64 i;
     for(i = 0; i <= idx; i++) {
         str[i] = a[i];
     }
-    str[i++] = '/';
     str[i++] = '\0';
 
     return str;

@@ -233,7 +233,7 @@ static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
             }
 
             if(!noBasePath) {
-                basePath = mfStringSliceRight(&state->logger, component->path, idx);
+                basePath = mfStringSliceLeft(&state->logger, component->path, idx);
             }
         }
 
