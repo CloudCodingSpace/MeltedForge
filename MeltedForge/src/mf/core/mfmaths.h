@@ -793,6 +793,7 @@ MF_INLINE MFMat3 mfMat4ToMat3(MFMat4 mat) {
     f32* data = mat.data;
 
     MFMat3 m;
+    memset(&m, 0, sizeof(m));
     m.data[0] = data[0];
     m.data[1] = data[1];
     m.data[2] = data[2];
@@ -810,6 +811,7 @@ MF_INLINE MFMat4 mfMat3ToMat4(MFMat3 mat) {
     f32* data = mat.data;
 
     MFMat4 m;
+    memset(&m, 0, sizeof(m));
     m.data[0] = data[0];
     m.data[1] = data[1];
     m.data[2] = data[2];

@@ -24,7 +24,7 @@ typedef struct MFSkyboxConfig_s {
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);
 void mfSkyboxDestroy(MFSkybox* skybox);
 
-void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, bool irradiance);
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, bool irradiance);
 
 // @note The returned MFGpuImage* is read only!
 MFGpuImage* mfSkyboxGetCubemapImage(MFSkybox* skybox);

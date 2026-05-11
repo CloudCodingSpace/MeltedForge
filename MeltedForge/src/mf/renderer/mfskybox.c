@@ -174,15 +174,15 @@ size_t mfSkyboxGetSizeInBytes(void) {
     return sizeof(MFSkybox);
 }
 
-void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, bool irradiance) {
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, bool irradiance) {
     MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
     MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
 
     mfPipelineBind(skybox->pipeline, mfRendererGetViewport(skybox->renderer), mfRendererGetScissor(skybox->renderer));
     
     MFMat4 data[] = {
-        projection,
-        view
+        mfMat4Mul(projection, mfMat3ToMat4(mfMat4ToMat3(view))),
+        model
     };
 
     if(irradiance && skybox->config.generateIrradiance) {
