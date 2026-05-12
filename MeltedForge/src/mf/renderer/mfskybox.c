@@ -27,7 +27,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     {
         MFGpuImageConfig info = {
             .binding = config.binding,
-            .generateMipmaps = false, // TODO: Later enable mipmaps for skybox
+            .generateMipmaps = config.generateMipmaps,
             .width = config.faceSize,
             .height = config.faceSize,
             .isCubemap = true,
@@ -36,6 +36,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         };
         skybox->image = mfGpuImageCreate(renderer, info);
         if(config.generateIrradiance) {
+            info.generateMipmaps = false;
             info.width = info.height = 32;
             skybox->irradiance = mfGpuImageCreate(renderer, info);
         }

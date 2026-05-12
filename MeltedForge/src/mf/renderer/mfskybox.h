@@ -18,7 +18,7 @@ typedef struct MFSkyboxConfig_s {
     u32 binding;
     u64 faceSize;
     MFRenderTarget* renderTarget;
-    bool generateIrradiance;
+    bool generateIrradiance, generateMipmaps;
 } MFSkyboxConfig;
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);

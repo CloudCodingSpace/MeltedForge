@@ -241,6 +241,8 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 
 void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkAccessFlagBits srcAccess, VkPipelineStageFlagBits srcStage) {
     VulkanBackendCtx* ctx = image->info.ctx;
+    if(image->info.mipLevels == 1)
+        return;
     
     // Checking if image blit is supported or not!
     {

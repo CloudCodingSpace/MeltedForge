@@ -210,7 +210,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
                     .baseArrayLayer = 0,
                     .layerCount = 6,
                     .baseMipLevel = 0,
-                    .levelCount = 1
+                    .levelCount = cubemapImage->info.mipLevels
                 }
             };
 
@@ -339,7 +339,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
                 .subresourceRange = {
                     .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                     .baseMipLevel = 0,
-                    .levelCount = 1,
+                    .levelCount = cubemapImage->info.mipLevels,
                     .baseArrayLayer = 0,
                     .layerCount = 6
                 },
@@ -363,6 +363,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     // Cleaning up
     {
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+        VulkanImageGenerateMipmaps(cubemapImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
         vkDestroyFence(ctx->device, fence, ctx->allocator);
         vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
         vkDestroyImageView(ctx->device, view, ctx->allocator);
@@ -533,7 +535,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                     .baseArrayLayer = 0,
                     .layerCount = 6,
                     .baseMipLevel = 0,
-                    .levelCount = 1
+                    .levelCount = cubemapImage->info.mipLevels
                 }
             };
 
@@ -662,7 +664,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                 .subresourceRange = {
                     .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                     .baseMipLevel = 0,
-                    .levelCount = 1,
+                    .levelCount = cubemapImage->info.mipLevels,
                     .baseArrayLayer = 0,
                     .layerCount = 6
                 },
@@ -686,6 +688,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     // Cleaning up
     {
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+        VulkanImageGenerateMipmaps(cubemapImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+        
         vkDestroyFence(ctx->device, fence, ctx->allocator);
         vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
         vkDestroyImageView(ctx->device, view, ctx->allocator);
