@@ -276,20 +276,28 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
             },
             .image = image->image
         };
+        
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcAccessMask = srcAccess;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        vkCmdPipelineBarrier(cmd, srcStage, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                            0, 0, mfnull, 0, mfnull, 1, &barrier);
+
+        barrier.subresourceRange.baseMipLevel = 1;
+        barrier.subresourceRange.levelCount = image->info.mipLevels - 1;
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.srcAccessMask = srcAccess;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;;
+
+        vkCmdPipelineBarrier(cmd, srcStage, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                            0, 0, mfnull, 0, mfnull, 1, &barrier);
 
         u32 w = image->info.width;
         u32 h = image->info.height;
 
         for(i32 i = 1; i < image->info.mipLevels; i++) {
-            barrier.subresourceRange.baseMipLevel = i - 1;
-            barrier.oldLayout = oldLayout;
-            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            barrier.srcAccessMask = srcAccess;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-            vkCmdPipelineBarrier(cmd, srcStage, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                0, 0, mfnull, 0, mfnull, 1, &barrier);
-        
             VkImageBlit blit = {
                 .srcOffsets[0] = {0, 0, 0},
                 .srcOffsets[1] = {w, h, 1},
@@ -311,11 +319,13 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
 
             vkCmdBlitImage(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            barrier.subresourceRange.levelCount = 1;
+            barrier.subresourceRange.baseMipLevel = i;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                 0, 0, mfnull, 0, mfnull, 1, &barrier);
             
             if(w > 1)
@@ -323,15 +333,25 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
             if(h > 1)
                 h /= 2;
         }
-
-        barrier.subresourceRange.baseMipLevel = image->info.mipLevels - 1;
-        barrier.oldLayout = oldLayout;
-        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        barrier.srcAccessMask = srcAccess;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        vkCmdPipelineBarrier(cmd, srcStage, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                0, 0, mfnull, 0, mfnull, 1, &barrier);
     }
+
+    VkImageMemoryBarrier barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .image = image->image,
+        .subresourceRange = {
+            .aspectMask = image->info.aspectFlags,
+            .baseArrayLayer = 0,
+            .layerCount = image->info.arrayLayers,
+            .baseMipLevel = 0,
+            .levelCount = image->info.mipLevels
+        }
+    };
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                0, 0, mfnull, 0, mfnull, 1, &barrier);
     
     VkSubmitInfo submit = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
