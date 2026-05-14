@@ -32,7 +32,7 @@ void main() {
     vec4 albedo = texture(u_DiffuseTex, oUv);
     if(albedo.a < 0.5)
         discard;
-    albedo.rgb = pow(albedo.rgb, vec3(2.2));
+    albedo.rgb = mfGammaCorrectedToLinear(albedo.rgb);
 
     vec3 normal;
     {
@@ -44,7 +44,7 @@ void main() {
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
     vec4 emission = texture(u_EmissionTex, oUv);
-    emission.rgb = pow(emission.rgb, vec3(2.2));
+    emission.rgb = mfGammaCorrectedToLinear(emission.rgb);
 
     MFPbrLightingInfo info;
     info.normal = normal;
@@ -62,6 +62,6 @@ void main() {
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 
-    outColor.rgb = outColor.rgb / (outColor.rgb + 1);
-    outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));
+    outColor.rgb = mfTonemapperReinhard(outColor.rgb);
+    outColor.rgb = mfGammaCorrect(outColor.rgb);
 }
