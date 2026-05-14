@@ -340,8 +340,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .binding = 0,
             .faceSize = 512,
             .environmentPath = "mftskyboxes/1.hdr",
-            .generateIrradiance = true,
-            .generateMipmaps = true
+            .generateIrradiance = true
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
         config.renderTarget = state->renderTarget;

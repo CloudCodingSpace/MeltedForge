@@ -9,6 +9,8 @@ extern "C" {
 #include <string.h>
 #include <vulkan/vulkan_core.h>
 
+#include "core/mfarray.h"
+
 #include "common.h"
 #include "command_buffer.h"
 
@@ -100,6 +102,54 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
     vkGetPhysicalDeviceFeatures2(device, &features);
 
     return IsQueueDataComplete(data) && extSupport && scalarFeatures.scalarBlockLayout;
+}
+
+static u64 RatePhysicalDevice(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties props;
+    VkPhysicalDeviceFeatures features;
+    VkPhysicalDeviceMemoryProperties memory;
+
+    vkGetPhysicalDeviceProperties(device, &props);
+    vkGetPhysicalDeviceFeatures(device, &features);
+    vkGetPhysicalDeviceMemoryProperties(device, &memory);
+
+    u64 score = 0;
+    switch(props.deviceType) {
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            score += 5000;
+            break;
+
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            score += 2000;
+            break;
+
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            score += 1000;
+            break;
+
+        default:
+            score += 100;
+    }
+
+    u64 vram = 0;
+    for(uint32_t i = 0; i < memory.memoryHeapCount; i++) {
+        if(memory.memoryHeaps[i].flags &
+           VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+            vram += memory.memoryHeaps[i].size;
+    }
+
+    score += vram / (1024ULL * 1024ULL * 1024ULL) * 500;
+
+    if(features.samplerAnisotropy)
+        score += 200;
+
+    if(features.geometryShader)
+        score += 100;
+
+    score += VK_API_VERSION_MAJOR(props.apiVersion) * 1000;
+    score += VK_API_VERSION_MINOR(props.apiVersion) * 100;
+
+    return score;
 }
 
 static VulkanScCaps GetScCaps(VulkanBackendCtx* ctx) {
@@ -425,16 +475,30 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
             abort();
         }
 
-        // TODO: Select the most capable physical device if there are more than one
+        MFArray usableDevices = mfArrayCreate(1, sizeof(VkPhysicalDevice));
+        MFArray usableScores = mfArrayCreate(1, sizeof(u64));
         for(u32 i = 0; i < deviceCount; i++) {
             if(IsDeviceUsable(ctx->surface, devices[i])) {
-                ctx->physicalDevice = devices[i];
-                break;
+                mfArrayAddElement(&usableDevices, VkPhysicalDevice, devices[i]);
+                mfArrayAddElement(&usableScores, u64, RatePhysicalDevice(devices[i]));
             }
         }
 
-        MF_FREEMEM(devices);
+        MF_PANIC_IF(usableDevices.len == 0, mfGetLogger(), "(From the vulkan backend) Failed to select a suitable GPU in the current PC!");
+        
+        u64 highestRate = 0;
+        for(u64 i = 0; i < usableDevices.len; i++) {
+            if(highestRate < mfArrayGetElement(usableScores, u64, i)) {
+                highestRate = mfArrayGetElement(usableScores, u64, i);
+                ctx->physicalDevice = mfArrayGetElement(usableDevices, VkPhysicalDevice, i);
+            }
+        }
+
         MF_PANIC_IF(ctx->physicalDevice == mfnull, mfGetLogger(), "(From the vulkan backend) Failed to select a suitable GPU in the current PC!");
+
+        mfArrayDestroy(&usableDevices);
+        mfArrayDestroy(&usableScores);
+        MF_FREEMEM(devices);
 
         ctx->queueData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
     }
