@@ -63,7 +63,6 @@ jobs:
           libvulkan-dev \
           vulkan-tools \
           glslang-tools \
-          shaderc-tools \
           xorg-dev
 
     - name: Verify Vulkan tools
