@@ -107,16 +107,16 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
 
 ////////////////////////             Gamma and Tonemappers                /////////////////////////////////
 
-vec3 mfGammaCorrectedToLinear(vec3 color) {
-    return pow(color, vec3(2.2));
+void mfGammaCorrectedToLinear(inout vec3 color) {
+    color = pow(color, vec3(2.2));
 }
 
-vec3 mfGammaCorrect(vec3 color) {
-    return pow(color, vec3(1.0/2.2));
+void mfGammaCorrect(inout vec3 color) {
+    color = pow(color, vec3(1.0/2.2));
 }
 
-vec3 mfTonemapperReinhard(vec3 color) {
-    return color / (color + vec3(1.0));
+void mfTonemapperReinhard(inout vec3 color) {
+    color = color / (color + vec3(1.0));
 }
 
 #endif
