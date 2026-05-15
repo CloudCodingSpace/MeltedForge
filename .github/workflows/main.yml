@@ -16,25 +16,25 @@ jobs:
       matrix:
         include:
           # GCC Debug
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             build_type: Debug
             cc: gcc
             cxx: g++
 
           # GCC Release
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             build_type: Release
             cc: gcc
             cxx: g++
 
           # Clang Debug
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             build_type: Debug
             cc: clang
             cxx: clang++
 
           # Clang Release
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             build_type: Release
             cc: clang
             cxx: clang++
@@ -67,10 +67,18 @@ jobs:
 
         sudo apt update
 
-    - name: Setup Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
-      with:
-        vulkan-query-version: 1.3.275.0
+    - name: Install Vulkan SDK (Direct APT)
+      run: |
+        # Add LunarG Vulkan SDK repo (using 'noble' for Ubuntu 24.04)
+        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | \
+          sudo gpg --dearmor -o /usr/share/keyrings/lunarg.gpg
+        
+        echo "deb [signed-by=/usr/share/keyrings/lunarg.gpg] https://packages.lunarg.com/vulkan noble main" | \
+          sudo tee /etc/apt/sources.list.d/lunarg-vulkan.list
+        
+        sudo apt update
+        sudo apt install -y vulkan-sdk
+
     - name: Verify Vulkan tools
       run: |
         which glslc
