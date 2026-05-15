@@ -63,7 +63,10 @@ jobs:
           build-essential \
           clang \
           libglfw3-dev \
-          xorg-dev
+          xorg-dev \
+          libwayland-dev \
+          libxkbcommon-dev \
+          wayland-protocols
 
         sudo apt update
 
