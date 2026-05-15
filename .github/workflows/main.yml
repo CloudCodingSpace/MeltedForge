@@ -15,21 +15,25 @@ jobs:
 
       matrix:
         include:
+          # GCC Debug
           - os: ubuntu-latest
             build_type: Debug
             cc: gcc
             cxx: g++
 
+          # GCC Release
           - os: ubuntu-latest
             build_type: Release
             cc: gcc
             cxx: g++
 
+          # Clang Debug
           - os: ubuntu-latest
             build_type: Debug
             cc: clang
             cxx: clang++
 
+          # Clang Release
           - os: ubuntu-latest
             build_type: Release
             cc: clang
@@ -40,10 +44,11 @@ jobs:
       CXX: ${{ matrix.cxx }}
 
     steps:
-    - name: Checkout
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0
 
     - name: Install dependencies
       run: |
@@ -52,17 +57,22 @@ jobs:
         sudo apt install -y \
           cmake \
           ninja-build \
+          build-essential \
+          clang \
           libglfw3-dev \
           libvulkan-dev \
           vulkan-tools \
           glslang-tools \
-          shaderc \
+          shaderc-tools \
           xorg-dev
 
+    - name: Verify Vulkan tools
+      run: |
         which glslc
         glslc --version
+        vulkaninfo --summary || true
 
-    - name: Configure
+    - name: Configure CMake
       run: |
         cmake -B build \
           -G Ninja \
@@ -72,3 +82,7 @@ jobs:
     - name: Build
       run: |
         cmake --build build
+
+    - name: List build output
+      run: |
+        ls -R build

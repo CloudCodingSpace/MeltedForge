@@ -7,6 +7,12 @@ else()
 endif()
 add_compile_definitions(TRACY_ENABLE)
 
+find_program(GLSLC_EXECUTABLE glslc REQUIRED)
+
+if(NOT GLSLC_EXECUTABLE)
+    message(FATAL_ERROR "GLSLC not found! Make sure to download the vulkan sdk and set the VULKAN_SDK environment variable!")
+endif()
+
 function(EnableFlags target)
     if(MSVC)
         target_compile_options(${target} PRIVATE
