@@ -27,6 +27,7 @@ static VKAPI_PTR VkBool32 debugCallback(
         severity = SLOG_SEVERITY_ERROR;
     }
     slogLogMsg(logger, severity, "(From the vulkan backend) %s", pCallbackData->pMessage);
+    return VK_FALSE;
 }
 
 static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
@@ -131,20 +132,23 @@ static u64 RatePhysicalDevice(VkPhysicalDevice device) {
             score += 100;
     }
 
-    u64 vram = 0;
-    for(uint32_t i = 0; i < memory.memoryHeapCount; i++) {
-        if(memory.memoryHeaps[i].flags &
-           VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-            vram += memory.memoryHeaps[i].size;
-    }
-
-    score += vram / (1024ULL * 1024ULL * 1024ULL) * 500;
-
-    if(features.samplerAnisotropy)
+    if(features.multiDrawIndirect)
+        score += 200;
+    if(features.occlusionQueryPrecise)
+        score += 200;
+    if(features.shaderSampledImageArrayDynamicIndexing)
+        score += 200;
+    if(features.shaderStorageBufferArrayDynamicIndexing)
+        score += 200;
+    if(features.shaderStorageImageArrayDynamicIndexing)
+        score += 200;
+    if(features.shaderStorageImageExtendedFormats)
         score += 200;
 
     if(features.geometryShader)
-        score += 100;
+        score += 600;
+    if(features.tessellationShader)
+        score += 600;
 
     score += VK_API_VERSION_MAJOR(props.apiVersion) * 1000;
     score += VK_API_VERSION_MINOR(props.apiVersion) * 100;
@@ -282,7 +286,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
 		if (queueCount > 1)
 		{
 			info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			info.queueFamilyIndexCount = 4;
+			info.queueFamilyIndexCount = queueCount;
 			info.pQueueFamilyIndices = qs;
 		}
 		else
