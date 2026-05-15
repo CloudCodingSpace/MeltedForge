@@ -93,6 +93,7 @@ jobs:
         cmake -B build \
           -G "Unix Makefiles" \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_ENV=GitWorkflow \
           -S .
 
     - name: Build

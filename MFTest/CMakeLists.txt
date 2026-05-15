@@ -25,7 +25,9 @@ add_executable(MFTest ${SOURCES})
 target_link_libraries(MFTest PRIVATE mf)
 EnableFlags(MFTest)
 
-set_target_properties(MFTest PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    OUTPUT_NAME "MFTest"
-)
+if(NOT BUILD_ENV)
+    set_target_properties(MFTest PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        OUTPUT_NAME "MFTest"
+    )
+endif()
