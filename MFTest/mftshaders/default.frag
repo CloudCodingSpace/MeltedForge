@@ -64,6 +64,6 @@ void main() {
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 
-    mfTonemapperReinhard(outColor.rgb);
+    mfTonemapperAces(outColor.rgb);
     mfGammaCorrect(outColor.rgb);
 }
