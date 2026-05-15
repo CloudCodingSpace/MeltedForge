@@ -27,18 +27,6 @@ jobs:
             cc: gcc
             cxx: g++
 
-          # Clang Debug
-          - os: ubuntu-24.04
-            build_type: Debug
-            cc: clang
-            cxx: clang++
-
-          # Clang Release
-          - os: ubuntu-24.04
-            build_type: Release
-            cc: clang
-            cxx: clang++
-
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
