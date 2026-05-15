@@ -55,15 +55,27 @@ jobs:
         sudo apt update
 
         sudo apt install -y \
+          wget \
+          gnupg \
+          software-properties-common \
           cmake \
           ninja-build \
           build-essential \
           clang \
           libglfw3-dev \
-          libvulkan-dev \
-          vulkan-tools \
-          glslang-tools \
           xorg-dev
+
+        # Add LunarG Vulkan SDK repo
+        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | \
+          sudo gpg --dearmor -o /usr/share/keyrings/lunarg.gpg
+
+        wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list \
+          https://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+
+        sudo apt update
+
+        # Install Vulkan SDK
+        sudo apt install -y vulkan-sdk
 
     - name: Verify Vulkan tools
       run: |
