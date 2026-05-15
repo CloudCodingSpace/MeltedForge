@@ -20,6 +20,7 @@ typedef struct LightUBOData_s {
     MFVec3 lightColor;
     f32 lightIntensity;
     int useNormalMap;
+    int useAcesTonemapping;
 } LightUBOData;
 
 typedef struct MFTState_s {

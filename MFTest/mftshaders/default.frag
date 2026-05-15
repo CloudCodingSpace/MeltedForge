@@ -18,6 +18,7 @@ layout (binding = 1, scalar) uniform LightUBO {
     vec3 lightColor;
     float lightIntensity;
     int useNormalMap;
+    int useAcesTonemapping;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
@@ -64,6 +65,6 @@ void main() {
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 
-    mfTonemapperAces(outColor.rgb);
+    (ubo.useAcesTonemapping == 1) ? mfTonemapperAces(outColor.rgb) : mfTonemapperReinhard(outColor.rgb);
     mfGammaCorrect(outColor.rgb);
 }
