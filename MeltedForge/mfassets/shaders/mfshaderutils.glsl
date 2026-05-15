@@ -128,4 +128,23 @@ void mfTonemapperAces(inout vec3 x) {
     x = clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
+vec3 _mfTonemapperUncharted2Tonemap(vec3 x) {
+    float A = 0.15;
+    float B = 0.50;
+    float C = 0.10;
+    float D = 0.20;
+    float E = 0.02;
+    float F = 0.30;
+    float W = 11.2;
+    return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
+void mfTonemapperUncharted2Tonemap(inout vec3 color) {
+    const float W = 11.2;
+    float exposureBias = 2.0;
+    vec3 curr = _mfTonemapperUncharted2Tonemap(exposureBias * color);
+    vec3 whiteScale = 1.0 / _mfTonemapperUncharted2Tonemap(vec3(W));
+    color = curr * whiteScale;
+}
+
 #endif
