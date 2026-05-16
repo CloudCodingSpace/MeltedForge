@@ -36,6 +36,7 @@ The link to tests and apps made using MeltedForge is her :-
  - Skybox support (Equirectangular image as input only. HDR format also supported!)
  - Basic PBR support
     - Diffuse IBL support
+    - Specular IBL support
 
 ---
 
