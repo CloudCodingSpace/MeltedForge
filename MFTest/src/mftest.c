@@ -275,6 +275,8 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         MFMeshComponent mComp = {
             .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
             // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
+            // .path = "mftmeshes/pistol/service_pistol.gltf",
+            // .path = "mftmeshes/sofa/sofa_1k.gltf",
             .perVertSize = sizeof(Vertex)
         };
 

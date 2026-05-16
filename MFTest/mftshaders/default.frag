@@ -47,6 +47,7 @@ void main() {
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
     vec4 emission = texture(u_EmissionTex, oUv);
+    mfGammaCorrectedToLinear(metallicRoughness.rgb);
     mfGammaCorrectedToLinear(emission.rgb);
 
     MFPbrLightingInfo info;
