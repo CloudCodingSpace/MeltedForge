@@ -341,7 +341,7 @@ void MFTOnInit(void* pstate, void* pappState) {
             .binding = 0,
             .faceSize = 512,
             .environmentPath = "mftskyboxes/1.hdr",
-            .generateIrradiance = true
+            .generatePbrMaps = true
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
         config.renderTarget = state->renderTarget;
@@ -423,11 +423,11 @@ void MFTOnRender(void* pstate, void* pappState) {
     mfSceneRender(&state->scene, &config);
 
     if(state->enableRenderTarget) {
-        mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), state->showIrradiance);
+        mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
         mfRenderTargetEnd(state->renderTarget);
     }
     else {
-        mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), state->showIrradiance);
+        mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
     }
 
     MF_PROFILE_ZONE_END(__temp);
@@ -487,7 +487,6 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
             igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Use ACES Tonemapping (Default tonemapper is Reinhard)", &useAcesTonemapping);
-            igCheckbox("Show irradiance map", &state->showIrradiance);
 
             state->lightData.useAcesTonemapping = useAcesTonemapping;
             state->lightData.useNormalMap = useNormalMap;

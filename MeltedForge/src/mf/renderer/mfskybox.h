@@ -13,18 +13,24 @@ extern "C" {
 
 typedef struct MFSkybox_s MFSkybox;
 
+typedef enum MFSkyboxType_e {
+    MF_SKYBOX_TYPE_NORMAL,
+    MF_SKYBOX_TYPE_PREFILTERED,
+    MF_SKYBOX_TYPE_IRRADIANCE
+} MFSkyboxType;
+
 typedef struct MFSkyboxConfig_s {
     const char* environmentPath;
     u32 binding;
     u64 faceSize;
     MFRenderTarget* renderTarget;
-    bool generateIrradiance, generateMipmaps;
+    bool generatePbrMaps, generateMipmaps;
 } MFSkyboxConfig;
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);
 void mfSkyboxDestroy(MFSkybox* skybox);
 
-void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, bool irradiance);
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, MFSkyboxType type);
 
 // @note The returned MFGpuImage* is read only!
 MFGpuImage* mfSkyboxGetCubemapImage(MFSkybox* skybox);

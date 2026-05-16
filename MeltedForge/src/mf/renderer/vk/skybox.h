@@ -15,11 +15,13 @@ struct MFSkybox_s {
     MFMesh mesh;
     MFPipeline* pipeline;
     MFResourceSet* set;
-    MFResourceSet* set2;
+    MFResourceSet* irradianceSet;
+    MFResourceSet* prefilteredSet;
     MFResourceSetLayout* layout;
 
     MFGpuImage* image;
     MFGpuImage* irradiance;
+    MFGpuImage* prefilteredMap;
     MFSkyboxConfig config;
     VulkanBackend* backend;
     MFRenderer* renderer;

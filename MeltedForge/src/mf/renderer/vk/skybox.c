@@ -27,8 +27,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     VulkanImage depthImage, tempImage;
     VulkanPipeline pipeline;
     VkRenderPass pass = mfnull;
-    VkImageView view;
-    VkFramebuffer fb;
+    VkFramebuffer fb = mfnull;
+    VkImageView view = mfnull;
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
     VulkanImage* cubemapImage = (VulkanImage*)mfGpuImageGetBackend(skybox->image);
@@ -274,8 +274,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             vkCmdBindDescriptorSets(cmdBuff, pipeline.bindPoint, pipeline.layout, 0, 1, &sets[0], 0, mfnull);
             
             PCData pcData = {
-                mfMat4Mul(proj, views[i]),
-                0.0f
+                .mat = mfMat4Mul(proj, views[i]),
+                .roughness = 0.0f
             };
 
             vkCmdPushConstants(cmdBuff, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MFMat4) + sizeof(f32), &pcData);
@@ -392,8 +392,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     VulkanImage depthImage, tempImage;
     VulkanPipeline pipeline;
     VkRenderPass pass = mfnull;
-    VkImageView view;
-    VkFramebuffer fb;
+    VkFramebuffer fb = mfnull;
+    VkImageView view = mfnull;
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
     VulkanImage* cubemapImage = (VulkanImage*)mfGpuImageGetBackend(skybox->irradiance);
@@ -412,8 +412,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     {
         VulkanImageInfo info = {
             .ctx = ctx,
-            .width = 32,
-            .height = 32,
+            .width = cubemapImage->info.width,
+            .height = cubemapImage->info.height,
             .gpuResource = false,
             .pixels = mfnull,
             .format = ctx->depthFormat,
@@ -450,7 +450,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
 
         VkPushConstantRange range = {
             .offset = 0,
-            .size = sizeof(MFMat4) * 2,
+            .size = sizeof(MFMat4) + sizeof(f32),
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
         };
 
@@ -468,7 +468,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .cache = skybox->backend->pipelineCache,
             .depthCompareOp = VK_COMPARE_OP_LESS,
             .renderpass = pass,
-            .extent = (VkExtent2D){ .width = 32, .height = 32 },
+            .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
             .hasDepth = true,
             .setLayoutCount = 1,
             .setLayouts = &lay,
@@ -509,8 +509,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .attachmentCount = 2,
             .pAttachments = attachments,
-            .width = 32,
-            .height = 32,
+            .width = cubemapImage->info.width,
+            .height = cubemapImage->info.height,
             .layers = 1,
             .renderPass = pass
         };
@@ -573,7 +573,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                 .pClearValues = clearValue,
                 .framebuffer = fb,
                 .renderArea = {
-                    .extent = { .width = 32, .height = 32 },
+                    .extent = { .width = cubemapImage->info.width, .height = cubemapImage->info.height },
                     .offset = {0, 0}
                 },
                 .renderPass = pass
@@ -585,12 +585,12 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                 .y = 0,
                 .minDepth = 0.0f,
                 .maxDepth = 1.0f,
-                .width = 32,
-                .height = 32
+                .width = cubemapImage->info.width,
+                .height = cubemapImage->info.height
             };
 
             VkRect2D rect = {
-                .extent = { .width = 32, .height = 32 },
+                .extent = { .width = cubemapImage->info.width, .height = cubemapImage->info.height },
                 .offset = { 0, 0 }
             };
 
@@ -599,11 +599,11 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             VkDescriptorSet* sets = (VkDescriptorSet*)mfResourceSetGetBackend(skybox->set);
             vkCmdBindDescriptorSets(cmdBuff, pipeline.bindPoint, pipeline.layout, 0, 1, &sets[0], 0, mfnull);
             
-            MFMat4 pcData[] = {
-                proj,
-                views[i]
+            PCData pcData = {
+                .mat = mfMat4Mul(proj, views[i]),
+                .roughness = 0.0f
             };
-            vkCmdPushConstants(cmdBuff, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MFMat4) * 2, pcData);
+            vkCmdPushConstants(cmdBuff, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MFMat4) + sizeof(f32), &pcData);
             VulkanBuffer* vertBuffer = (VulkanBuffer*)mfGpuBufferGetBackend(skybox->mesh.vertBuffer);
             VulkanBuffer* indexBuffer = (VulkanBuffer*)mfGpuBufferGetBackend(skybox->mesh.indBuffer);
             VkDeviceSize offsets[1] = {0};
@@ -649,8 +649,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                         .mipLevel = 0
                     },
                     .extent = {
-                        32,
-                        32,
+                        cubemapImage->info.width,
+                        cubemapImage->info.height,
                         1
                     }
                 };

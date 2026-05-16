@@ -35,10 +35,19 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             .binding = 0
         };
         skybox->image = mfGpuImageCreate(renderer, info);
-        if(config.generateIrradiance) {
-            info.generateMipmaps = false;
-            info.width = info.height = 32;
-            skybox->irradiance = mfGpuImageCreate(renderer, info);
+        if(config.generatePbrMaps) {
+            // Irradiance map
+            {
+                info.generateMipmaps = false;
+                info.width = info.height = 32;
+                skybox->irradiance = mfGpuImageCreate(renderer, info);
+            }
+            // Prefiltered map
+            {
+                info.generateMipmaps = true;
+                info.width = info.height = 128;
+                skybox->prefilteredMap = mfGpuImageCreate(renderer, info);
+            }
         }
     }
 
@@ -80,7 +89,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     // Resources
     {
         MFResourceDescription description = mfGpuImageGetDescription(skybox->image);
-        skybox->layout = mfResourceSetLayoutCreate(1, &description, 2, renderer);
+        skybox->layout = mfResourceSetLayoutCreate(1, &description, 3, renderer);
 
         skybox->set = mfResourceSetCreate(skybox->layout, renderer);
 
@@ -91,12 +100,17 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             mfArrayDestroy(&array);
         }
         
-        if(config.generateIrradiance) {
-            skybox->set2 = mfResourceSetCreate(skybox->layout, renderer);
+        if(config.generatePbrMaps) {
+            skybox->irradianceSet = mfResourceSetCreate(skybox->layout, renderer);
+            skybox->prefilteredSet = mfResourceSetCreate(skybox->layout, renderer);
 
             MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
             mfArrayAddElement(&array, MFGpuImage*, skybox->irradiance);
-            mfResourceSetUpdate(skybox->set2, &array, mfnull);
+            mfResourceSetUpdate(skybox->irradianceSet, &array, mfnull);
+            
+            mfArraySetElement(array, MFGpuImage*, 0, skybox->prefilteredMap);
+            mfResourceSetUpdate(skybox->prefilteredSet, &array, mfnull);
+
             mfArrayDestroy(&array);
         }
     }
@@ -143,7 +157,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     }
 
     SkyboxConvertEnvMapToSkybox(skybox, config, renderer);
-    if(config.generateIrradiance) {
+    if(config.generatePbrMaps) {
         SkyboxGenerateIrradiance(skybox, config, renderer);
     }
 
@@ -155,9 +169,11 @@ void mfSkyboxDestroy(MFSkybox* skybox) {
     MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
     MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
     
-    if(skybox->config.generateIrradiance) {
-        mfResourceSetDestroy(skybox->set2);
+    if(skybox->config.generatePbrMaps) {
+        mfResourceSetDestroy(skybox->irradianceSet);
         mfGpuImageDestroy(skybox->irradiance);
+        mfResourceSetDestroy(skybox->prefilteredSet);
+        mfGpuImageDestroy(skybox->prefilteredMap);
     }
 
     mfMeshDestroy(&skybox->mesh);
@@ -175,7 +191,7 @@ size_t mfSkyboxGetSizeInBytes(void) {
     return sizeof(MFSkybox);
 }
 
-void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, bool irradiance) {
+void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, MFSkyboxType type) {
     MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
     MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
 
@@ -186,8 +202,13 @@ void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 mod
         model
     };
 
-    if(irradiance && skybox->config.generateIrradiance) {
-        mfResourceSetsBind(0, 1, &skybox->set2, skybox->pipeline);
+    if(skybox->config.generatePbrMaps) {
+        if(type == MF_SKYBOX_TYPE_IRRADIANCE)
+            mfResourceSetsBind(0, 1, &skybox->irradianceSet, skybox->pipeline);
+        else if(type == MF_SKYBOX_TYPE_PREFILTERED)
+            mfResourceSetsBind(0, 1, &skybox->prefilteredSet, skybox->pipeline);
+        else
+            mfResourceSetsBind(0, 1, &skybox->set, skybox->pipeline);
     } else {
         mfResourceSetsBind(0, 1, &skybox->set, skybox->pipeline);
     }

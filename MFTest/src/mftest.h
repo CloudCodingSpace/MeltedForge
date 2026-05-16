@@ -46,7 +46,7 @@ typedef struct MFTState_s {
     
     MFRenderTarget* renderTarget;
     ImVec2 sceneViewport;
-    bool enableRenderTarget, showIrradiance;
+    bool enableRenderTarget;
     
     MFWindow* window;
     void* renderer;
