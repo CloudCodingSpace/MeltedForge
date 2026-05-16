@@ -159,6 +159,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     SkyboxConvertEnvMapToSkybox(skybox, config, renderer);
     if(config.generatePbrMaps) {
         SkyboxGenerateIrradiance(skybox, config, renderer);
+        SkyboxGeneratePrefilteredMap(skybox, config, renderer);
     }
 
     skybox->init = true;

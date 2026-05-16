@@ -30,6 +30,7 @@ struct MFSkybox_s {
 
 void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer);
 void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer);
+void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer);
 
 #ifdef __cplusplus
 }
