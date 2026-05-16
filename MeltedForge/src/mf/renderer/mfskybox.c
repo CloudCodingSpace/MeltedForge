@@ -48,6 +48,14 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
                 info.width = info.height = 128;
                 skybox->prefilteredMap = mfGpuImageCreate(renderer, info);
             }
+            // Brdf LUT
+            {
+                info.generateMipmaps = false;
+                info.isCubemap = false;
+                info.isColorAttachment = true;
+                info.width = info.height = config.faceSize;
+                skybox->brdfLut = mfGpuImageCreate(renderer, info);
+            }
         }
     }
 
@@ -160,6 +168,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     if(config.generatePbrMaps) {
         SkyboxGenerateIrradiance(skybox, config, renderer);
         SkyboxGeneratePrefilteredMap(skybox, config, renderer);
+        SkyboxGenerateBrdfLUT(skybox, config, renderer);
     }
 
     skybox->init = true;
@@ -172,9 +181,10 @@ void mfSkyboxDestroy(MFSkybox* skybox) {
     
     if(skybox->config.generatePbrMaps) {
         mfResourceSetDestroy(skybox->irradianceSet);
-        mfGpuImageDestroy(skybox->irradiance);
         mfResourceSetDestroy(skybox->prefilteredSet);
+        mfGpuImageDestroy(skybox->irradiance);
         mfGpuImageDestroy(skybox->prefilteredMap);
+        mfGpuImageDestroy(skybox->brdfLut);
     }
 
     mfMeshDestroy(&skybox->mesh);
@@ -186,10 +196,6 @@ void mfSkyboxDestroy(MFSkybox* skybox) {
     MF_FREEMEM(skybox->config.environmentPath);
     MF_SETMEM(skybox, 0, sizeof(MFSkybox));
     MF_FREEMEM(skybox);
-}
-
-size_t mfSkyboxGetSizeInBytes(void) {
-    return sizeof(MFSkybox);
 }
 
 void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, MFSkyboxType type) {
@@ -229,6 +235,24 @@ MFGpuImage* mfSkyboxGetIrradianceCubemapImage(MFSkybox* skybox) {
     MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
 
     return skybox->irradiance;
+}
+
+MFGpuImage* mfSkyboxGetPrefilteredCubemapImage(MFSkybox* skybox) {
+    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
+    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
+
+    return skybox->prefilteredMap;
+}
+
+MFGpuImage* mfSkyboxGetBRDFLUT(MFSkybox* skybox) {
+    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
+    MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
+
+    return skybox->brdfLut;
+}
+
+size_t mfSkyboxGetSizeInBytes(void) {
+    return sizeof(MFSkybox);
 }
 
 #ifdef __cplusplus

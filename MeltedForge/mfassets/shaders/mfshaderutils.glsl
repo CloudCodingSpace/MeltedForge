@@ -47,22 +47,41 @@ struct MFPbrLightingInfo {
     float roughness, metalness, lightIntensity;
     vec3 lightColor;
     vec4 diffuseIrradianceSample;
+    vec4 prefilteredSample;
+    vec4 brdfLutSample;
     vec3 albedoColor;
     vec3 emissionColor;
     vec3 camPos;
     vec3 fragPos;
     vec3 lightPos;
-    bool useIrradianceSample;
+    bool useIBLSamples;
 };
+
+vec4 mfSampleFromIrradianceMap(samplerCube map, vec3 normal) {
+    return texture(map, normal);
+}
+
+vec4 mfSampleFromBRDFLUT(sampler2D map, vec3 viewDir, vec3 normal, float roughness) {
+    return texture(map, vec2(max(dot(viewDir, normal), 0.0), roughness));
+}
+
+vec4 mfSampleFromPrefiltered(samplerCube map, vec3 viewDir, vec3 normal, float roughness) {
+    const float MAX_REFLECTION_LOD = 4.0;
+    return textureLod(map, reflect(-viewDir, normal),  roughness * MAX_REFLECTION_LOD);
+}
 
 float _mfGeoSmithApprox(float x, float roughness) {
     float k = pow(roughness + 1, 2) / 8.0;
     return x / (x * (1 - k) + k);
 }
 
+vec3 _mfFresnelSchlick(float cosTheta, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
 vec3 _mfFresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-} 
+}
 
 vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     float roughness = max(info.roughness, 0.03);
@@ -79,7 +98,7 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, info.albedoColor, info.metalness);
-    vec3 F = info.useIrradianceSample ? _mfFresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness) : (F0 + (1.0 - F0) * pow(1- VdotH, 5));
+    vec3 F = info.useIBLSamples ? _mfFresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness) : _mfFresnelSchlick(VdotH, F0);
 
     float a = pow(roughness, 2);
     float a2 = a * a;
@@ -95,12 +114,18 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     float distance2 = dot(info.lightPos - info.fragPos, info.lightPos - info.fragPos);
     float attenuation = 1.0 / distance2;
     vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
-
-    vec3 irradiance = info.useIrradianceSample ? info.diffuseIrradianceSample.rgb : vec3(1.0);
+    
+    vec3 irradiance = info.useIBLSamples ? info.diffuseIrradianceSample.rgb : vec3(1.0);
     vec3 diffuse = info.albedoColor / PI;
     diffuse *= irradiance;
-    vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
+
+    vec3 prefilteredColor = info.prefilteredSample.rgb;
+    vec2 brdf = info.brdfLutSample.rg;
+    vec3 specularIBL = info.useIBLSamples ? prefilteredColor * (F * brdf.x + brdf.y) : vec3(0.0);
+    specular += specularIBL;
+
     vec3 ambient = kD * diffuse;
+    vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
 
     return vec3(LO + ambient + info.emissionColor);
 }

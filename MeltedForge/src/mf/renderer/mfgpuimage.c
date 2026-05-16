@@ -53,6 +53,8 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         info.addressModes[1] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         info.addressModes[2] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     }
+    if(config.isColorAttachment)
+        info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     
     VulkanImageCreate(&image->image, info);
 

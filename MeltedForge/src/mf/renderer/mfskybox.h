@@ -35,6 +35,9 @@ void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 mod
 // @note The returned MFGpuImage* is read only!
 MFGpuImage* mfSkyboxGetCubemapImage(MFSkybox* skybox);
 MFGpuImage* mfSkyboxGetIrradianceCubemapImage(MFSkybox* skybox);
+MFGpuImage* mfSkyboxGetPrefilteredCubemapImage(MFSkybox* skybox);
+MFGpuImage* mfSkyboxGetBRDFLUT(MFSkybox* skybox);
+
 size_t mfSkyboxGetSizeInBytes(void);
 
 #ifdef __cplusplus

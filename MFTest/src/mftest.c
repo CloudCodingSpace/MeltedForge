@@ -107,6 +107,8 @@ static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
     MFGpuImage* skyboxImage = mfSkyboxGetCubemapImage(state->skybox);
     MFGpuImage* irradianceMap = mfSkyboxGetIrradianceCubemapImage(state->skybox);
+    MFGpuImage* prefilteredMap = mfSkyboxGetPrefilteredCubemapImage(state->skybox);
+    MFGpuImage* brdfLut = mfSkyboxGetBRDFLUT(state->skybox);
     // Resource layouts
     {
         MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
@@ -130,9 +132,13 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         {
             mfGpuImageSetBinding(skyboxImage, 0);
             mfGpuImageSetBinding(irradianceMap, 1);
+            mfGpuImageSetBinding(prefilteredMap, 2);
+            mfGpuImageSetBinding(brdfLut, 3);
             MFResourceDescription descs2[] = {
                 mfGpuImageGetDescription(skyboxImage),
-                mfGpuImageGetDescription(irradianceMap)
+                mfGpuImageGetDescription(irradianceMap),
+                mfGpuImageGetDescription(prefilteredMap),
+                mfGpuImageGetDescription(brdfLut)
             };
             state->layout2 = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs2, MFResourceDescription), descs2, 1, state->renderer);
         }
@@ -175,6 +181,8 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             MFArray images = mfArrayCreate(1, sizeof(MFGpuImage*));
             mfArrayAddElement(&images, MFGpuImage*, skyboxImage);
             mfArrayAddElement(&images, MFGpuImage*, irradianceMap);
+            mfArrayAddElement(&images, MFGpuImage*, prefilteredMap);
+            mfArrayAddElement(&images, MFGpuImage*, brdfLut);
             mfResourceSetUpdate(state->set2, &images, mfnull);
             mfArrayDestroy(&images);
         }

@@ -650,7 +650,6 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     // Cleaning up
     {
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
-        VulkanImageGenerateMipmaps(cubemapImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
         
         vkDestroyFence(ctx->device, fence, ctx->allocator);
         vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
@@ -968,6 +967,194 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanPipelineDestroy(ctx, &pipeline);
         VulkanRenderPassDestroy(ctx, pass);
     }   
+}
+
+void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer) {
+    VulkanBackendCtx* ctx = &skybox->backend->ctx;
+    VulkanPipeline pipeline;
+    VkRenderPass pass = mfnull;
+    VkFramebuffer fb = mfnull;
+    VkCommandBuffer cmdBuff = mfnull;
+    VkFence fence = mfnull;
+    VulkanImage* outImage = (VulkanImage*)mfGpuImageGetBackend(skybox->brdfLut);
+    VulkanBuffer vertexBuffer;
+
+    // Vertex buffer
+    {
+        f32 data[] = {
+            //      POS              TEXCOORDS
+            -1.0f, -1.0f, 0.0f,     1.0f, 0.0f,
+             1.0f, -1.0f, 0.0f,     0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f,     0.0f, 1.0f,
+            
+             1.0f,  1.0f, 0.0f,     0.0f, 1.0f,
+            -1.0f,  1.0f, 0.0f,     1.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f,     1.0f, 0.0f
+        };
+        VulkanBufferAllocate(&vertexBuffer, ctx, ctx->commandPool, sizeof(data), data, VULKAN_BUFFER_TYPE_VERTEX);
+    }
+    // Renderpass
+    {
+        VulkanRenderPassInfo info = {
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
+            .hasDepth = false
+        };
+        pass = VulkanRenderPassCreate(ctx, info);
+    }
+    // Pipeline
+    {
+        VkVertexInputBindingDescription binding = {
+            .binding = 0,
+            .inputRate = MF_VERTEX_INPUT_RATE_VERTEX,
+            .stride = sizeof(f32) * 5
+        };
+
+        VkVertexInputAttributeDescription attributes[2];
+        attributes[0] = (VkVertexInputAttributeDescription) {
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .location = 0,
+            .offset = 0
+        };
+        attributes[1] = (VkVertexInputAttributeDescription) {
+            .binding = 0,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .location = 1,
+            .offset = sizeof(f32) * 3
+        };
+
+        VulkanPipelineInfo info = {
+            .attributesCount = 2,
+            .attributes = attributes,
+            .bindingsCount = 1,
+            .bindings = &binding,
+            .vertPath = "mfassets/shaders/mfbrdflut.vert.spv",
+            .fragPath = "mfassets/shaders/mfbrdflut.frag.spv",
+            .cache = skybox->backend->pipelineCache,
+            .depthCompareOp = VK_COMPARE_OP_LESS,
+            .renderpass = pass,
+            .extent = (VkExtent2D){ .width = outImage->info.width, .height = outImage->info.height },
+            .hasDepth = false,
+            .cullMode = VK_CULL_MODE_NONE
+        };
+        VulkanPipelineCreate(ctx, &pipeline, &info);
+    }
+    // Command buffer
+    cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
+    // Image views and framebuffers
+    {
+        VkImageView attachments[2] = {
+            outImage->view,
+        };
+        VkFramebufferCreateInfo fbInfo = {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .attachmentCount = 1,
+            .pAttachments = attachments,
+            .width = outImage->info.width,
+            .height = outImage->info.height,
+            .layers = 1,
+            .renderPass = pass
+        };
+        VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
+    }
+    // Fence
+    {
+        VkFenceCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+        };
+        VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &fence));
+    }
+
+    // Main recording
+    {
+        VulkanCommandBufferBegin(cmdBuff, true);
+
+        VkClearValue clearValue[1] = {
+            skybox->backend->clearColor
+        };
+
+        VkRenderPassBeginInfo begin = {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .clearValueCount = 1,
+            .pClearValues = clearValue,
+            .framebuffer = fb,
+            .renderArea = {
+                .extent = { .width = outImage->info.width, .height = outImage->info.height },
+                .offset = {0, 0}
+            },
+            .renderPass = pass
+        };
+        vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
+        
+        VkViewport vp = {
+            .x = 0,
+            .y = 0,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+            .width = outImage->info.width,
+            .height = outImage->info.height
+        };
+
+        VkRect2D rect = {
+            .extent = { .width = outImage->info.width, .height = outImage->info.height },
+            .offset = { 0, 0 }
+        };
+
+        VulkanPipelineBind(&pipeline, vp, rect, cmdBuff);
+
+        VkDeviceSize offsets[1] = {0};
+        vkCmdBindVertexBuffers(cmdBuff, 0, 1, &vertexBuffer.handle, offsets);
+        vkCmdDraw(cmdBuff, 6, 1, 0, 0);
+
+        vkCmdEndRenderPass(cmdBuff);
+
+        // Transition outImage to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        {
+            VkImageMemoryBarrier barrier = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = outImage->image,
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = outImage->info.mipLevels,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1
+                },
+                .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT
+            };
+
+            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
+        }
+
+        VulkanCommandBufferEnd(cmdBuff);
+
+        VkSubmitInfo info = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cmdBuff
+        };
+        VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, fence));
+    }
+
+    // Cleaning up
+    {
+        VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+        
+        vkDestroyFence(ctx->device, fence, ctx->allocator);
+        vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
+
+        VulkanBufferFree(&vertexBuffer, ctx);
+        VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
+        VulkanPipelineDestroy(ctx, &pipeline);
+        VulkanRenderPassDestroy(ctx, pass);
+    }
 }
 
 #ifdef __cplusplus

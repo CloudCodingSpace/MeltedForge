@@ -8,3 +8,6 @@ not be much readable or elegant, since its purpose is to just stress test the en
 
  - **PBR *(Without Specular IBL)***
 ![pbr_screenshot](./screenshots/pbr_without_ibl.png)
+
+ - **PBR *(With Specular IBL)***
+![pbr_screenshot](./screenshots/pbr_with_ibl.png)

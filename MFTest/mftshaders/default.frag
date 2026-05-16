@@ -28,6 +28,8 @@ layout (binding = 5) uniform sampler2D u_EmissionTex;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
+layout (set = 1, binding = 2) uniform samplerCube u_PrefilteredMap;
+layout (set = 1, binding = 3) uniform sampler2D u_BrdfLUT;
 
 void main() {
     vec4 albedo = texture(u_DiffuseTex, oUv);
@@ -57,9 +59,14 @@ void main() {
     info.metalness = metallicRoughness.b;
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
-    info.diffuseIrradianceSample = texture(u_IrradianceMap, normal);
-    info.useIrradianceSample = true;
     info.emissionColor = emission.rgb;
+
+    vec3 viewDir = normalize(info.camPos - info.fragPos);
+
+    info.useIBLSamples = true;
+    info.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
+    info.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
+    info.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);
 
     mfGammaCorrectedToLinear(info.lightColor);
 
