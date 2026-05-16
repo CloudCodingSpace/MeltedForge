@@ -4,6 +4,7 @@ extern "C" {
 
 #include "skybox.h"
 
+#include "core/mfmaths.h"
 #include "pipeline.h"
 #include "image.h"
 #include "buffer.h"
@@ -12,6 +13,11 @@ extern "C" {
 #include "command_buffer.h"
 
 #include <stb/stb_image.h>
+
+typedef struct PCData {
+    MFMat4 mat;
+    float roughness;
+} PCData;
 
 void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer) {
     VulkanBackendCtx* ctx = &skybox->backend->ctx;
@@ -118,7 +124,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
 
         VkPushConstantRange range = {
             .offset = 0,
-            .size = sizeof(MFMat4) * 2,
+            .size = sizeof(MFMat4) + sizeof(f32),
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
         };
 
@@ -267,11 +273,12 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             VkDescriptorSet* sets = (VkDescriptorSet*)mfResourceSetGetBackend(set);
             vkCmdBindDescriptorSets(cmdBuff, pipeline.bindPoint, pipeline.layout, 0, 1, &sets[0], 0, mfnull);
             
-            MFMat4 pcData[] = {
-                proj,
-                views[i]
+            PCData pcData = {
+                mfMat4Mul(proj, views[i]),
+                0.0f
             };
-            vkCmdPushConstants(cmdBuff, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MFMat4) * 2, pcData);
+
+            vkCmdPushConstants(cmdBuff, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MFMat4) + sizeof(f32), &pcData);
             VulkanBuffer* vertBuffer = (VulkanBuffer*)mfGpuBufferGetBackend(skybox->mesh.vertBuffer);
             VulkanBuffer* indexBuffer = (VulkanBuffer*)mfGpuBufferGetBackend(skybox->mesh.indBuffer);
             VkDeviceSize offsets[1] = {0};
