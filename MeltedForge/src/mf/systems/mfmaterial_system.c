@@ -394,8 +394,8 @@ error_return:
         .generateMipmaps = true
     };
 
-    if(type == MF_MODEL_MAT_TEXTURE_DIFFUSE) {
-        config.generateMipmaps = true;
+    if(type == MF_MODEL_MAT_TEXTURE_METALNESS || type == MF_MODEL_MAT_TEXTURE_NORMAL) {
+        config.generateMipmaps = false;
     }
 
     MFGpuImage* image = mfGpuImageCreate(renderer, config);

@@ -69,8 +69,6 @@ void main() {
     info.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
     info.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);
 
-    mfGammaCorrectedToLinear(info.lightColor);
-
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 
     (ubo.useAcesTonemapping == 1) ? mfTonemapperAces(outColor.rgb) : mfTonemapperReinhard(outColor.rgb);

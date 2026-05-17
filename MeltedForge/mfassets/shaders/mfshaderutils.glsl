@@ -67,7 +67,7 @@ vec4 mfSampleFromBRDFLUT(sampler2D map, vec3 viewDir, vec3 normal, float roughne
 
 vec4 mfSampleFromPrefiltered(samplerCube map, vec3 viewDir, vec3 normal, float roughness) {
     const float MAX_REFLECTION_LOD = 4.0;
-    return textureLod(map, reflect(-viewDir, normal),  roughness * MAX_REFLECTION_LOD);
+    return textureLod(map, normalize(reflect(-viewDir, normal)),  roughness * MAX_REFLECTION_LOD);
 }
 
 float _mfGeoSmithApprox(float x, float roughness) {
@@ -84,7 +84,7 @@ vec3 _mfFresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
 }
 
 vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
-    float roughness = max(info.roughness, 0.03);
+    float roughness = max(info.roughness, 0.1);
 
     vec3 N = normalize(info.normal);
     vec3 V = normalize(info.camPos - info.fragPos);
@@ -117,14 +117,12 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     
     vec3 irradiance = info.useIBLSamples ? info.diffuseIrradianceSample.rgb : vec3(1.0);
     vec3 diffuse = info.albedoColor / PI;
-    diffuse *= irradiance;
 
     vec3 prefilteredColor = info.prefilteredSample.rgb;
     vec2 brdf = info.brdfLutSample.rg;
     vec3 specularIBL = info.useIBLSamples ? prefilteredColor * (F * brdf.x + brdf.y) : vec3(0.0);
-    specular += specularIBL;
 
-    vec3 ambient = kD * diffuse;
+    vec3 ambient = kD * diffuse * irradiance + specularIBL;
     vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
 
     return vec3(LO + ambient + info.emissionColor);

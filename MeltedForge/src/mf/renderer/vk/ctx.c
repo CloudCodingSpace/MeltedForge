@@ -14,7 +14,7 @@ extern "C" {
 #include "common.h"
 #include "command_buffer.h"
 
-static VKAPI_PTR VkBool32 debugCallback(
+static VkBool32 debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
