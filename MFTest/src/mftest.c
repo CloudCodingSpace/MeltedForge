@@ -350,7 +350,7 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFSkyboxConfig config = {
             .binding = 0,
             .faceSize = 512,
-            .environmentPath = "mftskyboxes/1.hdr",
+            .environmentPath = "mftskyboxes/2.hdr",
             .generatePbrMaps = true
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
