@@ -215,7 +215,8 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .lightIntensity = 100,
         .useNormalMap = true,
-        .useAcesTonemapping = true
+        .useAcesTonemapping = true,
+        .useIBL = true
     };
     
     state->lightUbo = mfGpuBufferAllocate(config, appState->renderer);
@@ -494,10 +495,13 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
             bool useNormalMap = state->lightData.useNormalMap;
             bool useAcesTonemapping = state->lightData.useAcesTonemapping;
+            bool useIBL = state->lightData.useIBL;
 
             igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Use ACES Tonemapping (Default tonemapper is Reinhard)", &useAcesTonemapping);
+            igCheckbox("Use IBL", &useIBL);
 
+            state->lightData.useIBL = useIBL;
             state->lightData.useAcesTonemapping = useAcesTonemapping;
             state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);

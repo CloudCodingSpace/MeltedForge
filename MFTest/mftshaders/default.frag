@@ -19,6 +19,7 @@ layout (binding = 1, scalar) uniform LightUBO {
     float lightIntensity;
     int useNormalMap;
     int useAcesTonemapping;
+    int useIBL;
 } ubo;
 
 layout (binding = 2) uniform sampler2D u_DiffuseTex;
@@ -64,7 +65,7 @@ void main() {
 
     vec3 viewDir = normalize(info.camPos - info.fragPos);
 
-    info.useIBLSamples = true;
+    info.useIBLSamples = (ubo.useIBL == 1) ? true : false;
     info.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
     info.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
     info.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);

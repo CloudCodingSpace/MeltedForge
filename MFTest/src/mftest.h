@@ -21,6 +21,7 @@ typedef struct LightUBOData_s {
     f32 lightIntensity;
     int useNormalMap;
     int useAcesTonemapping;
+    int useIBL;
 } LightUBOData;
 
 typedef struct MFTState_s {
