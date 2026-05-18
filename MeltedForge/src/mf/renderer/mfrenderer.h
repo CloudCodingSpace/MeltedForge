@@ -16,7 +16,12 @@ extern "C" {
 
 typedef struct MFRenderer_s MFRenderer;
 
-MFRenderer* mfRendererCreate(const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window);
+typedef struct MFRendererConfig_s {
+    bool enableDepth, vsync, enableUI;
+    const char* appName;
+} MFRendererConfig;
+
+MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window);
 void mfRendererShutdown(MFRenderer* renderer);
 
 bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);

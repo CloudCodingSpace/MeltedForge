@@ -122,9 +122,8 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     vec3 prefilteredColor = info.prefilteredSample.rgb;
     vec2 brdf = info.brdfLutSample.rg;
     vec3 specularIBL = info.useIBLSamples ? prefilteredColor * (F * brdf.x + brdf.y) : vec3(0.0);
-    specular += specularIBL;
 
-    vec3 ambient = kD * diffuse;
+    vec3 ambient = kD * diffuse + specularIBL;
     vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
 
     return vec3(LO + ambient + info.emissionColor);

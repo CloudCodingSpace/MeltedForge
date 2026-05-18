@@ -18,20 +18,20 @@ struct MFRenderer_s {
     bool init;
 };
 
-MFRenderer* mfRendererCreate(const char* appName, bool enableDepth, bool vsync, bool enableUI, MFWindow* window) {
+MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
 
-    VulkanBackendConfig config = {
-        .appName = appName,
-        .vsync = vsync,
-        .enableDepth = enableDepth,
-        .enableUI = enableUI,
+    VulkanBackendConfig vkConfig = {
+        .appName = config.appName,
+        .vsync = config.vsync,
+        .enableDepth = config.enableDepth,
+        .enableUI = config.enableUI,
         .window = window
     };
 
-    VulkanBackendInit(&renderer->backend, &config);
+    VulkanBackendInit(&renderer->backend, &vkConfig);
     renderer->init = true;
 
     return renderer;

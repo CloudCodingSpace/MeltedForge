@@ -21,7 +21,8 @@ static void initApp(void* st, MFAppConfig* config) {
         stbi_image_free(data);
     }
 
-    state->renderer = mfRendererCreate(config->appName, config->enableDepth, config->vsync, config->enableUI, state->window);
+    config->rendererConfig.appName = config->appName;
+    state->renderer = mfRendererCreate(config->rendererConfig, state->window);
 
     mfMaterialSystemInitialize();
 
@@ -68,7 +69,7 @@ static void runApp(void* st, MFAppConfig* config) {
                 MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
                 if(layer->onRender)
                     layer->onRender(layer->state, st);
-                if(config->enableUI && layer->onUIRender)
+                if(config->rendererConfig.enableUI && layer->onUIRender)
                     layer->onUIRender(layer->state, st);
             }
             mfRendererEndframe(state->renderer, state->window);

@@ -20,9 +20,9 @@ MFAppConfig mfClientCreateAppConfig() {
 
     config.layers = layers;
     config.winConfig.resizable = true;
-    config.vsync = false;
-    config.enableUI = true;
-    config.enableDepth = true;
+    config.rendererConfig.vsync = false;
+    config.rendererConfig.enableUI = true;
+    config.rendererConfig.enableDepth = true;
 
     return config;
 }
