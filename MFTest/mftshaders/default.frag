@@ -26,6 +26,7 @@ layout (binding = 2) uniform sampler2D u_DiffuseTex;
 layout (binding = 3) uniform sampler2D u_NormalTex;
 layout (binding = 4) uniform sampler2D u_MetallicRoughness;
 layout (binding = 5) uniform sampler2D u_EmissionTex;
+layout (binding = 6) uniform sampler2D u_AoMap;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
@@ -48,7 +49,7 @@ void main() {
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
     vec4 emission = texture(u_EmissionTex, oUv);
-    mfGammaCorrectedToLinear(metallicRoughness.rgb);
+    // mfGammaCorrectedToLinear(metallicRoughness.rgb);
     mfGammaCorrectedToLinear(emission.rgb);
 
     MFPbrLightingInfo info;
@@ -62,10 +63,13 @@ void main() {
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
     info.emissionColor = emission.rgb;
+    info.ambientOcclusion = texture(u_AoMap, oUv).r;
 
     vec3 viewDir = normalize(info.camPos - info.fragPos);
 
     info.useIBLSamples = (ubo.useIBL == 1) ? true : false;
+    info.iblDiffuseStrength = 1.0;
+    info.iblSpecularStrength = 0.3;
     info.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
     info.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
     info.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);

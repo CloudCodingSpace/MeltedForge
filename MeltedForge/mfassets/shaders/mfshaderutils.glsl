@@ -54,6 +54,9 @@ struct MFPbrLightingInfo {
     vec3 camPos;
     vec3 fragPos;
     vec3 lightPos;
+    float ambientOcclusion;
+    float iblDiffuseStrength;
+    float iblSpecularStrength;
     bool useIBLSamples;
 };
 
@@ -115,15 +118,15 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     float attenuation = 1.0 / distance2;
     vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
     
-    vec3 irradiance = info.useIBLSamples ? info.diffuseIrradianceSample.rgb : vec3(1.0);
+    vec3 irradiance = info.useIBLSamples ? info.diffuseIrradianceSample.rgb * info.iblDiffuseStrength : vec3(1.0);
     vec3 diffuse = info.albedoColor / PI;
-    diffuse *= irradiance;
 
+    vec3 diffuseIBL = diffuse * irradiance * info.ambientOcclusion;
     vec3 prefilteredColor = info.prefilteredSample.rgb;
     vec2 brdf = info.brdfLutSample.rg;
-    vec3 specularIBL = info.useIBLSamples ? prefilteredColor * (F * brdf.x + brdf.y) : vec3(0.0);
+    vec3 specularIBL = info.useIBLSamples ? prefilteredColor * (F * brdf.x + brdf.y) * info.iblSpecularStrength : vec3(0.0);
 
-    vec3 ambient = kD * diffuse + specularIBL;
+    vec3 ambient = diffuseIBL + specularIBL;
     vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
 
     return vec3(LO + ambient + info.emissionColor);
