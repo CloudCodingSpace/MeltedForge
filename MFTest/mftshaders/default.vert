@@ -6,10 +6,12 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 uv;
 layout (location = 3) in vec3 tangent;
 
-layout (location = 4) out vec3 oNormal;
-layout (location = 6) out vec3 oTangent;
-layout (location = 7) out vec2 oUv;
-layout (location = 8) out vec3 oFragPos;
+out VS_OUT {
+    layout (location = 4) out vec3 oNormal;
+    layout (location = 6) out vec3 oTangent;
+    layout (location = 7) out vec2 oUv;
+    layout (location = 8) out vec3 oFragPos;
+} vo;
 
 layout (binding = 0, scalar) uniform UBO {
     mat4 proj;
@@ -25,8 +27,8 @@ void main() {
     vec4 worldPos = md.model * vec4(pos, 1.0);
     gl_Position = ubo.proj * ubo.view * worldPos;
     
-    oNormal = normalize(md.normalMat * normal);
-    oTangent = normalize(md.normalMat * tangent);
-    oFragPos = worldPos.xyz;
-    oUv = uv;
+    vo.oNormal = normalize(md.normalMat * normal);
+    vo.oTangent = normalize(md.normalMat * tangent);
+    vo.oFragPos = worldPos.xyz;
+    vo.oUv = uv;
 }

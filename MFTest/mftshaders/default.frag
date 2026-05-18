@@ -7,12 +7,14 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout (location = 4) in vec3 oNormal;
-layout (location = 6) in vec3 oTangent;
-layout (location = 7) in vec2 oUv;
-layout (location = 8) in vec3 oFragPos;
+in VS_IN {
+    layout (location = 4) vec3 oNormal;
+    layout (location = 6) vec3 oTangent;
+    layout (location = 7) vec2 oUv;
+    layout (location = 8) vec3 oFragPos;
+} vi;
 
-layout (binding = 1, scalar) uniform LightUBO {
+layout (set = 0, binding = 1, scalar) uniform LightUBO {
     vec3 lightPos;
     vec3 camPos;
     vec3 lightColor;
@@ -25,11 +27,11 @@ layout (binding = 1, scalar) uniform LightUBO {
     int useIBL;
 } ubo;
 
-layout (binding = 2) uniform sampler2D u_DiffuseTex;
-layout (binding = 3) uniform sampler2D u_NormalTex;
-layout (binding = 4) uniform sampler2D u_MetallicRoughness;
-layout (binding = 5) uniform sampler2D u_EmissionTex;
-layout (binding = 6) uniform sampler2D u_AoMap;
+layout (set = 0, binding = 2) uniform sampler2D u_DiffuseTex;
+layout (set = 0, binding = 3) uniform sampler2D u_NormalTex;
+layout (set = 0, binding = 4) uniform sampler2D u_MetallicRoughness;
+layout (set = 0, binding = 5) uniform sampler2D u_EmissionTex;
+layout (set = 0, binding = 6) uniform sampler2D u_AoMap;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
@@ -37,28 +39,28 @@ layout (set = 1, binding = 2) uniform samplerCube u_PrefilteredMap;
 layout (set = 1, binding = 3) uniform sampler2D u_BrdfLUT;
 
 void main() {
-    vec4 albedo = texture(u_DiffuseTex, oUv);
+    vec4 albedo = texture(u_DiffuseTex, vi.oUv);
     if(albedo.a < 0.5)
         discard;
     mfGammaCorrectedToLinear(albedo.rgb);
 
     vec3 normal;
     {
-        vec3 texel = texture(u_NormalTex, oUv).rgb * 2.0 - 1.0;
-        vec3 bitangent = normalize(cross(oNormal, oTangent));
-        mat3 TBN = mat3(oTangent, bitangent, oNormal);
-        normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : oNormal;
+        vec3 texel = texture(u_NormalTex, vi.oUv).rgb * 2.0 - 1.0;
+        vec3 bitangent = normalize(cross(vi.oNormal, vi.oTangent));
+        mat3 TBN = mat3(vi.oTangent, bitangent, vi.oNormal);
+        normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : vi.oNormal;
     }
 
-    vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
-    vec4 emission = texture(u_EmissionTex, oUv);
+    vec4 metallicRoughness = texture(u_MetallicRoughness, vi.oUv);
+    vec4 emission = texture(u_EmissionTex, vi.oUv);
     mfGammaCorrectedToLinear(metallicRoughness.rgb);
     mfGammaCorrectedToLinear(emission.rgb);
 
     MFPbrLightingInfo info;
     info.normal = normal;
     info.camPos = ubo.camPos;
-    info.fragPos = oFragPos;
+    info.fragPos = vi.oFragPos;
     info.lightColor = ubo.lightColor;
     info.lightPos = ubo.lightPos;
     info.roughness = metallicRoughness.g;
@@ -66,7 +68,7 @@ void main() {
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
     info.emissionColor = emission.rgb;
-    info.ambientOcclusion = (ubo.useAoMap == 1) ? texture(u_AoMap, oUv).r : 1.0;
+    info.ambientOcclusion = (ubo.useAoMap == 1) ? texture(u_AoMap, vi.oUv).r : 1.0;
 
     vec3 viewDir = normalize(info.camPos - info.fragPos);
 
