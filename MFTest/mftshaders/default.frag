@@ -17,7 +17,10 @@ layout (binding = 1, scalar) uniform LightUBO {
     vec3 camPos;
     vec3 lightColor;
     float lightIntensity;
+    float iblDiffuseStrength;
+    float iblSpecularStrength;
     int useNormalMap;
+    int useAoMap;
     int useAcesTonemapping;
     int useIBL;
 } ubo;
@@ -49,7 +52,7 @@ void main() {
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, oUv);
     vec4 emission = texture(u_EmissionTex, oUv);
-    // mfGammaCorrectedToLinear(metallicRoughness.rgb);
+    mfGammaCorrectedToLinear(metallicRoughness.rgb);
     mfGammaCorrectedToLinear(emission.rgb);
 
     MFPbrLightingInfo info;
@@ -63,13 +66,13 @@ void main() {
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
     info.emissionColor = emission.rgb;
-    info.ambientOcclusion = texture(u_AoMap, oUv).r;
+    info.ambientOcclusion = (ubo.useAoMap == 1) ? texture(u_AoMap, oUv).r : 1.0;
 
     vec3 viewDir = normalize(info.camPos - info.fragPos);
 
     info.useIBLSamples = (ubo.useIBL == 1) ? true : false;
-    info.iblDiffuseStrength = 1.0;
-    info.iblSpecularStrength = 0.3;
+    info.iblDiffuseStrength = ubo.iblDiffuseStrength;
+    info.iblSpecularStrength = ubo.iblSpecularStrength;
     info.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
     info.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
     info.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);

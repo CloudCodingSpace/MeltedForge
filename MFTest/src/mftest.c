@@ -218,7 +218,10 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .lightPos = (MFVec3){0.0f, 20.0f, 10.0f},
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .lightIntensity = 100,
+        .iblDiffuseStrength = 1,
+        .iblSpecularStrength = 0.3f,
         .useNormalMap = true,
+        .useAoMap = true,
         .useAcesTonemapping = true,
         .useIBL = true
     };
@@ -498,16 +501,21 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             igDragFloat3("LightPos", posData, 0.1f, -5000.0f, 5000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igDragFloat("Light Intensity", &state->lightData.lightIntensity, 0.5f, 1.0f, 10000.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
             igColorEdit3("Light Color", colorData, ImGuiColorEditFlags_None);
+            igDragFloat("Diffuse IBL strength", &state->lightData.iblDiffuseStrength, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
+            igDragFloat("Specular IBL strength", &state->lightData.iblSpecularStrength, 0.01f, 0.0f, 1.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
 
             bool useNormalMap = state->lightData.useNormalMap;
+            bool useAoMap = state->lightData.useAoMap;
             bool useAcesTonemapping = state->lightData.useAcesTonemapping;
             bool useIBL = state->lightData.useIBL;
 
             igCheckbox("Use normal map", &useNormalMap);
+            igCheckbox("Use AO map", &useAoMap);
             igCheckbox("Use ACES Tonemapping (Default tonemapper is Reinhard)", &useAcesTonemapping);
             igCheckbox("Use IBL", &useIBL);
 
             state->lightData.useIBL = useIBL;
+            state->lightData.useAoMap = useAoMap;
             state->lightData.useAcesTonemapping = useAcesTonemapping;
             state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);
