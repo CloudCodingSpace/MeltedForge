@@ -57,7 +57,7 @@ typedef struct VulkanBackendCtx_s {
     VkCommandPool commandPool;
 } VulkanBackendCtx;
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync, bool enableDepth, MFWindow* window);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool enableDepth, MFWindow* window);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);

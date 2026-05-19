@@ -69,9 +69,9 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     VkPipelineMultisampleStateCreateInfo msaaState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT, // NOTE: Make it configurable
         .sampleShadingEnable = VK_FALSE // NOTE: Make it configurable
     };
+    msaaState.rasterizationSamples = info->samples;
 
     VkPipelineRasterizationStateCreateInfo rasState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,

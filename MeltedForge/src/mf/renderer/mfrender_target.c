@@ -31,7 +31,7 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
 
     renderTarget->begun = false;
     
-    if(hasDepth && renderTarget->backend->enableDepth) {
+    if(hasDepth && renderTarget->backend->config.enableDepth) {
         VulkanImageInfo info = {
             .ctx = &renderTarget->backend->ctx,
             .width = renderTarget->backend->ctx.swapchainExtent.width,
@@ -57,7 +57,7 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
             .format = renderTarget->backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .hasDepth = hasDepth && renderTarget->backend->enableDepth,
+            .hasDepth = hasDepth && renderTarget->backend->config.enableDepth,
             .renderTarget = true
         };
 
@@ -91,13 +91,13 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
             renderTarget->images[i].view
         };
 
-        if(hasDepth && renderTarget->backend->enableDepth) {
+        if(hasDepth && renderTarget->backend->config.enableDepth) {
             views[1] = renderTarget->depthImage.view;
             count++;
         }
 
         renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.swapchainExtent);
-        if(renderTarget->backend->enableUI)
+        if(renderTarget->backend->config.enableUI)
             renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
@@ -128,14 +128,14 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     }
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        if(renderTarget->backend->enableUI)
+        if(renderTarget->backend->config.enableUI)
             ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
         
         VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
         VulkanImageDestroy(&renderTarget->images[i]);
     }
 
-    if(renderTarget->hasDepth && renderTarget->backend->enableDepth)
+    if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth)
         VulkanImageDestroy(&renderTarget->depthImage);
     
     VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
@@ -158,16 +158,16 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     // Deleting
     {
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            if(renderTarget->backend->enableUI)
+            if(renderTarget->backend->config.enableUI)
                 ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
             
             VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
             VulkanImageDestroy(&renderTarget->images[i]);
         }
         
-        if(renderTarget->hasDepth && renderTarget->backend->enableDepth)
+        if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth)
             VulkanImageDestroy(&renderTarget->depthImage);
-        if(renderTarget->backend->enableUI)
+        if(renderTarget->backend->config.enableUI)
             MF_SETMEM(renderTarget->igSets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->frameBuffers, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
@@ -175,7 +175,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     }
     // Re-creating
     {
-        if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
+        if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
             VulkanImageInfo info = {
                 .ctx = &renderTarget->backend->ctx,
                 .width = extent.x,
@@ -223,13 +223,13 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 renderTarget->images[i].view
             };
 
-            if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
+            if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
                 views[1] = renderTarget->depthImage.view;
                 count++;
             }
 
             renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, (VkExtent2D){extent.x, extent.y});
-            if(renderTarget->backend->enableUI)
+            if(renderTarget->backend->config.enableUI)
                 renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
     }
@@ -286,10 +286,10 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     {
         u32 count = 1;
         VkClearValue values[2] = {
-            renderTarget->backend->clearColor
+            renderTarget->clearValue
         };
         
-        if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
+        if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
             count++;
             values[1].depthStencil.depth = 1.0f;
             values[1].depthStencil.stencil = 0;
@@ -343,7 +343,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
         renderTarget->clearValue
     };
     
-    if(renderTarget->hasDepth && renderTarget->backend->enableDepth) {
+    if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
         count++;
         values[1].depthStencil.depth = 1.0f;
         values[1].depthStencil.stencil = 0;
@@ -444,7 +444,7 @@ ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
-    if(!renderTarget->backend->enableUI)
+    if(!renderTarget->backend->config.enableUI)
         return mfnull;
     return (ImTextureID)renderTarget->igSets[renderTarget->backend->frameIndex];
 }

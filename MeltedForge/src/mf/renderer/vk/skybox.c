@@ -146,7 +146,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .hasDepth = true,
             .setLayoutCount = 1,
             .setLayouts = &lay,
-            .cullMode = VK_CULL_MODE_NONE
+            .cullMode = VK_CULL_MODE_NONE,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -450,7 +451,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .hasDepth = true,
             .setLayoutCount = 1,
             .setLayouts = &lay,
-            .cullMode = VK_CULL_MODE_NONE
+            .cullMode = VK_CULL_MODE_NONE,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -751,7 +753,8 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .hasDepth = true,
             .setLayoutCount = 1,
             .setLayouts = &lay,
-            .cullMode = VK_CULL_MODE_NONE
+            .cullMode = VK_CULL_MODE_NONE,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -1040,7 +1043,8 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
             .renderpass = pass,
             .extent = (VkExtent2D){ .width = outImage->info.width, .height = outImage->info.height },
             .hasDepth = false,
-            .cullMode = VK_CULL_MODE_NONE
+            .cullMode = VK_CULL_MODE_NONE,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }

@@ -99,7 +99,12 @@ MFAppConfig mfCreateDefaultApp(const char* name) {
         .shutdownApp = &deinitApp,
         .runApp = &runApp,
         .getWindowHandle = &getWindow,
-        .appName = (name) ? name : "MeltedForge application"
+        .appName = (name) ? name : "MeltedForge application",
+        .rendererConfig = {
+            .enableDepth = false,
+            .enableUI = false,
+            .msaaSamples = MF_SAMPLE_COUNT_1
+        }
     };
 }
 

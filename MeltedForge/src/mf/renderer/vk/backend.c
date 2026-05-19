@@ -27,20 +27,44 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(backend->ctx.device));
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
+        if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
+            VulkanImageDestroy(&backend->msaaImages[i]);
         VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
 
     VulkanBackendCtxResize(&backend->ctx, window);
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
-        u32 len = 1;
-        VkImageView views[2] = {
-            backend->ctx.swapchainImageViews[i]
-        };
-        if(backend->enableDepth) {
-            len++;
-            views[1] = backend->ctx.depthImage.view;
+        // MSAA Images
+        if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) {
+            VulkanImageInfo info = {
+                .width = backend->ctx.swapchainExtent.width,
+                .height = backend->ctx.swapchainExtent.height,
+                .arrayLayers = 1,
+                .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+                .ctx = &backend->ctx,
+                .format = backend->ctx.swapchainFormat.format,
+                .generateMipmaps = false,
+                .gpuResource = false,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+                .samples = backend->ctx.samples,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .type = VK_IMAGE_TYPE_2D,
+                .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D
+            };
+            VulkanImageCreate(&backend->msaaImages[i], info);
         }
+
+        u32 len = 1;
+        VkImageView views[3] = {
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImageViews[i]
+        };
+        if(backend->config.enableDepth) {
+            views[len++] = backend->ctx.depthImage.view;
+        }
+        if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
+            views[len++] = backend->ctx.swapchainImageViews[i];
 
         backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
@@ -51,12 +75,10 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 }
 
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
-    backend->enableUI = config->enableUI;
-    backend->enableDepth = config->enableDepth;
-
+    backend->config = *config;
     backend->renderTargets = mfArrayCreate(2, sizeof(MFRenderTarget*));
 
-    VulkanBackendCtxInit(&backend->ctx, config->appName, config->vsync, config->enableDepth, config->window);
+    VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->enableDepth, config->window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         backend->commandBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true);
@@ -68,24 +90,50 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             .hasDepth = config->enableDepth,
-            .renderTarget = false
+            .renderTarget = false,
+            .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
         };
 
         backend->pass = VulkanRenderPassCreate(&backend->ctx, info);
     }
-    
+
+    // Color images
+    if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) {
+        backend->msaaImages = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * backend->ctx.swapchainImageCount);
+        for(u32 i = 0; i < backend->ctx.swapchainImageCount; i++) {
+            VulkanImageInfo info = {
+                .width = backend->ctx.swapchainExtent.width,
+                .height = backend->ctx.swapchainExtent.height,
+                .arrayLayers = 1,
+                .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+                .ctx = &backend->ctx,
+                .format = backend->ctx.swapchainFormat.format,
+                .generateMipmaps = false,
+                .gpuResource = false,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+                .samples = backend->ctx.samples,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .type = VK_IMAGE_TYPE_2D,
+                .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D
+            };
+            VulkanImageCreate(&backend->msaaImages[i], info);
+        }
+    }
+
     // Framebuffers
     backend->frameBufferCount = backend->ctx.swapchainImageCount;
     backend->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->frameBufferCount);
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
-        VkImageView views[2] = {
-            backend->ctx.swapchainImageViews[i]
+        VkImageView views[3] = {
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImageViews[i]
         };
         if(config->enableDepth) {
-            len++;
-            views[1] = backend->ctx.depthImage.view;
+            views[len++] = backend->ctx.depthImage.view;
         }
+        if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
+            views[len++] = backend->ctx.swapchainImageViews[i];
 
         backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
@@ -165,7 +213,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .Instance = backend->ctx.instance,
             .Device = backend->ctx.device,
             .PhysicalDevice = backend->ctx.physicalDevice,
-            .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+            .MSAASamples = backend->ctx.samples,
             .Subpass = 0,
             .RenderPass = backend->pass,
             .Queue = backend->ctx.queueData.graphicsQueue,
@@ -178,7 +226,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
 }
 
 void VulkanBackendShutdown(VulkanBackend* backend) {
-    if(backend->enableUI) {
+    if(backend->config.enableUI) {
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         igDestroyContext(igGetCurrentContext());
@@ -216,12 +264,16 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     }
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
+        if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
+            VulkanImageDestroy(&backend->msaaImages[i]);
         VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
     }
     
     VulkanRenderPassDestroy(&backend->ctx, backend->pass);
     VulkanBackendCtxDestroy(&backend->ctx);
 
+    if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
+        MF_FREEMEM(backend->msaaImages);
     MF_FREEMEM(backend->renderFinishedSemas);
     MF_FREEMEM(backend->frameBuffers);
     MF_SETMEM(backend, 0, sizeof(VulkanBackend));
@@ -250,14 +302,16 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     VulkanCommandBufferBegin(backend->commandBuffers[backend->frameIndex], true);
 
     u32 clearCount = 1;
-    VkClearValue values[2] = {
+    VkClearValue values[3] = {
         backend->clearColor
     };
-    if(backend->enableDepth) {
-        clearCount++;
-        values[1].depthStencil.depth = 1.0f;
-        values[1].depthStencil.stencil = 0;
+    if(backend->config.enableDepth) {
+        values[clearCount].depthStencil.depth = 1.0f;
+        values[clearCount++].depthStencil.stencil = 0;
     }
+    if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
+        values[clearCount++] = backend->clearColor;
+    
     VkRenderPassBeginInfo rpInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = clearCount,
@@ -269,7 +323,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
 
     vkCmdBeginRenderPass(backend->commandBuffers[backend->frameIndex], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    if(!backend->enableUI)
+    if(!backend->config.enableUI)
         return true;
 
     ImGui_ImplVulkan_NewFrame();
@@ -280,7 +334,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
 }
 
 void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
-    if(backend->enableUI) {
+    if(backend->config.enableUI) {
         igEndFrame();
         igRender();
         ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), backend->commandBuffers[backend->frameIndex], mfnull);

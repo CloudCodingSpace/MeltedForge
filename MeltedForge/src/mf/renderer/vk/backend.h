@@ -16,21 +16,22 @@ typedef struct VulkanBackendConfig_s {
     bool enableUI;
     bool enableDepth;
     bool vsync;
-    MFWindow* window;
     const char* appName;
+    MFWindow* window;
+    VkSampleCountFlagBits msaaSamples;
 } VulkanBackendConfig;
 
 typedef struct VulkanBackend_s {
     MFArray renderTargets;
 
+    VulkanBackendConfig config;
     VulkanBackendCtx ctx;
     u32 swapchainImageIndex, frameIndex;
     VkClearValue clearColor;
-    bool enableUI;
-    bool enableDepth;
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
 
+    VulkanImage* msaaImages;
     VkRenderPass pass;
     u32 frameBufferCount;
     VkFramebuffer* frameBuffers;

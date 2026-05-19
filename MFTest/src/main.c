@@ -23,6 +23,7 @@ MFAppConfig mfClientCreateAppConfig() {
     config.rendererConfig.vsync = false;
     config.rendererConfig.enableUI = true;
     config.rendererConfig.enableDepth = true;
+    config.rendererConfig.msaaSamples = MF_SAMPLE_COUNT_4;
 
     return config;
 }

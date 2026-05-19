@@ -18,6 +18,23 @@ struct MFRenderer_s {
     bool init;
 };
 
+static MFSamples verifySamples(MFSamples samples) {
+    switch(samples) {
+        case MF_SAMPLE_COUNT_1:
+        case MF_SAMPLE_COUNT_2:
+        case MF_SAMPLE_COUNT_4:
+        case MF_SAMPLE_COUNT_8:
+        case MF_SAMPLE_COUNT_16:
+        case MF_SAMPLE_COUNT_32:
+        case MF_SAMPLE_COUNT_64:
+            return samples;
+        default:
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided msaa sample count to the renderer is invalid! Defaulting to MF_SAMPLE_COUNT_1");
+    }
+
+    return MF_SAMPLE_COUNT_1;
+}
+
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
 
@@ -28,7 +45,8 @@ MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
         .vsync = config.vsync,
         .enableDepth = config.enableDepth,
         .enableUI = config.enableUI,
-        .window = window
+        .window = window,
+        .msaaSamples = (VkSampleCountFlagBits)(u32)verifySamples(config.msaaSamples)
     };
 
     VulkanBackendInit(&renderer->backend, &vkConfig);

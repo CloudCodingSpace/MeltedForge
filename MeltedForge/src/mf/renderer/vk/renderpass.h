@@ -12,6 +12,7 @@ typedef struct VulkanRenderPassInfo_s {
     VkImageLayout finalLayout; 
     bool hasDepth; 
     bool renderTarget;
+    bool hasMsaa;
 } VulkanRenderPassInfo;
 
 VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo info);

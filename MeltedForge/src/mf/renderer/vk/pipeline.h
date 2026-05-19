@@ -19,6 +19,7 @@ typedef struct VulkanPipelineInfo_s {
     VkCompareOp depthCompareOp;
     VkPipelineCache cache;
     VkCullModeFlags cullMode;
+    VkSampleCountFlagBits samples;
     bool hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;

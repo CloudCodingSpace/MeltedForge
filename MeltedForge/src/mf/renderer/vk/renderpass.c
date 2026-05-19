@@ -11,14 +11,15 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
         .format = pinfo.format,
         .initialLayout = pinfo.initialLayout,
         .finalLayout = pinfo.finalLayout,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = pinfo.hasMsaa ? ctx->samples : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE
     };
 
-    VkAttachmentDescription attachments[2] = {0};
+    u32 attachmentCount = 1;
+    VkAttachmentDescription attachments[3] = {0};
     attachments[0] = colorAttachment;
 
     VkAttachmentReference colRef = {
@@ -42,7 +43,7 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
 
     VkAttachmentDescription depthAttachment = {
         .format = ctx->depthFormat,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = pinfo.hasMsaa ? ctx->samples : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -52,17 +53,31 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
     };
     
     VkAttachmentReference depthRef = {
-        .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
-    if(pinfo.hasDepth) {        
-        attachments[1] = depthAttachment;
+    VkAttachmentDescription resolveAttachment = colorAttachment;
+    resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    
+    VkAttachmentReference resolveRef = {
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    if(pinfo.hasDepth) {
+        depthRef.attachment = attachmentCount;
+        attachments[attachmentCount++] = depthAttachment;
         subpass.pDepthStencilAttachment = &depthRef;
         
         dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependency.srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+
+    if(pinfo.hasMsaa) {
+        resolveRef.attachment = attachmentCount;
+        attachments[attachmentCount++] = resolveAttachment;
+        subpass.pResolveAttachments = &resolveRef;
+        dependency.srcAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     }
 
     if(pinfo.renderTarget) {
@@ -71,7 +86,7 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
 
     VkRenderPassCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = (pinfo.hasDepth) ? 2 : 1,
+        .attachmentCount = attachmentCount,
         .pAttachments = attachments,
         .subpassCount = 1,
         .pSubpasses = &subpass,

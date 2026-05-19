@@ -376,7 +376,7 @@ static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync, bool enableDepth, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool enableDepth, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->vsync = vsync;
     ctx->enableDepth = enableDepth;
@@ -428,7 +428,6 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
         exts2[extCount] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
         extCount++;
 #endif
-
         VkInstanceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
             .pApplicationInfo = &appInfo,
@@ -521,6 +520,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
 
         ctx->queueData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
         ctx->maxSupportedSamples = GetMaxSupportedSampleCount(ctx->physicalDevice);
+        ctx->samples = (ctx->maxSupportedSamples >= samples) ? samples : ctx->maxSupportedSamples;
     }
     // Device 
     {
@@ -631,7 +631,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .samples = ctx->samples
         };
 
         VulkanImageCreate(&ctx->depthImage, info);
@@ -721,7 +721,7 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
             .type = VK_IMAGE_TYPE_2D,
             .arrayLayers = 1,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .samples = ctx->samples
         };
 
         VulkanImageCreate(&ctx->depthImage, info);
