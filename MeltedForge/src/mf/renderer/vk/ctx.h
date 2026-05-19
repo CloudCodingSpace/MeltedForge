@@ -48,6 +48,7 @@ typedef struct VulkanBackendCtx_s {
     VkImageView* swapchainImageViews;
     
     bool vsync, enableDepth;
+    VkSampleCountFlagBits maxSupportedSamples, samples;
 
     VkFormat depthFormat;
     VulkanImage depthImage;

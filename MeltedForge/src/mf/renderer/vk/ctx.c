@@ -333,7 +333,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     MF_FREEMEM(caps.modes);
 }
 
-void GetDepthFormat(VulkanBackendCtx* ctx) {
+static void GetDepthFormat(VulkanBackendCtx* ctx) {
     ctx->depthFormat = VK_FORMAT_UNDEFINED;
 
     VkFormat reqFormats[] = {
@@ -359,6 +359,21 @@ void GetDepthFormat(VulkanBackendCtx* ctx) {
     }
 
     MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
+}
+
+static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties props = {};
+    vkGetPhysicalDeviceProperties(device, &props);
+
+    VkSampleCountFlagBits samples = props.limits.framebufferColorSampleCounts & props.limits.framebufferDepthSampleCounts;
+    if (samples & VK_SAMPLE_COUNT_64_BIT) return VK_SAMPLE_COUNT_64_BIT;
+    if (samples & VK_SAMPLE_COUNT_32_BIT) return VK_SAMPLE_COUNT_32_BIT;
+    if (samples & VK_SAMPLE_COUNT_16_BIT) return VK_SAMPLE_COUNT_16_BIT;
+    if (samples & VK_SAMPLE_COUNT_8_BIT) return VK_SAMPLE_COUNT_8_BIT;
+    if (samples & VK_SAMPLE_COUNT_4_BIT) return VK_SAMPLE_COUNT_4_BIT;
+    if (samples & VK_SAMPLE_COUNT_2_BIT) return VK_SAMPLE_COUNT_2_BIT;
+
+    return VK_SAMPLE_COUNT_1_BIT;
 }
 
 void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync, bool enableDepth, MFWindow* window) {
@@ -492,7 +507,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
         
         u64 highestRate = 0;
         for(u64 i = 0; i < usableDevices.len; i++) {
-            if(highestRate < mfArrayGetElement(usableScores, u64, i)) {
+            if(highestRate <= mfArrayGetElement(usableScores, u64, i)) {
                 highestRate = mfArrayGetElement(usableScores, u64, i);
                 ctx->physicalDevice = mfArrayGetElement(usableDevices, VkPhysicalDevice, i);
             }
@@ -505,6 +520,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
         MF_FREEMEM(devices);
 
         ctx->queueData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
+        ctx->maxSupportedSamples = GetMaxSupportedSampleCount(ctx->physicalDevice);
     }
     // Device 
     {
@@ -614,7 +630,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, const char* appName, bool vsync
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
-            .type = VK_IMAGE_TYPE_2D
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
 
         VulkanImageCreate(&ctx->depthImage, info);
@@ -703,7 +720,8 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .type = VK_IMAGE_TYPE_2D,
             .arrayLayers = 1,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
 
         VulkanImageCreate(&ctx->depthImage, info);

@@ -84,7 +84,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
-            .type = VK_IMAGE_TYPE_2D
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
 
         VulkanImageCreate(&depthImage, info);
@@ -399,7 +400,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
-            .type = VK_IMAGE_TYPE_2D
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
 
         VulkanImageCreate(&depthImage, info);
@@ -699,7 +701,8 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
-            .type = VK_IMAGE_TYPE_2D
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
 
         VulkanImageCreate(&depthImage[i], info);

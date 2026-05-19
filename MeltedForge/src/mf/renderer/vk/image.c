@@ -40,7 +40,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .tiling = pinfo.tiling,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .usage = pinfo.usage,
-            .samples = VK_SAMPLE_COUNT_1_BIT, // NOTE: Make it configurable if required
+            .samples = pinfo.samples,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // NOTE: Make it configurable if required 
             .mipLevels = pinfo.mipLevels,
             .flags = pinfo.imageFlags

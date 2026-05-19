@@ -45,7 +45,8 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .type = VK_IMAGE_TYPE_2D,
             .arrayLayers = 1,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .samples = VK_SAMPLE_COUNT_1_BIT
         };
 
         VulkanImageCreate(&renderTarget->depthImage, info);
@@ -78,7 +79,8 @@ MFRenderTarget* mfRenderTargetCreate(MFRenderer* renderer, bool hasDepth) {
                 .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                 .type = VK_IMAGE_TYPE_2D,
                 .arrayLayers = 1,
-                .viewType = VK_IMAGE_VIEW_TYPE_2D
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .samples = VK_SAMPLE_COUNT_1_BIT
             };
 
             VulkanImageCreate(&renderTarget->images[i], info);
@@ -187,7 +189,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                 .type = VK_IMAGE_TYPE_2D,
                 .arrayLayers = 1,
-                .viewType = VK_IMAGE_VIEW_TYPE_2D
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .samples = VK_SAMPLE_COUNT_1_BIT
             };
 
             VulkanImageCreate(&renderTarget->depthImage, info);
@@ -208,7 +211,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                     .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                     .type = VK_IMAGE_TYPE_2D,
                     .arrayLayers = 1,
-                    .viewType = VK_IMAGE_VIEW_TYPE_2D
+                    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                    .samples = VK_SAMPLE_COUNT_1_BIT
                 };
 
                 VulkanImageCreate(&renderTarget->images[i], info);

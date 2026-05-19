@@ -38,6 +38,7 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         .type = VK_IMAGE_TYPE_2D,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .generateMipmaps = config.generateMipmaps,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
         .addressModes = {
             VK_SAMPLER_ADDRESS_MODE_REPEAT,
             VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -102,7 +103,8 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
         .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
         .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
-        .generateMipmaps = image->config.generateMipmaps
+        .generateMipmaps = image->config.generateMipmaps,
+        .samples = VK_SAMPLE_COUNT_1_BIT
     };
     
     VulkanImageCreate(&image->image, info);
