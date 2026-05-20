@@ -59,6 +59,24 @@ MF_INLINE u32 VulkanFormatBytesPerPixel(VkFormat format) {
     }
 }
 
+
+MF_INLINE MFSamples verifySamples(MFSamples samples) {
+    switch(samples) {
+        case MF_SAMPLE_COUNT_1:
+        case MF_SAMPLE_COUNT_2:
+        case MF_SAMPLE_COUNT_4:
+        case MF_SAMPLE_COUNT_8:
+        case MF_SAMPLE_COUNT_16:
+        case MF_SAMPLE_COUNT_32:
+        case MF_SAMPLE_COUNT_64:
+            return samples;
+        default:
+            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided msaa sample count to the renderer is invalid! Defaulting to MF_SAMPLE_COUNT_1");
+    }
+
+    return MF_SAMPLE_COUNT_1;
+}
+
 #define VK_CHECK(result) check_vk_result(result, __LINE__, __func__, __FILE__)
 #define FRAMES_IN_FLIGHT 2
 

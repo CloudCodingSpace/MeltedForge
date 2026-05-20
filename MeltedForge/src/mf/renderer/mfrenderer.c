@@ -11,6 +11,7 @@ extern "C" {
 #define DT_SAMPLES 10
 
 struct MFRenderer_s {
+    MFRendererConfig config;
     VulkanBackend backend;
     f64 lastTime;
     u8 currentDtIndex;
@@ -18,27 +19,11 @@ struct MFRenderer_s {
     bool init;
 };
 
-static MFSamples verifySamples(MFSamples samples) {
-    switch(samples) {
-        case MF_SAMPLE_COUNT_1:
-        case MF_SAMPLE_COUNT_2:
-        case MF_SAMPLE_COUNT_4:
-        case MF_SAMPLE_COUNT_8:
-        case MF_SAMPLE_COUNT_16:
-        case MF_SAMPLE_COUNT_32:
-        case MF_SAMPLE_COUNT_64:
-            return samples;
-        default:
-            slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The provided msaa sample count to the renderer is invalid! Defaulting to MF_SAMPLE_COUNT_1");
-    }
-
-    return MF_SAMPLE_COUNT_1;
-}
-
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
+    renderer->config = config;
 
     VulkanBackendConfig vkConfig = {
         .appName = config.appName,
@@ -192,7 +177,7 @@ u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer) {
 f64 mfRendererGetDeltaTime(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");    
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
-
+    
     f64 avg = 0;
     for(u8 i = 0; i < DT_SAMPLES; i++) {
         avg += renderer->deltas[i];
@@ -203,6 +188,13 @@ f64 mfRendererGetDeltaTime(MFRenderer* renderer) {
 
 u8 mfRendererGetBufferingCount(void) {
     return FRAMES_IN_FLIGHT;
+}
+
+const MFRendererConfig* mfRendererGetConfig(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");    
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+    
+    return &renderer->config;
 }
 
 size_t mfRendererGetSizeInBytes(void) {

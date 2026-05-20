@@ -46,9 +46,10 @@ void* mfRendererGetRenderPass(MFRenderer* renderer);
 
 u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
 f64 mfRendererGetDeltaTime(MFRenderer* renderer);
+u8 mfRendererGetBufferingCount(void);
+const MFRendererConfig* mfRendererGetConfig(MFRenderer* renderer);
 
 size_t mfRendererGetSizeInBytes(void);
-u8 mfRendererGetBufferingCount(void);
 
 #ifdef __cplusplus
 }
