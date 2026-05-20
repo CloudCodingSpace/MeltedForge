@@ -37,6 +37,7 @@ The link to tests and apps made using MeltedForge is her :-
  - Basic PBR support
     - Diffuse IBL support
     - Specular IBL support
+ - MSAA support for native window and rendertargets as well
 
 ---
 
