@@ -15,9 +15,11 @@ struct MFRenderTarget_s {
     void* userData;
     void (*resizeCallback)(void* userData);
     VulkanImage depthImage;
+    VulkanImage msaaImages[FRAMES_IN_FLIGHT];
     VulkanImage images[FRAMES_IN_FLIGHT];
     VkFramebuffer frameBuffers[FRAMES_IN_FLIGHT];
     VkRenderPass renderPass;
+    VkSampleCountFlagBits samples;
     VkDescriptorSet igSets[FRAMES_IN_FLIGHT];
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
@@ -25,7 +27,7 @@ struct MFRenderTarget_s {
     
     VkClearValue clearValue;
 
-    bool hasDepth, init, begun;
+    bool hasDepth, init, begun, hasMsaa;
 };
 
 #ifdef __cplusplus

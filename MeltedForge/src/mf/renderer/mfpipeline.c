@@ -86,7 +86,7 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig* info) {
         .pushConstRanges = ranges,
         .cache = pipeline->backend->pipelineCache,
         .cullMode = (VkCullModeFlags)(int)info->cullMode,
-        .samples = (info->renderTarget == mfnull) ? pipeline->ctx->samples : VK_SAMPLE_COUNT_1_BIT // TODO: Enable msaa for render targets as well
+        .samples = pipeline->ctx->samples
     };
 
     if(info->renderTarget != mfnull) {
