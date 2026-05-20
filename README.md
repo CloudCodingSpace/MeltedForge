@@ -24,6 +24,7 @@ The link to tests and apps made using MeltedForge is her :-
    - Can add/remove components to/from a scene
    - Can attach/detach components from entities
    - Basic scene management
+   - Scene load/save
    - Material system
  - GLTF 2.0 model loading along with the material data
     - Can load complex models (Tested with Sponza & Bistro Internal)
@@ -31,9 +32,13 @@ The link to tests and apps made using MeltedForge is her :-
     - UI customization (Using Dear ImGui's styles)
  - Render targets
     - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
+    - In other words, they are offscreen framebuffers on which we can render something too
  - A binary serialization/deserialization api
  - Explicit shader resource management control for resources like UBOs and image samplers.
- - Skybox support (Equirectangular image as input only. HDR format also supported!)
+ - Skybox support
+    - Only 2D equirectangular images as input
+    - HDR format supported as well
+    - Optional to generate IBL textures such as BRDF LUT, Prefiltered Map and Irradiance map
  - Basic PBR support
     - Diffuse IBL support
     - Specular IBL support
@@ -60,7 +65,10 @@ The link to tests and apps made using MeltedForge is her :-
  - Beginner-friendly setup and usage
  - Low-end device friendly
  - Cross-platform (Only on desktop platforms)
- - Realistic graphics
+ - Advance real time rendering techniques
+   - Bloom
+   - Deferred rendering
+ - Text rendering
  - Sound system support
  - Animation system
  - Multithreading
@@ -78,7 +86,7 @@ it would be much appreciated if a pull request is opened in the documentation's 
 
 ---
 
-## TODO list
+## Roadmap of the project
 
 There is a public read-only todo list of this engine.
 It is hosted on trello. It can be found [here](https://trello.com/b/Zt1Azhtg/meltedforge) 
