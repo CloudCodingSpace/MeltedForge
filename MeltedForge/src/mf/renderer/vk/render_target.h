@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include "common.h"
+#include "gpu_res.h"
 
 struct VulkanBackend_s;
 
@@ -21,6 +22,8 @@ struct MFRenderTarget_s {
     VkRenderPass renderPass;
     VkSampleCountFlagBits samples;
     VkDescriptorSet igSets[FRAMES_IN_FLIGHT];
+    MFResourceSetLayout* layout;
+    VkDescriptorSet sets[FRAMES_IN_FLIGHT];
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkSemaphore* renderFinishedSemas;

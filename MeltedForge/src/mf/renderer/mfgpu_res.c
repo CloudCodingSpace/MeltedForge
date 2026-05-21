@@ -15,22 +15,7 @@ extern "C" {
 #include "vk/image.h"
 #include "vk/render_target.h"
 #include "vk/pipeline.h"
-
-struct MFResourceSetLayout_s {
-    VkDescriptorSetLayout layout;
-    VkDescriptorPool pool;
-    MFRenderer* renderer;
-    MFArray resourceDescriptions;
-    u64 imageCount, bufferCount;
-    bool init;
-};
-
-struct MFResourceSet_s {
-    VkDescriptorSet sets[FRAMES_IN_FLIGHT];
-    MFResourceSetLayout* layout;
-    MFRenderer* renderer;
-    bool init;
-};
+#include "vk/gpu_res.h"
 
 MFResourceSetLayout* mfResourceSetLayoutCreate(u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, u64 maxSets, MFRenderer* renderer) {
     MF_PANIC_IF(maxSets == 0, mfGetLogger(), "The provided maxSet count shouldn't be 0!");

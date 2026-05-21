@@ -67,6 +67,26 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         renderTarget->renderPass = VulkanRenderPassCreate(&renderTarget->backend->ctx, info);
     }
 
+    {
+        MFResourceDescription desc = {
+            .binding = 0,
+            .descriptorCount = 1,
+            .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
+            .stageFlags = MF_SHADER_STAGE_FRAGMENT // TODO: Make it configurable if required
+        };
+
+        renderTarget->layout = mfResourceSetLayoutCreate(1, &desc, FRAMES_IN_FLIGHT, renderer);
+
+        VkDescriptorSetAllocateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &renderTarget->layout->layout,
+            .descriptorPool = renderTarget->layout->pool
+        };
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+            VK_CHECK(vkAllocateDescriptorSets(renderTarget->backend->ctx.device, &info, &renderTarget->sets[i]));
+    }
+
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         {
             VulkanImageInfo info = {
@@ -92,26 +112,47 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
                 VulkanImageCreate(&renderTarget->msaaImages[i], info);
         }
 
-        u32 count = 1;
-        VkImageView views[3] = {
-            renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view
-        };
+        {
+            u32 count = 1;
+            VkImageView views[3] = {
+                renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view
+            };
 
-        if(hasDepth && renderTarget->backend->config.enableDepth) {
-            views[1] = renderTarget->depthImage.view;
-            count++;
+            if(hasDepth && renderTarget->backend->config.enableDepth) {
+                views[count++] = renderTarget->depthImage.view;
+            }
+            if(renderTarget->hasMsaa)
+                views[count++] = renderTarget->images[i].view;
+
+            renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.swapchainExtent);
         }
-        if(renderTarget->hasMsaa)
-            views[count++] = renderTarget->images[i].view;
 
-        renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.swapchainExtent);
-        if(renderTarget->backend->config.enableUI)
+        if(renderTarget->backend->config.enableUI) {
             renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    }
+        }
 
-    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        {
+            VkDescriptorImageInfo imgInfo = {
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .imageView = renderTarget->images[i].view,
+                .sampler = renderTarget->images[i].sampler
+            };
+
+            VkWriteDescriptorSet write = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .dstBinding = 0,
+                .dstSet = renderTarget->sets[i],
+                .pImageInfo = &imgInfo
+            };
+
+            vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
+        }
+
         renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.commandPool, true);
     }
+
     renderTarget->renderFinishedSemas = MF_ALLOCMEM(VkSemaphore, sizeof(VkSemaphore) * renderTarget->backend->ctx.swapchainImageCount);
     for(u32 i = 0; i < renderTarget->backend->ctx.swapchainImageCount; i++) {
         VkSemaphoreCreateInfo semaInfo = {
@@ -128,14 +169,12 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
-    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
-    }
     for(u32 i = 0; i < renderTarget->backend->ctx.swapchainImageCount; i++) {
         vkDestroySemaphore(renderTarget->backend->ctx.device, renderTarget->renderFinishedSemas[i], renderTarget->backend->ctx.allocator);
     }
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
         if(renderTarget->backend->config.enableUI)
             ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
 
@@ -147,7 +186,8 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
 
     if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth)
         VulkanImageDestroy(&renderTarget->depthImage);
-    
+
+    mfResourceSetLayoutDestroy(renderTarget->layout);
     VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
     
     MF_FREEMEM(renderTarget->renderFinishedSemas);    
@@ -248,6 +288,25 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI)
                 renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+            {
+                VkDescriptorImageInfo imgInfo = {
+                    .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    .imageView = renderTarget->images[i].view,
+                    .sampler = renderTarget->images[i].sampler
+                };
+
+                VkWriteDescriptorSet write = {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    .dstBinding = 0,
+                    .dstSet = renderTarget->sets[i],
+                    .pImageInfo = &imgInfo
+                };
+
+                vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
+            }
         }
     }
 
@@ -455,8 +514,15 @@ u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget) {
 u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
-
+    
     return renderTarget->images[0].info.height;
+}
+
+MFResourceSetLayout* mfRenderTargetGetResourceSetLayout(MFRenderTarget* renderTarget) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
+    return renderTarget->layout;
 }
 
 ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget) {

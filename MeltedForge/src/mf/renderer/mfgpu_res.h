@@ -8,8 +8,8 @@ extern "C" {
 #include "core/mfarray.h"
 
 #include "mfutil_types.h"
-#include "mfrenderer.h"
 
+typedef struct MFRenderer_s MFRenderer;
 typedef struct MFResourceSetLayout_s MFResourceSetLayout;
 typedef struct MFResourceSet_s MFResourceSet;
 struct MFPipeline_s;
