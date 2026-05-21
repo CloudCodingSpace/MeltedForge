@@ -31,17 +31,17 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
     
     renderTarget->samples = renderTarget->backend->ctx.samples;
     renderTarget->hasMsaa = renderTarget->backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT;
-    renderTarget->hasDepth = hasDepth;
+    renderTarget->hasDepth = hasDepth && renderTarget->backend->ctx.enableDepth;
     renderTarget->resizeCallback = mfnull;
 
     renderTarget->begun = false;
     
-    if(hasDepth && renderTarget->backend->config.enableDepth) {
+    if(renderTarget->hasDepth) {
         VulkanImageInfo info = {
             .ctx = &renderTarget->backend->ctx,
             .width = renderTarget->backend->ctx.swapchainExtent.width,
             .height = renderTarget->backend->ctx.swapchainExtent.height,
-            .gpuResource = false,
+            .gpuResource = true,
             .pixels = mfnull,
             .format = renderTarget->backend->ctx.depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -62,7 +62,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .format = renderTarget->backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .hasDepth = hasDepth && renderTarget->backend->config.enableDepth,
+            .hasDepth = renderTarget->hasDepth,
             .renderTarget = true,
             .hasMsaa = renderTarget->hasMsaa
         };
@@ -121,7 +121,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
                 renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view
             };
 
-            if(hasDepth && renderTarget->backend->config.enableDepth) {
+            if(renderTarget->hasDepth) {
                 views[count++] = renderTarget->depthImage.view;
             }
             if(renderTarget->hasMsaa)
@@ -187,7 +187,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
             VulkanImageDestroy(&renderTarget->msaaImages[i]);
     }
 
-    if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth)
+    if(renderTarget->hasDepth)
         VulkanImageDestroy(&renderTarget->depthImage);
 
     mfResourceSetLayoutDestroy(renderTarget->layout);
@@ -220,7 +220,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 VulkanImageDestroy(&renderTarget->msaaImages[i]);
         }
         
-        if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth)
+        if(renderTarget->hasDepth)
             VulkanImageDestroy(&renderTarget->depthImage);
         if(renderTarget->backend->config.enableUI)
             MF_SETMEM(renderTarget->igSets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
@@ -231,7 +231,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     }
     // Re-creating
     {
-        if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
+        if(renderTarget->hasDepth) {
             VulkanImageInfo info = {
                 .ctx = &renderTarget->backend->ctx,
                 .width = extent.x,
@@ -282,7 +282,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view
             };
 
-            if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
+            if(renderTarget->hasDepth) {
                 views[count++] = renderTarget->depthImage.view;
             }
             if(renderTarget->hasMsaa)
@@ -368,7 +368,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             renderTarget->clearValue
         };
         
-        if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
+        if(renderTarget->hasDepth) {
             values[count].depthStencil.depth = 1.0f;
             values[count++].depthStencil.stencil = 0;
         }
@@ -423,7 +423,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
         renderTarget->clearValue
     };
     
-    if(renderTarget->hasDepth && renderTarget->backend->config.enableDepth) {
+    if(renderTarget->hasDepth) {
         values[count].depthStencil.depth = 1.0f;
         values[count++].depthStencil.stencil = 0;
     }
