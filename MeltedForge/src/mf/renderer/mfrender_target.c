@@ -13,6 +13,9 @@ extern "C" {
 #include "vk/renderpass.h"
 #include "vk/command_buffer.h"
 #include "vk/render_target.h"
+#include "vk/pipeline.h"
+
+#include "mfpipeline.h"
 
 #include <cimgui.h>
 #include <cimgui_impl.h>
@@ -521,8 +524,27 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
 MFResourceSetLayout* mfRenderTargetGetResourceSetLayout(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
-
+    
     return renderTarget->layout;
+}
+
+void mfRenderTargetBindColorAttachmentResourceSets(MFRenderTarget* renderTarget, u64 setIndex, struct MFPipeline_s* pipeline) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+
+    VulkanBackend* backend = renderTarget->backend;
+    VulkanBackendCtx* ctx = &renderTarget->backend->ctx;
+
+    VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
+    if(backend->renderTarget != mfnull) {
+        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
+    }
+
+    VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
+
+    vkCmdBindDescriptorSets(buff, pipelineBackend->bindPoint, pipelineBackend->layout, 
+                                    setIndex, 1, &renderTarget->sets[backend->frameIndex], 
+                                    0, mfnull);
 }
 
 ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget) {
