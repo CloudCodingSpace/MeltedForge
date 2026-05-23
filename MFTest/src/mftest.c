@@ -158,9 +158,9 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
 
                 MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[k], &component->model, i, appState->renderer);
                 MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[k], &component->model, i, appState->renderer);
-                MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[0], &component->model, 0, appState->renderer);
-                MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[0], &component->model, 0, appState->renderer);
-                MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_LIGHTMAP, &state->materialImages[0], &component->model, 0, appState->renderer);
+                MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[k], &component->model, 0, appState->renderer);
+                MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[k], &component->model, 0, appState->renderer);
+                MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_LIGHTMAP, &state->materialImages[k], &component->model, 0, appState->renderer);
 
                 MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
                 mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
