@@ -5,7 +5,7 @@ documents which would guide them in their journey using MeltedForge instead of m
 engine's source code and figuring it out themselves.
 
 This website is made using Zensical as the site generator. Also, the code for this website is hosted on
-[github](https://github.com/CloudCodingSpace/MFDocs). We are open to any suggestion and improvements which would help
+[github](https://github.com/CloudCodingSpace/MeltedForge/trees/docs). We are open to any suggestion and improvements which would help
 making MeltedForge a better engine.
 
 This engine is made by CloudCodingSpace (Github profile [here](https://github.com/CloudCodingSpace)).
