@@ -1,7 +1,7 @@
 name: Documentation
 on:
   push:
-    branches: [main]
+    branches: [docs]
 
 permissions:
   contents: write
