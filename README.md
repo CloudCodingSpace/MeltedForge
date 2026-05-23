@@ -78,9 +78,9 @@ The link to tests and apps made using MeltedForge is her :-
 
 ## Documentation
 
-> **Note:** The documentation is currently a work in progress. The github repo is [here](https://github.com/CloudCodingSpace/MFDocs).
+> **Note:** The documentation is currently a work in progress. The code is [here](https://github.com/CloudCodingSpace/MeltedForge/tree/docs).
 
-The deployed url for the docs is [here](https://cloudcodingspace.github.io/MFDocs).
+The deployed url for the docs is [here](https://cloudcodingspace.github.io/MeltedForge).
 It would be great if it would be pointed out for any grammartical errors or any suggestions spotted. If so, then
 it would be much appreciated if a pull request is opened in the documentation's repo.
 
