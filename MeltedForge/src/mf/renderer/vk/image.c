@@ -25,6 +25,8 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
         image->info.mipLevels = pinfo.mipLevels = floor(log2(MAX(pinfo.width, pinfo.height))) + 1;
     }
 
+    VulkanBackendCtx* ctx = image->info.ctx;
+
     // Image & Memory
     {
         VkImageCreateInfo info = {
@@ -58,7 +60,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .usage = pinfo.memFlags
         };
 
-        VK_CHECK(vmaCreateImage(image->info.ctx->vmaAllocator, &info, &allocInfo, &image->image, &image->allocation, mfnull));
+        VK_CHECK(vmaCreateImage(ctx->vmaAllocator, &info, &allocInfo, &image->image, &image->allocation, mfnull));
     }
     // Image View
     {
@@ -82,7 +84,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .viewType = pinfo.viewType
         };
 
-        VK_CHECK(vkCreateImageView(pinfo.ctx->device, &info, pinfo.ctx->allocator, &image->view));
+        VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &image->view));
     }
 
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Created an image of resolution: %dx%d", 
@@ -94,9 +96,9 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
     // Samplers
     {
         VkPhysicalDeviceFeatures features = {0};
-        vkGetPhysicalDeviceFeatures(pinfo.ctx->physicalDevice, &features);
+        vkGetPhysicalDeviceFeatures(ctx->physicalDevice, &features);
         VkPhysicalDeviceProperties props = {0};
-        vkGetPhysicalDeviceProperties(pinfo.ctx->physicalDevice, &props);
+        vkGetPhysicalDeviceProperties(ctx->physicalDevice, &props);
 
         VkSamplerCreateInfo sinfo = {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -122,7 +124,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             sinfo.maxLod = VK_LOD_CLAMP_NONE;
         }
 
-        VK_CHECK(vkCreateSampler(pinfo.ctx->device, &sinfo, pinfo.ctx->allocator, &image->sampler));
+        VK_CHECK(vkCreateSampler(ctx->device, &sinfo, ctx->allocator, &image->sampler));
     }
 
     if(!pinfo.pixels)
@@ -133,6 +135,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
 
 void VulkanImageDestroy(VulkanImage* image) {
     VulkanBackendCtx* ctx = image->info.ctx;
+
     vkDestroyImageView(ctx->device, image->view, ctx->allocator);
     vmaDestroyImage(ctx->vmaAllocator, image->image, image->allocation);
 
