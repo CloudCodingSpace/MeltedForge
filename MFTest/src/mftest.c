@@ -119,6 +119,11 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
     {
         // Mesh set layout
         {
+            u32 totalMeshCount = 0;
+            for(u32 i = 0; i < state->entityCount; i++) {
+                MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[i]);
+                totalMeshCount += component->model.meshCount;
+            }
             MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
             MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, 0, appState->renderer);
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
@@ -134,7 +139,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 mfGpuImageGetDescription(aoImage) // NOTE: Description for one image is enough since they have the same bindings
             };
             
-            state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
+            state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, totalMeshCount, appState->renderer);
         }
     
         // Skybox layout
@@ -300,10 +305,10 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     mfCameraCreate(&camera, appState->window, mfWindowGetConfig(appState->window)->width, mfWindowGetConfig(appState->window)->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
     mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
     if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
-        state->entities = MF_ALLOCMEM(u64, sizeof(u64) * 2);
+        state->entityCount = 2;
+        state->entities = MF_ALLOCMEM(u64, sizeof(u64) * state->entityCount);
         state->entities[0] = mfSceneCreateEntity(&state->scene);
         state->entities[1] = mfSceneCreateEntity(&state->scene);
-        state->entityCount = 2;
 
         MFMeshComponent mComp = {
             .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
@@ -327,8 +332,17 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 
         tComp.position = (MFVec3){5, 0, 0};
         mfSceneAddTransformComponent(&state->scene, &tComp);
+        
+        MFMeshComponent mComp2 = {
+            // .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
+            // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
+            // .path = "mftmeshes/pistol/service_pistol.gltf",
+            .path = "mftmeshes/sofa/sofa_1k.gltf",
+            .perVertSize = sizeof(Vertex)
+        };
+        mfSceneAddMeshComponent(&state->scene, &mComp2);
 
-        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp);
+        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp2);
         mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[1], &tComp);
     } else {
         u64 entityCount = 0;
@@ -410,6 +424,10 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     for(u64 i = 0; i < state->scene.meshCompPool.len; i++) {
         MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, i);
+        if(component == mfnull)
+            continue;
+        if(!component->valid)
+            continue;
         for(u64 j = 0; j < component->model.meshCount; j++) {
             mfResourceSetDestroy(component->model.meshes[j].mat.set);
         }
