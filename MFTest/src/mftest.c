@@ -422,16 +422,22 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     INFO(&state->logger, "MFTest deinit");
     slogLoggerDestroy(&state->logger);
 
-    for(u64 i = 0; i < state->scene.meshCompPool.len; i++) {
-        MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, i);
-        if(component == mfnull)
-            continue;
-        if(!component->valid)
-            continue;
-        for(u64 j = 0; j < component->model.meshCount; j++) {
-            mfResourceSetDestroy(component->model.meshes[j].mat.set);
+    {
+        u64 count = 0;
+        mfSceneGetValidMeshComponents(&state->scene, &count, mfnull);
+        MFMeshComponent* components = MF_ALLOCMEM(MFMeshComponent, sizeof(MFMeshComponent) * count);
+        mfSceneGetValidMeshComponents(&state->scene, &count, components);
+
+        for(u32 i = 0; i < count; i++) {
+            for(u32 j = 0; j < components[i].model.meshCount; j++) {
+                MFMesh* mesh = &components[i].model.meshes[j];
+                mfResourceSetDestroy(mesh->mat.set);
+            }
         }
+
+        MF_FREEMEM(components);
     }
+
     mfResourceSetDestroy(state->cameraSet);
     mfResourceSetDestroy(state->skyboxSet);
 
