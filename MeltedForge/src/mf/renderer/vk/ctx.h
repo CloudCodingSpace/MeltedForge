@@ -33,6 +33,8 @@ typedef struct VulkanBackendCtx_s {
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT; 
 #endif
 
+    u32 uniqueQueueCount;
+    u32 uniqueQueues[4];
     VulkanBackendQueueData queueData;
     VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;

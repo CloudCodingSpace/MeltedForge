@@ -14,6 +14,11 @@ extern "C" {
 #include "common.h"
 #include "command_buffer.h"
 
+static const char* s_DeviceExts[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+static u32 s_DeviceExtsCount = MF_ARRAYLEN(s_DeviceExts, u32);
+
 static VkBool32 debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
@@ -66,19 +71,14 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 
     bool extSupport = false;
     {
-        const char* deviceExts[] = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-        u32 deviceExtCount = 1;
-
         u32 count = 0;
         VK_CHECK(vkEnumerateDeviceExtensionProperties(device, mfnull, &count, mfnull));
         VkExtensionProperties* props = MF_ALLOCMEM(VkExtensionProperties, sizeof(VkExtensionProperties) * count);
         VK_CHECK(vkEnumerateDeviceExtensionProperties(device, mfnull, &count, props));
 
         for(u32 i = 0; i < count; i++) {
-            for(u32 j = 0; j < deviceExtCount; j++) {
-                if(strcmp(props[i].extensionName, deviceExts[j]) == 0) {
+            for(u32 j = 0; j < s_DeviceExtsCount; j++) {
+                if(strcmp(props[i].extensionName, s_DeviceExts[j]) == 0) {
                     extSupport = true;
                     MF_FREEMEM(props);
                     break;
@@ -254,43 +254,11 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     		.oldSwapchain = mfnull
         };
 
-		u32 queueCount = 0;
-        u32 queues[4];
-        MF_SETMEM(queues, 0, sizeof(u32) * 4);
-
-        u32 qs[] = {
-            ctx->queueData.computeQueueIdx,
-            ctx->queueData.presentQueueIdx,
-            ctx->queueData.graphicsQueueIdx,
-            ctx->queueData.transferQueueIdx
-        };
-        
-        // Checking for duplicate queues
-        {
-            for(u32 i = 0; i < 4; i++) {
-                bool isUnique = true;
-    
-                for(u32 j = 0; j < queueCount; j++) {
-                    if(qs[i] == queues[j]) {
-                        isUnique = false;
-                        break;
-                    }
-                }
-    
-                if(isUnique) {
-                    queues[queueCount++] = qs[i];
-                }
-            }
-        }
-
-		if (queueCount > 1)
-		{
+		if (ctx->uniqueQueueCount > 1) {
 			info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			info.queueFamilyIndexCount = queueCount;
-			info.pQueueFamilyIndices = qs;
-		}
-		else
-		{
+			info.queueFamilyIndexCount = ctx->uniqueQueueCount;
+			info.pQueueFamilyIndices = ctx->uniqueQueues;
+		} else {
 			info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		}
 
@@ -524,14 +492,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
     }
     // Device 
     {
-        u32 deviceCount = 1;
-        const char* deviceExts[] = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-
-        u32 queueCount = 0;
-        u32 queues[4];
-        MF_SETMEM(queues, 0, sizeof(u32) * 4);
+        ctx->uniqueQueueCount = 0;
+        MF_SETMEM(ctx->uniqueQueues, 0, sizeof(u32) * 4);
         // Checking for duplicate queues
         {
             u32 qs[] = {
@@ -544,29 +506,28 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
             for(u32 i = 0; i < 4; i++) {
                 bool isUnique = true;
     
-                for(u32 j = 0; j < queueCount; j++) {
-                    if(qs[i] == queues[j]) {
+                for(u32 j = 0; j < ctx->uniqueQueueCount; j++) {
+                    if(qs[i] == ctx->uniqueQueues[j]) {
                         isUnique = false;
                         break;
                     }
                 }
     
                 if(isUnique) {
-                    queues[queueCount++] = qs[i];
+                    ctx->uniqueQueues[ctx->uniqueQueueCount++] = qs[i];
                 }
             }
         }
 
         float qPriority = 1.0f;
-
-        VkDeviceQueueCreateInfo* qInfos = MF_ALLOCMEM(VkDeviceQueueCreateInfo, sizeof(VkDeviceQueueCreateInfo) * queueCount);
-        MF_SETMEM(qInfos, 0, sizeof(VkDeviceQueueCreateInfo) * queueCount);
-        for(u32 i = 0; i < queueCount; i++) {
+        VkDeviceQueueCreateInfo* qInfos = MF_ALLOCMEM(VkDeviceQueueCreateInfo, sizeof(VkDeviceQueueCreateInfo) * ctx->uniqueQueueCount);
+        MF_SETMEM(qInfos, 0, sizeof(VkDeviceQueueCreateInfo) * ctx->uniqueQueueCount);
+        for(u32 i = 0; i < ctx->uniqueQueueCount; i++) {
             qInfos[i] = (VkDeviceQueueCreateInfo) {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .pQueuePriorities = &qPriority,
                 .queueCount = 1,
-                .queueFamilyIndex = queues[i]
+                .queueFamilyIndex = ctx->uniqueQueues[i]
             };
         }
 
@@ -580,10 +541,10 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 
         VkDeviceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .enabledExtensionCount = deviceCount,
-            .ppEnabledExtensionNames = deviceExts,
+            .enabledExtensionCount = s_DeviceExtsCount,
+            .ppEnabledExtensionNames = s_DeviceExts,
             .pEnabledFeatures = &features,
-            .queueCreateInfoCount = queueCount,
+            .queueCreateInfoCount = ctx->uniqueQueueCount,
             .pQueueCreateInfos = qInfos,
             .pNext = &scalarFeatures
         };
