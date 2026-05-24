@@ -43,10 +43,16 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .usage = pinfo.usage,
             .samples = pinfo.samples,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // NOTE: Make it configurable if required 
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .mipLevels = pinfo.mipLevels,
-            .flags = pinfo.imageFlags
+            .flags = pinfo.imageFlags,
+            .queueFamilyIndexCount = ctx->uniqueQueueCount,
+            .pQueueFamilyIndices = ctx->uniqueQueues
         };
+
+        if(ctx->uniqueQueueCount > 1) {
+            info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+        }
 
         if(pinfo.generateMipmaps) {
             info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;

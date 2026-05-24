@@ -11,8 +11,14 @@ void staging_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        .size = buffer->size
+        .size = buffer->size,
+        .queueFamilyIndexCount = ctx->uniqueQueueCount,
+        .pQueueFamilyIndices = ctx->uniqueQueues
     };
+
+    if(ctx->uniqueQueueCount > 1) {
+        info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
 
     VmaAllocationCreateInfo allocInfo = {
         .usage = VMA_MEMORY_USAGE_CPU_ONLY
@@ -26,8 +32,14 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        .size = buffer->size
+        .size = buffer->size,
+        .queueFamilyIndexCount = ctx->uniqueQueueCount,
+        .pQueueFamilyIndices = ctx->uniqueQueues
     };
+
+    if(ctx->uniqueQueueCount > 1) {
+        info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
 
     VmaAllocationCreateInfo allocInfo = {
         .usage = VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -43,8 +55,14 @@ void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        .size = buffer->size
+        .size = buffer->size,
+        .queueFamilyIndexCount = ctx->uniqueQueueCount,
+        .pQueueFamilyIndices = ctx->uniqueQueues
     };
+
+    if(ctx->uniqueQueueCount > 1) {
+        info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
 
     VmaAllocationCreateInfo allocInfo = {
         .usage = VMA_MEMORY_USAGE_GPU_ONLY
@@ -62,8 +80,14 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        .size = buffer->size
+        .size = buffer->size,
+        .queueFamilyIndexCount = ctx->uniqueQueueCount,
+        .pQueueFamilyIndices = ctx->uniqueQueues
     };
+
+    if(ctx->uniqueQueueCount > 1) {
+        info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
 
     VmaAllocationCreateInfo allocInfo = {
         .usage = VMA_MEMORY_USAGE_GPU_ONLY

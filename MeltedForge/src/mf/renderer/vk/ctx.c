@@ -14,11 +14,6 @@ extern "C" {
 #include "common.h"
 #include "command_buffer.h"
 
-static const char* s_DeviceExts[] = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-static u32 s_DeviceExtsCount = MF_ARRAYLEN(s_DeviceExts, u32);
-
 static VkBool32 debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
@@ -71,14 +66,19 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 
     bool extSupport = false;
     {
+        const char* deviceExts[] = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+        u32 deviceExtCount = 1;
+
         u32 count = 0;
         VK_CHECK(vkEnumerateDeviceExtensionProperties(device, mfnull, &count, mfnull));
         VkExtensionProperties* props = MF_ALLOCMEM(VkExtensionProperties, sizeof(VkExtensionProperties) * count);
         VK_CHECK(vkEnumerateDeviceExtensionProperties(device, mfnull, &count, props));
 
         for(u32 i = 0; i < count; i++) {
-            for(u32 j = 0; j < s_DeviceExtsCount; j++) {
-                if(strcmp(props[i].extensionName, s_DeviceExts[j]) == 0) {
+            for(u32 j = 0; j < deviceExtCount; j++) {
+                if(strcmp(props[i].extensionName, deviceExts[j]) == 0) {
                     extSupport = true;
                     MF_FREEMEM(props);
                     break;
@@ -492,6 +492,11 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
     }
     // Device 
     {
+        u32 extCount = 1;
+        const char* deviceExts[] = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+
         ctx->uniqueQueueCount = 0;
         MF_SETMEM(ctx->uniqueQueues, 0, sizeof(u32) * 4);
         // Checking for duplicate queues
@@ -541,8 +546,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 
         VkDeviceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .enabledExtensionCount = s_DeviceExtsCount,
-            .ppEnabledExtensionNames = s_DeviceExts,
+            .enabledExtensionCount = extCount,
+            .ppEnabledExtensionNames = deviceExts,
             .pEnabledFeatures = &features,
             .queueCreateInfoCount = ctx->uniqueQueueCount,
             .pQueueCreateInfos = qInfos,
