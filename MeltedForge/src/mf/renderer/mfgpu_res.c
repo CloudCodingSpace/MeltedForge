@@ -259,13 +259,13 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         // Buffers
         for (u64 i = 0; i < set->layout->bufferCount; i++) {
             VulkanBuffer* buffer = (VulkanBuffer*)mfGpuBufferGetBackend(mfArrayGetElement(*buffers, MFGpuBuffer*, i));
-            MF_PANIC_IF(buffer->type != VULKAN_BUFFER_TYPE_UBO, mfGetLogger(), 
+            MF_PANIC_IF(buffer->info.type != VULKAN_BUFFER_TYPE_UBO, mfGetLogger(), 
                                         "The given buffer for resource set isn't of an uniform buffer!");
 
             buffInfos[i] = (VkDescriptorBufferInfo){
                 .buffer = buffer[frame].handle,
                 .offset = 0,
-                .range = buffer[frame].size
+                .range = buffer[frame].info.size
             };
 
             writes[writeIdx] = (VkWriteDescriptorSet){

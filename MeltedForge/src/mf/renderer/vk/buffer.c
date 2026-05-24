@@ -11,7 +11,7 @@ void staging_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        .size = buffer->size,
+        .size = buffer->info.size,
         .queueFamilyIndexCount = ctx->uniqueQueueCount,
         .pQueueFamilyIndices = ctx->uniqueQueues
     };
@@ -32,7 +32,7 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        .size = buffer->size,
+        .size = buffer->info.size,
         .queueFamilyIndexCount = ctx->uniqueQueueCount,
         .pQueueFamilyIndices = ctx->uniqueQueues
     };
@@ -47,7 +47,7 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
     VK_CHECK(vmaMapMemory(ctx->vmaAllocator, buffer->allocation, &buffer->mappedMem));
 
-    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->info.size);
 }
 
 void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool) {
@@ -55,7 +55,7 @@ void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        .size = buffer->size,
+        .size = buffer->info.size,
         .queueFamilyIndexCount = ctx->uniqueQueueCount,
         .pQueueFamilyIndices = ctx->uniqueQueues
     };
@@ -69,10 +69,10 @@ void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool
     };
     VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
 
-    if(buffer->data) {
-        VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
+    if(buffer->info.data) {
+        VulkanBufferUploadData(buffer, buffer->info.data);
     }
-    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->info.size);
 }
 
 void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool) {
@@ -80,7 +80,7 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        .size = buffer->size,
+        .size = buffer->info.size,
         .queueFamilyIndexCount = ctx->uniqueQueueCount,
         .pQueueFamilyIndices = ctx->uniqueQueues
     };
@@ -94,74 +94,78 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
     };
     VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
 
-    if(buffer->data) {
-        VulkanBufferUploadData(buffer, ctx, pool, buffer->data);
+    if(buffer->info.data) {
+        VulkanBufferUploadData(buffer, buffer->info.data);
     }
 
-    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->size);
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->info.size);
 }
 
-void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, u64 size, void* data, VulkanBufferTypes type) {
-    buffer->type = type;
-    buffer->data = data;
-    buffer->size = size;
+void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info) {
+    buffer->info = info;
 
-    if(type == VULKAN_BUFFER_TYPE_VERTEX) {
-        vertex_buff(buffer, ctx, pool);
+    if(info.type == VULKAN_BUFFER_TYPE_VERTEX) {
+        vertex_buff(buffer, info.ctx, info.pool);
     }
-    else if(type == VULKAN_BUFFER_TYPE_INDEX) {
-        index_buff(buffer, ctx, pool);
+    else if(info.type == VULKAN_BUFFER_TYPE_INDEX) {
+        index_buff(buffer, info.ctx, info.pool);
     }
-    else if(type == VULKAN_BUFFER_TYPE_UBO) {
-        ubo_buff(buffer, ctx);
+    else if(info.type == VULKAN_BUFFER_TYPE_UBO) {
+        ubo_buff(buffer, info.ctx);
     }
-    else if(type == VULKAN_BUFFER_TYPE_STAGING) {
-        staging_buff(buffer, ctx);
+    else if(info.type == VULKAN_BUFFER_TYPE_STAGING) {
+        staging_buff(buffer, info.ctx);
     }
 }
 
-void VulkanBufferFree(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
-    if(buffer->type == VULKAN_BUFFER_TYPE_UBO)
+void VulkanBufferFree(VulkanBuffer* buffer) {
+    VulkanBackendCtx* ctx = buffer->info.ctx;
+
+    if(buffer->info.type == VULKAN_BUFFER_TYPE_UBO)
         vmaUnmapMemory(ctx->vmaAllocator, buffer->allocation);
 
     vmaDestroyBuffer(ctx->vmaAllocator, buffer->handle, buffer->allocation);
 
-    if(buffer->type != VULKAN_BUFFER_TYPE_STAGING)
-        MF_INFO(mfGetLogger(), "(From the vulkan backend) Freed a buffer of size: %zu bytes", buffer->size);
+    if(buffer->info.type != VULKAN_BUFFER_TYPE_STAGING)
+        MF_INFO(mfGetLogger(), "(From the vulkan backend) Freed a buffer of size: %zu bytes", buffer->info.size);
 
     MF_SETMEM(buffer, 0, sizeof(VulkanBuffer));
 }
 
-void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, void* data) {
-    buffer->data = data;
+void VulkanBufferUploadData(VulkanBuffer* buffer, void* data) {
+    buffer->info.data = data;
+    VulkanBackendCtx* ctx = buffer->info.ctx;
     
-    if(buffer->type == VULKAN_BUFFER_TYPE_UBO) {
-        memcpy(buffer->mappedMem, data, buffer->size);
+    if(buffer->info.type == VULKAN_BUFFER_TYPE_UBO) {
+        memcpy(buffer->mappedMem, data, buffer->info.size);
         return;
     }
 
     VulkanBuffer staging = {
-        .data = buffer->data,
-        .size = buffer->size,
-        .type = VULKAN_BUFFER_TYPE_STAGING
+        .info = {
+            .data = buffer->info.data,
+            .size = buffer->info.size,
+            .type = VULKAN_BUFFER_TYPE_STAGING,
+            .ctx = ctx
+        }
     };
 
-    staging_buff(&staging, ctx);
+    staging_buff(&staging, buffer->info.ctx);
 
     void* mappedMem = mfnull;
     VK_CHECK(vmaMapMemory(ctx->vmaAllocator, staging.allocation, &mappedMem));
-    memcpy(mappedMem, staging.data, staging.size);
+    memcpy(mappedMem, staging.info.data, staging.info.size);
     vmaUnmapMemory(ctx->vmaAllocator, staging.allocation);
 
     // Copy
     {
         VkSemaphore semaphore = VK_NULL_HANDLE;
-        VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, pool, true);
+        VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, buffer->info.pool, true);
 
         VulkanCommandBufferBegin(buff, true);
 
         VkBufferCopy region = {
-            .size = staging.size,
+            .size = staging.info.size,
             .dstOffset = 0, // NOTE: Make the offset configurable if necessary
             .srcOffset = 0 // NOTE: Make the offset configurable if necessary
         };
@@ -190,16 +194,18 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkComma
         VK_CHECK(vkResetFences(ctx->device, 1, &fence));
 
         vkDestroyFence(ctx->device, fence, ctx->allocator);
-        VulkanCommandBufferFree(ctx, buff, pool);
+        VulkanCommandBufferFree(ctx, buff, buffer->info.pool);
     }
 
-    VulkanBufferFree(&staging, ctx);
+    VulkanBufferFree(&staging);
 }
 
-void VulkanBufferResize(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, u64 size, void* data) {
-    VulkanBufferFree(buffer, ctx);
+void VulkanBufferResize(VulkanBuffer* buffer, u64 newSize) {
+    VulkanBufferInfo info = buffer->info;
+    VulkanBufferFree(buffer);
 
-    VulkanBufferAllocate(buffer, ctx, pool, size, data, buffer->type);
+    info.size = newSize;
+    VulkanBufferAllocate(buffer, info);
 }
 
 #ifdef __cplusplus

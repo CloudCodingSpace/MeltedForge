@@ -17,20 +17,26 @@ typedef enum VulkanBufferTypes_e {
     VULKAN_BUFFER_TYPE_STAGING
 } VulkanBufferTypes;
 
+typedef struct VulkanBufferInfo_s {
+    VulkanBackendCtx* ctx;
+    VkCommandPool pool;
+    u64 size;
+    void* data;
+    VulkanBufferTypes type;
+} VulkanBufferInfo;
+
 typedef struct VulkanBuffer_s {
     VkBuffer handle;
     VmaAllocation allocation;
-    u64 size;
-    void* data;
     void* mappedMem;
-    VulkanBufferTypes type;
+    VulkanBufferInfo info;
 } VulkanBuffer;
 
-void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, u64 size, void* data, VulkanBufferTypes type);
-void VulkanBufferFree(VulkanBuffer* buffer, VulkanBackendCtx* ctx);
+void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info);
+void VulkanBufferFree(VulkanBuffer* buffer);
 
-void VulkanBufferResize(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, u64 size, void* data);
-void VulkanBufferUploadData(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool, void* data);
+void VulkanBufferResize(VulkanBuffer* buffer, u64 newSize);
+void VulkanBufferUploadData(VulkanBuffer* buffer, void* data);
 
 #ifdef __cplusplus
 }

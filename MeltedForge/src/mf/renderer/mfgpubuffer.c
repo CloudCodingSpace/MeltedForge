@@ -27,11 +27,19 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
     buffer->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     buffer->ctx = &buffer->backend->ctx;
 
+    VulkanBufferInfo info = {
+        .ctx = buffer->ctx,
+        .pool = buffer->ctx->commandPool,
+        .data = config.data,
+        .size = config.size,
+        .type = (VulkanBufferTypes)(i32)config.type
+    };
+
     if(config.size == 0)
         return buffer;
     else {
         for(i32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
-            VulkanBufferAllocate(&buffer->buffer[i], buffer->ctx, buffer->ctx->commandPool, config.size, config.data, (VulkanBufferTypes)(i32)config.type);
+            VulkanBufferAllocate(&buffer->buffer[i], info);
     }
 
     buffer->init = true;
@@ -43,7 +51,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
-        VulkanBufferFree(&buffer->buffer[i], buffer->ctx);
+        VulkanBufferFree(&buffer->buffer[i]);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
     MF_FREEMEM(buffer);
@@ -56,7 +64,7 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
     buffer->config.data = data;
 
     u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? buffer->backend->frameIndex : 0;
-    VulkanBufferUploadData(&buffer->buffer[idx], buffer->ctx, buffer->ctx->commandPool, data);
+    VulkanBufferUploadData(&buffer->buffer[idx], data);
 }
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
@@ -66,8 +74,11 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     buffer->config.data = data;
     buffer->config.size = size;
 
-    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
-        VulkanBufferResize(&buffer->buffer[i], buffer->ctx, buffer->ctx->commandPool, size, data);
+    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++) {
+        VulkanBufferResize(&buffer->buffer[i], size);
+        if(data != mfnull)
+            VulkanBufferUploadData(&buffer->buffer[i], data);
+    }
 }
 
 void mfGpuBufferBind(MFGpuBuffer* buffer) {

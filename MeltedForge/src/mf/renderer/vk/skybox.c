@@ -997,7 +997,14 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
             -1.0f,  1.0f, 0.0f,     1.0f, 1.0f,
             -1.0f, -1.0f, 0.0f,     1.0f, 0.0f
         };
-        VulkanBufferAllocate(&vertexBuffer, ctx, ctx->commandPool, sizeof(data), data, VULKAN_BUFFER_TYPE_VERTEX);
+        VulkanBufferInfo info = {
+            .ctx = ctx,
+            .pool = ctx->commandPool,
+            .size = sizeof(data),
+            .data = data,
+            .type = VULKAN_BUFFER_TYPE_VERTEX
+        };
+        VulkanBufferAllocate(&vertexBuffer, info);
     }
     // Renderpass
     {
@@ -1157,7 +1164,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         vkDestroyFence(ctx->device, fence, ctx->allocator);
         vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
 
-        VulkanBufferFree(&vertexBuffer, ctx);
+        VulkanBufferFree(&vertexBuffer);
         VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
         VulkanPipelineDestroy(ctx, &pipeline);
         VulkanRenderPassDestroy(ctx, pass);

@@ -159,8 +159,15 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
     VulkanBackendCtx* ctx = image->info.ctx;
     VkDeviceSize size = image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format);
 
+    VulkanBufferInfo info = {
+        .ctx = ctx,
+        .pool = ctx->commandPool,
+        .data = mfnull,
+        .size = size,
+        .type = VULKAN_BUFFER_TYPE_STAGING
+    };
     VulkanBuffer staging = {};
-    VulkanBufferAllocate(&staging, ctx, ctx->commandPool, size, mfnull, VULKAN_BUFFER_TYPE_STAGING);
+    VulkanBufferAllocate(&staging, info);
 
     // Upload to staging buffer
     void* mem;
@@ -242,7 +249,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         vkDestroyFence(ctx->device, fence, ctx->allocator);
     }
 
-    VulkanBufferFree(&staging, ctx);
+    VulkanBufferFree(&staging);
 
     if(image->info.generateMipmaps && (image->info.mipLevels > 1))
         VulkanImageGenerateMipmaps(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
