@@ -13,7 +13,7 @@ out VS_OUT {
     layout (location = 8) out vec3 oFragPos;
 } vo;
 
-layout (binding = 0, scalar) uniform UBO {
+layout (set = 0, binding = 0, scalar) uniform UBO {
     mat4 proj;
     mat4 view;
 } ubo;

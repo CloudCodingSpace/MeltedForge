@@ -18,8 +18,9 @@ static void CreatePipeline(MFTState* state) {
     };
 
     MFResourceSetLayout* layouts[] = {
-        state->layout,
-        state->layout2
+        state->cameraLayout,
+        state->skyboxLayout,
+        state->layout
     };
 
     MFPipelineConfig info = {
@@ -45,7 +46,7 @@ static void CreatePipeline(MFTState* state) {
     info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
     info.renderTarget = state->renderTarget;
 
-    state->pipeline2 = mfPipelineCreate(state->renderer, &info);
+    state->rtPipeline = mfPipelineCreate(state->renderer, &info);
 
     MF_FREEMEM(attributes);
 }
@@ -80,7 +81,7 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
     modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
 
     MFResourceSet** set = &component->model.meshes[meshIdx].mat.set;
-    mfResourceSetsBind(0, 1, set, pipeline);
+    mfResourceSetsBind(2, 1, set, pipeline);
     mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
 
     MF_PROFILE_ZONE_END(__temp);
@@ -101,7 +102,12 @@ static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
 static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
     MFTState* state = (MFTState*)_state;
 
-    mfResourceSetsBind(1, 1, &state->set2, pipeline);
+    MFResourceSet* sets[] = {
+        state->cameraSet,
+        state->skyboxSet
+    };
+
+    mfResourceSetsBind(0, MF_ARRAYLEN(sets, MFResourceSet*), sets, pipeline);
 }
 
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
@@ -111,24 +117,25 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
     MFGpuImage* brdfLut = mfSkyboxGetBRDFLUT(state->skybox);
     // Resource layouts
     {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
-        MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, 0, appState->renderer);
-        MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
-        MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[0], &component->model, 0, appState->renderer);
-        MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[0], &component->model, 0, appState->renderer);
-        MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_LIGHTMAP, &state->materialImages[0], &component->model, 0, appState->renderer);
+        // Mesh set layout
+        {
+            MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
+            MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, 0, appState->renderer);
+            MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
+            MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALNESS, &state->materialImages[0], &component->model, 0, appState->renderer);
+            MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[0], &component->model, 0, appState->renderer);
+            MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_LIGHTMAP, &state->materialImages[0], &component->model, 0, appState->renderer);
 
-        MFResourceDescription descs[] = {
-            mfGpuImageGetDescription(diffuseImage), // NOTE: Description for one image is enough since they have the same bindings 
-            mfGpuImageGetDescription(normalImage), // NOTE: Description for one image is enough since they have the same bindings 
-            mfGpuImageGetDescription(metallicRoughnessImage), // NOTE: Description for one image is enough since they have the same bindings 
-            mfGpuImageGetDescription(emissiveImage), // NOTE: Description for one image is enough since they have the same bindings 
-            mfGpuImageGetDescription(aoImage), // NOTE: Description for one image is enough since they have the same bindings 
-            mfGpuBufferGetDescription(state->cameraUbo),
-            mfGpuBufferGetDescription(state->lightUbo)
-        };
-        
-        state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
+            MFResourceDescription descs[] = {
+                mfGpuImageGetDescription(diffuseImage), // NOTE: Description for one image is enough since they have the same bindings 
+                mfGpuImageGetDescription(normalImage), // NOTE: Description for one image is enough since they have the same bindings 
+                mfGpuImageGetDescription(metallicRoughnessImage), // NOTE: Description for one image is enough since they have the same bindings 
+                mfGpuImageGetDescription(emissiveImage), // NOTE: Description for one image is enough since they have the same bindings 
+                mfGpuImageGetDescription(aoImage) // NOTE: Description for one image is enough since they have the same bindings
+            };
+            
+            state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, component->model.meshCount, appState->renderer);
+        }
     
         // Skybox layout
         {
@@ -136,21 +143,27 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             mfGpuImageSetBinding(irradianceMap, 1);
             mfGpuImageSetBinding(prefilteredMap, 2);
             mfGpuImageSetBinding(brdfLut, 3);
-            MFResourceDescription descs2[] = {
+            MFResourceDescription descs[] = {
                 mfGpuImageGetDescription(skyboxImage),
                 mfGpuImageGetDescription(irradianceMap),
                 mfGpuImageGetDescription(prefilteredMap),
                 mfGpuImageGetDescription(brdfLut)
             };
-            state->layout2 = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs2, MFResourceDescription), descs2, 1, state->renderer);
+            state->skyboxLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, 1, state->renderer);
+        }
+        
+        // Camera layout
+        {
+            MFResourceDescription descs[] = {
+                mfGpuBufferGetDescription(state->cameraUbo),
+                mfGpuBufferGetDescription(state->lightUbo)
+            };
+            state->cameraLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(descs, MFResourceDescription), descs, 1, state->renderer);
         }
     }
     // Resource sets
     {
-        MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
-        mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
-        mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
-
+        // Mesh sets
         for(u64 k = 0; k < state->scene.meshCompPool.len; k++) {
             MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, k);
             for(u64 i = 0; i < component->model.meshCount; i++) {
@@ -169,25 +182,35 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 mfArrayAddElement(&images, MFGpuImage*, emissiveImage);
                 mfArrayAddElement(&images, MFGpuImage*, aoImage);
 
-                mfResourceSetUpdate(set, &images, &buffers);
+                mfResourceSetUpdate(set, &images, mfnull);
 
                 mfArrayDestroy(&images);
                 component->model.meshes[i].mat.set = set;
             }
         }
         
-        mfArrayDestroy(&buffers);
+        // Camera set
+        {
+            MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
+            mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
+            mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
+            
+            state->cameraSet = mfResourceSetCreate(state->cameraLayout, appState->renderer);
+            mfResourceSetUpdate(state->cameraSet, mfnull, &buffers);
+            
+            mfArrayDestroy(&buffers);
+        }
 
         // Skybox set
         {
-            state->set2 = mfResourceSetCreate(state->layout2, state->renderer);
+            state->skyboxSet = mfResourceSetCreate(state->skyboxLayout, state->renderer);
 
             MFArray images = mfArrayCreate(1, sizeof(MFGpuImage*));
             mfArrayAddElement(&images, MFGpuImage*, skyboxImage);
             mfArrayAddElement(&images, MFGpuImage*, irradianceMap);
             mfArrayAddElement(&images, MFGpuImage*, prefilteredMap);
             mfArrayAddElement(&images, MFGpuImage*, brdfLut);
-            mfResourceSetUpdate(state->set2, &images, mfnull);
+            mfResourceSetUpdate(state->skyboxSet, &images, mfnull);
             mfArrayDestroy(&images);
         }
     }
@@ -391,10 +414,12 @@ void MFTOnDeinit(void* pstate, void* pappState) {
             mfResourceSetDestroy(component->model.meshes[j].mat.set);
         }
     }
-    mfResourceSetDestroy(state->set2);
+    mfResourceSetDestroy(state->cameraSet);
+    mfResourceSetDestroy(state->skyboxSet);
 
     mfResourceSetLayoutDestroy(state->layout);
-    mfResourceSetLayoutDestroy(state->layout2);
+    mfResourceSetLayoutDestroy(state->skyboxLayout);
+    mfResourceSetLayoutDestroy(state->cameraLayout);
     
     mfGpuBufferFree(state->cameraUbo);
     mfGpuBufferFree(state->lightUbo);
@@ -410,7 +435,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfRenderTargetDestroy(state->renderTarget);
 
     mfPipelineDestroy(state->pipeline);
-    mfPipelineDestroy(state->pipeline2);
+    mfPipelineDestroy(state->rtPipeline);
 
     MF_FREEMEM(state->entities);
     MF_FREEMEM(state->materialImages);
@@ -432,7 +457,7 @@ void MFTOnRender(void* pstate, void* pappState) {
 
     MFSceneRenderConfig config = {
         .state = state,
-        .entityPipeline = (state->enableRenderTarget) ? state->pipeline2 : state->pipeline,
+        .entityPipeline = (state->enableRenderTarget) ? state->rtPipeline : state->pipeline,
         .scissor = mfRendererGetScissor(state->renderer),
         .viewport = mfRendererGetViewport(state->renderer),
         .perMeshDrawCallback = &MeshCallback,

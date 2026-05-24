@@ -30,11 +30,11 @@ typedef struct LightUBOData_s {
 typedef struct MFTState_s {
     SLogger logger;
 
-    MFResourceSetLayout* layout, *layout2;
-    MFResourceSet* set2;
+    MFResourceSetLayout* layout, *skyboxLayout, *cameraLayout;
+    MFResourceSet* skyboxSet, *cameraSet;
 
     MFPipeline* pipeline;
-    MFPipeline* pipeline2;
+    MFPipeline* rtPipeline;
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
     MFSkybox* skybox;

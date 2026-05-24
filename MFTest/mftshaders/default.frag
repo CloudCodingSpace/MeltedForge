@@ -27,11 +27,11 @@ layout (set = 0, binding = 1, scalar) uniform LightUBO {
     int useIBL;
 } ubo;
 
-layout (set = 0, binding = 2) uniform sampler2D u_DiffuseTex;
-layout (set = 0, binding = 3) uniform sampler2D u_NormalTex;
-layout (set = 0, binding = 4) uniform sampler2D u_MetallicRoughness;
-layout (set = 0, binding = 5) uniform sampler2D u_EmissionTex;
-layout (set = 0, binding = 6) uniform sampler2D u_AoMap;
+layout (set = 2, binding = 2) uniform sampler2D u_DiffuseTex;
+layout (set = 2, binding = 3) uniform sampler2D u_NormalTex;
+layout (set = 2, binding = 4) uniform sampler2D u_MetallicRoughness;
+layout (set = 2, binding = 5) uniform sampler2D u_EmissionTex;
+layout (set = 2, binding = 6) uniform sampler2D u_AoMap;
 
 layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
 layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
