@@ -10,8 +10,9 @@ layout(location = 0) out vec4 outColor;
 in VS_IN {
     layout (location = 4) vec3 oNormal;
     layout (location = 6) vec3 oTangent;
-    layout (location = 7) vec2 oUv;
-    layout (location = 8) vec3 oFragPos;
+    layout (location = 7) vec3 oBitangent;
+    layout (location = 8) vec2 oUv;
+    layout (location = 9) vec3 oFragPos;
 } vi;
 
 layout (set = 0, binding = 1, scalar) uniform LightUBO {
@@ -47,8 +48,7 @@ void main() {
     vec3 normal;
     {
         vec3 texel = texture(u_NormalTex, vi.oUv).rgb * 2.0 - 1.0;
-        vec3 bitangent = normalize(cross(vi.oNormal, vi.oTangent));
-        mat3 TBN = mat3(vi.oTangent, bitangent, vi.oNormal);
+        mat3 TBN = mat3(vi.oTangent, vi.oBitangent, vi.oNormal);
         normal = (ubo.useNormalMap == 1) ? normalize(TBN * texel) : vi.oNormal;
     }
 

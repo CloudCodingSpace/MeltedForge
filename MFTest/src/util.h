@@ -5,8 +5,9 @@
 typedef struct Vertex_s {
     MFVec3 pos;
     MFVec3 normal;
-    MFVec3 tangent;
     MFVec2 uv;
+    MFVec3 tangent;
+    MFVec3 bitangent;
 } Vertex;
 
 MF_INLINE MFVertexInputBindingDescription getVertBindingDesc() {
@@ -19,7 +20,7 @@ MF_INLINE MFVertexInputBindingDescription getVertBindingDesc() {
 }
 
 MF_INLINE MFVertexInputAttributeDescription* getVertAttribDescs(u32* count) {
-    *count = 4;
+    *count = 5;
 
     MFVertexInputAttributeDescription* desc = MF_ALLOCMEM(MFVertexInputAttributeDescription, sizeof(MFVertexInputAttributeDescription) * (*count));
     desc[0].binding = 0;
@@ -41,6 +42,11 @@ MF_INLINE MFVertexInputAttributeDescription* getVertAttribDescs(u32* count) {
     desc[3].location = 3;
     desc[3].offset = offsetof(Vertex, tangent);
     desc[3].format = MF_FORMAT_R32G32B32_SFLOAT;
+    
+    desc[4].binding = 0;
+    desc[4].location = 4;
+    desc[4].offset = offsetof(Vertex, bitangent);
+    desc[4].format = MF_FORMAT_R32G32B32_SFLOAT;
 
     return desc;
 }
@@ -52,6 +58,7 @@ MF_INLINE void vertBuilder(void* dst, MFModelVertexBuilderData data) {
     vertex->normal = data.normal;
     vertex->uv = data.texCoord;
     vertex->tangent = data.tangent;
+    vertex->bitangent = data.bitangent;
 }
 
 MF_INLINE void SetUiStyle() {
@@ -110,8 +117,8 @@ MF_INLINE void SetUiStyle() {
     colors[ImGuiCol_ResizeGripActive] =         (ImVec4){0.075f, 0.647f, 0.784f, 0.700f};
     colors[ImGuiCol_Tab] =                      (ImVec4){0.043f, 0.102f, 0.157f, 1.000f};
     colors[ImGuiCol_TabHovered] =               (ImVec4){0.075f, 0.647f, 0.784f, 0.320f};
-    colors[ImGuiCol_TabSelected] =                (ImVec4){0.075f, 0.647f, 0.784f, 0.240f};
-    colors[ImGuiCol_TabHovered] =             (ImVec4){0.043f, 0.102f, 0.157f, 1.000f};
+    colors[ImGuiCol_TabSelected] =              (ImVec4){0.075f, 0.647f, 0.784f, 0.240f};
+    colors[ImGuiCol_TabHovered] =               (ImVec4){0.043f, 0.102f, 0.157f, 1.000f};
     colors[ImGuiCol_DockingPreview] =           (ImVec4){0.075f, 0.647f, 0.784f, 0.320f};
     colors[ImGuiCol_DockingEmptyBg] =           (ImVec4){0.024f, 0.063f, 0.102f, 1.000f};
     colors[ImGuiCol_TableHeaderBg] =            (ImVec4){0.043f, 0.102f, 0.157f, 1.000f};
