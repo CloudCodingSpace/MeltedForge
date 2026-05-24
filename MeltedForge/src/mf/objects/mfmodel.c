@@ -96,6 +96,7 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
         struct aiVector3D pos = mesh->mVertices[j];
         struct aiVector3D normals = mesh->mNormals[j];
         struct aiVector3D tangents = mesh->mTangents[j];
+        struct aiVector3D bitangents = mesh->mBitangents[j];
 
         struct aiVector3D texCoords = {0};
         if (mesh->mTextureCoords[0]) {
@@ -103,10 +104,11 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
         }
 
         MFModelVertexBuilderData data = {
-            .pos = (MFVec3){pos.x, pos.y, pos.z},
-            .normal = (MFVec3){normals.x, normals.y, normals.z},
-            .tangent = (MFVec3){tangents.x, tangents.y, tangents.z},
-            .texCoord = (MFVec2){texCoords.x, texCoords.y}
+            .pos = (MFVec3){ pos.x, pos.y, pos.z },
+            .normal = (MFVec3){ normals.x, normals.y, normals.z },
+            .texCoord = (MFVec2){ texCoords.x, texCoords.y },
+            .tangent = (MFVec3){ tangents.x, tangents.y, tangents.z },
+            .bitangent = (MFVec3){ bitangents.x, bitangents.y, bitangents.z }
         };
         
         model->builder(vertices + j * model->perVertexSize, data);
@@ -120,7 +122,6 @@ void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mes
     
     if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
         struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-        int c = 1;
 
         matData.ambient_texpath = get_materialtex(scene, mat, aiTextureType_AMBIENT);
         matData.diffuse_texpath = get_materialtex(scene, mat, aiTextureType_DIFFUSE);
