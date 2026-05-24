@@ -62,6 +62,8 @@ MFMeshComponent* mfSceneEntityGetMeshComponent(MFScene* scene, u64* id);
 MFTransformComponent* mfSceneEntityGetTransformComponent(MFScene* scene, u64* id);
 
 void mfSceneGetValidEntities(MFScene* scene, u64* validEntityCount, MFEntity* entities);
+void mfSceneGetValidTransformComponents(MFScene* scene, u64* validCount, MFTransformComponent* components);
+void mfSceneGetValidMeshComponents(MFScene* scene, u64* validCount, MFMeshComponent* components);
 
 #ifdef __cplusplus
 }

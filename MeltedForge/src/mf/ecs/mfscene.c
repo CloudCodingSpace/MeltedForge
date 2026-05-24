@@ -340,8 +340,40 @@ void mfSceneGetValidEntities(MFScene* scene, u64* validEntityCount, MFEntity* en
         MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
         if(e->valid) {
             if(entities)
-                memcpy(&entities[*validEntityCount], e, sizeof(MFEntity));
+            memcpy(&entities[*validEntityCount], e, sizeof(MFEntity));
             *validEntityCount = *validEntityCount + 1;
+        }
+    }
+}
+
+void mfSceneGetValidTransformComponents(MFScene* scene, u64* validCount, MFTransformComponent* components) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
+    MF_PANIC_IF(validCount == mfnull, mfGetLogger(), "The pointer to valid count shouldn't be null!");
+    
+    *validCount = 0;
+    for(u64 i = 0; i < scene->transformCompPool.len; i++) {
+        MFTransformComponent* c = &mfArrayGetElement(scene->transformCompPool, MFTransformComponent, i);
+        if(c->valid) {
+            if(components)
+                memcpy(&components[*validCount], c, sizeof(MFTransformComponent));
+            *validCount = *validCount + 1;
+        }
+    }
+}
+
+void mfSceneGetValidMeshComponents(MFScene* scene, u64* validCount, MFMeshComponent* components) {
+    MF_PANIC_IF(scene == mfnull, mfGetLogger(), "The scene handle shouldn't be null!");
+    MF_PANIC_IF(!scene->init, mfGetLogger(), "The scene handle provided isn't initialised!");
+    MF_PANIC_IF(validCount == mfnull, mfGetLogger(), "The pointer to valid count shouldn't be null!");
+
+    *validCount = 0;
+    for(u64 i = 0; i < scene->meshCompPool.len; i++) {
+        MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, i);
+        if(c->valid) {
+            if(components)
+                memcpy(&components[*validCount], c, sizeof(MFMeshComponent));
+            *validCount = *validCount + 1;
         }
     }
 }
