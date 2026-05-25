@@ -31,8 +31,6 @@ static void pos_callback(GLFWwindow* window, double x, double y) {
 }
 
 MFWindow* mfWindowCreate(MFWindowConfig config) {
-    MF_PANIC_IF(!glfwInit(), mfGetLogger(), "Failed to initialize the system for creating the window!");
-
     MFWindow* window = MF_ALLOCMEM(MFWindow, sizeof(MFWindow));
 
     glfwWindowHint(GLFW_RESIZABLE, config.resizable);

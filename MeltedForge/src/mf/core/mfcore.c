@@ -83,6 +83,8 @@ void mfInitialize(void) {
             }
         }
     }
+
+    MF_PANIC_IF(!glfwInit(), mfGetLogger(), "Failed to initialize the system for creating the window!");
 }
 
 void mfShutdown(void) {
