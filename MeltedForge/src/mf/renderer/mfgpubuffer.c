@@ -119,7 +119,6 @@ MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     return (MFResourceDescription) {
-        .binding = buffer->config.binding,
         .descriptorCount = 1,
         .descriptorType = MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER,
         .stageFlags = buffer->config.stage

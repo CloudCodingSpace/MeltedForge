@@ -26,13 +26,11 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
 
     {
         MFGpuImageConfig info = {
-            .binding = config.binding,
             .generateMipmaps = config.generateMipmaps,
             .width = config.faceSize,
             .height = config.faceSize,
             .isCubemap = true,
-            .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
-            .binding = 0
+            .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM
         };
         skybox->image = mfGpuImageCreate(renderer, info);
         if(config.generatePbrMaps) {
@@ -97,7 +95,11 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     // Resources
     {
         MFResourceDescription description = mfGpuImageGetDescription(skybox->image);
-        skybox->layout = mfResourceSetLayoutCreate(1, &description, 3, renderer);
+        MFResourceSetBindings binding = {
+            .description = description,
+            .binding = 0
+        };
+        skybox->layout = mfResourceSetLayoutCreate(1, &binding, 3, renderer);
 
         skybox->set = mfResourceSetCreate(skybox->layout, renderer);
 

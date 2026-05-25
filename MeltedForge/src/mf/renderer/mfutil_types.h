@@ -457,11 +457,15 @@ typedef enum MFCompareOp_e {
 } MFCompareOp;
 
 typedef struct MFResourceDescription_s {
-    u32 binding;
     MFResourceDescriptionriptionType descriptorType;
     u32 descriptorCount;
     MFShaderStage stageFlags;
 } MFResourceDescription;
+
+typedef struct MFResourceSetBindings_s {
+    MFResourceDescription description;
+    u32 binding;
+} MFResourceSetBindings;
 
 typedef struct MFPipelinePushConstant_s {
     MFShaderStage stageFlags;

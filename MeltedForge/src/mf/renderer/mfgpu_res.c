@@ -17,29 +17,29 @@ extern "C" {
 #include "vk/pipeline.h"
 #include "vk/gpu_res.h"
 
-MFResourceSetLayout* mfResourceSetLayoutCreate(u64 reourceDescriptionLen, MFResourceDescription* resourceDescriptions, u64 maxSets, MFRenderer* renderer) {
+MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBindings* bindings, u64 maxSets, MFRenderer* renderer) {
     MF_PANIC_IF(maxSets == 0, mfGetLogger(), "The provided maxSet count shouldn't be 0!");
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The provided renderer handle shouldn't be null!");
-    MF_PANIC_IF(reourceDescriptionLen == 0, mfGetLogger(), "The provided resource description count shouldn't be 0!");
-    MF_PANIC_IF(resourceDescriptions == mfnull, mfGetLogger(), "The provided resource descriptions shouldn't be null!");
+    MF_PANIC_IF(bindingLen == 0, mfGetLogger(), "The provided resource binding count shouldn't be 0!");
+    MF_PANIC_IF(bindings == mfnull, mfGetLogger(), "The provided resource bindings shouldn't be null!");
 
     MFResourceSetLayout* layout = MF_ALLOCMEM(MFResourceSetLayout, sizeof(MFResourceSetLayout));
 
     layout->renderer = renderer;
-    layout->resourceDescriptions = mfArrayCreate(reourceDescriptionLen, sizeof(MFResourceDescription));
-    layout->resourceDescriptions.len = reourceDescriptionLen;
+    layout->bindings = mfArrayCreate(bindingLen, sizeof(MFResourceSetBindings));
+    layout->bindings.len = bindingLen;
 
-    for(u64 i = 0; i < reourceDescriptionLen; i++) {
-        mfArraySetElement(layout->resourceDescriptions, MFResourceDescription, i, resourceDescriptions[i]);
+    for(u64 i = 0; i < bindingLen; i++) {
+        mfArraySetElement(layout->bindings, MFResourceSetBindings, i, bindings[i]);
     }
 
     // TODO: Support more shader res type!
     u64 imageCount = 0, bufferCount = 0;
-    for(u64 i = 0; i < reourceDescriptionLen; i++) {
-        if(resourceDescriptions[i].descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER) {
+    for(u64 i = 0; i < bindingLen; i++) {
+        if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER) {
             imageCount++;
         }
-        if(resourceDescriptions[i].descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER) {
+        if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER) {
             bufferCount++;
         }
     }
@@ -75,28 +75,28 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 reourceDescriptionLen, MFReso
 
     // Descriptor layout
     {
-        VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * reourceDescriptionLen);
+        VkDescriptorSetLayoutBinding* layBindings = MF_ALLOCMEM(VkDescriptorSetLayoutBinding, sizeof(VkDescriptorSetLayoutBinding) * bindingLen);
         u32 uniqueBindingCount = 0;
 
-        for(u32 i = 0; i < reourceDescriptionLen; i++) {
+        for(u32 i = 0; i < bindingLen; i++) {
             bool bindingExists = false;
             for(u32 j = 0; j < uniqueBindingCount; j++) {
-                if(layBindings[j].binding == resourceDescriptions[i].binding) {
+                if(layBindings[j].binding == bindings[i].binding) {
                     bindingExists = true;
                     break;
                 }
             }
 
             if(!bindingExists) {
-                layBindings[uniqueBindingCount].binding = resourceDescriptions[i].binding;
-                layBindings[uniqueBindingCount].descriptorType = (VkDescriptorType)((int)resourceDescriptions[i].descriptorType);
-                layBindings[uniqueBindingCount].descriptorCount = resourceDescriptions[i].descriptorCount;
-                layBindings[uniqueBindingCount].stageFlags = (VkShaderStageFlags)((int)resourceDescriptions[i].stageFlags);
+                layBindings[uniqueBindingCount].binding = bindings[i].binding;
+                layBindings[uniqueBindingCount].descriptorType = (VkDescriptorType)((int)bindings[i].description.descriptorType);
+                layBindings[uniqueBindingCount].descriptorCount = bindings[i].description.descriptorCount;
+                layBindings[uniqueBindingCount].stageFlags = (VkShaderStageFlags)((int)bindings[i].description.stageFlags);
                 uniqueBindingCount++;
             }
         }
 
-        MF_DO_IF(uniqueBindingCount != reourceDescriptionLen, {
+        MF_DO_IF(uniqueBindingCount != bindingLen, {
             slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "The bindings of each resource description in a layout must be unique! But the provided descriptions aren't unique!");
         });
 
@@ -124,7 +124,7 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
     vkDestroyDescriptorPool(ctx->device, layout->pool, ctx->allocator);
     vkDestroyDescriptorSetLayout(ctx->device, layout->layout, ctx->allocator);
 
-    mfArrayDestroy(&layout->resourceDescriptions);
+    mfArrayDestroy(&layout->bindings);
 
     MF_SETMEM(layout, 0, sizeof(MFResourceSetLayout));
     MF_FREEMEM(layout);
@@ -230,14 +230,19 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
     VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * set->layout->imageCount);
     VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * set->layout->bufferCount);
+    u32* imgBindings = MF_ALLOCMEM(u32, sizeof(u32) * set->layout->imageCount);
+    u32* buffBindings = MF_ALLOCMEM(u32, sizeof(u32) * set->layout->bufferCount);
 
-    for(u64 i = 0; i < set->layout->imageCount; i++) {
-        VulkanImage* image = (VulkanImage*)mfGpuImageGetBackend(mfArrayGetElement(*images, MFGpuImage*, i));
-        imgInfos[i] = (VkDescriptorImageInfo){
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .imageView = image->view,
-            .sampler = image->sampler
-        };
+    // Getting bindings
+    {
+        u64 imgIdx = 0, buffIdx = 0;
+        for(u64 i = 0; i < set->layout->bindings.len; i++) {
+            MFResourceSetBindings* binding = &mfArrayGetElement(set->layout->bindings, MFResourceSetBindings, i);
+            if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER)
+                imgBindings[imgIdx++] = binding->binding;
+            else if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER)
+                buffBindings[buffIdx++] = binding->binding;
+        }
     }
     
     for (u32 frame = 0; frame < FRAMES_IN_FLIGHT; frame++) {
@@ -245,10 +250,17 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
         // Images
         for (u64 i = 0; i < set->layout->imageCount; i++) {
+            VulkanImage* image = (VulkanImage*)mfGpuImageGetBackend(mfArrayGetElement(*images, MFGpuImage*, i));
+            imgInfos[i] = (VkDescriptorImageInfo){
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .imageView = image->view,
+                .sampler = image->sampler
+            };
+
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfGpuImageGetDescription(mfArrayGetElement(*images, MFGpuImage*, i)).binding,
+                .dstBinding = imgBindings[i],
                 .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
@@ -271,7 +283,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
-                .dstBinding = mfGpuBufferGetDescription(mfArrayGetElement(*buffers, MFGpuBuffer*, i)).binding,
+                .dstBinding = buffBindings[i],
                 .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1,
                 .pBufferInfo = &buffInfos[i]
@@ -287,6 +299,8 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     MF_FREEMEM(writes);
     MF_FREEMEM(buffInfos);
     MF_FREEMEM(imgInfos);
+    MF_FREEMEM(buffBindings);
+    MF_FREEMEM(imgBindings);
 }
 
 void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout) {

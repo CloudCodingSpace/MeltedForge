@@ -21,7 +21,6 @@ typedef enum MFSkyboxType_e {
 
 typedef struct MFSkyboxConfig_s {
     const char* environmentPath;
-    u32 binding;
     u64 faceSize;
     MFRenderTarget* renderTarget;
     bool generatePbrMaps, generateMipmaps;

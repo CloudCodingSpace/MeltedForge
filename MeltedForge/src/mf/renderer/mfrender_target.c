@@ -72,13 +72,17 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
 
     {
         MFResourceDescription desc = {
-            .binding = 0,
             .descriptorCount = 1,
             .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
             .stageFlags = MF_SHADER_STAGE_FRAGMENT // TODO: Make it configurable if required
         };
 
-        renderTarget->layout = mfResourceSetLayoutCreate(1, &desc, FRAMES_IN_FLIGHT, renderer);
+        MFResourceSetBindings binding = {
+            .description = desc,
+            .binding = 0
+        };
+
+        renderTarget->layout = mfResourceSetLayoutCreate(1, &binding, FRAMES_IN_FLIGHT, renderer);
 
         VkDescriptorSetAllocateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,

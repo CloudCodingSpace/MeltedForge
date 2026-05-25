@@ -14,7 +14,6 @@ typedef struct MFGpuImage_s MFGpuImage;
 typedef struct MFGpuImageConfig_s {
     u32 width;
     u32 height;
-    u32 binding;
     void* pixels;
     MFFormat imageFormat;
     bool generateMipmaps;
@@ -31,8 +30,6 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height);
 const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image);
 bool mfGpuImageIsValid(MFGpuImage* image);
 size_t mfGpuImageGetSizeInBytes(void);
-
-void mfGpuImageSetBinding(MFGpuImage* image, u32 binding);
 
 MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image);
 void* mfGpuImageGetBackend(MFGpuImage* image);

@@ -298,7 +298,6 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
     };
 
     MFGpuImageConfig config = {
-        .binding = MF_INFINITY,
         .width = 1,
         .height = 1,
         .pixels = color,
@@ -389,7 +388,6 @@ error_return:
         .width = width,
         .height = height,
         .pixels = pixels,
-        .binding = MF_INFINITY,
         .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
         .generateMipmaps = true
     };

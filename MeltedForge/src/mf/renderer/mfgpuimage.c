@@ -127,20 +127,11 @@ bool mfGpuImageIsValid(MFGpuImage* image) {
     return image->init;
 }
 
-void mfGpuImageSetBinding(MFGpuImage* image, u32 binding) {
-    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
-    MF_PANIC_IF(binding < 0 || binding > 100, mfGetLogger(), "The binding slot provided should be valid!");
-    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
-
-    image->config.binding = binding;
-}
-
 MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
 
     return (MFResourceDescription) {
-        .binding = image->config.binding,
         .descriptorCount = 1, // NOTE: Make it configurable if required
         .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
         .stageFlags = MF_SHADER_STAGE_FRAGMENT // NOTE: Make it configurable if required
@@ -163,7 +154,6 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
         .width = mfGetErrorImageWidth(),
         .height = mfGetErrorImageHeight(),
         .pixels = mfGetErrorImagePixels(),
-        .binding = MF_INFINITY,
         .imageFormat = MF_FORMAT_R8G8B8A8_SRGB
     };
 

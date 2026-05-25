@@ -61,8 +61,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .generateMipmaps = false,
             .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .isCubemap = false,
-            .pixels = data,
-            .binding = 0
+            .pixels = data
         };
 
         image = mfGpuImageCreate(renderer, info);
@@ -98,7 +97,11 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     // Resources sets and layouts
     {
         MFResourceDescription description = mfGpuImageGetDescription(image);
-        layout = mfResourceSetLayoutCreate(1, &description, 1, renderer);
+        MFResourceSetBindings binding = {
+            .description = description,
+            .binding = 0
+        };
+        layout = mfResourceSetLayoutCreate(1, &binding, 1, renderer);
 
         set = mfResourceSetCreate(layout, renderer);
 
