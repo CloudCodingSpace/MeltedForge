@@ -34,7 +34,7 @@ static void CreatePipeline(MFTState* state) {
         .attributes = attributes,
         .bindingsCount = bindingCount,
         .bindings = &bindings,
-        .resourceLayoutCount = MF_ARRAYLEN(layouts, MFResourceSetLayout*),
+        .resourceLayoutCount = MF_ARRAYLEN(layouts),
         .resourceLayouts = layouts,
         .pushConstRangeCount = 1,
         .pushConstRanges = &range,
@@ -107,7 +107,7 @@ static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
         state->skyboxSet
     };
 
-    mfResourceSetsBind(0, MF_ARRAYLEN(sets, MFResourceSet*), sets, pipeline);
+    mfResourceSetsBind(0, MF_ARRAYLEN(sets), sets, pipeline);
 }
 
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
@@ -139,7 +139,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuImageGetDescription(aoImage), 4 }, // NOTE: Description for one image is enough since they have the same bindings
             };
             
-            state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings, MFResourceSetBindings), bindings, totalMeshCount, appState->renderer);
+            state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, totalMeshCount, appState->renderer);
         }
     
         // Skybox layout
@@ -150,7 +150,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuImageGetDescription(prefilteredMap), 2 },
                 { mfGpuImageGetDescription(brdfLut),        3 }
             };
-            state->skyboxLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings, MFResourceSetBindings), bindings, 1, state->renderer);
+            state->skyboxLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, 1, state->renderer);
         }
         
         // Camera layout
@@ -159,7 +159,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuBufferGetDescription(state->cameraUbo), 0 },
                 { mfGpuBufferGetDescription(state->lightUbo),  1 }
             };
-            state->cameraLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings, MFResourceSetBindings), bindings, 1, state->renderer);
+            state->cameraLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, 1, state->renderer);
         }
     }
     // Resource sets
@@ -603,11 +603,13 @@ void MFTOnUpdate(void* pstate, void* pappState) {
         state->scene.camera.width = winConfig->width;
         state->scene.camera.height = winConfig->height;
     }
+
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
 
     state->cameraUboData.proj = state->scene.camera.proj;
     state->cameraUboData.view = state->scene.camera.view;
     state->lightData.camPos = state->scene.camera.pos;
+
     mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
 

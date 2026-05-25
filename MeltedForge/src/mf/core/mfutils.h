@@ -52,9 +52,8 @@ extern "C" {
 
 // @brief Find the size of an array
 // @param arr The stack allocated array
-// @param T Type of the array
 // @note Only works if `arr` is an array, and not if it is a pointer to the array!
-#define MF_ARRAYLEN(arr, T) (sizeof(arr) / sizeof(T))
+#define MF_ARRAYLEN(arr) (sizeof(arr) / sizeof(arr[0]))
 
 typedef float f32;
 typedef double f64;

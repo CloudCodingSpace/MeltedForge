@@ -312,7 +312,7 @@ static void GetDepthFormat(VulkanBackendCtx* ctx) {
 
     u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    for(u32 i = 0; i < MF_ARRAYLEN(reqFormats, VkFormat); i++) {
+    for(u32 i = 0; i < MF_ARRAYLEN(reqFormats); i++) {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(ctx->physicalDevice, reqFormats[i], &props);
 
@@ -620,8 +620,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 
 		VkDescriptorPoolCreateInfo poolInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            .maxSets = 1000 * MF_ARRAYLEN(poolSizes, VkDescriptorPoolSize),
-            .poolSizeCount = MF_ARRAYLEN(poolSizes, VkDescriptorPoolSize),
+            .maxSets = 1000 * MF_ARRAYLEN(poolSizes),
+            .poolSizeCount = MF_ARRAYLEN(poolSizes),
             .pPoolSizes = poolSizes,
             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
         };

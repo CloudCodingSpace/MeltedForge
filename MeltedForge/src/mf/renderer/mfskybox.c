@@ -90,7 +90,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             4, 1, 5
         };
 
-        mfMeshCreate(&skybox->mesh, renderer, sizeof(f32) * MF_ARRAYLEN(vertices, f32), vertices, MF_ARRAYLEN(indices, u32), indices);
+        mfMeshCreate(&skybox->mesh, renderer, sizeof(f32) * MF_ARRAYLEN(vertices), vertices, MF_ARRAYLEN(indices), indices);
     }
     // Resources
     {
