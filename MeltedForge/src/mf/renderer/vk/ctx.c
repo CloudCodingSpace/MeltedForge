@@ -579,29 +579,6 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         };
         VK_CHECK(vmaCreateAllocator(&info, &ctx->vmaAllocator));
     }
-    // Depth
-    if(enableDepth) {
-        GetDepthFormat(ctx);
-
-        VulkanImageInfo info = {
-            .ctx = ctx,
-            .width = ctx->swapchainExtent.width,
-            .height = ctx->swapchainExtent.height,
-            .gpuResource = false,
-            .pixels = mfnull,
-            .format = ctx->depthFormat,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .arrayLayers = 1,
-            .type = VK_IMAGE_TYPE_2D,
-            .samples = ctx->samples
-        };
-
-        VulkanImageCreate(&ctx->depthImage, info);
-    }
     // Global descriptor pool for shader resources
     {
         VkDescriptorPoolSize poolSizes[] = {
@@ -632,14 +609,37 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
     {
         ctx->commandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
     }
+    // Depth
+    if(enableDepth) {
+        GetDepthFormat(ctx);
+
+        VulkanImageInfo info = {
+            .ctx = ctx,
+            .width = ctx->swapchainExtent.width,
+            .height = ctx->swapchainExtent.height,
+            .gpuResource = false,
+            .pixels = mfnull,
+            .format = ctx->depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .arrayLayers = 1,
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = ctx->samples
+        };
+
+        VulkanImageCreate(&ctx->depthImage, info);
+    }
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
-    VulkanCommandPoolDestroy(ctx, ctx->commandPool);
-    vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);
-
     if(ctx->enableDepth)
         VulkanImageDestroy(&ctx->depthImage);
+
+    VulkanCommandPoolDestroy(ctx, ctx->commandPool);
+    vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);    
 
     for(u32 i = 0; i < ctx->swapchainImageCount; i++)
         vkDestroyImageView(ctx->device, ctx->swapchainImageViews[i], ctx->allocator);

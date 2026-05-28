@@ -204,20 +204,26 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
             VK_CHECK(vkCreateFence(ctx->device, &fenceInfo, ctx->allocator, &fence));
         }
 
-        {
-            VkImageMemoryBarrier copy_barrier[1] = {};
-			copy_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			copy_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			copy_barrier[0].oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			copy_barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			copy_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			copy_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			copy_barrier[0].image = image->image;
-			copy_barrier[0].subresourceRange.aspectMask = image->info.aspectFlags;
-			copy_barrier[0].subresourceRange.levelCount = image->info.mipLevels;
-			copy_barrier[0].subresourceRange.layerCount = image->info.arrayLayers;
-			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, copy_barrier);
-        }
+        VulkanImageTransitionLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange) {
+            .aspectMask = image->info.aspectFlags,
+            .levelCount = image->info.mipLevels,
+            .layerCount = image->info.arrayLayers
+        });
+
+        // {
+        //     VkImageMemoryBarrier copy_barrier[1] = {};
+		// 	copy_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		// 	copy_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		// 	copy_barrier[0].oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		// 	copy_barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		// 	copy_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		// 	copy_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		// 	copy_barrier[0].image = image->image;
+		// 	copy_barrier[0].subresourceRange.aspectMask = image->info.aspectFlags;
+		// 	copy_barrier[0].subresourceRange.levelCount = image->info.mipLevels;
+		// 	copy_barrier[0].subresourceRange.layerCount = image->info.arrayLayers;
+		// 	vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, copy_barrier);
+        // }
 
         {
             VkBufferImageCopy region = {
@@ -235,19 +241,24 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         }
 
         if(!image->info.generateMipmaps && (image->info.mipLevels == 1)) {
-            VkImageMemoryBarrier use_barrier[1] = {};
-			use_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			use_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			use_barrier[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			use_barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			use_barrier[0].newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			use_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			use_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			use_barrier[0].image = image->image;
-			use_barrier[0].subresourceRange.aspectMask = image->info.aspectFlags;
-			use_barrier[0].subresourceRange.levelCount = image->info.mipLevels;
-			use_barrier[0].subresourceRange.layerCount = image->info.arrayLayers;
-			vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, use_barrier);
+            // VkImageMemoryBarrier use_barrier[1] = {};
+			// use_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			// use_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			// use_barrier[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			// use_barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			// use_barrier[0].newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			// use_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			// use_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			// use_barrier[0].image = image->image;
+			// use_barrier[0].subresourceRange.aspectMask = image->info.aspectFlags;
+			// use_barrier[0].subresourceRange.levelCount = image->info.mipLevels;
+			// use_barrier[0].subresourceRange.layerCount = image->info.arrayLayers;
+			// vkCmdPipelineBarrier(buff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, use_barrier);
+            VulkanImageTransitionLayout(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange) {
+                .aspectMask = image->info.aspectFlags,
+                .levelCount = image->info.mipLevels,
+                .layerCount = image->info.arrayLayers
+            });
         }
 
         VulkanCommandBufferEnd(buff);
@@ -429,6 +440,8 @@ void VulkanImageTransitionLayout(VulkanImage* image, VkImageLayout dstLayout, Vk
 
     VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &submit, image->fence));
     VK_CHECK(vkWaitForFences(ctx->device, 1, &image->fence, VK_TRUE, UINT64_MAX));
+    VK_CHECK(vkResetFences(ctx->device, 1, &image->fence));
+    vkResetCommandBuffer(image->cmdBuff, 0);
 
     image->layout = dstLayout;
     image->access = dstAccess;
