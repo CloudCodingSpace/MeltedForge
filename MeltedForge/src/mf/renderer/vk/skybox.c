@@ -185,26 +185,13 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     {
         VulkanCommandBufferBegin(cmdBuff, true);
 
-        // Transitioning cubemap to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .srcAccessMask = 0,
-                .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .image = cubemapImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseArrayLayer = 0,
-                    .layerCount = 6,
-                    .baseMipLevel = 0,
-                    .levelCount = cubemapImage->info.mipLevels
-                }
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &barrier);
-        }
+        VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseArrayLayer = 0,
+            .layerCount = 6,
+            .baseMipLevel = 0,
+            .levelCount = cubemapImage->info.mipLevels
+        });
 
         MFMat4 proj = mfMat4Perspective(90.0f * MF_DEG2RAD_MULTIPLIER, 1.0f, 0.1f, 100.0f);
         
@@ -272,25 +259,17 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             vkCmdEndRenderPass(cmdBuff);
 
             // Transition temp image to transfer src
-            {
-                VkImageMemoryBarrier barrier = {
-                    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                    .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                    .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-                    .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    .image = tempImage.image,
-                    .subresourceRange = {
-                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                        .baseArrayLayer = 0,
-                        .layerCount = 1,
-                        .baseMipLevel = 0,
-                        .levelCount = 1
-                    }
-                };
+            tempImage.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            tempImage.stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            tempImage.access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            VulkanImageTransitionLayout(&tempImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+                .baseMipLevel = 0,
+                .levelCount = 1
+            });
 
-                vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &barrier);
-            }
             // Copying to cubemap
             {
                 VkImageCopy copy = {
@@ -318,27 +297,16 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         }
 
         // Transition cubemap layer to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = cubemapImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = cubemapImage->info.mipLevels,
-                    .baseArrayLayer = 0,
-                    .layerCount = 6
-                },
-                .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
-        }
+        cubemapImage->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        cubemapImage->access = VK_ACCESS_TRANSFER_WRITE_BIT;
+        cubemapImage->stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = cubemapImage->info.mipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 6
+        });
 
         VulkanCommandBufferEnd(cmdBuff);
 
@@ -491,25 +459,13 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         VulkanCommandBufferBegin(cmdBuff, true);
 
         // Transitioning cubemap to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .srcAccessMask = 0,
-                .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .image = cubemapImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseArrayLayer = 0,
-                    .layerCount = 6,
-                    .baseMipLevel = 0,
-                    .levelCount = cubemapImage->info.mipLevels
-                }
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &barrier);
-        }
+        VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseArrayLayer = 0,
+            .layerCount = 6,
+            .baseMipLevel = 0,
+            .levelCount = cubemapImage->info.mipLevels
+        });
 
         MFMat4 proj = mfMat4Perspective(90.0f * MF_DEG2RAD_MULTIPLIER, 1.0f, 0.1f, 100.0f);
         
@@ -576,25 +532,17 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             vkCmdEndRenderPass(cmdBuff);
 
             // Transition temp image to transfer src
-            {
-                VkImageMemoryBarrier barrier = {
-                    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                    .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                    .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-                    .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    .image = tempImage.image,
-                    .subresourceRange = {
-                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                        .baseArrayLayer = 0,
-                        .layerCount = 1,
-                        .baseMipLevel = 0,
-                        .levelCount = 1
-                    }
-                };
+            tempImage.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            tempImage.stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            tempImage.access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            VulkanImageTransitionLayout(&tempImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+                .baseMipLevel = 0,
+                .levelCount = 1
+            });
 
-                vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &barrier);
-            }
             // Copying to cubemap
             {
                 VkImageCopy copy = {
@@ -622,27 +570,16 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         }
 
         // Transition cubemap layer to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = cubemapImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = cubemapImage->info.mipLevels,
-                    .baseArrayLayer = 0,
-                    .layerCount = 6
-                },
-                .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
-        }
+        cubemapImage->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        cubemapImage->access = VK_ACCESS_TRANSFER_WRITE_BIT;
+        cubemapImage->stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = cubemapImage->info.mipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 6
+        });
 
         VulkanCommandBufferEnd(cmdBuff);
 
@@ -793,25 +730,13 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanCommandBufferBegin(cmdBuff, true);
 
         // Transitioning cubemap to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .srcAccessMask = 0,
-                .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .image = cubemapImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseArrayLayer = 0,
-                    .layerCount = 6,
-                    .baseMipLevel = 0,
-                    .levelCount = cubemapImage->info.mipLevels
-                }
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &barrier);
-        }
+        VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseArrayLayer = 0,
+            .layerCount = 6,
+            .baseMipLevel = 0,
+            .levelCount = cubemapImage->info.mipLevels
+        });
 
         MFMat4 proj = mfMat4Perspective(90.0f * MF_DEG2RAD_MULTIPLIER, 1.0f, 0.1f, 100.0f);
         
@@ -882,25 +807,16 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                 vkCmdEndRenderPass(cmdBuff);
 
                 // Transition temp image to transfer src
-                {
-                    VkImageMemoryBarrier barrier = {
-                        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                        .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-                        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                        .image = tempImage[mip].image,
-                        .subresourceRange = {
-                            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                            .baseArrayLayer = 0,
-                            .layerCount = 1,
-                            .baseMipLevel = 0,
-                            .levelCount = 1
-                        }
-                    };
-
-                    vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &barrier);
-                }
+                tempImage[mip].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                tempImage[mip].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                tempImage[mip].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                VulkanImageTransitionLayout(&tempImage[mip], cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                    .baseMipLevel = 0,
+                    .levelCount = 1
+                });
                 // Copying to cubemap
                 {
                     VkImageCopy copy = {
@@ -929,27 +845,16 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         }
 
         // Transition cubemap layer to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = cubemapImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = cubemapImage->info.mipLevels,
-                    .baseArrayLayer = 0,
-                    .layerCount = 6
-                },
-                .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
-        }
+        cubemapImage->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        cubemapImage->access = VK_ACCESS_TRANSFER_WRITE_BIT;
+        cubemapImage->stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = cubemapImage->info.mipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 6
+        });
 
         VulkanCommandBufferEnd(cmdBuff);
 
@@ -1128,27 +1033,16 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         vkCmdEndRenderPass(cmdBuff);
 
         // Transition outImage to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        {
-            VkImageMemoryBarrier barrier = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = outImage->image,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = outImage->info.mipLevels,
-                    .baseArrayLayer = 0,
-                    .layerCount = 1
-                },
-                .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT
-            };
-
-            vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, mfnull, 0, mfnull, 1, &barrier);
-        }
+        outImage->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        outImage->access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        outImage->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        VulkanImageTransitionLayout(outImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange) {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = outImage->info.mipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        });
 
         VulkanCommandBufferEnd(cmdBuff);
 
