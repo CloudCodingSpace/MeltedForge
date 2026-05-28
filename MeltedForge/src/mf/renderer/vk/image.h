@@ -35,6 +35,9 @@ typedef struct VulkanImage_s {
     VkImageView view;
     VkSampler sampler;
     VmaAllocation allocation;
+    VkImageLayout layout;
+    VkAccessFlagBits access;
+    VkPipelineStageFlagBits stage;
 
     VulkanImageInfo info;
 } VulkanImage;
@@ -44,6 +47,7 @@ void VulkanImageDestroy(VulkanImage* image);
 
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels);
 void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkAccessFlagBits srcAccess, VkPipelineStageFlagBits srcStage);
+void VulkanImageTransitionLayout(VulkanImage* image, VkImageLayout dstLayout, VkAccessFlagBits dstAccess, VkPipelineStageFlagBits dstStage);
 
 #ifdef __cplusplus
 }
