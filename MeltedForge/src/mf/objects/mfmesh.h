@@ -45,9 +45,21 @@ typedef struct MFMesh_s {
     bool init;
 } MFMesh;
 
-void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indCount, u32* indices);
+// @brief Creates a mesh
+// @param mesh A valid pointer to a MFMesh handle
+// @param renderer A valid pointer to a MFRenderer handle
+// @param vertSize Size of the entire vertex buffer data in bytes
+// @param vertices A valid pointer to the vertex data
+// @param indicesCount Count of indices in the mesh
+// @param indices A valid pointer to u32 for the index data 
+void mfMeshCreate(MFMesh* mesh, MFRenderer* renderer, u64 vertSize, void* vertices, u32 indicesCount, u32* indices);
+
+// @param Destroys a mesh
+// @param mesh A valid pointer to a MFMesh handle
 void mfMeshDestroy(MFMesh* mesh);
 
+// @brief Renders a mesh
+// @param mesh A valid pointer to a MFMesh handle
 void mfMeshRender(MFMesh* mesh);
 
 #ifdef __cplusplus
