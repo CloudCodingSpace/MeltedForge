@@ -223,7 +223,6 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     MFGpuBufferConfig config = {
         .type = MF_GPU_BUFFER_TYPE_UBO,
         .size = sizeof(UBOData),
-        .binding = 0,
         .stage = MF_SHADER_STAGE_VERTEX
     };
 
@@ -234,7 +233,6 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
     
     config.size = sizeof(LightUBOData);
-    config.binding = 1;
     config.stage = MF_SHADER_STAGE_FRAGMENT;
     
     state->lightData = (LightUBOData) {
