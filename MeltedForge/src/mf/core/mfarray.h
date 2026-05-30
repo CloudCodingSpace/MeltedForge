@@ -24,6 +24,11 @@ MFArray mfArrayCreate(u64 capacity, u64 elementSize);
 // @param array A valid pointer to MFArray returned by `mfArrayCreate`
 void mfArrayDestroy(MFArray* array);
 
+// @brief Resets a MFArray
+// @param array A valid pointer to MFArray returned by `mfArrayCreate`
+// @note It resets its data and sets the data & length to 0, but it doesn't free the memory it occupies
+void mfArrayReset(MFArray* array);
+
 // @brief Resizes the array
 // @param array A valid pointer to MFArray returned by `mfArrayCreate`
 // @param newCapacity A u64 which is the new capacity of the array

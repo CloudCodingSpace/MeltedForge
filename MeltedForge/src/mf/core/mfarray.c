@@ -31,6 +31,14 @@ void mfArrayDestroy(MFArray* array) {
     MF_SETMEM(array, 0, sizeof(MFArray));
 }
 
+void mfArrayReset(MFArray* array) {
+    MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be 0!");
+    MF_PANIC_IF(!array->init, mfGetLogger(), "The array provided isn't initialised!");
+
+    array->len = 0;
+    MF_SETMEM(array->data, 0, array->elementSize * array->capacity);
+}
+
 void mfArrayResize(MFArray* array, u64 newCapacity) {
     MF_PANIC_IF(array == mfnull, mfGetLogger(), "The array provided shouldn't be 0!");
     MF_PANIC_IF(!array->init, mfGetLogger(), "The array provided isn't initialised!");
