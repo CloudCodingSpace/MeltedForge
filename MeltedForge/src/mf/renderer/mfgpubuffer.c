@@ -63,7 +63,7 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
 
     buffer->config.data = data;
 
-    u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? buffer->backend->frameIndex : 0;
+    u32 idx = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO || buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO) ? buffer->backend->frameIndex : 0;
     VulkanBufferUploadData(&buffer->buffer[idx], data);
 }
 
