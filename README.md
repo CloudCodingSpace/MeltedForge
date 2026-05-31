@@ -32,17 +32,23 @@ The link to tests and apps made using MeltedForge is her :-
     - UI customization (Using Dear ImGui's styles)
  - Render targets
     - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
-    - In other words, they are offscreen framebuffers on which we can render something too
+    - In other words, they are offscreen framebuffers on which we can render something onto
  - A binary serialization/deserialization api
- - Explicit shader resource management control for resources like UBOs and image samplers.
+ - Explicit gpu resource management control for resources like:
+    - Vertex buffers
+    - Index buffers
+    - Textures and skyboxes
+    - UBOs
+    - SSBOs
+    - Image samplers (`sampler2D` and `samplerCube` in glsl)
  - Skybox support
     - Only 2D equirectangular images as input
     - HDR format supported as well
-    - Optional to generate IBL textures such as BRDF LUT, Prefiltered Map and Irradiance map
+    - Optional to generate utility IBL textures such as BRDF LUT, Prefiltered Map and Irradiance map
  - Basic PBR support
     - Diffuse IBL support
     - Specular IBL support
- - MSAA support for native window and rendertargets as well
+ - MSAA support for native window and render targets as well
 
 ---
 
