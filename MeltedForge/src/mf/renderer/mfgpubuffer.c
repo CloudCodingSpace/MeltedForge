@@ -38,7 +38,7 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
     if(config.size == 0)
         return buffer;
     else {
-        for(i32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+        for(i32 i = 0; i < ((config.type == MF_GPU_BUFFER_TYPE_UBO || buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO) ? FRAMES_IN_FLIGHT : 1); i++)
             VulkanBufferAllocate(&buffer->buffer[i], info);
     }
 
@@ -50,7 +50,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
-    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++)
+    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO || buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO) ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanBufferFree(&buffer->buffer[i]);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
@@ -74,7 +74,7 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     buffer->config.data = data;
     buffer->config.size = size;
 
-    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) ? FRAMES_IN_FLIGHT : 1); i++) {
+    for(i32 i = 0; i < ((buffer->config.type == MF_GPU_BUFFER_TYPE_UBO || buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO) ? FRAMES_IN_FLIGHT : 1); i++) {
         VulkanBufferResize(&buffer->buffer[i], size);
         if(data != mfnull)
             VulkanBufferUploadData(&buffer->buffer[i], data);
@@ -86,6 +86,8 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_UBO)
+        return;
+    if(buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO)
         return;
 
     VkCommandBuffer buff = buffer->backend->commandBuffers[buffer->backend->frameIndex];
@@ -118,9 +120,15 @@ MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
+    MFResourceDescriptionType type = MF_RES_DESCRIPTION_TYPE_MAX_ENUM;
+    if(buffer->config.type == MF_GPU_BUFFER_TYPE_UBO)
+        type = MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER;
+    else if(buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO)
+        type = MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER;
+
     return (MFResourceDescription) {
         .descriptorCount = 1,
-        .descriptorType = MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER,
+        .descriptorType = type,
         .stageFlags = buffer->config.stage
     };
 }

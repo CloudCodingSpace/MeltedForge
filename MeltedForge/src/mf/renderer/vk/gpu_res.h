@@ -16,7 +16,7 @@ struct MFResourceSetLayout_s {
     VkDescriptorPool pool;
     MFRenderer* renderer;
     MFArray bindings;
-    u64 imageCount, bufferCount;
+    u64 imageCount, uboCount, ssboCount;
     bool init;
 };
 

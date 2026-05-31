@@ -34,18 +34,22 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     }
 
     // TODO: Support more shader res type!
-    u64 imageCount = 0, bufferCount = 0;
+    u64 imageCount = 0, ssboCount = 0, uboCount = 0;
     for(u64 i = 0; i < bindingLen; i++) {
         if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER) {
             imageCount++;
         }
-        if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER) {
-            bufferCount++;
+        else if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER) {
+            uboCount++;
+        }
+        else if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER) {
+            ssboCount++;
         }
     }
 
     layout->imageCount = imageCount;
-    layout->bufferCount = bufferCount;
+    layout->uboCount = uboCount;
+    layout->ssboCount = ssboCount;
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
@@ -53,13 +57,16 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     // Descriptor pool
     {
         u32 count = 0;
-        VkDescriptorPoolSize sizes[2] = {0};
+        VkDescriptorPoolSize sizes[3] = {0};
 
         if(imageCount != 0) {
             sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ((u32)imageCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
         }
-        if(bufferCount != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ((u32)bufferCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
+        if(uboCount != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ((u32)uboCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
+        }
+        if(ssboCount != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ((u32)ssboCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
         }
 
         VkDescriptorPoolCreateInfo info = {
@@ -221,26 +228,28 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
     }
 
     MF_PANIC_IF(imgCount != set->layout->imageCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
-    MF_PANIC_IF(buffCount != set->layout->bufferCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
+    MF_PANIC_IF(buffCount != (set->layout->uboCount + set->layout->ssboCount), mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
-    u64 count = set->layout->imageCount + set->layout->bufferCount;
+    u64 count = set->layout->imageCount + set->layout->ssboCount + set->layout->uboCount;
     VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
     VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * set->layout->imageCount);
-    VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * set->layout->bufferCount);
+    VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * buffCount);
     u32* imgBindings = MF_ALLOCMEM(u32, sizeof(u32) * set->layout->imageCount);
-    u32* buffBindings = MF_ALLOCMEM(u32, sizeof(u32) * set->layout->bufferCount);
+    u32* buffBindings = MF_ALLOCMEM(u32, sizeof(u32) * buffCount);
 
     // Getting bindings
     {
         u64 imgIdx = 0, buffIdx = 0;
-        for(u64 i = 0; i < set->layout->bindings.len; i++) {
+        for(u64 i = 0; i < count; i++) {
             MFResourceSetBindings* binding = &mfArrayGetElement(set->layout->bindings, MFResourceSetBindings, i);
             if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER)
                 imgBindings[imgIdx++] = binding->binding;
             else if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER)
+                buffBindings[buffIdx++] = binding->binding;
+            else if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER)
                 buffBindings[buffIdx++] = binding->binding;
         }
     }
@@ -269,10 +278,10 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         }
 
         // Buffers
-        for (u64 i = 0; i < set->layout->bufferCount; i++) {
+        for (u64 i = 0; i < buffCount; i++) {
             VulkanBuffer* buffer = (VulkanBuffer*)mfGpuBufferGetBackend(mfArrayGetElement(*buffers, MFGpuBuffer*, i));
-            MF_PANIC_IF(buffer->info.type != VULKAN_BUFFER_TYPE_UBO, mfGetLogger(), 
-                                        "The given buffer for resource set isn't of an uniform buffer!");
+            MF_PANIC_IF(buffer->info.type != VULKAN_BUFFER_TYPE_UBO && buffer->info.type != VULKAN_BUFFER_TYPE_SSBO, mfGetLogger(), 
+                                        "The given buffer for resource set isn't an uniform/shader storage buffer!");
 
             buffInfos[i] = (VkDescriptorBufferInfo){
                 .buffer = buffer[frame].handle,
@@ -280,11 +289,17 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
                 .range = buffer[frame].info.size
             };
 
+            VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+            if(buffer->info.type == VULKAN_BUFFER_TYPE_UBO)
+                type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            else if(buffer->info.type == VULKAN_BUFFER_TYPE_UBO)
+                type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
                 .dstBinding = buffBindings[i],
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorType = type,
                 .descriptorCount = 1,
                 .pBufferInfo = &buffInfos[i]
             };

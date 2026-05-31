@@ -14,7 +14,8 @@ typedef enum MFGpuBufferTypes_s {
     MF_GPU_BUFFER_TYPE_NONE,
     MF_GPU_BUFFER_TYPE_VERTEX,
     MF_GPU_BUFFER_TYPE_INDEX,
-    MF_GPU_BUFFER_TYPE_UBO
+    MF_GPU_BUFFER_TYPE_UBO,
+    MF_GPU_BUFFER_TYPE_SSBO
 } MFGpuBufferTypes;
 
 typedef struct MFGpuBufferConfig_s {
