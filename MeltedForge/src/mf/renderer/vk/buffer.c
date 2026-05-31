@@ -50,6 +50,30 @@ void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->info.size);
 }
 
+void ssbo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
+    VkBufferCreateInfo info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        .size = buffer->info.size,
+        .queueFamilyIndexCount = ctx->uniqueQueueCount,
+        .pQueueFamilyIndices = ctx->uniqueQueues
+    };
+
+    if(ctx->uniqueQueueCount > 1) {
+        info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
+
+    // TODO: Consider host visible too for frequently updated buffers
+    VmaAllocationCreateInfo allocInfo = {
+        .usage = VMA_MEMORY_USAGE_GPU_ONLY
+    };
+    VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
+    VK_CHECK(vmaMapMemory(ctx->vmaAllocator, buffer->allocation, &buffer->mappedMem));
+
+    MF_INFO(mfGetLogger(), "(From the vulkan backend) Allocated a buffer of size: %zu bytes", buffer->info.size);
+}
+
 void vertex_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool) {
     VkBufferCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -115,6 +139,9 @@ void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info) {
     }
     else if(info.type == VULKAN_BUFFER_TYPE_STAGING) {
         staging_buff(buffer, info.ctx);
+    }
+    else if(info.type == VULKAN_BUFFER_TYPE_SSBO) {
+        ssbo_buff(buffer, info.ctx);
     }
 }
 
