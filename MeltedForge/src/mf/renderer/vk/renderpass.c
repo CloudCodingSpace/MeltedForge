@@ -81,7 +81,7 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
     }
 
     if(pinfo.renderTarget) {
-        dependency.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
+        // dependency.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
     }
 
     VkRenderPassCreateInfo info = {

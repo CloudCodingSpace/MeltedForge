@@ -318,7 +318,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     }
 
     // Transitioning the images explicitly
-    {
+    /*{
         VkCommandBuffer cmd = renderTarget->commandBuffers[0];
         VK_CHECK(vkResetCommandBuffer(cmd, 0));
         VulkanCommandBufferBegin(cmd, true);
@@ -341,7 +341,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
         };
         VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
         VK_CHECK(vkQueueWaitIdle(renderTarget->backend->ctx.queueData.graphicsQueue));
-    }
+    }*/
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VK_CHECK(vkResetCommandBuffer(renderTarget->commandBuffers[i], 0));
