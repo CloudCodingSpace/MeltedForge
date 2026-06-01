@@ -163,7 +163,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             .renderTarget = config.renderTarget
         };
 
-        skybox->pipeline = mfPipelineCreate(renderer, &info);
+        skybox->pipeline = mfPipelineCreate(renderer, info);
     }
 
     SkyboxConvertEnvMapToSkybox(skybox, config, renderer);

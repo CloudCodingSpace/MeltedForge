@@ -20,41 +20,40 @@ struct MFPipeline_s {
     bool init;
 };
 
-MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig* info) {
+MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
-    MF_PANIC_IF(info == mfnull, mfGetLogger(), "The pipeline info handle provided shouldn't be null!");
 
     MFPipeline* pipeline = MF_ALLOCMEM(MFPipeline, sizeof(MFPipeline));
 
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
-    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info->bindingsCount);
-    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info->attributesCount);
+    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info.bindingsCount);
+    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info.attributesCount);
 
-    for (u32 i = 0; i < info->bindingsCount; i++) {
-        bindings[i].binding = info->bindings[i].binding;
-        bindings[i].inputRate = (VkVertexInputRate)((int)info->bindings[i].rate);
-        bindings[i].stride = info->bindings[i].stride;
+    for (u32 i = 0; i < info.bindingsCount; i++) {
+        bindings[i].binding = info.bindings[i].binding;
+        bindings[i].inputRate = (VkVertexInputRate)((int) info.bindings[i].rate);
+        bindings[i].stride = info.bindings[i].stride;
     }
 
-    for (u32 i = 0; i < info->attributesCount; i++) {
-        attribs[i].binding = info->attributes[i].binding;
-        attribs[i].format = (VkFormat)((int)info->attributes[i].format);
-        attribs[i].location = info->attributes[i].location;
-        attribs[i].offset = info->attributes[i].offset;
+    for (u32 i = 0; i < info.attributesCount; i++) {
+        attribs[i].binding = info.attributes[i].binding;
+        attribs[i].format = (VkFormat)((int) info.attributes[i].format);
+        attribs[i].location = info.attributes[i].location;
+        attribs[i].offset = info.attributes[i].offset;
     }
 
-    VkDescriptorSetLayout* setLayouts = MF_ALLOCMEM(VkDescriptorSetLayout, sizeof(VkDescriptorSetLayout) * info->resourceLayoutCount);
-    for(u32 i = 0; i < info->resourceLayoutCount; i++) {
-        setLayouts[i] = mfResourceSetLayoutGetBackend(info->resourceLayouts[i]);
+    VkDescriptorSetLayout* setLayouts = MF_ALLOCMEM(VkDescriptorSetLayout, sizeof(VkDescriptorSetLayout) * info.resourceLayoutCount);
+    for(u32 i = 0; i < info.resourceLayoutCount; i++) {
+        setLayouts[i] = mfResourceSetLayoutGetBackend( info.resourceLayouts[i]);
     }
 
     // Push constant size check
     {
         u32 totalSize = 0;
-        for(u64 i = 0; i < info->pushConstRangeCount; i++) {
-            totalSize += info->pushConstRanges[i].size;
+        for(u64 i = 0; i < info.pushConstRangeCount; i++) {
+            totalSize += info.pushConstRanges[i].size;
         }
         VkPhysicalDeviceProperties properties = {};
         vkGetPhysicalDeviceProperties(pipeline->backend->ctx.physicalDevice, &properties);
@@ -62,35 +61,35 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig* info) {
         MF_PANIC_IF(properties.limits.maxPushConstantsSize < totalSize, mfGetLogger(), "The total push constant size of the pipeline is greater than the GPU's limits!");
     }
 
-    VkPushConstantRange* ranges = MF_ALLOCMEM(VkPushConstantRange, sizeof(VkPushConstantRange) * info->pushConstRangeCount);
-    for(u64 i = 0; i < info->pushConstRangeCount; i++) {
-        ranges[i].offset = info->pushConstRanges[i].offset;
-        ranges[i].size = info->pushConstRanges[i].size;
-        ranges[i].stageFlags = (VkShaderStageFlags)((int)info->pushConstRanges[i].stage);
+    VkPushConstantRange* ranges = MF_ALLOCMEM(VkPushConstantRange, sizeof(VkPushConstantRange) * info.pushConstRangeCount);
+    for(u64 i = 0; i < info.pushConstRangeCount; i++) {
+        ranges[i].offset = info.pushConstRanges[i].offset;
+        ranges[i].size = info.pushConstRanges[i].size;
+        ranges[i].stageFlags = (VkShaderStageFlags)((int) info.pushConstRanges[i].stage);
     }
 
     VulkanPipelineInfo binfo = {
-        .vertPath = info->vertPath,
-        .fragPath = info->fragPath,
+        .vertPath = info.vertPath,
+        .fragPath = info.fragPath,
         .renderpass = mfRendererGetRenderPass(renderer),
-        .depthCompareOp = (VkCompareOp)(int)info->depthCompareOp,
-        .hasDepth = info->hasDepth,
-        .extent = (VkExtent2D) { info->extent.x, info->extent.y },
-        .attributesCount = info->attributesCount,
+        .depthCompareOp = (VkCompareOp)(int)info.depthCompareOp,
+        .hasDepth = info.hasDepth,
+        .extent = (VkExtent2D) { info.extent.x, info.extent.y },
+        .attributesCount = info.attributesCount,
         .attributes = attribs,
-        .bindingsCount = info->bindingsCount,
+        .bindingsCount = info.bindingsCount,
         .bindings = bindings,
-        .setLayoutCount = info->resourceLayoutCount,
+        .setLayoutCount = info.resourceLayoutCount,
         .setLayouts = setLayouts,
-        .pushConstRangesCount = info->pushConstRangeCount,
+        .pushConstRangesCount = info.pushConstRangeCount,
         .pushConstRanges = ranges,
         .cache = pipeline->backend->pipelineCache,
-        .cullMode = (VkCullModeFlags)(int)info->cullMode,
+        .cullMode = (VkCullModeFlags)(int) info.cullMode,
         .samples = pipeline->ctx->samples
     };
 
-    if(info->renderTarget != mfnull) {
-        binfo.renderpass = info->renderTarget->renderPass;
+    if( info.renderTarget != mfnull) {
+        binfo.renderpass = info.renderTarget->renderPass;
     }
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);

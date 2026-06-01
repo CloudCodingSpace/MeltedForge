@@ -23,7 +23,7 @@ typedef struct MFRendererConfig_s {
 } MFRendererConfig;
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window);
-void mfRendererShutdown(MFRenderer* renderer);
+void mfRendererDestroy(MFRenderer* renderer);
 
 bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
 void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);

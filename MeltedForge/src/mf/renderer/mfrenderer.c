@@ -40,7 +40,7 @@ MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     return renderer;
 }
 
-void mfRendererShutdown(MFRenderer* renderer) {
+void mfRendererDestroy(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
     

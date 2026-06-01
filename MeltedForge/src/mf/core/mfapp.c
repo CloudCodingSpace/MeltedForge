@@ -50,7 +50,7 @@ static void deinitApp(void* st, MFAppConfig* config) {
     if(config->layers.data && config->layers.len > 0)
         mfArrayDestroy(&config->layers);
 
-    mfRendererShutdown(state->renderer);
+    mfRendererDestroy(state->renderer);
     mfWindowDestroy(state->window);
 }
 

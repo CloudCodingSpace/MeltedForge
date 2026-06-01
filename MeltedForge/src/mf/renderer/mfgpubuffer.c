@@ -39,7 +39,7 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
         return buffer;
     else {
         bool isShaderRes = (config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
-        for(i32 i = 0; i < isShaderRes ? FRAMES_IN_FLIGHT : 1; i++)
+        for(i32 i = 0; i < (isShaderRes ? FRAMES_IN_FLIGHT : 1); i++)
             VulkanBufferAllocate(&buffer->buffer[i], info);
     }
 
@@ -52,7 +52,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     bool isShaderRes = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
-    for(i32 i = 0; i < isShaderRes ? FRAMES_IN_FLIGHT : 1; i++)
+    for(i32 i = 0; i < (isShaderRes ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanBufferFree(&buffer->buffer[i]);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));

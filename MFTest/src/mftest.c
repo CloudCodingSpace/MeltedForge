@@ -41,12 +41,12 @@ static void CreatePipeline(MFTState* state) {
         .cullMode = MF_CULL_MODE_BACK_BIT
     };
 
-    state->pipeline = mfPipelineCreate(state->renderer, &info);
+    state->pipeline = mfPipelineCreate(state->renderer, info);
 
     info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
     info.renderTarget = state->renderTarget;
 
-    state->rtPipeline = mfPipelineCreate(state->renderer, &info);
+    state->rtPipeline = mfPipelineCreate(state->renderer, info);
 
     MF_FREEMEM(attributes);
 }
