@@ -63,7 +63,6 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             .hasDepth = renderTarget->hasDepth,
-            .renderTarget = true,
             .hasMsaa = renderTarget->hasMsaa
         };
 
@@ -316,32 +315,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             }
         }
     }
-
-    // Transitioning the images explicitly
-    /*{
-        VkCommandBuffer cmd = renderTarget->commandBuffers[0];
-        VK_CHECK(vkResetCommandBuffer(cmd, 0));
-        VulkanCommandBufferBegin(cmd, true);
-
-        for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VulkanImageTransitionLayout(&renderTarget->images[i], cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1
-            });
-        }
-
-        VulkanCommandBufferEnd(cmd);
-        VkSubmitInfo submitInfo = {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &cmd
-        };
-        VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
-        VK_CHECK(vkQueueWaitIdle(renderTarget->backend->ctx.queueData.graphicsQueue));
-    }*/
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         VK_CHECK(vkResetCommandBuffer(renderTarget->commandBuffers[i], 0));

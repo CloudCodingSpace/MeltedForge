@@ -90,7 +90,6 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             .hasDepth = config->enableDepth,
-            .renderTarget = false,
             .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
         };
 

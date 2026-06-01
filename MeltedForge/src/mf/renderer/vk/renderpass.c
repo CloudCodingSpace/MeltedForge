@@ -80,10 +80,6 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
         dependency.srcAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     }
 
-    if(pinfo.renderTarget) {
-        // dependency.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
-    }
-
     VkRenderPassCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = attachmentCount,
