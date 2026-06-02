@@ -27,6 +27,7 @@ struct MFRenderTarget_s {
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkSemaphore* renderFinishedSemas;
+    VkFence fences[FRAMES_IN_FLIGHT];
     
     VkClearValue clearValue;
 

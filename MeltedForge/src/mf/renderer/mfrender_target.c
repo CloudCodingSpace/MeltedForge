@@ -159,6 +159,14 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.commandPool, true);
     }
 
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VkFenceCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+        };
+        VK_CHECK(vkCreateFence(renderTarget->backend->ctx.device, &info, renderTarget->backend->ctx.allocator, &renderTarget->fences[i]));
+        VK_CHECK(vkResetFences(renderTarget->backend->ctx.device, 1, &renderTarget->fences[i]));
+    }
+
     renderTarget->renderFinishedSemas = MF_ALLOCMEM(VkSemaphore, sizeof(VkSemaphore) * renderTarget->backend->ctx.swapchainImageCount);
     for(u32 i = 0; i < renderTarget->backend->ctx.swapchainImageCount; i++) {
         VkSemaphoreCreateInfo semaInfo = {
@@ -180,6 +188,8 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     }
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        vkDestroyFence(renderTarget->backend->ctx.device, renderTarget->fences[i], renderTarget->backend->ctx.allocator);
+
         VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
         if(renderTarget->backend->config.enableUI)
             ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
@@ -415,7 +425,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     renderTarget->begun = true;
 }
 
-void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
+void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
     MF_PANIC_IF(!renderTarget->begun, mfGetLogger(), "The render target hasn't begun yet!");
@@ -444,7 +454,12 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget) {
         .pWaitDstStageMask = waitDstFlags
     };
 
-    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, VK_NULL_HANDLE));
+    VkFence fence = renderTarget->fences[renderTarget->backend->frameIndex];
+    VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, waitOnCpu ? fence : VK_NULL_HANDLE));
+    if(waitOnCpu) {
+        VK_CHECK(vkWaitForFences(renderTarget->backend->ctx.device, 1, &fence, VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(renderTarget->backend->ctx.device, 1, &fence));
+    }
 
     renderTarget->backend->renderTarget = mfnull;
     renderTarget->begun = false;

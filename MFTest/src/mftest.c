@@ -474,7 +474,7 @@ void MFTOnRender(void* pstate, void* pappState) {
 
     if(state->enableRenderTarget) {
         mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
-        mfRenderTargetEnd(state->renderTarget);
+        mfRenderTargetEnd(state->renderTarget, false);
     }
     else {
         mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);

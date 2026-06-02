@@ -25,7 +25,7 @@ void mfRenderTargetSetClearColor(MFRenderTarget* renderTarget, MFVec3 color);
 MFVec3 mfRenderTargetGetClearColor(MFRenderTarget* renderTarget);
 
 void mfRenderTargetBegin(MFRenderTarget* renderTarget);
-void mfRenderTargetEnd(MFRenderTarget* renderTarget);
+void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu);
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData);
 void* mfRenderTargetGetPass(MFRenderTarget* renderTarget);
