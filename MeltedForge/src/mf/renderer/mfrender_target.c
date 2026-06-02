@@ -326,37 +326,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
         }
     }
 
-    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VK_CHECK(vkResetCommandBuffer(renderTarget->commandBuffers[i], 0));
-        VulkanCommandBufferBegin(renderTarget->commandBuffers[i], true);
-    }
-
-    // Begin the renderPass
-    {
-        u32 count = 1;
-        VkClearValue values[3] = {
-            renderTarget->clearValue
-        };
-        
-        if(renderTarget->hasDepth) {
-            values[count].depthStencil.depth = 1.0f;
-            values[count++].depthStencil.stencil = 0;
-        }
-        if(renderTarget->hasMsaa)
-            values[count++] = renderTarget->clearValue;
-
-        VkRenderPassBeginInfo beginInfo = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .clearValueCount = count,
-            .pClearValues = values,
-            .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
-            .renderPass = renderTarget->renderPass,
-            .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex]
-        }; 
-
-        vkCmdBeginRenderPass(renderTarget->commandBuffers[renderTarget->backend->frameIndex], &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    }
-
     if(renderTarget->resizeCallback != mfnull) {
         renderTarget->resizeCallback(renderTarget->userData);
     }
