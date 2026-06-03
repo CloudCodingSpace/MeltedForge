@@ -32,7 +32,8 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
         .pool = buffer->ctx->commandPool,
         .data = config.data,
         .size = config.size,
-        .type = (VulkanBufferTypes)(i32)config.type
+        .type = (VulkanBufferTypes)(i32)config.type,
+        .frequentUpdates = config.frequentUpdates
     };
 
     if(config.size == 0)
