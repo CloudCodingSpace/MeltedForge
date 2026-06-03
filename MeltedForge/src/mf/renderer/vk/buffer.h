@@ -24,6 +24,7 @@ typedef struct VulkanBufferInfo_s {
     u64 size;
     void* data;
     VulkanBufferTypes type;
+    bool frequentUpdates;
 } VulkanBufferInfo;
 
 typedef struct VulkanBuffer_s {
