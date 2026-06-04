@@ -11,3 +11,6 @@ not be much readable or elegant, since its purpose is to just stress test the en
 
  - **PBR *(With Specular IBL)***
 ![pbr_screenshot](./screenshots/pbr_with_ibl.png)
+
+ - **Multiple Entities with different mesh components *(With 4X MSAA on Forward render)***
+![4x_msaa_multiple_entities_ss](./screenshots/4x_msaa_multiple_entities.png)

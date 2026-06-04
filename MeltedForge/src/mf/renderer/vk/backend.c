@@ -21,8 +21,16 @@ extern "C" {
 void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     if(backend->ctx.swapchainExtent.width == width && backend->ctx.swapchainExtent.height == height)
         return;
-    if(width == 0 && height == 0)
-        return;
+    
+    // Waiting until window res is more than 0
+    {
+        GLFWwindow* handle = mfWindowGetHandle(window);
+        int width, height;
+        while(width == 0 || height == 0) {
+            glfwGetWindowSize(handle, &width, &height);
+            glfwWaitEvents();
+        }
+    }
 
     VK_CHECK(vkDeviceWaitIdle(backend->ctx.device));
 
