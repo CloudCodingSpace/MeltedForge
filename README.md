@@ -142,7 +142,7 @@ cmake --build <path-to-build-dir> --parallel
 
 The third party libraries used in this engine are :-
 
- - [Stb](http://github.com/nothings/stb) (For image loading)
+ - [Stb](https://github.com/CloudCodingSpace/stb) (For single header libraries for things like image loading, noise, etc)
  - [Assimp](https://github.com/assimp/assimp/) (For loading models)
  - [Glfw](https://github.com/glfw/glfw) (For cross-platform windowing and input handling)
  - [Slog](https://github.com/CloudCodingSpace/slog) (For logging)
