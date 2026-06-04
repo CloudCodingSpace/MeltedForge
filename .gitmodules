@@ -17,3 +17,6 @@
 [submodule "vma"]
 	path = MeltedForge/libs/vma
 	url = https://github.com/CloudCodingSpace/VMA
+[submodule "stb"]
+	path = MeltedForge/libs/stb
+	url = https://github.com/CloudCodingSpace/stb.git
