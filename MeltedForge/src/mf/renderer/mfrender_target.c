@@ -215,6 +215,11 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
+    if(renderTarget->begun) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't resize the render target when the render target has already begun!");
+        return;
+    }
+
     if(extent.x == 0 || extent.y == 0) {
         return;
     }
