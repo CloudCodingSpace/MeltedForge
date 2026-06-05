@@ -30,6 +30,7 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu);
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData);
 void* mfRenderTargetGetPass(MFRenderTarget* renderTarget);
 
+u8* mfRenderTargetGetCurrentImagePixels(MFRenderTarget* renderTarget, u32* width, u32* height);
 u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget);
 u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget);
 

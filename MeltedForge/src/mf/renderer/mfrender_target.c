@@ -456,6 +456,15 @@ void* mfRenderTargetGetPass(MFRenderTarget* renderTarget) {
     return (void*)renderTarget->renderPass;
 }
 
+u8* mfRenderTargetGetCurrentImagePixels(MFRenderTarget* renderTarget, u32* width, u32* height) {
+    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(width == mfnull, mfGetLogger(), "The width pointer provided shouldn't be null!");
+    MF_PANIC_IF(height == mfnull, mfGetLogger(), "The height pointer provided shouldn't be null!");
+
+    return VulkanImageGetPixels(&renderTarget->images[renderTarget->backend->frameIndex], 0, 0, width, height);
+}
+
 u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
