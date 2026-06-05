@@ -54,7 +54,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .imageType = pinfo.type, 
             .tiling = pinfo.tiling,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .usage = pinfo.usage,
+            .usage = pinfo.usage | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
             .samples = pinfo.samples,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .mipLevels = pinfo.mipLevels,
@@ -66,14 +66,6 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
         if(ctx->uniqueQueueCount > 1) {
             info.sharingMode = VK_SHARING_MODE_CONCURRENT;
         }
-
-        if(pinfo.generateMipmaps) {
-            info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-            info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        }
-
-        if(pinfo.gpuResource)
-            info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
         VmaAllocationCreateInfo allocInfo = {
             .usage = pinfo.memFlags
@@ -244,6 +236,87 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         VulkanImageGenerateMipmaps(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 }
 
+u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex) {
+    VulkanBackendCtx* ctx = image->info.ctx;
+    
+    u32 width  = MAX(1, image->info.width  >> mipLevel);
+    u32 height = MAX(1, image->info.height >> mipLevel);
+    u64 size = sizeof(u8) * VulkanFormatBytesPerPixel(image->info.format) * width * height;
+    u8* buffer = MF_ALLOCMEM(u8, size);
+
+    VulkanBuffer staging = {0};
+    VkFence fence = mfnull;
+    VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
+    {
+        VulkanBufferInfo buffInfo = {
+            .frequentUpdates = true,
+            .ctx = ctx,
+            .data = mfnull,
+            .pool = ctx->commandPool,
+            .size = size,
+            .type = VULKAN_BUFFER_TYPE_STAGING
+        };
+        VulkanBufferAllocate(&staging, buffInfo);
+
+        VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        VK_CHECK(vkCreateFence(ctx->device, &fenceInfo, ctx->allocator, &fence));
+    }
+
+    VulkanCommandBufferBegin(buff, true);
+
+    VkAccessFlagBits access = image->access;
+    VkPipelineStageFlagBits stage = image->stage;
+    VkImageLayout layout = image->layout;
+
+    VulkanImageTransitionLayout(image, buff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+        .aspectMask = image->info.aspectFlags,
+        .baseArrayLayer = faceIndex,
+        .baseMipLevel = mipLevel,
+        .layerCount = 1,
+        .levelCount = 1
+    });
+
+    VkBufferImageCopy region = {
+        .imageOffset = (VkOffset3D){ 0, 0, 0 },
+        .imageSubresource.mipLevel = mipLevel,
+        .imageSubresource.aspectMask = image->info.aspectFlags,
+        .imageSubresource.baseArrayLayer = faceIndex,
+        .imageSubresource.layerCount = 1,
+        .imageExtent = (VkExtent3D){ (uint32_t)width, (uint32_t)height, 1 },
+        .bufferImageHeight = 0,
+        .bufferOffset = 0,
+        .bufferRowLength = 0
+    };
+    vkCmdCopyImageToBuffer(buff, image->image, image->layout, staging.handle, 1, &region);
+
+    VulkanImageTransitionLayout(image, buff, layout, access, stage, (VkImageSubresourceRange){
+        .aspectMask = image->info.aspectFlags,
+        .baseArrayLayer = faceIndex,
+        .baseMipLevel = mipLevel,
+        .layerCount = 1,
+        .levelCount = 1
+    });
+
+    VulkanCommandBufferEnd(buff);
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &buff
+    };
+
+    VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &submitInfo, fence));
+    VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+    memcpy(buffer, staging.mappedMem, size);
+
+    VulkanBufferFree(&staging);
+    VulkanCommandBufferFree(ctx, buff, ctx->commandPool);
+    vkDestroyFence(ctx->device, fence, ctx->allocator);
+
+    return buffer;
+}
+
 void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkAccessFlagBits srcAccess, VkPipelineStageFlagBits srcStage) {
     VulkanBackendCtx* ctx = image->info.ctx;
     if(image->info.mipLevels == 1)
@@ -348,12 +421,14 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
     VK_CHECK(vkWaitForFences(ctx->device, 1, &image->fence, VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(ctx->device, 1, &image->fence));
     VK_CHECK(vkResetCommandBuffer(image->cmdBuff, 0));
-
 }
 
 void VulkanImageTransitionLayout(VulkanImage* image, VkCommandBuffer cmdBuff, VkImageLayout dstLayout, VkAccessFlagBits dstAccess, VkPipelineStageFlagBits dstStage, VkImageSubresourceRange subResRange) {
     VulkanBackendCtx* ctx = image->info.ctx;
     
+    if(image->access == dstAccess && image->layout == dstLayout && image->stage == dstStage)
+        return;
+
     VkImageMemoryBarrier barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .oldLayout = image->layout,

@@ -50,6 +50,7 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo info);
 void VulkanImageDestroy(VulkanImage* image);
 
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels);
+u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex);
 void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkAccessFlagBits srcAccess, VkPipelineStageFlagBits srcStage);
 void VulkanImageTransitionLayout(VulkanImage* image, VkCommandBuffer cmdBuff, VkImageLayout dstLayout, VkAccessFlagBits dstAccess, VkPipelineStageFlagBits dstStage, VkImageSubresourceRange subResRange);
 

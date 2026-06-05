@@ -25,6 +25,7 @@ void staging_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
     };
 
     VK_CHECK(vmaCreateBuffer(ctx->vmaAllocator, &info, &allocInfo, &buffer->handle, &buffer->allocation, mfnull));
+    VK_CHECK(vmaMapMemory(ctx->vmaAllocator, buffer->allocation, &buffer->mappedMem));
 }
 
 void ubo_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx) {
@@ -170,7 +171,7 @@ void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info) {
 void VulkanBufferFree(VulkanBuffer* buffer) {
     VulkanBackendCtx* ctx = buffer->info.ctx;
 
-    if(buffer->info.frequentUpdates)
+    if(buffer->info.frequentUpdates || (buffer->info.type == VULKAN_BUFFER_TYPE_STAGING))
         vmaUnmapMemory(ctx->vmaAllocator, buffer->allocation);
 
     vmaDestroyBuffer(ctx->vmaAllocator, buffer->handle, buffer->allocation);
