@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="./assets/icon.ico">
-      <meta name="generator" content="zensical-0.0.43">
+      <meta name="generator" content="zensical-0.0.44">
     
     
       
@@ -502,44 +502,56 @@ engine like Unity, Godot, Unreal Engine, Cry engine, etc. but it is in the path 
 games and applications.</p>
 <p>Features of the engine as of now:</p>
 <ul>
-<li>Basic ECS<ul>
+<li>A Basic ECS</li>
+<li>Multiple entities support</li>
+<li>Can add/remove components to/from a scene</li>
+<li>Can attach/detach components from entities</li>
 <li>Basic scene management</li>
-<li>Serialization/Deserialization of scene</li>
-<li>Management of multiple entities</li>
+<li>Scene load/save</li>
+<li>Material system</li>
+<li>GLTF 2.0 model loading along with the material data<ul>
+<li>Can load complex models (Tested with Sponza &amp; Bistro Internal)</li>
 </ul>
 </li>
-<li>Material system (with texture caching)</li>
-<li>Model loading (Only gltf 2.0 format)</li>
-<li>Editor level UI (Using cimgui)<ul>
-<li>Customization of the UI (By cimgui)</li>
+<li>Engine &amp; editor level UI<ul>
+<li>UI customization (Using Dear ImGui's styles)</li>
 </ul>
 </li>
-<li>Custom offscreen render targets</li>
-<li>Binary serializing &amp; deserializing api</li>
-<li>Explicit shader resource control</li>
-<li>Explicit shader code control</li>
-<li>Can create shader pipelines with explicit control</li>
-<li>Skybox creation<ul>
-<li>Skybox generation from equirectangular image (.hdr format supported too!)</li>
-<li>Irradiance map generation support (Diffuse IBL)</li>
+<li>Render targets<ul>
+<li>Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport</li>
+<li>In other words, they are offscreen framebuffers on which we can render something onto</li>
 </ul>
 </li>
-<li>Custom useful data structures<ul>
-<li>MFArray (A dynamic array which uses the heap)</li>
-<li>MFHashMap (A unordered dynamic hashmap which uses the heap)</li>
+<li>A binary serialization/deserialization api</li>
+<li>Explicit gpu resource management control for resources like:<ul>
+<li>Vertex buffers</li>
+<li>Index buffers</li>
+<li>Textures and skyboxes</li>
+<li>UBOs</li>
+<li>SSBOs</li>
+<li>Image samplers (<code>sampler2D</code> and <code>samplerCube</code> in glsl)</li>
+<li>ResourceSets and ResourceSetLayouts (Custom engine type)</li>
+</ul>
+</li>
+<li>Skybox support<ul>
+<li>Only 2D equirectangular images as input</li>
+<li>HDR format supported as well</li>
+<li>Optional to generate utility IBL textures such as BRDF LUT, Prefiltered Map and Irradiance map</li>
 </ul>
 </li>
 <li>Basic PBR support<ul>
-<li>IBL (Only diffuse currently)</li>
+<li>Diffuse IBL support</li>
+<li>Specular IBL support</li>
 </ul>
 </li>
+<li>MSAA support for native window and render targets as well</li>
 </ul>
 <hr />
 <h2 id="third-party-dependencies">Third party dependencies</h2>
 <p>The engine uses a few third party dependencies internally. They are:</p>
 <ul>
 <li>Slog (Custom logger by the same author. Repository <a href="https://github.com/CloudCodingSpace/slog">here</a>)</li>
-<li>Stb's single header utils (Single header utils by stb. Repository <a href="https://github.com/nothings/stb">here</a>)</li>
+<li>Stb's single header utils (Single header utils by stb. Repository <a href="https://github.com/CloudCodingSpace/stb">here</a>)</li>
 <li>Glfw (Cross-platform windowing/util library. Repository <a href="https://github.com/CloudCodingSpace/GLFW/tree/73f09546ccd681047360e4e8bc5474adad55147f">here</a>)</li>
 <li>Tracy (For profiling. Repository <a href="https://github.com/wolfpld/tracy/tree/05cceee0df3b8d7c6fa87e9638af311dbabc63cb">here</a>)</li>
 <li>Assimp (Model loader. Repository <a href="https://github.com/assimp/assimp/tree/e0b52347c6e52de2827ec957a9ebf00ce3c54f79">here</a>)</li>
