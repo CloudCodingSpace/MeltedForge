@@ -75,6 +75,12 @@ Features of the engine as of now:
     - Specular IBL support
  - MSAA support for native window and render targets as well
 
+ - MFTest's latest status (A test application included in the main repo to stress test the engine's core)  
+   ![img](https://raw.githubusercontent.com/CloudCodingSpace/MeltedForge/main/MFTest/screenshots/4x_msaa_multiple_entities.png)
+
+!!! Info
+   This above image is currently in development and is being run on an Intel UHD so the delta time is more then it should be ideally 😅
+
 ---
 
 ## Third party dependencies
