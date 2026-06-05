@@ -236,12 +236,14 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         VulkanImageGenerateMipmaps(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 }
 
-u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex) {
+u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex, u32* width, u32* height) {
     VulkanBackendCtx* ctx = image->info.ctx;
     
-    u32 width  = MAX(1, image->info.width  >> mipLevel);
-    u32 height = MAX(1, image->info.height >> mipLevel);
-    u64 size = sizeof(u8) * VulkanFormatBytesPerPixel(image->info.format) * width * height;
+    u32 w  = MAX(1, image->info.width  >> mipLevel);
+    u32 h = MAX(1, image->info.height >> mipLevel);
+    *width = w;
+    *height = h;
+    u64 size = sizeof(u8) * VulkanFormatBytesPerPixel(image->info.format) * w * h;
     u8* buffer = MF_ALLOCMEM(u8, size);
 
     VulkanBuffer staging = {0};
@@ -282,7 +284,7 @@ u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex) {
         .imageSubresource.aspectMask = image->info.aspectFlags,
         .imageSubresource.baseArrayLayer = faceIndex,
         .imageSubresource.layerCount = 1,
-        .imageExtent = (VkExtent3D){ (uint32_t)width, (uint32_t)height, 1 },
+        .imageExtent = (VkExtent3D){ (uint32_t)w, (uint32_t)h, 1 },
         .bufferImageHeight = 0,
         .bufferOffset = 0,
         .bufferRowLength = 0

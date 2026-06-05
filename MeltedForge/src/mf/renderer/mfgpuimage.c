@@ -73,12 +73,29 @@ void mfGpuImageDestroy(MFGpuImage* image) {
     MF_FREEMEM(image);
 }
 
+u8* mfGpuImageGetPixels(MFGpuImage* image, u32* width, u32* height, u32 mipLevel, u32 faceIndex) {
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
+    MF_PANIC_IF(width == mfnull, mfGetLogger(), "The width pointer provided shouldn't be null!");
+    MF_PANIC_IF(height == mfnull, mfGetLogger(), "The height pointer provided shouldn't be null!");
+
+    VulkanImage* backend = &image->image;
+    if(backend->info.arrayLayers <= faceIndex) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The faceIndex isn't valid for getting the image's pixels! Returning the max. possible faceIndex available!");
+        faceIndex = backend->info.arrayLayers - 1;
+    }
+    if(backend->info.mipLevels <= mipLevel) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The mipLevel isn't valid for getting the image's pixels! Returning the max. possible mip level available!");
+        mipLevel = backend->info.mipLevels - 1;
+    }
+
+    return VulkanImageGetPixels(backend, mipLevel, faceIndex, width, height);
+}
+
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
-    
-    memcpy(image->config.pixels, pixels, sizeof(u8) * image->config.width * image->config.height * 4);
 
     VulkanImageSetPixels(&image->image, image->config.pixels);
 }
