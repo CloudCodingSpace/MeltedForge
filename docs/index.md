@@ -42,27 +42,38 @@ games and applications.
 
 Features of the engine as of now:
 
- - Basic ECS
-    - Basic scene management
-    - Serialization/Deserialization of scene
-    - Management of multiple entities
- - Material system (with texture caching)
- - Model loading (Only gltf 2.0 format)
- - Editor level UI (Using cimgui)
-     - Customization of the UI (By cimgui)
- - Custom offscreen render targets
- - Binary serializing & deserializing api
- - Explicit shader resource control
- - Explicit shader code control
- - Can create shader pipelines with explicit control
- - Skybox creation
-    - Skybox generation from equirectangular image (.hdr format supported too!)
-    - Irradiance map generation support (Diffuse IBL)
- - Custom useful data structures
-    - MFArray (A dynamic array which uses the heap)
-    - MFHashMap (A unordered dynamic hashmap which uses the heap)
+
+ - A Basic ECS
+   - Multiple entities support
+   - Can add/remove components to/from a scene
+   - Can attach/detach components from entities
+   - Basic scene management
+   - Scene load/save
+   - Material system
+ - GLTF 2.0 model loading along with the material data
+    - Can load complex models (Tested with Sponza & Bistro Internal)
+ - Engine & editor level UI
+    - UI customization (Using Dear ImGui's styles)
+ - Render targets
+    - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
+    - In other words, they are offscreen framebuffers on which we can render something onto
+ - A binary serialization/deserialization api
+ - Explicit gpu resource management control for resources like:
+    - Vertex buffers
+    - Index buffers
+    - Textures and skyboxes
+    - UBOs
+    - SSBOs
+    - Image samplers (`sampler2D` and `samplerCube` in glsl)
+    - ResourceSets and ResourceSetLayouts (Custom engine type)
+ - Skybox support
+    - Only 2D equirectangular images as input
+    - HDR format supported as well
+    - Optional to generate utility IBL textures such as BRDF LUT, Prefiltered Map and Irradiance map
  - Basic PBR support
-    - IBL (Only diffuse currently)
+    - Diffuse IBL support
+    - Specular IBL support
+ - MSAA support for native window and render targets as well
 
 ---
 
@@ -71,7 +82,7 @@ Features of the engine as of now:
 The engine uses a few third party dependencies internally. They are:
 
  - Slog (Custom logger by the same author. Repository [here](https://github.com/CloudCodingSpace/slog))
- - Stb's single header utils (Single header utils by stb. Repository [here](https://github.com/nothings/stb))
+ - Stb's single header utils (Single header utils by stb. Repository [here](https://github.com/CloudCodingSpace/stb))
  - Glfw (Cross-platform windowing/util library. Repository [here](https://github.com/CloudCodingSpace/GLFW/tree/73f09546ccd681047360e4e8bc5474adad55147f))
  - Tracy (For profiling. Repository [here](https://github.com/wolfpld/tracy/tree/05cceee0df3b8d7c6fa87e9638af311dbabc63cb))
  - Assimp (Model loader. Repository [here](https://github.com/assimp/assimp/tree/e0b52347c6e52de2827ec957a9ebf00ce3c54f79))
