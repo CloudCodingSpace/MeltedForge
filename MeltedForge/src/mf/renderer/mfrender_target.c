@@ -437,6 +437,9 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
 
     renderTarget->backend->renderTarget = mfnull;
     renderTarget->begun = false;
+    renderTarget->images[renderTarget->backend->frameIndex].access = VK_ACCESS_SHADER_READ_BIT;
+    renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {
@@ -461,6 +464,11 @@ u8* mfRenderTargetGetCurrentImagePixels(MFRenderTarget* renderTarget, u32* width
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
     MF_PANIC_IF(width == mfnull, mfGetLogger(), "The width pointer provided shouldn't be null!");
     MF_PANIC_IF(height == mfnull, mfGetLogger(), "The height pointer provided shouldn't be null!");
+
+    if(renderTarget->begun) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't get the pixels of render target when the render target has already begun!");
+        return mfnull;
+    }
 
     return VulkanImageGetPixels(&renderTarget->images[renderTarget->backend->frameIndex], 0, 0, width, height);
 }

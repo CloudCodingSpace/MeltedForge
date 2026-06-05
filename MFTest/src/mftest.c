@@ -1,6 +1,8 @@
 #include "mftest.h"
 #include "util.h"
 
+#include <stb/stb_image_write.h>
+
 #define INFO(logger, msg, ...) slogLogMsg(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
 
 #pragma region Helpers
@@ -514,10 +516,9 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
 
-        bool enableRenderTarget = state->enableRenderTarget;
-        igCheckbox("Render to ImGui window", &enableRenderTarget);
-        if(enableRenderTarget != state->enableRenderTarget) {
-            state->enableRenderTarget = enableRenderTarget;
+        igCheckbox("Render to ImGui window", &state->enableRenderTarget);
+        if(igButton("Take screenshot", (ImVec2){200, 35})) {
+            state->takeScreenshot = true;
         }
 
         igDummy((ImVec2){ 0.0f, 50.0f });
@@ -594,6 +595,16 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*)pappState;
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
+
+    if(state->takeScreenshot) {
+        u32 width, height;
+        u8* pixels = mfRenderTargetGetCurrentImagePixels(state->renderTarget, &width, &height);
+
+        stbi_write_png("mftscreenshot.png", width, height, 4, pixels, width * 4 * sizeof(u8));
+
+        MF_FREEMEM(pixels);
+        state->takeScreenshot = false;
+    }
 
     if(state->enableRenderTarget) {
         state->scene.camera.width = state->sceneViewport.x;

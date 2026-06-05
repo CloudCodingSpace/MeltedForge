@@ -197,7 +197,7 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 	{
 		bool set = false;
 		for (u32 i = 0; i < caps.formatCount; i++) {
-			if (caps.formats[i].format == VK_FORMAT_B8G8R8A8_UNORM && caps.formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
+			if (caps.formats[i].format == VK_FORMAT_R8G8B8A8_UNORM && caps.formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
 				ctx->swapchainFormat = caps.formats[i];
 				set = true;
 				break;
