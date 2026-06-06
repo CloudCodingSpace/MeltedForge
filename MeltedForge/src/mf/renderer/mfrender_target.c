@@ -397,6 +397,8 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     }
 
     renderTarget->begun = true;
+    renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
 void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {

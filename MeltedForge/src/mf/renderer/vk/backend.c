@@ -337,10 +337,15 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     ImGui_ImplGlfw_NewFrame();
     igNewFrame();
 
+    backend->renderPassBegun = true;
+
     return true;
 }
 
 void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
+    if(!backend->renderPassBegun)
+        return;
+
     if(backend->config.enableUI) {
         igEndFrame();
         igRender();
@@ -407,6 +412,8 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VK_CHECK(result);
     
     backend->frameIndex = (backend->frameIndex + 1) % FRAMES_IN_FLIGHT;
+    backend->renderPassBegun = false;
+
     MF_FREEMEM(waitDstMasks);
     MF_FREEMEM(waitSemas);
 }

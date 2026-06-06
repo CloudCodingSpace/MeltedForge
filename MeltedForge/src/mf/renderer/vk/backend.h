@@ -33,6 +33,7 @@ typedef struct VulkanBackend_s {
 
     VulkanImage* msaaImages;
     VkRenderPass pass;
+    bool renderPassBegun;
     u32 frameBufferCount;
     VkFramebuffer* frameBuffers;
 
