@@ -249,7 +249,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     		.presentMode = ctx->swapchainMode,
     		.imageArrayLayers = 1,
     		.imageExtent = ctx->swapchainExtent,
-    		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
     		.clipped = VK_TRUE,
     		.oldSwapchain = mfnull
         };
