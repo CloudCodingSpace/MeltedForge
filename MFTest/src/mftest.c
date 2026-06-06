@@ -601,7 +601,7 @@ void MFTOnUpdate(void* pstate, void* pappState) {
 
     if(state->takeScreenshot) {
         u32 width, height;
-        u8* pixels = mfRenderTargetGetCurrentImagePixels(state->renderTarget, &width, &height);
+        u8* pixels = mfRendererGetCurrentImagePixels(appState->renderer, &width, &height);
 
         stbi_write_png("mftscreenshot.png", width, height, 4, pixels, width * 4 * sizeof(u8));
 
