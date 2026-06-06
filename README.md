@@ -49,6 +49,7 @@ The link to tests and apps made using MeltedForge is her :-
     - Diffuse IBL support
     - Specular IBL support
  - MSAA support for native window and render targets as well
+ - Can get the image pixels from the native window, render targets and images as well.
 
 ---
 
