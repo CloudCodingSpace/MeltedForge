@@ -22,8 +22,6 @@ typedef struct VulkanBackendConfig_s {
 } VulkanBackendConfig;
 
 typedef struct VulkanBackend_s {
-    MFArray renderTargets;
-
     VulkanBackendConfig config;
     VulkanBackendCtx ctx;
     u32 swapchainImageIndex, frameIndex;
@@ -44,6 +42,10 @@ typedef struct VulkanBackend_s {
     const char* pipelineCacheFilePath;
     VkPipelineCache pipelineCache;
     struct MFRenderTarget_s* renderTarget;
+    bool hadRenderTargetUsage;
+    MFArray waitStages;
+    MFArray waitSemas;
+    MFArray descSetBindingPool;
 
     void* callbackState;
     void (*resizeCallback)(void* state);

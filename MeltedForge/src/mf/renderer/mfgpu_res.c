@@ -202,17 +202,15 @@ void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, s
 
     VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
 
-    // TODO: Later fix this by figuring out a way to not allocate this list in the heap and freeing it per bind
-    VkDescriptorSet* handles = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * setCount);
     for(u64 i = 0; i < setCount; i++) {
-        handles[i] = sets[i]->sets[backend->frameIndex];
+        mfArrayAddElement(&backend->descSetBindingPool, VkDescriptorSet, sets[i]->sets[backend->frameIndex]);
     }
 
     vkCmdBindDescriptorSets(buff, pipelineBackend->bindPoint, pipelineBackend->layout, 
-                                    firstSetIndex, setCount, handles, 
+                                    firstSetIndex, setCount, (VkDescriptorSet*)backend->descSetBindingPool.data, 
                                     0, mfnull);
 
-    MF_FREEMEM(handles);
+    mfArrayReset(&backend->descSetBindingPool);
 }
 
 void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {

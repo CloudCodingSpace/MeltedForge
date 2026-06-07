@@ -385,17 +385,19 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    renderTarget->backend->renderTarget = renderTarget;
+    // TODO: Make this search faster if required
     bool exists = false;
-    for(u64 i = 0; i < renderTarget->backend->renderTargets.len; i++) {
-        if(mfArrayGetElement(renderTarget->backend->renderTargets, MFRenderTarget*, i) == renderTarget) {
+    for(u64 i = 0; i < renderTarget->backend->waitSemas.len; i++) {
+        if(mfArrayGetElement(renderTarget->backend->waitStages, VkSemaphore, i) == renderTarget->renderFinishedSemas[renderTarget->backend->swapchainImageIndex])
             exists = true;
-        }
     }
     if(!exists) {
-        mfArrayAddElement(&renderTarget->backend->renderTargets, MFRenderTarget*, renderTarget);
+        mfArrayAddElement(&renderTarget->backend->waitSemas, VkSemaphore, renderTarget->renderFinishedSemas[renderTarget->backend->swapchainImageIndex]);
+        mfArrayAddElement(&renderTarget->backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
+    renderTarget->backend->renderTarget = renderTarget;
+    renderTarget->backend->hadRenderTargetUsage = true;
     renderTarget->begun = true;
     renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_UNDEFINED;

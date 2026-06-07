@@ -85,7 +85,9 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     backend->config = *config;
-    backend->renderTargets = mfArrayCreate(2, sizeof(MFRenderTarget*));
+    backend->waitSemas = mfArrayCreate(5, sizeof(VkSemaphore));
+    backend->waitStages = mfArrayCreate(5, sizeof(VkPipelineStageFlags));
+    backend->descSetBindingPool = mfArrayCreate(5, sizeof(VkDescriptorSet));
 
     VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->enableDepth, config->window);
 
@@ -240,7 +242,9 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
         igDestroyContext(igGetCurrentContext());
     }
 
-    mfArrayDestroy(&backend->renderTargets);
+    mfArrayDestroy(&backend->waitSemas);
+    mfArrayDestroy(&backend->waitStages);
+    mfArrayDestroy(&backend->descSetBindingPool);
 
     if(backend->pipelineCache) {
         size_t size = 0;
@@ -288,10 +292,11 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
 }
 
 bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
-    // Clearing the rnederTargets array
+    // Clearing per frame data
     {
-        MF_SETMEM(backend->renderTargets.data, 0, backend->renderTargets.elementSize * backend->renderTargets.capacity);
-        backend->renderTargets.len = 0;
+        mfArrayReset(&backend->waitSemas);
+        mfArrayReset(&backend->waitStages);
+        backend->hadRenderTargetUsage = false;
     }
 
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
@@ -359,22 +364,9 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     vkCmdEndRenderPass(backend->commandBuffers[backend->frameIndex]);
     VulkanCommandBufferEnd(backend->commandBuffers[backend->frameIndex]);
 
-    u64 waitCount = 1;
-    bool hasRenderTargets = false;
-    if(backend->renderTargets.len > 0) {
-        waitCount = backend->renderTargets.len;
-        hasRenderTargets = true;
-    }
-    VkPipelineStageFlags* waitDstMasks = MF_ALLOCMEM(VkPipelineStageFlags, sizeof(VkPipelineStageFlags) * waitCount);
-    VkSemaphore* waitSemas = MF_ALLOCMEM(VkSemaphore, sizeof(VkSemaphore) * waitCount);
-    if(!hasRenderTargets) {
-        waitDstMasks[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        waitSemas[0] = backend->imageAvailableSemas[backend->frameIndex];
-    } else {
-        for(u64 i = 0; i < waitCount; i++) {
-            waitDstMasks[i] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            waitSemas[i] = mfArrayGetElement(backend->renderTargets, MFRenderTarget*, i)->renderFinishedSemas[backend->swapchainImageIndex];
-        }
+    if(!backend->hadRenderTargetUsage) {
+        mfArrayAddElement(&backend->waitSemas, VkSemaphore, backend->imageAvailableSemas[backend->frameIndex]);
+        mfArrayAddElement(&backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
     VkSemaphore signalSemas[1] = {
@@ -385,11 +377,11 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,
         .pCommandBuffers = &backend->commandBuffers[backend->frameIndex],
-        .pWaitDstStageMask = waitDstMasks,
+        .pWaitDstStageMask = (VkPipelineStageFlags*)backend->waitStages.data,
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = signalSemas,
-        .waitSemaphoreCount = waitCount,
-        .pWaitSemaphores = waitSemas
+        .waitSemaphoreCount = backend->waitSemas.len,
+        .pWaitSemaphores = (VkSemaphore*)backend->waitSemas.data
     };
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
@@ -406,17 +398,13 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        MF_FREEMEM(waitDstMasks);
-        MF_FREEMEM(waitSemas);
         return;
     }
     VK_CHECK(result);
     
     backend->frameIndex = (backend->frameIndex + 1) % FRAMES_IN_FLIGHT;
     backend->renderPassBegun = false;
-
-    MF_FREEMEM(waitDstMasks);
-    MF_FREEMEM(waitSemas);
+    backend->renderTarget = mfnull;
 }
 
 void VulkanBackendWaitForFrame(VulkanBackend* backend) {
