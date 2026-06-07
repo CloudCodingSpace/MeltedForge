@@ -670,7 +670,6 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
 
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
         vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
-        VulkanCommandBufferFree(ctx, ctx->swapchainImages[i].cmdBuff, ctx->commandPool);
         vkDestroyFence(ctx->device, ctx->swapchainImages[i].fence, ctx->allocator);
     }
 
