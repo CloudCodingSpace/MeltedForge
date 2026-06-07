@@ -67,13 +67,13 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 
         u32 len = 1;
         VkImageView views[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImageViews[i]
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImages[i].view
         };
         if(backend->config.enableDepth) {
             views[len++] = backend->ctx.depthImage.view;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            views[len++] = backend->ctx.swapchainImageViews[i];
+            views[len++] = backend->ctx.swapchainImages[i].view;
 
         backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
@@ -135,13 +135,13 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
         VkImageView views[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImageViews[i]
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImages[i].view
         };
         if(config->enableDepth) {
             views[len++] = backend->ctx.depthImage.view;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            views[len++] = backend->ctx.swapchainImageViews[i];
+            views[len++] = backend->ctx.swapchainImages[i].view;
 
         backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
     }
@@ -336,6 +336,9 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     igNewFrame();
 
     backend->renderPassBegun = true;
+    backend->ctx.swapchainImages[backend->swapchainImageIndex].access = 0;
+    backend->ctx.swapchainImages[backend->swapchainImageIndex].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    backend->ctx.swapchainImages[backend->swapchainImageIndex].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     return true;
 }
@@ -419,6 +422,10 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 void VulkanBackendWaitForFrame(VulkanBackend* backend) {
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
+
+    backend->ctx.swapchainImages[backend->swapchainImageIndex].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    backend->ctx.swapchainImages[backend->swapchainImageIndex].layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    backend->ctx.swapchainImages[backend->swapchainImageIndex].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 }
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
@@ -443,82 +450,14 @@ void VulkanBackendSetCurrentImagePixels(VulkanBackend* backend, u8* pixels) {
     if(backend->renderPassBegun)
         return;
 
-    VkFence fence = mfnull;
-    VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-    VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &fence));
-    // HACK: The following is a hack, not recommended to do this always.
-    // TODO: Change this!!
-    VulkanImage image = {
-        .info = {
-            .ctx = &backend->ctx,
-            .arrayLayers = 1,
-            .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-            .format = backend->ctx.swapchainFormat.format,
-            .generateMipmaps = false,
-            .gpuResource = false,
-            .width = backend->ctx.swapchainExtent.width,
-            .height = backend->ctx.swapchainExtent.height,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .mipLevels = 1,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .type = VK_IMAGE_TYPE_2D,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D
-        },
-        .access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        .cmdBuff = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true),
-        .fence = fence,
-        .image = backend->ctx.swapchainImages[backend->swapchainImageIndex],
-        .view = backend->ctx.swapchainImageViews[backend->swapchainImageIndex]
-    };
-
-    VulkanImageSetPixels(&image, pixels);
-
-    VulkanCommandBufferFree(&backend->ctx, image.cmdBuff, backend->ctx.commandPool);
-    vkDestroyFence(backend->ctx.device, fence, backend->ctx.allocator);
+    VulkanImageSetPixels(&backend->ctx.swapchainImages[backend->swapchainImageIndex], pixels);
 }
 
 u8* VulkanBackendGetCurrentImagePixels(VulkanBackend* backend, u32* width, u32* height) {
     if(backend->renderPassBegun)
         return mfnull;
     
-    VkFence fence = mfnull;
-    VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-    VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &fence));
-    // HACK: The following is a hack, not recommended to do this always.
-    // TODO: Change this!!
-    VulkanImage image = {
-        .info = {
-            .ctx = &backend->ctx,
-            .arrayLayers = 1,
-            .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-            .format = backend->ctx.swapchainFormat.format,
-            .generateMipmaps = false,
-            .gpuResource = false,
-            .width = backend->ctx.swapchainExtent.width,
-            .height = backend->ctx.swapchainExtent.height,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .mipLevels = 1,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .type = VK_IMAGE_TYPE_2D,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D
-        },
-        .access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        .cmdBuff = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true),
-        .fence = fence,
-        .image = backend->ctx.swapchainImages[backend->swapchainImageIndex],
-        .view = backend->ctx.swapchainImageViews[backend->swapchainImageIndex]
-    };
-
-    u8* pixels = VulkanImageGetPixels(&image, 0, 0, width, height);
-
-    VulkanCommandBufferFree(&backend->ctx, image.cmdBuff, backend->ctx.commandPool);
-    vkDestroyFence(backend->ctx.device, fence, backend->ctx.allocator);
-
-    return pixels;
+    return VulkanImageGetPixels(&backend->ctx.swapchainImages[backend->swapchainImageIndex], 0, 0, width, height);
 }
 
 #ifdef __cplusplus

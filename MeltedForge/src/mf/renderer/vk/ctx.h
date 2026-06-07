@@ -46,8 +46,7 @@ typedef struct VulkanBackendCtx_s {
     VkSurfaceFormatKHR swapchainFormat;
     VkSwapchainKHR swapchain;
     u32 swapchainImageCount;
-    VkImage* swapchainImages;
-    VkImageView* swapchainImageViews;
+    VulkanImage* swapchainImages;
     
     bool vsync, enableDepth;
     VkSampleCountFlagBits maxSupportedSamples, samples;
