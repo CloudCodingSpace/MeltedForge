@@ -12,6 +12,7 @@ extern "C" {
 
 struct MFRenderer_s {
     MFRendererConfig config;
+    MFWindow* window;
     VulkanBackend backend;
     f64 lastTime;
     u8 currentDtIndex;
@@ -24,6 +25,7 @@ MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
     renderer->config = config;
+    renderer->window = window;
 
     VulkanBackendConfig vkConfig = {
         .appName = config.appName,
@@ -50,7 +52,7 @@ void mfRendererDestroy(MFRenderer* renderer) {
     MF_FREEMEM(renderer);
 }
 
-bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
+bool mfRendererBeginframe(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
@@ -59,14 +61,21 @@ bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window) {
     renderer->lastTime = currentTime;
     renderer->currentDtIndex = (renderer->currentDtIndex + 1) % DT_SAMPLES;
 
-    return VulkanBackendBeginframe(&renderer->backend, window);
+    return VulkanBackendBeginframe(&renderer->backend, renderer->window);
 }
 
-void mfRendererEndframe(MFRenderer* renderer, MFWindow* window) {
+void mfRendererEndframe(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
-    VulkanBackendEndframe(&renderer->backend, window);
+    VulkanBackendEndframe(&renderer->backend, renderer->window);
+}
+
+void mfRendererWaitForFrame(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+
+    VulkanBackendWaitForFrame(&renderer->backend);
 }
 
 void mfRendererWaitForGPU(MFRenderer* renderer) {

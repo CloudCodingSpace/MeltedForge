@@ -25,9 +25,9 @@ typedef struct MFRendererConfig_s {
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window);
 void mfRendererDestroy(MFRenderer* renderer);
 
-bool mfRendererBeginframe(MFRenderer* renderer, MFWindow* window);
-void mfRendererEndframe(MFRenderer* renderer, MFWindow* window);
-
+bool mfRendererBeginframe(MFRenderer* renderer);
+void mfRendererEndframe(MFRenderer* renderer);
+void mfRendererWaitForFrame(MFRenderer* renderer);
 void mfRendererWaitForGPU(MFRenderer* renderer);
 
 void mfRendererDrawVerticesIndexed(MFRenderer* renderer, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance);

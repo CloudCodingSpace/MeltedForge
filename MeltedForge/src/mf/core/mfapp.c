@@ -59,13 +59,15 @@ static void runApp(void* st, MFAppConfig* config) {
 
     mfWindowShow(state->window);
     while(mfIsWindowOpen(state->window)) {
+        mfRendererWaitForFrame(state->renderer);
+
         for(u32 i = 0; i < config->layers.len; i++) {
             MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
             if(layer->onUpdate)
                 layer->onUpdate(layer->state, st);
         }
         
-        if(mfRendererBeginframe(state->renderer, state->window)) {
+        if(mfRendererBeginframe(state->renderer)) {
             for(u32 i = 0; i < config->layers.len; i++) {
                 MFLayer* layer = &mfArrayGetElement(config->layers, MFLayer, i);
                 if(layer->onRender)
@@ -73,7 +75,7 @@ static void runApp(void* st, MFAppConfig* config) {
                 if(config->rendererConfig.enableUI && layer->onUIRender)
                     layer->onUIRender(layer->state, st);
             }
-            mfRendererEndframe(state->renderer, state->window);
+            mfRendererEndframe(state->renderer);
         }
 
         mfWindowUpdate(state->window);

@@ -288,9 +288,6 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
 }
 
 bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
-    VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
-    VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
-
     // Clearing the rnederTargets array
     {
         MF_SETMEM(backend->renderTargets.data, 0, backend->renderTargets.elementSize * backend->renderTargets.capacity);
@@ -417,6 +414,11 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 
     MF_FREEMEM(waitDstMasks);
     MF_FREEMEM(waitSemas);
+}
+
+void VulkanBackendWaitForFrame(VulkanBackend* backend) {
+    VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
+    VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
 }
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
