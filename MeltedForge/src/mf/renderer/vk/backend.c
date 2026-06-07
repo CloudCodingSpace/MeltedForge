@@ -437,6 +437,46 @@ void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u3
     vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // NOTE: Make the offset configurable if necessary
 }
 
+void VulkanBackendSetCurrentImagePixels(VulkanBackend* backend, u8* pixels) {
+    if(backend->renderPassBegun)
+        return;
+
+    VkFence fence = mfnull;
+    VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    VK_CHECK(vkCreateFence(backend->ctx.device, &fenceInfo, backend->ctx.allocator, &fence));
+    // HACK: The following is a hack, not recommended to do this always.
+    // TODO: Change this!!
+    VulkanImage image = {
+        .info = {
+            .ctx = &backend->ctx,
+            .arrayLayers = 1,
+            .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+            .format = backend->ctx.swapchainFormat.format,
+            .generateMipmaps = false,
+            .gpuResource = false,
+            .width = backend->ctx.swapchainExtent.width,
+            .height = backend->ctx.swapchainExtent.height,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .mipLevels = 1,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .type = VK_IMAGE_TYPE_2D,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D
+        },
+        .access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .cmdBuff = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true),
+        .fence = fence,
+        .image = backend->ctx.swapchainImages[backend->swapchainImageIndex],
+        .view = backend->ctx.swapchainImageViews[backend->swapchainImageIndex]
+    };
+
+    VulkanImageSetPixels(&image, pixels);
+
+    VulkanCommandBufferFree(&backend->ctx, image.cmdBuff, backend->ctx.commandPool);
+    vkDestroyFence(backend->ctx.device, fence, backend->ctx.allocator);
+}
+
 u8* VulkanBackendGetCurrentImagePixels(VulkanBackend* backend, u32* width, u32* height) {
     if(backend->renderPassBegun)
         return mfnull;

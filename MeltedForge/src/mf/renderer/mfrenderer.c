@@ -167,6 +167,26 @@ void* mfRendererGetRenderPass(MFRenderer* renderer) {
     return (void*)renderer->backend.pass;
 }
 
+u32 mfRendererGetImageBytesPerPixel(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+
+    return VulkanFormatBytesPerPixel(renderer->backend.ctx.swapchainFormat.format);
+}
+
+void mfRendererSetCurrentImagePixels(MFRenderer* renderer, u8* pixels) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+    MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
+
+    if(renderer->backend.renderPassBegun) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't get the set of renderer's image since the frame has already begun!");
+        return;
+    }
+
+    VulkanBackendSetCurrentImagePixels(&renderer->backend, pixels);
+}
+
 u8* mfRendererGetCurrentImagePixels(MFRenderer* renderer, u32* width, u32* height) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");

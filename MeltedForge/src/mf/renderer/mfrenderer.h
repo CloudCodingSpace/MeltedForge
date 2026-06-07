@@ -44,6 +44,8 @@ MFRect2D mfRendererGetScissor(MFRenderer* renderer);
 void* mfRendererGetBackend(MFRenderer* renderer);
 void* mfRendererGetRenderPass(MFRenderer* renderer);
 
+u32 mfRendererGetImageBytesPerPixel(MFRenderer* renderer);
+void mfRendererSetCurrentImagePixels(MFRenderer* renderer, u8* pixels);
 u8* mfRendererGetCurrentImagePixels(MFRenderer* renderer, u32* width, u32* height);
 u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
 f64 mfRendererGetDeltaTime(MFRenderer* renderer);

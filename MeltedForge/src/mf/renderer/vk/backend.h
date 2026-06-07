@@ -58,6 +58,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window);
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance);
 
+void VulkanBackendSetCurrentImagePixels(VulkanBackend* backend, u8* pixels);
 u8* VulkanBackendGetCurrentImagePixels(VulkanBackend* backend, u32* width, u32* height);
 
 #ifdef __cplusplus
