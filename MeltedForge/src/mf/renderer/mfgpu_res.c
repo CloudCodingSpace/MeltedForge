@@ -259,19 +259,20 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         for (u64 i = 0; i < set->layout->imageCount; i++) {
             VulkanImage* image = (VulkanImage*)mfGpuImageGetBackend(mfArrayGetElement(*images, MFGpuImage*, i));
             imgInfos[i] = (VkDescriptorImageInfo){
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .imageLayout = image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 .imageView = image->view,
-                .sampler = image->sampler
+                .sampler = image->info.storageImage ? mfnull : image->sampler
             };
 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
                 .dstBinding = imgBindings[i],
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .descriptorType = (VkDescriptorType)(u32)mfGpuImageGetDescription(mfArrayGetElement(*images, MFGpuImage*, i)).descriptorType,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
             };
+
             writeIdx++;
         }
 
@@ -287,17 +288,11 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
                 .range = buffer[frame].info.size
             };
 
-            VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-            if(buffer->info.type == VULKAN_BUFFER_TYPE_UBO)
-                type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            else if(buffer->info.type == VULKAN_BUFFER_TYPE_UBO)
-                type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
                 .dstBinding = buffBindings[i],
-                .descriptorType = type,
+                .descriptorType = (VkDescriptorType)(u32)mfGpuBufferGetDescription(mfArrayGetElement(*buffers, MFGpuBuffer*, i)).descriptorType,
                 .descriptorCount = 1,
                 .pBufferInfo = &buffInfos[i]
             };

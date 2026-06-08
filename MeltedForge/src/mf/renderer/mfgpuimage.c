@@ -27,7 +27,7 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         .ctx = image->ctx,
         .width = config.width,
         .height = config.height,
-        .gpuResource = true,
+        .gpuResource = !config.isStorageImage,
         .pixels = config.pixels,
         .format = (VkFormat)(u32)(config.imageFormat),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -43,7 +43,8 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
             VK_SAMPLER_ADDRESS_MODE_REPEAT,
             VK_SAMPLER_ADDRESS_MODE_REPEAT,
             VK_SAMPLER_ADDRESS_MODE_REPEAT
-        }
+        },
+        .storageImage = config.isStorageImage
     };
 
     if(config.isCubemap) {
@@ -54,6 +55,7 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         info.addressModes[1] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         info.addressModes[2] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     }
+
     if(config.isColorAttachment)
         info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     
@@ -150,8 +152,8 @@ MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image) {
 
     return (MFResourceDescription) {
         .descriptorCount = 1, // NOTE: Make it configurable if required
-        .descriptorType = MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
-        .stageFlags = MF_SHADER_STAGE_FRAGMENT // NOTE: Make it configurable if required
+        .descriptorType = image->config.isStorageImage ? MF_RES_DESCRIPTION_TYPE_STORAGE_IMAGE : MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER,
+        .stageFlags = MF_SHADER_STAGE_FRAGMENT | MF_SHADER_STAGE_COMPUTE // NOTE: Make it configurable if required
     };
 }
 

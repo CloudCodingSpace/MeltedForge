@@ -19,6 +19,7 @@ typedef struct MFGpuImageConfig_s {
     bool generateMipmaps;
     bool isCubemap;
     bool isColorAttachment;
+    bool isStorageImage;
 } MFGpuImageConfig;
 
 MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config);
