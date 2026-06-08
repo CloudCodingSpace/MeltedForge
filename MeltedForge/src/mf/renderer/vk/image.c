@@ -63,6 +63,10 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
             .pQueueFamilyIndices = ctx->uniqueQueues
         };
 
+        if(pinfo.storageImage) {
+            info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+        }
+
         if(ctx->uniqueQueueCount > 1) {
             info.sharingMode = VK_SHARING_MODE_CONCURRENT;
         }
@@ -102,6 +106,9 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
                     image->info.width, image->info.height);
 
     if(!pinfo.gpuResource)
+        return;
+    
+    if(pinfo.storageImage)
         return;
 
     // Samplers
@@ -153,8 +160,9 @@ void VulkanImageDestroy(VulkanImage* image) {
     vkDestroyImageView(ctx->device, image->view, ctx->allocator);
     vmaDestroyImage(ctx->vmaAllocator, image->image, image->allocation);
 
-    if(image->info.gpuResource)
+    if(image->info.gpuResource && !image->info.storageImage) {
         vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
+    }
 
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Destroyed an image of resolution: %dx%d",
                         image->info.width, image->info.height);
@@ -209,7 +217,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         }
 
         if(!image->info.generateMipmaps && (image->info.mipLevels == 1)) {
-            VulkanImageTransitionLayout(image, image->cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange) {
+            VulkanImageTransitionLayout(image, image->cmdBuff, image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
                 .aspectMask = image->info.aspectFlags,
                 .levelCount = image->info.mipLevels,
                 .layerCount = image->info.arrayLayers
@@ -397,7 +405,7 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
     }
     
     image->layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    VulkanImageTransitionLayout(image, image->cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange) {
+    VulkanImageTransitionLayout(image, image->cmdBuff, image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
         .aspectMask = image->info.aspectFlags,
         .baseArrayLayer = 0,
         .layerCount = image->info.arrayLayers,
