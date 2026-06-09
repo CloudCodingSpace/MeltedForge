@@ -69,27 +69,30 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
     }
 
     VulkanPipelineInfo binfo = {
-        .vertPath = info.vertPath,
-        .fragPath = info.fragPath,
-        .renderpass = mfRendererGetRenderPass(renderer),
-        .depthCompareOp = (VkCompareOp)(int)info.depthCompareOp,
-        .hasDepth = info.hasDepth,
-        .extent = (VkExtent2D) { info.extent.x, info.extent.y },
-        .attributesCount = info.attributesCount,
-        .attributes = attribs,
-        .bindingsCount = info.bindingsCount,
-        .bindings = bindings,
+        .ginfo = {
+            .vertPath = info.vertPath,
+            .fragPath = info.fragPath,
+            .renderpass = mfRendererGetRenderPass(renderer),
+            .depthCompareOp = (VkCompareOp)(int)info.depthCompareOp,
+            .hasDepth = info.hasDepth,
+            .extent = (VkExtent2D) { info.extent.x, info.extent.y },
+            .attributesCount = info.attributesCount,
+            .attributes = attribs,
+            .bindingsCount = info.bindingsCount,
+            .bindings = bindings,
+            .cullMode = (VkCullModeFlags)(int) info.cullMode,
+            .samples = pipeline->ctx->samples
+        },
         .setLayoutCount = info.resourceLayoutCount,
         .setLayouts = setLayouts,
         .pushConstRangesCount = info.pushConstRangeCount,
         .pushConstRanges = ranges,
         .cache = pipeline->backend->pipelineCache,
-        .cullMode = (VkCullModeFlags)(int) info.cullMode,
-        .samples = pipeline->ctx->samples
+        .type = VULKAN_PIPELINE_TYPE_GRAPHICS
     };
 
-    if( info.renderTarget != mfnull) {
-        binfo.renderpass = info.renderTarget->renderPass;
+    if(info.renderTarget != mfnull) {
+        binfo.ginfo.renderpass = info.renderTarget->renderPass;
     }
 
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);

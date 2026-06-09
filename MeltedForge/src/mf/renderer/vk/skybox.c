@@ -134,23 +134,26 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         VkDescriptorSetLayout lay = (VkDescriptorSetLayout)mfResourceSetLayoutGetBackend(layout);
 
         VulkanPipelineInfo info = {
-            .attributesCount = 1,
-            .attributes = &attribute,
-            .bindingsCount = 1,
-            .bindings = &binding,
+            .ginfo = {
+                .attributesCount = 1,
+                .attributes = &attribute,
+                .bindingsCount = 1,
+                .bindings = &binding,
+                .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
+                .fragPath = "mfassets/shaders/mfskyboxConvert.frag.spv",
+                .depthCompareOp = VK_COMPARE_OP_LESS,
+                .cullMode = VK_CULL_MODE_NONE,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .renderpass = pass,
+                .extent = (VkExtent2D){ .width = config.faceSize, .height = config.faceSize },
+                .hasDepth = true,
+            },
             .pushConstRangesCount = 1,
             .pushConstRanges = &range,
-            .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
-            .fragPath = "mfassets/shaders/mfskyboxConvert.frag.spv",
             .cache = skybox->backend->pipelineCache,
-            .depthCompareOp = VK_COMPARE_OP_LESS,
-            .renderpass = pass,
-            .extent = (VkExtent2D){ .width = config.faceSize, .height = config.faceSize },
-            .hasDepth = true,
             .setLayoutCount = 1,
             .setLayouts = &lay,
-            .cullMode = VK_CULL_MODE_NONE,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .type = VULKAN_PIPELINE_TYPE_GRAPHICS
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -407,23 +410,26 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         VkDescriptorSetLayout lay = (VkDescriptorSetLayout)mfResourceSetLayoutGetBackend(skybox->layout);
 
         VulkanPipelineInfo info = {
-            .attributesCount = 1,
-            .attributes = &attribute,
-            .bindingsCount = 1,
-            .bindings = &binding,
             .pushConstRangesCount = 1,
             .pushConstRanges = &range,
-            .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
-            .fragPath = "mfassets/shaders/mfIrradianceConvert.frag.spv",
             .cache = skybox->backend->pipelineCache,
-            .depthCompareOp = VK_COMPARE_OP_LESS,
-            .renderpass = pass,
-            .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
-            .hasDepth = true,
+            .ginfo = {
+                .attributes = &attribute,
+                .bindingsCount = 1,
+                .attributesCount = 1,
+                .bindings = &binding,
+                .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
+                .fragPath = "mfassets/shaders/mfIrradianceConvert.frag.spv",
+                .depthCompareOp = VK_COMPARE_OP_LESS,
+                .renderpass = pass,
+                .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .hasDepth = true,
+                .cullMode = VK_CULL_MODE_NONE,
+            },
             .setLayoutCount = 1,
             .setLayouts = &lay,
-            .cullMode = VK_CULL_MODE_NONE,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .type = VULKAN_PIPELINE_TYPE_GRAPHICS
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -678,23 +684,26 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VkDescriptorSetLayout lay = (VkDescriptorSetLayout)mfResourceSetLayoutGetBackend(skybox->layout);
 
         VulkanPipelineInfo info = {
-            .attributesCount = 1,
-            .attributes = &attribute,
-            .bindingsCount = 1,
-            .bindings = &binding,
+            .ginfo = {
+                .attributesCount = 1,
+                .attributes = &attribute,
+                .bindingsCount = 1,
+                .bindings = &binding,
+                .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
+                .fragPath = "mfassets/shaders/mfPrefilterEnvMap.frag.spv",
+                .depthCompareOp = VK_COMPARE_OP_LESS,
+                .renderpass = pass,
+                .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
+                .hasDepth = true,
+                .cullMode = VK_CULL_MODE_NONE,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+            },
+            .type = VULKAN_PIPELINE_TYPE_GRAPHICS,
             .pushConstRangesCount = 1,
             .pushConstRanges = &range,
-            .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
-            .fragPath = "mfassets/shaders/mfPrefilterEnvMap.frag.spv",
             .cache = skybox->backend->pipelineCache,
-            .depthCompareOp = VK_COMPARE_OP_LESS,
-            .renderpass = pass,
-            .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
-            .hasDepth = true,
             .setLayoutCount = 1,
             .setLayouts = &lay,
-            .cullMode = VK_CULL_MODE_NONE,
-            .samples = VK_SAMPLE_COUNT_1_BIT
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -947,19 +956,22 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         };
 
         VulkanPipelineInfo info = {
-            .attributesCount = 2,
-            .attributes = attributes,
-            .bindingsCount = 1,
-            .bindings = &binding,
-            .vertPath = "mfassets/shaders/mfbrdflut.vert.spv",
-            .fragPath = "mfassets/shaders/mfbrdflut.frag.spv",
+            .ginfo = {
+                .attributesCount = 2,
+                .attributes = attributes,
+                .bindingsCount = 1,
+                .bindings = &binding,
+                .vertPath = "mfassets/shaders/mfbrdflut.vert.spv",
+                .fragPath = "mfassets/shaders/mfbrdflut.frag.spv",
+                .renderpass = pass,
+                .extent = (VkExtent2D){ .width = outImage->info.width, .height = outImage->info.height },
+                .hasDepth = false,
+                .cullMode = VK_CULL_MODE_NONE,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .depthCompareOp = VK_COMPARE_OP_LESS,
+            },
+            .type = VULKAN_PIPELINE_TYPE_GRAPHICS,
             .cache = skybox->backend->pipelineCache,
-            .depthCompareOp = VK_COMPARE_OP_LESS,
-            .renderpass = pass,
-            .extent = (VkExtent2D){ .width = outImage->info.width, .height = outImage->info.height },
-            .hasDepth = false,
-            .cullMode = VK_CULL_MODE_NONE,
-            .samples = VK_SAMPLE_COUNT_1_BIT
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }

@@ -8,21 +8,38 @@ extern "C" {
 
 #include "ctx.h"
 
-typedef struct VulkanPipelineInfo_s {
+typedef enum VulkanPipelineType_e {
+    VULKAN_PIPELINE_TYPE_GRAPHICS,
+    VULKAN_PIPELINE_TYPE_COMPUTE
+} VulkanPipelineType;
+
+typedef struct VulkanGPipelineInfo_s {
     VkRenderPass renderpass;
     VkExtent2D extent;
-    u32 bindingsCount, attributesCount, setLayoutCount, pushConstRangesCount;
+    u32 bindingsCount, attributesCount;
     VkVertexInputBindingDescription* bindings;
     VkVertexInputAttributeDescription* attributes;
-    VkPushConstantRange* pushConstRanges;
-    VkDescriptorSetLayout* setLayouts;
     VkCompareOp depthCompareOp;
-    VkPipelineCache cache;
     VkCullModeFlags cullMode;
     VkSampleCountFlagBits samples;
     bool hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
+} VulkanGPipelineInfo;
+
+typedef struct VulkanCPipelineInfo_s {
+    const char* path;
+} VulkanCPipelineInfo;
+
+typedef struct VulkanPipelineInfo_s {
+    u32 setLayoutCount, pushConstRangesCount;
+    VkPushConstantRange* pushConstRanges;
+    VkDescriptorSetLayout* setLayouts;
+    VkPipelineCache cache;
+
+    VulkanPipelineType type;
+    VulkanGPipelineInfo ginfo;
+    VulkanCPipelineInfo cinfo;
 } VulkanPipelineInfo;
 
 typedef struct VulkanPipeline_s {
