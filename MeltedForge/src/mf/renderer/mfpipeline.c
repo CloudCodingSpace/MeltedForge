@@ -10,13 +10,16 @@ extern "C" {
 #include "vk/image.h"
 #include "vk/buffer.h"
 #include "vk/render_target.h"
+#include "vk/command_buffer.h"
 
 #include <vulkan/vk_enum_string_helper.h>
 
 struct MFPipeline_s {
+    MFPipelineConfig config;
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     VulkanPipeline pipeline;
+    VkSemaphore semas[FRAMES_IN_FLIGHT];
     bool init;
 };
 
@@ -26,8 +29,14 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
 
     MFPipeline* pipeline = MF_ALLOCMEM(MFPipeline, sizeof(MFPipeline));
 
+    pipeline->config = info;
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+
+    VkSemaphoreCreateInfo semaInfo = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VK_CHECK(vkCreateSemaphore(pipeline->ctx->device, &semaInfo, pipeline->ctx->allocator, &pipeline->semas[i]));
+    }
 
     VkVertexInputBindingDescription* bindings = mfnull;
     VkVertexInputAttributeDescription* attribs = mfnull;
@@ -124,10 +133,70 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
     
+    for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(pipeline->ctx->device, pipeline->semas[i], pipeline->ctx->allocator);
+    }
+
     VulkanPipelineDestroy(pipeline->ctx, &pipeline->pipeline);
     
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));
     MF_FREEMEM(pipeline);
+}
+
+void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline) {
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
+
+    if(pipeline->config.type != MF_PIPELINE_TYPE_COMPUTE) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't begin dispatch for non-compute pipelines!");
+        return;
+    }
+
+    if(pipeline->backend->dispatchBegun) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't start dispatch when one is already going on!");
+        return;
+    }
+
+    VkCommandBuffer buff = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
+    VK_CHECK(vkResetCommandBuffer(buff, 0));
+    VulkanCommandBufferBegin(buff, true);
+    pipeline->backend->dispatchBegun = true;
+}
+
+void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 workgroupSizeY) {
+    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
+
+    if(pipeline->config.type != MF_PIPELINE_TYPE_COMPUTE) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't dispatch for non-compute pipelines!");
+        return;
+    }
+
+    if(!pipeline->backend->dispatchBegun) {
+        slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't dispatch pipeline when one hasn't begun yet!");
+        return;
+    }
+
+    VkCommandBuffer buff = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
+    VkSubmitInfo info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &buff,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &pipeline->semas[pipeline->backend->frameIndex]
+    };
+    VK_CHECK(vkQueueSubmit(pipeline->ctx->queueData.computeQueue, 1, &info, VK_NULL_HANDLE));
+
+    // TODO: Make this search faster if required
+    bool exists = false;
+    for(u64 i = 0; i < pipeline->backend->waitSemas.len; i++) {
+        if(mfArrayGetElement(pipeline->backend->waitStages, VkSemaphore, i) == pipeline->semas[pipeline->backend->frameIndex])
+            exists = true;
+    }
+    if(!exists) {
+        mfArrayAddElement(&pipeline->backend->waitSemas, VkSemaphore, pipeline->semas[pipeline->backend->frameIndex]);
+        mfArrayAddElement(&pipeline->backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    }
 }
 
 void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data) {
@@ -135,7 +204,10 @@ void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
 
     VkCommandBuffer commandBuffer = pipeline->backend->commandBuffers[pipeline->backend->frameIndex];
-    if(pipeline->backend->renderTarget != mfnull) {
+    if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->dispatchBegun) {
+        commandBuffer = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
+    }
+    else if(pipeline->backend->renderTarget != mfnull) {
         commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
     }
 
@@ -164,7 +236,10 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     };
     
     VkCommandBuffer commandBuffer = pipeline->backend->commandBuffers[pipeline->backend->frameIndex];
-    if(pipeline->backend->renderTarget != mfnull) {
+    if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->dispatchBegun) {
+        commandBuffer = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
+    }
+    else if(pipeline->backend->renderTarget != mfnull) {
         commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
     }
     

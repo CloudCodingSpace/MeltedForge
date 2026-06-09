@@ -8,10 +8,15 @@ extern "C" {
 #include "vk/ctx.h"
 #include "vk/backend.h"
 
+#include <cimgui.h>
+#include <cimgui_impl.h>
+
 struct MFGpuImage_s {
     VulkanImage image;
+    VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     MFGpuImageConfig config;
+    VkDescriptorSet igSets[FRAMES_IN_FLIGHT];
     bool init;
 };
 
@@ -21,7 +26,8 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
     MFGpuImage* image = MF_ALLOCMEM(MFGpuImage, sizeof(MFGpuImage));
     
     image->config = config;
-    image->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
+    image->backend = ((VulkanBackend*)mfRendererGetBackend(renderer));
+    image->ctx = &image->backend->ctx;
 
     VulkanImageInfo info = {
         .ctx = image->ctx,
@@ -59,6 +65,12 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
     if(config.isColorAttachment)
         info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     
+    if(config.forImguiTexture && image->backend->config.enableUI) {
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            image->igSets[i] = ImGui_ImplVulkan_AddTexture(image->image.sampler, image->image.view, config.isStorageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
+    }
+    
     VulkanImageCreate(&image->image, info);
 
     image->init = true;
@@ -69,10 +81,24 @@ void mfGpuImageDestroy(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
  
+    
+    if(image->config.forImguiTexture && image->backend->config.enableUI) {
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            ImGui_ImplVulkan_RemoveTexture(image->igSets[i]);
+        }
+    }
+
     VulkanImageDestroy(&image->image);
 
     MF_SETMEM(image, 0, sizeof(MFGpuImage));
     MF_FREEMEM(image);
+}
+
+ImTextureID mfGpuImageGetImGuiTextureID(MFGpuImage* image) {
+    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
+
+    return (ImTextureID)image->igSets[image->backend->frameIndex];
 }
 
 u8* mfGpuImageGetPixels(MFGpuImage* image, u32* width, u32* height, u32 mipLevel, u32 faceIndex) {

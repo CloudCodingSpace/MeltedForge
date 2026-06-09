@@ -202,12 +202,15 @@ void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, s
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(sets[0]->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
+    VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
+
     VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
-    if(backend->renderTarget != mfnull) {
+    if(pipelineBackend->info.type == VULKAN_PIPELINE_TYPE_COMPUTE && backend->dispatchBegun) {
+        buff = backend->computeCmdBuffers[backend->frameIndex];
+    }
+    else if(backend->renderTarget != mfnull) {
         buff = backend->renderTarget->commandBuffers[backend->frameIndex];
     }
-
-    VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
 
     for(u64 i = 0; i < setCount; i++) {
         mfArrayAddElement(&backend->descSetBindingPool, VkDescriptorSet, sets[i]->sets[backend->frameIndex]);

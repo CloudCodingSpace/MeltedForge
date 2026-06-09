@@ -93,6 +93,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         backend->commandBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true);
+        backend->computeCmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.computeCommandPool, true);
     }
 
     {
@@ -269,6 +270,8 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(backend->ctx.device, backend->imageAvailableSemas[i], backend->ctx.allocator);
         vkDestroyFence(backend->ctx.device, backend->inFlightFences[i], backend->ctx.allocator);
+        VulkanCommandBufferFree(&backend->ctx, backend->commandBuffers[i], backend->ctx.commandPool);
+        VulkanCommandBufferFree(&backend->ctx, backend->computeCmdBuffers[i], backend->ctx.computeCommandPool);
     }
 
     for(u32 i = 0; i < backend->ctx.swapchainImageCount; i++) {

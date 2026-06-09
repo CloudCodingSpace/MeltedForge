@@ -594,6 +594,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
     // Command Pool
     {
         ctx->commandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
+        ctx->computeCommandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.computeQueueIdx);
     }
     // Swapchain
     CreateSwapchain(ctx, mfWindowGetHandle(window));
@@ -666,6 +667,7 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
         VulkanImageDestroy(&ctx->depthImage);
 
     VulkanCommandPoolDestroy(ctx, ctx->commandPool);
+    VulkanCommandPoolDestroy(ctx, ctx->computeCommandPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);
 
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {

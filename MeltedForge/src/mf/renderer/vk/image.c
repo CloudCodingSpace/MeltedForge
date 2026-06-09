@@ -107,9 +107,6 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
 
     if(!pinfo.gpuResource)
         return;
-    
-    if(pinfo.storageImage)
-        return;
 
     // Samplers
     {
@@ -160,7 +157,7 @@ void VulkanImageDestroy(VulkanImage* image) {
     vkDestroyImageView(ctx->device, image->view, ctx->allocator);
     vmaDestroyImage(ctx->vmaAllocator, image->image, image->allocation);
 
-    if(image->info.gpuResource && !image->info.storageImage) {
+    if(image->info.gpuResource) {
         vkDestroySampler(ctx->device, image->sampler, ctx->allocator);
     }
 

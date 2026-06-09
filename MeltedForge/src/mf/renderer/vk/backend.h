@@ -28,10 +28,11 @@ typedef struct VulkanBackend_s {
     VkClearValue clearColor;
 
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
+    VkCommandBuffer computeCmdBuffers[FRAMES_IN_FLIGHT];
 
     VulkanImage* msaaImages;
     VkRenderPass pass;
-    bool renderPassBegun;
+    bool renderPassBegun, dispatchBegun;
     u32 frameBufferCount;
     VkFramebuffer* frameBuffers;
 

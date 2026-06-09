@@ -55,7 +55,7 @@ typedef struct VulkanBackendCtx_s {
     VulkanImage depthImage;
 
     VkDescriptorPool uiDescriptorPool;
-    VkCommandPool commandPool;
+    VkCommandPool commandPool, computeCommandPool;
 } VulkanBackendCtx;
 
 void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool enableDepth, MFWindow* window);
