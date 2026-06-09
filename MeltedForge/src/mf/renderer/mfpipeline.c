@@ -22,27 +22,15 @@ struct MFPipeline_s {
 
 MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    MF_PANIC_IF((info.type < 0) || (info.type >= MF_PIPELINE_TYPE_COUNT), mfGetLogger(), "The pipeline type provided is invalid!");
 
     MFPipeline* pipeline = MF_ALLOCMEM(MFPipeline, sizeof(MFPipeline));
 
     pipeline->ctx = &((VulkanBackend*)mfRendererGetBackend(renderer))->ctx;
     pipeline->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
 
-    VkVertexInputBindingDescription* bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info.bindingsCount);
-    VkVertexInputAttributeDescription* attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info.attributesCount);
-
-    for (u32 i = 0; i < info.bindingsCount; i++) {
-        bindings[i].binding = info.bindings[i].binding;
-        bindings[i].inputRate = (VkVertexInputRate)((int) info.bindings[i].rate);
-        bindings[i].stride = info.bindings[i].stride;
-    }
-
-    for (u32 i = 0; i < info.attributesCount; i++) {
-        attribs[i].binding = info.attributes[i].binding;
-        attribs[i].format = (VkFormat)((int) info.attributes[i].format);
-        attribs[i].location = info.attributes[i].location;
-        attribs[i].offset = info.attributes[i].offset;
-    }
+    VkVertexInputBindingDescription* bindings = mfnull;
+    VkVertexInputAttributeDescription* attribs = mfnull;
 
     VkDescriptorSetLayout* setLayouts = MF_ALLOCMEM(VkDescriptorSetLayout, sizeof(VkDescriptorSetLayout) * info.resourceLayoutCount);
     for(u32 i = 0; i < info.resourceLayoutCount; i++) {
@@ -69,38 +57,64 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
     }
 
     VulkanPipelineInfo binfo = {
-        .ginfo = {
-            .vertPath = info.vertPath,
-            .fragPath = info.fragPath,
-            .renderpass = mfRendererGetRenderPass(renderer),
-            .depthCompareOp = (VkCompareOp)(int)info.depthCompareOp,
-            .hasDepth = info.hasDepth,
-            .extent = (VkExtent2D) { info.extent.x, info.extent.y },
-            .attributesCount = info.attributesCount,
-            .attributes = attribs,
-            .bindingsCount = info.bindingsCount,
-            .bindings = bindings,
-            .cullMode = (VkCullModeFlags)(int) info.cullMode,
-            .samples = pipeline->ctx->samples
-        },
         .setLayoutCount = info.resourceLayoutCount,
         .setLayouts = setLayouts,
         .pushConstRangesCount = info.pushConstRangeCount,
         .pushConstRanges = ranges,
         .cache = pipeline->backend->pipelineCache,
-        .type = VULKAN_PIPELINE_TYPE_GRAPHICS
+        .type = (VulkanPipelineType)(u32)info.type
     };
+    
+    if(info.type == MF_PIPELINE_TYPE_GRAPHICS) {
+        bindings = MF_ALLOCMEM(VkVertexInputBindingDescription, sizeof(VkVertexInputBindingDescription) * info.graphicsConfig.bindingsCount);
+        attribs = MF_ALLOCMEM(VkVertexInputAttributeDescription, sizeof(VkVertexInputAttributeDescription) * info.graphicsConfig.attributesCount);
+        
+        for (u32 i = 0; i < info.graphicsConfig.bindingsCount; i++) {
+            bindings[i].binding = info.graphicsConfig.bindings[i].binding;
+            bindings[i].inputRate = (VkVertexInputRate)((int) info.graphicsConfig.bindings[i].rate);
+            bindings[i].stride = info.graphicsConfig.bindings[i].stride;
+        }
+        
+        for (u32 i = 0; i < info.graphicsConfig.attributesCount; i++) {
+            attribs[i].binding = info.graphicsConfig.attributes[i].binding;
+            attribs[i].format = (VkFormat)((int) info.graphicsConfig.attributes[i].format);
+            attribs[i].location = info.graphicsConfig.attributes[i].location;
+            attribs[i].offset = info.graphicsConfig.attributes[i].offset;
+        }
 
-    if(info.renderTarget != mfnull) {
-        binfo.ginfo.renderpass = info.renderTarget->renderPass;
+        binfo.ginfo = (VulkanGPipelineInfo) {
+            .vertPath = info.graphicsConfig.vertPath,
+            .fragPath = info.graphicsConfig.fragPath,
+            .renderpass = mfRendererGetRenderPass(renderer),
+            .depthCompareOp = (VkCompareOp)(int)info.graphicsConfig.depthCompareOp,
+            .hasDepth = info.graphicsConfig.hasDepth,
+            .extent = (VkExtent2D) { info.graphicsConfig.extent.x, info.graphicsConfig.extent.y },
+            .attributesCount = info.graphicsConfig.attributesCount,
+            .attributes = attribs,
+            .bindingsCount = info.graphicsConfig.bindingsCount,
+            .bindings = bindings,
+            .cullMode = (VkCullModeFlags)(int) info.graphicsConfig.cullMode,
+            .samples = pipeline->ctx->samples
+        };
+
+        if(info.graphicsConfig.renderTarget != mfnull) {
+            binfo.ginfo.renderpass = info.graphicsConfig.renderTarget->renderPass;
+        }
     }
-
+    else if(info.type == MF_PIPELINE_TYPE_COMPUTE) {
+        binfo.cinfo = (VulkanCPipelineInfo) {
+            .path = info.computeConfig.filePath
+        };
+    }
+    
     VulkanPipelineCreate(pipeline->ctx, &pipeline->pipeline, &binfo);
-
+    
     MF_FREEMEM(ranges);
     MF_FREEMEM(setLayouts);
-    MF_FREEMEM(bindings);
-    MF_FREEMEM(attribs);
+    if(info.type == MF_PIPELINE_TYPE_GRAPHICS) {
+        MF_FREEMEM(bindings);
+        MF_FREEMEM(attribs);
+    }
 
     pipeline->init = true;
     return pipeline;

@@ -17,19 +17,37 @@ typedef struct MFPipeline_s MFPipeline;
 
 #include "mfrenderer.h"
 
-typedef struct MFPipelineConfig_s {
-    MFVec2 extent;
-    MFCullModeFlags cullMode;
-    u32 bindingsCount, attributesCount, resourceLayoutCount, pushConstRangeCount;
-    MFVertexInputBindingDescription* bindings;
-    MFVertexInputAttributeDescription* attributes;
-    MFPushConstantRange* pushConstRanges;
-    MFResourceSetLayout** resourceLayouts;
+typedef enum MFPipelineType_e {
+    MF_PIPELINE_TYPE_GRAPHICS,
+    MF_PIPELINE_TYPE_COMPUTE,
+    MF_PIPELINE_TYPE_COUNT
+} MFPipelineType;
+
+typedef struct MFGraphicsPipelineConfig_s {
+    u32 bindingsCount, attributesCount;
     MFCompareOp depthCompareOp;
     bool hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
     MFRenderTarget* renderTarget;
+    MFVec2 extent;
+    MFCullModeFlags cullMode;
+    MFVertexInputBindingDescription* bindings;
+    MFVertexInputAttributeDescription* attributes;
+} MFGraphicsPipelineConfig;
+
+typedef struct MFComputePipelineConfig_s {
+    const char* filePath;
+} MFComputePipelineConfig;
+
+typedef struct MFPipelineConfig_s {
+    u32 resourceLayoutCount, pushConstRangeCount;
+    MFPushConstantRange* pushConstRanges;
+    MFResourceSetLayout** resourceLayouts;
+    
+    MFPipelineType type;
+    MFGraphicsPipelineConfig graphicsConfig;
+    MFComputePipelineConfig computeConfig;
 } MFPipelineConfig;
 
 MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info);

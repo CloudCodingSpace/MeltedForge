@@ -26,27 +26,30 @@ static void CreatePipeline(MFTState* state) {
     };
 
     MFPipelineConfig info = {
-        .extent = (MFVec2){ .x = config->width, .y = config->height },
-        .hasDepth = true,
-        .depthCompareOp = MF_COMPARE_OP_DEFAULT,
-        .transparent = true,
-        .vertPath = "mftshaders/default.vert.spv",
-        .fragPath = "mftshaders/default.frag.spv",
-        .attributesCount = attributeCount,
-        .attributes = attributes,
-        .bindingsCount = bindingCount,
-        .bindings = &bindings,
+        .graphicsConfig = {
+            .extent = (MFVec2){ .x = config->width, .y = config->height },
+            .hasDepth = true,
+            .depthCompareOp = MF_COMPARE_OP_DEFAULT,
+            .transparent = true,
+            .vertPath = "mftshaders/default.vert.spv",
+            .fragPath = "mftshaders/default.frag.spv",
+            .attributesCount = attributeCount,
+            .attributes = attributes,
+            .bindingsCount = bindingCount,
+            .bindings = &bindings,
+            .cullMode = MF_CULL_MODE_BACK_BIT
+        },
         .resourceLayoutCount = MF_ARRAYLEN(layouts),
         .resourceLayouts = layouts,
         .pushConstRangeCount = 1,
         .pushConstRanges = &range,
-        .cullMode = MF_CULL_MODE_BACK_BIT
+        .type = MF_PIPELINE_TYPE_GRAPHICS
     };
 
     state->pipeline = mfPipelineCreate(state->renderer, info);
 
-    info.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
-    info.renderTarget = state->renderTarget;
+    info.graphicsConfig.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
+    info.graphicsConfig.renderTarget = state->renderTarget;
 
     state->rtPipeline = mfPipelineCreate(state->renderer, info);
 

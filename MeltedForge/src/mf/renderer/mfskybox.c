@@ -146,21 +146,24 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         };
 
         MFPipelineConfig info = {
-            .hasDepth = true,
-            .extent = (MFVec2){100.0f, 100.0f}, // NOTE: Leaving at 100,100 since pipeline supports dynamic rendering, that time this exten won't matter.
-            .vertPath = "mfassets/shaders/mfskybox.vert.spv",
-            .fragPath = "mfassets/shaders/mfskybox.frag.spv",
-            .attributesCount = 1,
-            .attributes = &attribute,
-            .bindingsCount = 1,
-            .bindings = &binding,
+            .graphicsConfig = {
+                .hasDepth = true,
+                .extent = (MFVec2){100.0f, 100.0f}, // NOTE: Leaving at 100,100 since pipeline supports dynamic rendering, that time this exten won't matter.
+                .vertPath = "mfassets/shaders/mfskybox.vert.spv",
+                .fragPath = "mfassets/shaders/mfskybox.frag.spv",
+                .attributesCount = 1,
+                .attributes = &attribute,
+                .bindingsCount = 1,
+                .bindings = &binding,
+                .depthCompareOp = MF_COMPARE_OP_LESS_OR_EQUAL,
+                .renderTarget = config.renderTarget,
+                .cullMode = MF_CULL_MODE_NONE,
+            },
+            .type = MF_PIPELINE_TYPE_GRAPHICS,
             .pushConstRangeCount = 1,
             .pushConstRanges = &range,
-            .depthCompareOp = MF_COMPARE_OP_LESS_OR_EQUAL,
             .resourceLayoutCount = 1,
             .resourceLayouts = &skybox->layout,
-            .cullMode = MF_CULL_MODE_NONE,
-            .renderTarget = config.renderTarget
         };
 
         skybox->pipeline = mfPipelineCreate(renderer, info);
