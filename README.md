@@ -40,7 +40,9 @@ The link to tests and apps made using MeltedForge is her :-
     - Textures and skyboxes
     - UBOs
     - SSBOs
+    - Storage images
     - Image samplers (`sampler2D` and `samplerCube` in glsl)
+    - Resource set and layout management (MFResourcSet and MFResourceSetLayout)
  - Skybox support
     - Only 2D equirectangular images as input
     - HDR format supported as well
