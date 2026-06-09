@@ -34,10 +34,13 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     }
 
     // TODO: Support more shader res type!
-    u64 imageCount = 0, ssboCount = 0, uboCount = 0;
+    u64 imageCount = 0, ssboCount = 0, uboCount = 0, storageImages = 0;
     for(u64 i = 0; i < bindingLen; i++) {
         if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER) {
             imageCount++;
+        }
+        else if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_STORAGE_IMAGE) {
+            storageImages++;
         }
         else if(bindings[i].description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER) {
             uboCount++;
@@ -50,6 +53,7 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     layout->imageCount = imageCount;
     layout->uboCount = uboCount;
     layout->ssboCount = ssboCount;
+    layout->storageImageCount = storageImages;
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
@@ -57,7 +61,7 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     // Descriptor pool
     {
         u32 count = 0;
-        VkDescriptorPoolSize sizes[3] = {0};
+        VkDescriptorPoolSize sizes[4] = {0};
 
         if(imageCount != 0) {
             sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ((u32)imageCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
@@ -67,6 +71,9 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
         }
         if(ssboCount != 0) {
             sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ((u32)ssboCount) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
+        }
+        if(storageImages != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, ((u32)storageImages) * FRAMES_IN_FLIGHT * ((u32)maxSets) };
         }
 
         VkDescriptorPoolCreateInfo info = {
@@ -225,17 +232,17 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         buffCount = buffers->len;
     }
 
-    MF_PANIC_IF(imgCount != set->layout->imageCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
+    MF_PANIC_IF(imgCount != (set->layout->imageCount + set->layout->storageImageCount), mfGetLogger(), "The image array doesn't follow the resource set layout!");
     MF_PANIC_IF(buffCount != (set->layout->uboCount + set->layout->ssboCount), mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
-    u64 count = set->layout->imageCount + set->layout->ssboCount + set->layout->uboCount;
+    u64 count = set->layout->imageCount + set->layout->ssboCount + set->layout->uboCount + set->layout->storageImageCount;
     VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
-    VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * set->layout->imageCount);
+    VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * imgCount);
     VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * buffCount);
-    u32* imgBindings = MF_ALLOCMEM(u32, sizeof(u32) * set->layout->imageCount);
+    u32* imgBindings = MF_ALLOCMEM(u32, sizeof(u32) * imgCount);
     u32* buffBindings = MF_ALLOCMEM(u32, sizeof(u32) * buffCount);
 
     // Getting bindings
@@ -244,6 +251,8 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         for(u64 i = 0; i < count; i++) {
             MFResourceSetBindings* binding = &mfArrayGetElement(set->layout->bindings, MFResourceSetBindings, i);
             if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER)
+                imgBindings[imgIdx++] = binding->binding;
+            else if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_STORAGE_IMAGE)
                 imgBindings[imgIdx++] = binding->binding;
             else if(binding->description.descriptorType == MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER)
                 buffBindings[buffIdx++] = binding->binding;
