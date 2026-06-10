@@ -365,7 +365,6 @@ void MFTOnInit(void* pstate, void* pappState) {
    
     slogLoggerCreate(&state->logger, "MFTest", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE);
     slogLoggerSetName(&state->logger, "MFTest");
-    INFO(&state->logger, "MFTest init");
 
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0, 0, 0.01f));
     mfRendererSetResizeCallback(appState->renderer, state, &ResizeCallback);
@@ -406,7 +405,6 @@ void MFTOnInit(void* pstate, void* pappState) {
 void MFTOnDeinit(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     
-    INFO(&state->logger, "MFTest deinit");
     slogLoggerDestroy(&state->logger);
 
     {
