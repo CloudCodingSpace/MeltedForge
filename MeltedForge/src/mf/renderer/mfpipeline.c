@@ -178,6 +178,9 @@ void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 wor
     }
 
     VkCommandBuffer buff = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
+    vkCmdDispatch(buff, workgroupSizeX, workgroupSizeY, 1);
+    VulkanCommandBufferEnd(buff);
+
     VkSubmitInfo info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,

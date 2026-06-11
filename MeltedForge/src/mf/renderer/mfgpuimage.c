@@ -12,11 +12,11 @@ extern "C" {
 #include <cimgui_impl.h>
 
 struct MFGpuImage_s {
-    VulkanImage image;
+    VulkanImage image[FRAMES_IN_FLIGHT];
     VulkanBackend* backend;
     VulkanBackendCtx* ctx;
     MFGpuImageConfig config;
-    VkDescriptorSet igSets[FRAMES_IN_FLIGHT];
+    VkDescriptorSet igSets[FRAMES_IN_FLIGHT][FRAMES_IN_FLIGHT];
     bool init;
 };
 
@@ -65,13 +65,16 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
     if(config.isColorAttachment)
         info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     
+    for(u32 i = 0; i < (config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanImageCreate(&image->image[i], info);
+   
     if(config.forImguiTexture && image->backend->config.enableUI) {
-        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            image->igSets[i] = ImGui_ImplVulkan_AddTexture(image->image.sampler, image->image.view, config.isStorageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        for(u32 j = 0; j < (config.frameSynced ? FRAMES_IN_FLIGHT : 1); j++) {
+            for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+                image->igSets[j][i] = ImGui_ImplVulkan_AddTexture(image->image[j].sampler, image->image[j].view, config.isStorageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
         }
     }
-    
-    VulkanImageCreate(&image->image, info);
 
     image->init = true;
     return image;
@@ -83,12 +86,15 @@ void mfGpuImageDestroy(MFGpuImage* image) {
  
     
     if(image->config.forImguiTexture && image->backend->config.enableUI) {
-        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            ImGui_ImplVulkan_RemoveTexture(image->igSets[i]);
+        for(u32 j = 0; j < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); j++) {
+            for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+                ImGui_ImplVulkan_RemoveTexture(image->igSets[j][i]);
+            }
         }
     }
 
-    VulkanImageDestroy(&image->image);
+    for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanImageDestroy(&image->image[i]);
 
     MF_SETMEM(image, 0, sizeof(MFGpuImage));
     MF_FREEMEM(image);
@@ -98,7 +104,8 @@ ImTextureID mfGpuImageGetImGuiTextureID(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
 
-    return (ImTextureID)image->igSets[image->backend->frameIndex];
+    u32 imgIdx = image->config.frameSynced ? image->backend->frameIndex : 0;
+    return (ImTextureID)image->igSets[imgIdx][image->backend->frameIndex];
 }
 
 u8* mfGpuImageGetPixels(MFGpuImage* image, u32* width, u32* height, u32 mipLevel, u32 faceIndex) {
@@ -107,7 +114,8 @@ u8* mfGpuImageGetPixels(MFGpuImage* image, u32* width, u32* height, u32 mipLevel
     MF_PANIC_IF(width == mfnull, mfGetLogger(), "The width pointer provided shouldn't be null!");
     MF_PANIC_IF(height == mfnull, mfGetLogger(), "The height pointer provided shouldn't be null!");
 
-    VulkanImage* backend = &image->image;
+    u32 imgIdx = image->config.frameSynced ? image->backend->frameIndex : 0;
+    VulkanImage* backend = &image->image[imgIdx];
     if(backend->info.arrayLayers <= faceIndex) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "The faceIndex isn't valid for getting the image's pixels! Returning the max. possible faceIndex available!");
         faceIndex = backend->info.arrayLayers - 1;
@@ -125,7 +133,8 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
 
-    VulkanImageSetPixels(&image->image, image->config.pixels);
+    for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanImageSetPixels(&image->image[i], image->config.pixels);
 }
 
 void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
@@ -135,7 +144,8 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
     image->config.width = width;
     image->config.height = height;
 
-    VulkanImageDestroy(&image->image);
+    for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanImageDestroy(&image->image[i]);
 
     VulkanImageInfo info = {
         .ctx = image->ctx,
@@ -152,7 +162,8 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
         .samples = VK_SAMPLE_COUNT_1_BIT
     };
     
-    VulkanImageCreate(&image->image, info);
+    for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanImageCreate(&image->image[i], info);
 }
 
 const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image) {
@@ -187,7 +198,7 @@ void* mfGpuImageGetBackend(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     
-    return &image->image;
+    return image->image;
 }
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {

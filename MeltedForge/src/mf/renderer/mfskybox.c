@@ -92,6 +92,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
 
         mfMeshCreate(&skybox->mesh, renderer, sizeof(f32) * MF_ARRAYLEN(vertices), vertices, MF_ARRAYLEN(indices), indices);
     }
+
     // Resources
     {
         MFResourceDescription description = mfGpuImageGetDescription(skybox->image);
@@ -102,28 +103,13 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         skybox->layout = mfResourceSetLayoutCreate(1, &binding, 3, renderer);
 
         skybox->set = mfResourceSetCreate(skybox->layout, renderer);
-
-        {
-            MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
-            mfArrayAddElement(&array, MFGpuImage*, skybox->image);
-            mfResourceSetUpdate(skybox->set, &array, mfnull);
-            mfArrayDestroy(&array);
-        }
         
         if(config.generatePbrMaps) {
             skybox->irradianceSet = mfResourceSetCreate(skybox->layout, renderer);
             skybox->prefilteredSet = mfResourceSetCreate(skybox->layout, renderer);
-
-            MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
-            mfArrayAddElement(&array, MFGpuImage*, skybox->irradiance);
-            mfResourceSetUpdate(skybox->irradianceSet, &array, mfnull);
-            
-            mfArraySetElement(array, MFGpuImage*, 0, skybox->prefilteredMap);
-            mfResourceSetUpdate(skybox->prefilteredSet, &array, mfnull);
-
-            mfArrayDestroy(&array);
         }
     }
+
     // Pipeline
     {
         MFVertexInputBindingDescription binding = {
@@ -168,12 +154,30 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
 
         skybox->pipeline = mfPipelineCreate(renderer, info);
     }
-
+    
     SkyboxConvertEnvMapToSkybox(skybox, config, renderer);
+    // Updating sets
+    {
+        MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
+        mfArrayAddElement(&array, MFGpuImage*, skybox->image);
+        mfResourceSetUpdate(skybox->set, &array, mfnull);
+        mfArrayDestroy(&array);
+    }
+    
     if(config.generatePbrMaps) {
         SkyboxGenerateIrradiance(skybox, config, renderer);
         SkyboxGeneratePrefilteredMap(skybox, config, renderer);
         SkyboxGenerateBrdfLUT(skybox, config, renderer);
+    
+        // Updating sets
+        MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
+        mfArrayAddElement(&array, MFGpuImage*, skybox->irradiance);
+        mfResourceSetUpdate(skybox->irradianceSet, &array, mfnull);
+        
+        mfArraySetElement(array, MFGpuImage*, 0, skybox->prefilteredMap);
+        mfResourceSetUpdate(skybox->prefilteredSet, &array, mfnull);
+
+        mfArrayDestroy(&array);
     }
 
     skybox->init = true;

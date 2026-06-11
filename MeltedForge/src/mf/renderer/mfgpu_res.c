@@ -269,18 +269,22 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
 
         // Images
         for (u64 i = 0; i < set->layout->imageCount; i++) {
-            VulkanImage* image = (VulkanImage*)mfGpuImageGetBackend(mfArrayGetElement(*images, MFGpuImage*, i));
+            MFGpuImage* image = mfArrayGetElement(*images, MFGpuImage*, i);
+            u32 idx = mfGpuImageGetConfig(image)->frameSynced ? frame : 0;
+            VulkanImage* backends = (VulkanImage*)mfGpuImageGetBackend(image);
+            VulkanImage* backend = &backends[idx];
+
             imgInfos[i] = (VkDescriptorImageInfo){
-                .imageLayout = image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                .imageView = image->view,
-                .sampler = image->info.storageImage ? mfnull : image->sampler
+                .imageLayout = backend->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .imageView = backend->view,
+                .sampler = backend->sampler
             };
 
             writes[writeIdx] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = set->sets[frame],
                 .dstBinding = imgBindings[i],
-                .descriptorType = (VkDescriptorType)(u32)mfGpuImageGetDescription(mfArrayGetElement(*images, MFGpuImage*, i)).descriptorType,
+                .descriptorType = (VkDescriptorType)(u32)mfGpuImageGetDescription(image).descriptorType,
                 .descriptorCount = 1,
                 .pImageInfo = &imgInfos[i]
             };

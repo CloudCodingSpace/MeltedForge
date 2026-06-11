@@ -23,6 +23,7 @@ typedef struct MFGpuImageConfig_s {
     bool isColorAttachment;
     bool isStorageImage;
     bool forImguiTexture;
+    bool frameSynced;
 } MFGpuImageConfig;
 
 MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config);
