@@ -229,7 +229,8 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .type = MF_GPU_BUFFER_TYPE_UBO,
         .size = sizeof(UBOData),
         .stage = MF_SHADER_STAGE_VERTEX,
-        .frequentUpdates = true
+        .frequentUpdates = true,
+        .frameSynced = true
     };
 
     state->cameraUboData.proj = state->scene.camera.proj;

@@ -36,13 +36,8 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
         .frequentUpdates = config.frequentUpdates
     };
 
-    if(config.size == 0)
-        return buffer;
-    else {
-        bool isShaderRes = (config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
-        for(i32 i = 0; i < (isShaderRes ? FRAMES_IN_FLIGHT : 1); i++)
-            VulkanBufferAllocate(&buffer->buffer[i], info);
-    }
+    for(i32 i = 0; i < (config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
+        VulkanBufferAllocate(&buffer->buffer[i], info);
 
     buffer->init = true;
     return buffer;
@@ -52,8 +47,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
-    bool isShaderRes = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
-    for(i32 i = 0; i < (isShaderRes ? FRAMES_IN_FLIGHT : 1); i++)
+    for(i32 i = 0; i < (buffer->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanBufferFree(&buffer->buffer[i]);
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
@@ -66,8 +60,8 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
 
     buffer->config.data = data;
 
-    bool isShaderRes = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
-    VulkanBufferUploadData(&buffer->buffer[isShaderRes ? buffer->backend->frameIndex : 0], data);
+    u32 idx = buffer->config.frameSynced ? buffer->backend->frameIndex : 0;
+    VulkanBufferUploadData(&buffer->buffer[idx], data);
 }
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
@@ -77,8 +71,7 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {
     buffer->config.data = data;
     buffer->config.size = size;
 
-    bool isShaderRes = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
-    for(i32 i = 0; i < (isShaderRes ? FRAMES_IN_FLIGHT : 1); i++) {
+    for(i32 i = 0; i < (buffer->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++) {
         VulkanBufferResize(&buffer->buffer[i], size);
         if(data != mfnull)
             VulkanBufferUploadData(&buffer->buffer[i], data);
@@ -92,6 +85,8 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     bool isShaderRes = (buffer->config.type == MF_GPU_BUFFER_TYPE_UBO) || (buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO);
     if(isShaderRes)
         return;
+    
+    u32 idx = buffer->config.frameSynced ? buffer->backend->frameIndex : 0;
 
     VkCommandBuffer buff = buffer->backend->commandBuffers[buffer->backend->frameIndex];
     if(buffer->backend->renderTarget != mfnull) {
@@ -101,10 +96,10 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {
         VkDeviceSize offsets[] = { 0 }; // NOTE: Make it configurable if necessary
 
-        vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer[0].handle, offsets);
+        vkCmdBindVertexBuffers(buff, 0, 1, &buffer->buffer[idx].handle, offsets);
     }
     else if (buffer->config.type == MF_GPU_BUFFER_TYPE_INDEX) {
-        vkCmdBindIndexBuffer(buff, buffer->buffer[0].handle, 0, VK_INDEX_TYPE_UINT32); // NOTE: Make the offset configurable if necessary
+        vkCmdBindIndexBuffer(buff, buffer->buffer[idx].handle, 0, VK_INDEX_TYPE_UINT32); // NOTE: Make the offset configurable if necessary
     }
 }
 

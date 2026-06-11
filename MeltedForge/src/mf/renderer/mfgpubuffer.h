@@ -23,7 +23,7 @@ typedef struct MFGpuBufferConfig_s {
     MFShaderStage stage;
     void* data;
     MFGpuBufferTypes type;
-    bool frequentUpdates;
+    bool frequentUpdates, frameSynced;
 } MFGpuBufferConfig;
 
 typedef struct MFGpuBuffer_s MFGpuBuffer;
