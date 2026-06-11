@@ -64,6 +64,7 @@ Features of the engine as of now:
     - Textures and skyboxes
     - UBOs
     - SSBOs
+    - Storage images
     - Image samplers (`sampler2D` and `samplerCube` in glsl)
     - ResourceSets and ResourceSetLayouts (Custom engine type)
  - Skybox support
@@ -74,6 +75,7 @@ Features of the engine as of now:
     - Diffuse IBL support
     - Specular IBL support
  - MSAA support for native window and render targets as well
+ - Compute shader support
 
  - MFTest's latest status (A test application included in the main repo to stress test the engine's core)  
    ![img](https://raw.githubusercontent.com/CloudCodingSpace/MeltedForge/main/MFTest/screenshots/4x_msaa_multiple_entities.png)
