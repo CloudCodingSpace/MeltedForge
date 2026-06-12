@@ -16,6 +16,8 @@ typedef struct PushConstantData_s {
 
 typedef struct ComputePushConstantData_s {
     MFVec2 resolution;
+    MFVec2 mouse;
+    float time;
 } ComputePushConstantData;
 
 typedef struct LightUBOData_s {

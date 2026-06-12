@@ -555,8 +555,15 @@ void MFTOnRender(void* pstate, void* pappState) {
         u32 height = mfGpuImageGetConfig(state->storageImage)->height;
 
         ComputePushConstantData cpc = {
-            .resolution = mfVec2Create(width, height)
+            .resolution = mfVec2Create(width, height),
+            .time = (f32)mfGetTimeElapsed()
         };
+        if(mfInputIsMBPressed(appState->window, MF_MOUSE_BUTTON_RIGHT)) {
+            f64 x,y;
+            mfInputGetMousePos(appState->window, &x, &y);
+            cpc.mouse = mfVec2Create((f32)x, (f32)y);
+        }
+
         mfPipelinePushConstant(state->computePipeline, MF_SHADER_STAGE_COMPUTE, 0, sizeof(ComputePushConstantData), &cpc);
 
         const u32 localSizeX = 16, localSizeY = 16;
