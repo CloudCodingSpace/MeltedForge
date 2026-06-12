@@ -214,7 +214,7 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
         }
 
         if(!image->info.generateMipmaps && (image->info.mipLevels == 1)) {
-            VulkanImageTransitionLayout(image, image->cmdBuff, image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
+            VulkanImageTransitionLayout(image, image->cmdBuff, image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
                 .aspectMask = image->info.aspectFlags,
                 .levelCount = image->info.mipLevels,
                 .layerCount = image->info.arrayLayers
@@ -402,7 +402,7 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
     }
     
     image->layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    VulkanImageTransitionLayout(image, image->cmdBuff, image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
+    VulkanImageTransitionLayout(image, image->cmdBuff, image->info.storageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
         .aspectMask = image->info.aspectFlags,
         .baseArrayLayer = 0,
         .layerCount = image->info.arrayLayers,
@@ -427,7 +427,9 @@ void VulkanImageGenerateMipmaps(VulkanImage* image, VkImageLayout oldLayout, VkA
 void VulkanImageTransitionLayout(VulkanImage* image, VkCommandBuffer cmdBuff, VkImageLayout dstLayout, VkAccessFlagBits dstAccess, VkPipelineStageFlagBits dstStage, VkImageSubresourceRange subResRange) {
     VulkanBackendCtx* ctx = image->info.ctx;
     
-    if(image->access == dstAccess && image->layout == dstLayout && image->stage == dstStage)
+    bool sameAccess = (image->access & dstAccess) == dstAccess;
+    bool sameStage = (image->stage & dstStage) == dstStage;
+    if(sameAccess && image->layout == dstLayout && sameStage)
         return;
 
     VkImageMemoryBarrier barrier = {
