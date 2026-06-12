@@ -432,10 +432,18 @@ void MFTOnInit(void* pstate, void* pappState) {
         }
         // Pipeline
         {
+            MFPushConstantRange range = {
+                .offset = 0,
+                .size = sizeof(ComputePushConstantData),
+                .stage = MF_SHADER_STAGE_COMPUTE
+            };
+
             MFPipelineConfig config = {
                 .type = MF_PIPELINE_TYPE_COMPUTE,
                 .resourceLayoutCount = 1,
                 .resourceLayouts = &state->computeLayout,
+                .pushConstRangeCount = 1,
+                .pushConstRanges = &range,
                 .computeConfig = {
                     .filePath = "./mftshaders/test.comp.spv"
                 }
@@ -543,9 +551,15 @@ void MFTOnRender(void* pstate, void* pappState) {
         mfPipelinePrepareComputeDispatch(state->computePipeline);
         mfResourceSetsBind(0, 1, &state->computeSet, state->computePipeline);
 
-        const u32 localSizeX = 16, localSizeY = 16;
         u32 width = mfGpuImageGetConfig(state->storageImage)->width;
         u32 height = mfGpuImageGetConfig(state->storageImage)->height;
+
+        ComputePushConstantData cpc = {
+            .resolution = mfVec2Create(width, height)
+        };
+        mfPipelinePushConstant(state->computePipeline, MF_SHADER_STAGE_COMPUTE, 0, sizeof(ComputePushConstantData), &cpc);
+
+        const u32 localSizeX = 16, localSizeY = 16;
         mfPipelineComputeDispatch(state->computePipeline, (width + localSizeX - 1) / localSizeX, (height + localSizeY) / localSizeY);
     }
 
@@ -574,7 +588,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         u32 height = mfGpuImageGetConfig(state->storageImage)->height;
 
         igBegin("Compute scene", mfnull, ImGuiWindowFlags_None);
-        igImage(mfGpuImageGetImGuiTextureID(state->storageImage), (ImVec2){ width, height }, (ImVec2){0, 0}, (ImVec2){1, 1});
+        igImage(mfGpuImageGetImGuiTextureID(state->storageImage), (ImVec2){ width, height }, (ImVec2){0, 1}, (ImVec2){1, 0});
         igEnd();
     }
 

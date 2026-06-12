@@ -14,6 +14,10 @@ typedef struct PushConstantData_s {
     MFMat3 normalMat;
 } PushConstantData;
 
+typedef struct ComputePushConstantData_s {
+    MFVec2 resolution;
+} ComputePushConstantData;
+
 typedef struct LightUBOData_s {
     MFVec3 lightPos;
     MFVec3 camPos;
