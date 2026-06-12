@@ -50,7 +50,7 @@ typedef struct MFPipelineConfig_s {
     MFComputePipelineConfig computeConfig;
 } MFPipelineConfig;
 
-MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info);
+MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig config);
 void mfPipelineDestroy(MFPipeline* pipeline);
 
 void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline);

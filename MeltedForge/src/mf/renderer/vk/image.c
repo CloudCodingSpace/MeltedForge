@@ -105,6 +105,30 @@ void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
     MF_INFO(mfGetLogger(), "(From the vulkan backend) Created an image of resolution: %dx%d", 
                     image->info.width, image->info.height);
 
+    if(pinfo.storageImage && !pinfo.pixels) {
+        VulkanCommandBufferBegin(image->cmdBuff, true);
+
+        VulkanImageTransitionLayout(image, image->cmdBuff, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, (VkImageSubresourceRange) {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseArrayLayer = 0,
+            .baseMipLevel = 0,
+            .layerCount = pinfo.arrayLayers,
+            .levelCount = image->info.mipLevels
+        });
+
+        VulkanCommandBufferEnd(image->cmdBuff);
+
+        VkSubmitInfo info = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &image->cmdBuff
+        };
+        VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, image->fence));
+        VK_CHECK(vkWaitForFences(ctx->device, 1, &image->fence, VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(ctx->device, 1, &image->fence));
+        VK_CHECK(vkResetCommandBuffer(image->cmdBuff, 0));
+    }
+
     if(!pinfo.gpuResource)
         return;
 

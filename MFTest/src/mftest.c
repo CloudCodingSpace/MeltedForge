@@ -400,6 +400,50 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     SetUiStyle();
 
+    // Compute test
+    {
+        // Storage images
+        {
+            MFGpuImageConfig config = {
+                .forImguiTexture = true,
+                .frameSynced = true,
+                .width = 800,
+                .height = 600,
+                .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
+                .isStorageImage = true
+            };
+            state->storageImage = mfGpuImageCreate(appState->renderer, config);
+        }
+        // Resource handles
+        {
+            MFResourceSetBindings binding = {
+                .binding = 0,
+                .description = mfGpuImageGetDescription(state->storageImage)
+            };
+            state->computeLayout = mfResourceSetLayoutCreate(1, &binding, 1, appState->renderer);
+
+            state->computeSet = mfResourceSetCreate(state->computeLayout, appState->renderer);
+            MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
+            mfArrayAddElement(&array, MFGpuImage*, state->storageImage);
+            
+            mfResourceSetUpdate(state->computeSet, &array, mfnull);
+            
+            mfArrayDestroy(&array);
+        }
+        // Pipeline
+        {
+            MFPipelineConfig config = {
+                .type = MF_PIPELINE_TYPE_COMPUTE,
+                .resourceLayoutCount = 1,
+                .resourceLayouts = &state->computeLayout,
+                .computeConfig = {
+                    .filePath = "./mftshaders/test.comp.spv"
+                }
+            };
+            state->computePipeline = mfPipelineCreate(appState->renderer, config);
+        }
+    }
+
     MF_PROFILE_ZONE_END(__temp);
 }
 
@@ -408,6 +452,15 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     
     slogLoggerDestroy(&state->logger);
 
+    // Compute test
+    {
+        mfPipelineDestroy(state->computePipeline);
+        mfResourceSetDestroy(state->computeSet);
+        mfResourceSetLayoutDestroy(state->computeLayout);
+        mfGpuImageDestroy(state->storageImage);
+    }
+
+    // Deleting resource sets
     {
         u64 count = 0;
         mfSceneGetValidMeshComponents(&state->scene, &count, mfnull);
@@ -485,6 +538,17 @@ void MFTOnRender(void* pstate, void* pappState) {
         mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
     }
 
+    // Compute test
+    {
+        mfPipelinePrepareComputeDispatch(state->computePipeline);
+        mfResourceSetsBind(0, 1, &state->computeSet, state->computePipeline);
+
+        const u32 localSizeX = 16, localSizeY = 16;
+        u32 width = mfGpuImageGetConfig(state->storageImage)->width;
+        u32 height = mfGpuImageGetConfig(state->storageImage)->height;
+        mfPipelineComputeDispatch(state->computePipeline, (width + localSizeX - 1) / localSizeX, (height + localSizeY) / localSizeY);
+    }
+
     MF_PROFILE_ZONE_END(__temp);
 }
 
@@ -501,6 +565,16 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igBegin("Scene", mfnull, ImGuiWindowFlags_None);
         igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderTargetGetColorAttachmentImTexID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
+        igEnd();
+    }
+
+    // Compute scene
+    {
+        u32 width = mfGpuImageGetConfig(state->storageImage)->width;
+        u32 height = mfGpuImageGetConfig(state->storageImage)->height;
+
+        igBegin("Compute scene", mfnull, ImGuiWindowFlags_None);
+        igImage(mfGpuImageGetImGuiTextureID(state->storageImage), (ImVec2){ width, height }, (ImVec2){0, 0}, (ImVec2){1, 1});
         igEnd();
     }
 

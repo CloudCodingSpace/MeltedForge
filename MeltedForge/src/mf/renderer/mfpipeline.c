@@ -160,6 +160,9 @@ void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline) {
     VkCommandBuffer buff = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
     VK_CHECK(vkResetCommandBuffer(buff, 0));
     VulkanCommandBufferBegin(buff, true);
+
+    vkCmdBindPipeline(buff, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->pipeline.pipeline);
+
     pipeline->backend->dispatchBegun = true;
 }
 
@@ -200,6 +203,8 @@ void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 wor
         mfArrayAddElement(&pipeline->backend->waitSemas, VkSemaphore, pipeline->semas[pipeline->backend->frameIndex]);
         mfArrayAddElement(&pipeline->backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
+
+    pipeline->backend->dispatchBegun = false;
 }
 
 void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data) {

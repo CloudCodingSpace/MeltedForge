@@ -33,7 +33,7 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         .ctx = image->ctx,
         .width = config.width,
         .height = config.height,
-        .gpuResource = !config.isStorageImage,
+        .gpuResource = true,
         .pixels = config.pixels,
         .format = (VkFormat)(u32)(config.imageFormat),
         .tiling = VK_IMAGE_TILING_OPTIMAL,

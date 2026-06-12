@@ -268,7 +268,7 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         u32 writeIdx = 0;
 
         // Images
-        for (u64 i = 0; i < set->layout->imageCount; i++) {
+        for (u64 i = 0; i < imgCount; i++) {
             MFGpuImage* image = mfArrayGetElement(*images, MFGpuImage*, i);
             u32 idx = mfGpuImageGetConfig(image)->frameSynced ? frame : 0;
             VulkanImage* imageBackends = (VulkanImage*)mfGpuImageGetBackend(image);
