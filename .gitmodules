@@ -20,3 +20,6 @@
 [submodule "stb"]
 	path = MeltedForge/libs/stb
 	url = https://github.com/CloudCodingSpace/stb.git
+[submodule "cgltf"]
+	path = MeltedForge/libs/cgltf
+	url = https://github.com/CloudCodingSpace/cgltf
