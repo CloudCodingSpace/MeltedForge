@@ -14,12 +14,6 @@ typedef struct PushConstantData_s {
     MFMat3 normalMat;
 } PushConstantData;
 
-typedef struct ComputePushConstantData_s {
-    MFVec2 resolution;
-    MFVec2 mouse;
-    float time;
-} ComputePushConstantData;
-
 typedef struct LightUBOData_s {
     MFVec3 lightPos;
     MFVec3 camPos;
@@ -35,11 +29,6 @@ typedef struct LightUBOData_s {
 
 typedef struct MFTState_s {
     SLogger logger;
-
-    MFResourceSetLayout* computeLayout;
-    MFResourceSet* computeSet;
-    MFPipeline* computePipeline;
-    MFGpuImage* storageImage;
 
     MFResourceSetLayout* layout, *skyboxLayout, *cameraLayout;
     MFResourceSet* skyboxSet, *cameraSet;
