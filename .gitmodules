@@ -7,10 +7,6 @@
 [submodule "cimgui"]
 	path = MeltedForge/libs/cimgui
 	url = https://github.com/cimgui/cimgui
-[submodule "assimp"]
-	path = MeltedForge/libs/assimp
-	url = https://github.com/assimp/assimp
-	branch = bugfix/change_mail
 [submodule "tracy"]
 	path = MeltedForge/libs/tracy
 	url = https://github.com/wolfpld/tracy/
