@@ -194,15 +194,27 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     MF_PANIC_IF(model->init, mfGetLogger(), "The model handle provided is already initialised!");
 
+    MF_PANIC_IF(!mfStringEndsWith(mfGetLogger(), filePath, ".gltf"), mfGetLogger(), "The model must only be a .gltf file following glTF 2.0 standards. Glb aren't supported as of now!");
+
     // Loading the model
+    cgltf_options options = {};
+    cgltf_data data = {};
+    if(cgltf_parse_file(&options, filePath, &data) != cgltf_result_success) {
+        MF_FATAL_ABORT(mfGetLogger(), "Failed to parse gltf file!");
+    }
+    
+    if(cgltf_load_buffers(&options, &data, filePath) != cgltf_result_success) {
+        MF_FATAL_ABORT(mfGetLogger(), "Failed to parse gltf file!");
+    }
+
+    model->meshCount = data.meshes_count;
+    model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * data.meshes_count);
+    model->renderer = renderer;
+    model->builder = builder;
+    model->perVertexSize = perVertSize;
+
     // const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_OptimizeMeshes);
     // MF_PANIC_IF((!scene) || (!scene->mRootNode) || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE), mfGetLogger(), aiGetErrorString());
-
-    // model->meshCount = scene->mNumMeshes;
-    // model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * scene->mNumMeshes);
-    // model->renderer = renderer;
-    // model->builder = builder;
-    // model->perVertexSize = perVertSize;
 
     // processNode(model, scene, scene->mRootNode, mfMat4Identity());
 
@@ -214,12 +226,12 @@ void mfModelDestroy(MFModel* model) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
     MF_PANIC_IF(!model->init, mfGetLogger(), "The model handle provided isn't initialised!");
     
-    // for(u64 i = 0; i < model->meshCount; i++) {
-    //     mfMeshDestroy(&model->meshes[i]);
-    // }
+    for(u64 i = 0; i < model->meshCount; i++) {
+        mfMeshDestroy(&model->meshes[i]);
+    }
 
-    // if(model->meshes)
-    //     MF_FREEMEM(model->meshes);
+    if(model->meshes)
+        MF_FREEMEM(model->meshes);
 
     MF_SETMEM(model, 0, sizeof(MFModel));
 }
