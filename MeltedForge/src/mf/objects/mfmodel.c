@@ -84,111 +84,235 @@ extern "C" {
 //     return mfnull;
 // }
 
-// void processMesh(MFModel* model, const struct aiScene* scene, struct aiMesh* mesh, MFMat4 transform) {
-//     MFMeshMaterial matData = {0};
-//     MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
-//     MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
-//     MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
-//     MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
+void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 transform) {
+    MFMeshMaterial matData = {0};
+    MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
+    MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
+    MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
+    MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
 
-//     u8* vertices = MF_ALLOCMEM(u8, model->perVertexSize * mesh->mNumVertices);
-//     u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * mesh->mNumFaces * 3);
+    u64 verticesCount = 0, indicesCount = 0;
 
-//     for(u32 j = 0; j < mesh->mNumVertices; j++) {
-//         struct aiVector3D pos = mesh->mVertices[j];
-//         struct aiVector3D normals = mesh->mNormals[j];
-//         struct aiVector3D tangents = mesh->mTangents[j];
-//         struct aiVector3D bitangents = mesh->mBitangents[j];
+    for(u64 i = 0; i < mesh->primitives_count; i++) {
+        cgltf_primitive* primitive = &mesh->primitives[i];
+        if(primitive->indices) {
+            indicesCount += primitive->indices->count;
+        }
 
-//         struct aiVector3D texCoords = {0};
-//         if (mesh->mTextureCoords[0]) {
-//             texCoords = mesh->mTextureCoords[0][j];
-//         }
+        for(u64 j = 0; j < primitive->attributes_count; j++) {
+            cgltf_attribute* attrib = &primitive->attributes[j];
+            
+            if(attrib->type == cgltf_attribute_type_position)
+            {
+                verticesCount += attrib->data->count;
+                break;
+            }
+        }
+    }
 
-//         MFModelVertexBuilderData data = {
-//             .pos = (MFVec3){ pos.x, pos.y, pos.z },
-//             .normal = (MFVec3){ normals.x, normals.y, normals.z },
-//             .texCoord = (MFVec2){ texCoords.x, texCoords.y },
-//             .tangent = (MFVec3){ tangents.x, tangents.y, tangents.z },
-//             .bitangent = (MFVec3){ bitangents.x, bitangents.y, bitangents.z }
-//         };
+    if(verticesCount == 0)
+        return;
+
+    u8* vertices = MF_ALLOCMEM(u8, model->perVertexSize * verticesCount);
+    u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * indicesCount);
+
+    u32 vertexOffset = 0;
+    u32 indexOffset = 0;
+    for(u64 i = 0; i < mesh->primitives_count; i++) {
+        cgltf_primitive* prim = &mesh->primitives[i];
+        cgltf_accessor* posAccessor = mfnull;
+        cgltf_accessor* normalAccessor = mfnull;
+        cgltf_accessor* uvAccessor = mfnull;
+        cgltf_accessor* colorAccessor = mfnull;
+        cgltf_accessor* tangentAccessor = mfnull;
+
+        cgltf_accessor* indexAccessor = prim->indices;
+
+        for(u64 j = 0; j < prim->attributes_count; j++) {
+            cgltf_attribute* attrib = &prim->attributes[j];
+
+            switch(attrib->type) {
+                case cgltf_attribute_type_position:
+                    posAccessor = attrib->data;
+                    break;
+                case cgltf_attribute_type_normal:
+                    normalAccessor = attrib->data;
+                    break;
+                case cgltf_attribute_type_texcoord:
+                    if(attrib->index == 0)
+                        uvAccessor = attrib->data;
+                    break;
+                case cgltf_attribute_type_tangent:
+                    tangentAccessor = attrib->data;
+                    break;
+                case cgltf_attribute_type_color:
+                    colorAccessor = attrib->data;
+                    break;
+                default:
+                    break;
+            };
+        }
+
+        if(!posAccessor)
+            continue;
+            
+        if(indexAccessor) {
+            for (u64 j = 0; j < indexAccessor->count; j++) {
+                indices[indexOffset + j] = (u32)cgltf_accessor_read_index(indexAccessor, j) + vertexOffset;
+            }
+        }
+
+        for(u64 j = 0; j < posAccessor->count; j++) {
+            float pos[3] = {0};
+            float tangent[4] = {0};
+            float uv[2] = {0};
+            float normal[3] = {0};
+            float color[3] = {0};
+
+            cgltf_accessor_read_float(posAccessor, j, pos, 3);
+
+            if(normalAccessor)
+                cgltf_accessor_read_float(normalAccessor, j, normal, 3);
+            if(uvAccessor)
+                cgltf_accessor_read_float(uvAccessor, j, uv, 2);
+            if(tangentAccessor)
+                cgltf_accessor_read_float(tangentAccessor, j, tangent, 4);
+            if(colorAccessor)
+                cgltf_accessor_read_float(colorAccessor, j, color, 3);
+
+            MFVec3 bitangent = {0};
+
+            if(tangentAccessor && normalAccessor) {
+                MFVec3 n = { normal[0], normal[1], normal[2] };
+                MFVec3 t = { tangent[0], tangent[1], tangent[2] };
+
+                bitangent = mfVec3MulScalar(mfVec3Cross(n, t), tangent[3]);
+            }
+            MFModelVertexBuilderData data = {
+                .pos = { pos[0], pos[1], pos[2] },
+                .normal = { normal[0], normal[1], normal[2] },
+                .texCoord = { uv[0], uv[1] },
+                .tangent = { tangent[0], tangent[1], tangent[2] },
+                .bitangent = bitangent
+            };
+
+            model->builder(vertices + (vertexOffset + j) * model->perVertexSize, data);
+        }
         
-//         model->builder(vertices + j * model->perVertexSize, data);
-//     }
-//     for(u32 j = 0; j < mesh->mNumFaces; j++) {
-//         struct aiFace face = mesh->mFaces[j];
-//         for(u32  k = 0; k < face.mNumIndices; k++) {
-//             indices[j * 3 + k] = face.mIndices[k];
-//         }
-//     }
+        vertexOffset += posAccessor->count;
+        if(indexAccessor)
+            indexOffset += indexAccessor->count;
+    }
+
+    // for(u32 j = 0; j < mesh->mNumVertices; j++) {
+    //     struct aiVector3D pos = mesh->mVertices[j];
+    //     struct aiVector3D normals = mesh->mNormals[j];
+    //     struct aiVector3D tangents = mesh->mTangents[j];
+    //     struct aiVector3D bitangents = mesh->mBitangents[j];
+
+    //     struct aiVector3D texCoords = {0};
+    //     if (mesh->mTextureCoords[0]) {
+    //         texCoords = mesh->mTextureCoords[0][j];
+    //     }
+
+    //     MFModelVertexBuilderData data = {
+    //         .pos = (MFVec3){ pos.x, pos.y, pos.z },
+    //         .normal = (MFVec3){ normals.x, normals.y, normals.z },
+    //         .texCoord = (MFVec2){ texCoords.x, texCoords.y },
+    //         .tangent = (MFVec3){ tangents.x, tangents.y, tangents.z },
+    //         .bitangent = (MFVec3){ bitangents.x, bitangents.y, bitangents.z }
+    //     };
+        
+    //     model->builder(vertices + j * model->perVertexSize, data);
+    // }
+    // for(u32 j = 0; j < mesh->mNumFaces; j++) {
+    //     struct aiFace face = mesh->mFaces[j];
+    //     for(u32  k = 0; k < face.mNumIndices; k++) {
+    //         indices[j * 3 + k] = face.mIndices[k];
+    //     }
+    // }
     
-//     if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
-//         struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+    // if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
+    //     struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
 
-//         matData.ambient_texpath = get_materialtex(scene, mat, aiTextureType_AMBIENT);
-//         matData.diffuse_texpath = get_materialtex(scene, mat, aiTextureType_DIFFUSE);
-//         matData.displacement_texpath = get_materialtex(scene, mat, aiTextureType_DISPLACEMENT);
-//         matData.specular_texpath = get_materialtex(scene, mat, aiTextureType_SPECULAR);
-//         matData.normal_texpath = get_materialtex(scene, mat, aiTextureType_NORMALS);
-//         matData.shininess_texpath = get_materialtex(scene, mat, aiTextureType_SHININESS);
-//         matData.emission_texpath = get_materialtex(scene, mat, aiTextureType_EMISSIVE);
-//         matData.metalness_texpath = get_materialtex(scene, mat, aiTextureType_METALNESS);
-//         matData.lightmap_texpath = get_materialtex(scene, mat, aiTextureType_LIGHTMAP);
+    //     matData.ambient_texpath = get_materialtex(scene, mat, aiTextureType_AMBIENT);
+    //     matData.diffuse_texpath = get_materialtex(scene, mat, aiTextureType_DIFFUSE);
+    //     matData.displacement_texpath = get_materialtex(scene, mat, aiTextureType_DISPLACEMENT);
+    //     matData.specular_texpath = get_materialtex(scene, mat, aiTextureType_SPECULAR);
+    //     matData.normal_texpath = get_materialtex(scene, mat, aiTextureType_NORMALS);
+    //     matData.shininess_texpath = get_materialtex(scene, mat, aiTextureType_SHININESS);
+    //     matData.emission_texpath = get_materialtex(scene, mat, aiTextureType_EMISSIVE);
+    //     matData.metalness_texpath = get_materialtex(scene, mat, aiTextureType_METALNESS);
+    //     matData.lightmap_texpath = get_materialtex(scene, mat, aiTextureType_LIGHTMAP);
 
-//         struct aiColor4D color;
-//         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
-//             matData.specular[0] = color.r;
-//             matData.specular[1] = color.g;
-//             matData.specular[2] = color.b;
-//         }
-//         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
-//             matData.emission[0] = color.r;
-//             matData.emission[1] = color.g;
-//             matData.emission[2] = color.b;
-//         }
-//         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
-//             matData.diffuse[0] = color.r;
-//             matData.diffuse[1] = color.g;
-//             matData.diffuse[2] = color.b;
-//         }
-//         if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
-//             matData.ambient[0] = color.r;
-//             matData.ambient[1] = color.g;
-//             matData.ambient[2] = color.b;
-//         }
+    //     struct aiColor4D color;
+    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
+    //         matData.specular[0] = color.r;
+    //         matData.specular[1] = color.g;
+    //         matData.specular[2] = color.b;
+    //     }
+    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
+    //         matData.emission[0] = color.r;
+    //         matData.emission[1] = color.g;
+    //         matData.emission[2] = color.b;
+    //     }
+    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
+    //         matData.diffuse[0] = color.r;
+    //         matData.diffuse[1] = color.g;
+    //         matData.diffuse[2] = color.b;
+    //     }
+    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
+    //         matData.ambient[0] = color.r;
+    //         matData.ambient[1] = color.g;
+    //         matData.ambient[2] = color.b;
+    //     }
 
-//         float f = 0.0f;
-//         if(aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &f) == AI_SUCCESS) {
-//             matData.shininess = f;
-//         }
-//         f = 1.0f;
-//         if(aiGetMaterialFloat(mat, AI_MATKEY_REFRACTI, &f) == AI_SUCCESS) {
-//             matData.ior = f;
-//         }
-//         f = 1.0f;
-//         if(aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f) == AI_SUCCESS) {
-//             matData.opaque = (f >= 1.0f);
-//         }
-//     }
+    //     float f = 0.0f;
+    //     if(aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &f) == AI_SUCCESS) {
+    //         matData.shininess = f;
+    //     }
+    //     f = 1.0f;
+    //     if(aiGetMaterialFloat(mat, AI_MATKEY_REFRACTI, &f) == AI_SUCCESS) {
+    //         matData.ior = f;
+    //     }
+    //     f = 1.0f;
+    //     if(aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f) == AI_SUCCESS) {
+    //         matData.opaque = (f >= 1.0f);
+    //     }
+    // }
 
-//     model->meshes[model->_meshIdx].mat = matData;
-//     model->meshes[model->_meshIdx].transform = transform;
-//     mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * mesh->mNumVertices, vertices, mesh->mNumFaces * 3, indices);
-//     model->_meshIdx++;
+    model->meshes[model->_meshIdx].mat = matData;
+    model->meshes[model->_meshIdx].transform = transform;
+    mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * verticesCount, vertices, indicesCount, indices);
+    model->_meshIdx++;
 
-//     MF_FREEMEM(vertices);
-//     MF_FREEMEM(indices);
-// }
+    MF_FREEMEM(vertices);
+    MF_FREEMEM(indices);
+}
 
-// void processNode(MFModel* model, const struct aiScene* scene, struct aiNode* node, MFMat4 transform) {
-//     MFMat4 mat = mfMat4Mul(transform, ToMat4(node->mTransformation));
-//     for(u32 i = 0; i < node->mNumMeshes; i++) {
-//         processMesh(model, scene, scene->mMeshes[node->mMeshes[i]], mat);
-//     }
-//     for(u32 i = 0; i < node->mNumChildren; i++) {
-//         processNode(model, scene, node->mChildren[i], mat);
-//     }
-// }
+void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node, MFMat4 transform) {
+    MFMat4 mat = transform;
+    {
+        MFMat4 out = mfMat4Identity();
+        cgltf_node_transform_local(node, out.data);
+
+        mat = mfMat4Mul(mat, out);
+    }
+
+    if(!node->mesh) {
+        for(u32 i = 0; i < node->children_count; i++) {
+            processNode(model, scene, node->children[i], mat);
+        }
+    }
+
+    processMesh(model, scene, node->mesh, mat);
+    // for(u32 i = 0; i < node->mesh; i++) {
+    //     processMesh(model, scene, scene->mMeshes[node->mMeshes[i]], mat);
+    // }
+    // for(u32 i = 0; i < node->mNumChildren; i++) {
+    //     processNode(model, scene, node->mChildren[i], mat);
+    // }
+}
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
     MF_PANIC_IF(model == mfnull, mfGetLogger(), "The model handle provided shouldn't be null!");
@@ -198,27 +322,26 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
 
     // Loading the model
     cgltf_options options = {};
-    cgltf_data data = {};
+    cgltf_data* data;
     if(cgltf_parse_file(&options, filePath, &data) != cgltf_result_success) {
         MF_FATAL_ABORT(mfGetLogger(), "Failed to parse gltf file!");
     }
     
-    if(cgltf_load_buffers(&options, &data, filePath) != cgltf_result_success) {
+    if(cgltf_load_buffers(&options, data, filePath) != cgltf_result_success) {
         MF_FATAL_ABORT(mfGetLogger(), "Failed to parse gltf file!");
     }
 
-    model->meshCount = data.meshes_count;
-    model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * data.meshes_count);
+    model->meshCount = data->meshes_count;
+    model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * data->meshes_count);
     model->renderer = renderer;
     model->builder = builder;
     model->perVertexSize = perVertSize;
 
-    // const struct aiScene* scene = aiImportFile(filePath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_OptimizeMeshes);
-    // MF_PANIC_IF((!scene) || (!scene->mRootNode) || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE), mfGetLogger(), aiGetErrorString());
+    cgltf_scene* scene = data->scene;
+    for(u32 i = 0; i < scene->nodes_count; i++) {
+        processNode(model, scene, scene->nodes[i], mfMat4Identity());
+    }
 
-    // processNode(model, scene, scene->mRootNode, mfMat4Identity());
-
-    // aiReleaseImport(scene);
     model->init = true;
 }
 
