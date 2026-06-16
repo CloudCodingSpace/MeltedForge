@@ -11,24 +11,16 @@ extern "C" {
 #include "core/mfutils.h"
 
 typedef struct MFMeshMaterial_s {
-    float ambient[3];
     float diffuse[3];
-    float specular[3];
     float emission[3];
-    float shininess;
-    float ior;  // index of refraction
-    bool opaque;
+    float roughness;
+    float metallic;
 
-    const char* ambient_texpath;
     const char* diffuse_texpath;
-    const char* specular_texpath;
     const char* normal_texpath;
-    const char* displacement_texpath;
-    const char* shininess_texpath;
     const char* lightmap_texpath;
     const char* emission_texpath;
-    const char* metalness_texpath;
-    const char* alpha_texpath;
+    const char* metallic_roughness_texpath;
     MFResourceSet* set; // TODO: Baked resource set manually by client for now. So change this later by using a resource set helper system
 } MFMeshMaterial;
 

@@ -12,7 +12,7 @@ typedef struct MFModelVertexBuilderData_s {
     MFVec3 pos;
     MFVec3 normal;
     MFVec2 texCoord;
-    MFVec3 tangent;
+    MFVec4 tangent;
     MFVec3 bitangent;
 } MFModelVertexBuilderData;
 

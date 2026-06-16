@@ -57,7 +57,7 @@ MF_INLINE void vertBuilder(void* dst, MFModelVertexBuilderData data) {
     vertex->pos = data.pos;
     vertex->normal = data.normal;
     vertex->uv = data.texCoord;
-    vertex->tangent = data.tangent;
+    vertex->tangent = mfVec3Create(data.tangent.x, data.tangent.y, data.tangent.z);
     vertex->bitangent = data.bitangent;
 }
 

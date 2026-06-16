@@ -13,100 +13,23 @@ extern "C" {
 
 #include <cgltf/cgltf.h>
 
-// #include <assimp/cimport.h>
-// #include <assimp/scene.h>
-// #include <assimp/postprocess.h>
+const char* get_materialtex(cgltf_texture* tex) {
+    if(!tex)
+        return mfnull;
+    
+    cgltf_image* image = tex->image;
+    if(!image)
+        return mfnull;
+    
+    if(!image->uri)
+        return mfnull;
 
-// MFMat4 ToMat4(C_STRUCT aiMatrix4x4 m) {
-//     return (MFMat4){
-//         .data = {
-//             m.a1, m.b1, m.c1, m.d1,
-//             m.a2, m.b2, m.c2, m.d2,
-//             m.a3, m.b3, m.c3, m.d3,
-//             m.a4, m.b4, m.c4, m.d4
-//         }
-//     };
-// }
-
-// const char* ToString(struct aiString string) {
-//     u64 size = string.length + 1;
-//     char* str = MF_ALLOCMEM(char, sizeof(char) * size);
-//     for(u32 i = 0; i < string.length; i++) {
-//         str[i] = string.data[i];
-//     }
-//     str[string.length] = '\0';
-
-//     return str;
-// }
-
-// const char* get_materialtex(const struct aiScene* scene, struct aiMaterial* mat, enum aiTextureType type) {
-//     //! FIXME: MAKE USE OF ALL THE TEXTURE TYPES AVAILABLE!
-//     int count = aiGetMaterialTextureCount(mat, type);
-//     if(count >= 1) {
-//         struct aiString path;
-//         MF_PANIC_IF(aiGetMaterialTexture(mat, type, 0, &path, mfnull, mfnull, mfnull, mfnull, mfnull, mfnull) != AI_SUCCESS,
-//                                             mfGetLogger(), "Couldn't retrieve the material's texture path from the model!");
-//         //! NOTE: SUS CUZ THE HEADER SAYS PATH.LENGTH IS THE BINARY LENGTH AND NOT THE LENGTH OF THE UTF-8 MULTI-BYTE SEQUENCE, ASSUMING EACH ELEMENT OF CHAR IS 1BYTE
-//         if(path.data[0] == '*') {
-//             u64 idx = strtoull(path.data + 1, mfnull, 10);
-//             const char* texPath = ToString(scene->mTextures[idx]->mFilename);
-//             u64 texLen = strlen(texPath);
-//             bool hasFormat = false;
-
-//             u64 size = strlen(texPath) + 1;
-//             if(strchr(texPath, '.') != 0) {
-//                 hasFormat = true;
-//             } else {
-//                 size += strlen(scene->mTextures[idx]->achFormatHint) + 1; // 1 for '.'
-//             }
-
-//             char* str = MF_ALLOCMEM(char, sizeof(char) * size);
-//             for(u32 i = 0; i < texLen; i++) {
-//                 str[i] = texPath[i];
-//             }
-
-//             if(!hasFormat) {
-//                 u64 formatLen = strlen(scene->mTextures[idx]->achFormatHint);
-//                 u64 j = texLen;
-//                 str[j++] = '.';
-//                 memcpy(&str[j], scene->mTextures[idx]->achFormatHint, sizeof(char) * formatLen);
-//             }
-
-//             str[size - 1] = '\0';
-
-//             MF_FREEMEM(texPath);
-//             return str;
-//         } else {
-//             return ToString(path);
-//         }
-//     }
-
-//     return mfnull;
-// }
+    return mfStringDuplicate(image->uri);
+}
 
 void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 transform) {
-
-    // for(u64 i = 0; i < mesh->primitives_count; i++) {
-    //     cgltf_primitive* primitive = &mesh->primitives[i];
-    //     if(primitive->indices) {
-    //         indicesCount += primitive->indices->count;
-    //     }
-
-    //     for(u64 j = 0; j < primitive->attributes_count; j++) {
-    //         cgltf_attribute* attrib = &primitive->attributes[j];
-            
-    //         if(attrib->type == cgltf_attribute_type_position)
-    //         {
-    //             verticesCount += attrib->data->count;
-    //             break;
-    //         }
-    //     }
-    // }
-
     for(u64 i = 0; i < mesh->primitives_count; i++) {
         MFMeshMaterial matData = {0};
-        MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
-        MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
         MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
         MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
 
@@ -144,19 +67,99 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
             };
         }
 
-
         if(!posAccessor)
             continue;
         
         if(!indexAccessor)
             continue;
-
         
         u8* vertices = MF_ALLOCMEM(u8, model->perVertexSize * posAccessor->count);
         u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * indexAccessor->count);
 
+        MFVec3* tanAccum = MF_ALLOCMEM(MFVec3, sizeof(MFVec3) * posAccessor->count);
+        MFVec3* bitanAccum = MF_ALLOCMEM(MFVec3, sizeof(MFVec3) * posAccessor->count);
+        MFVec4* generatedTangents = mfnull;
+
         for (u64 j = 0; j < indexAccessor->count; j++) {
             indices[j] = (u32)cgltf_accessor_read_index(indexAccessor, j);
+        }
+
+        if(!tangentAccessor && normalAccessor && uvAccessor) {
+            generatedTangents = MF_ALLOCMEM(MFVec4, sizeof(MFVec4) * posAccessor->count);
+
+            for(u64 j = 0; j < indexAccessor->count; j += 3) {
+                u32 i0 = indices[j + 0];
+                u32 i1 = indices[j + 1];
+                u32 i2 = indices[j + 2];
+
+                float p0f[3], p1f[3], p2f[3];
+                float uv0f[2], uv1f[2], uv2f[2];
+
+                cgltf_accessor_read_float(posAccessor, i0, p0f, 3);
+                cgltf_accessor_read_float(posAccessor, i1, p1f, 3);
+                cgltf_accessor_read_float(posAccessor, i2, p2f, 3);
+
+                cgltf_accessor_read_float(uvAccessor, i0, uv0f, 2);
+                cgltf_accessor_read_float(uvAccessor, i1, uv1f, 2);
+                cgltf_accessor_read_float(uvAccessor, i2, uv2f, 2);
+
+                MFVec3 p0 = { p0f[0], p0f[1], p0f[2] };
+                MFVec3 p1 = { p1f[0], p1f[1], p1f[2] };
+                MFVec3 p2 = { p2f[0], p2f[1], p2f[2] };
+
+                MFVec2 uv0 = { uv0f[0], uv0f[1] };
+                MFVec2 uv1 = { uv1f[0], uv1f[1] };
+                MFVec2 uv2 = { uv2f[0], uv2f[1] };
+
+                MFVec3 edge1 = mfVec3Sub(p1, p0);
+                MFVec3 edge2 = mfVec3Sub(p2, p0);
+
+                MFVec2 duv1 = mfVec2Sub(uv1, uv0);
+                MFVec2 duv2 = mfVec2Sub(uv2, uv0);
+
+                float det = duv1.x * duv2.y - duv2.x * duv1.y;
+
+                if(fabsf(det) < 1e-6f)
+                    continue;
+
+                float f = 1.0f / det;
+
+                MFVec3 tangent = {
+                    f * (edge1.x * duv2.y - edge2.x * duv1.y),
+                    f * (edge1.y * duv2.y - edge2.y * duv1.y),
+                    f * (edge1.z * duv2.y - edge2.z * duv1.y)
+                };
+
+                MFVec3 bitangent = {
+                    f * (edge2.x * duv1.x - edge1.x * duv2.x),
+                    f * (edge2.y * duv1.x - edge1.y * duv2.x),
+                    f * (edge2.z * duv1.x - edge1.z * duv2.x)
+                };
+
+                tanAccum[i0] = mfVec3Add(tanAccum[i0], tangent);
+                tanAccum[i1] = mfVec3Add(tanAccum[i1], tangent);
+                tanAccum[i2] = mfVec3Add(tanAccum[i2], tangent);
+
+                bitanAccum[i0] = mfVec3Add(bitanAccum[i0], bitangent);
+                bitanAccum[i1] = mfVec3Add(bitanAccum[i1], bitangent);
+                bitanAccum[i2] = mfVec3Add(bitanAccum[i2], bitangent);
+            }
+
+            for(u64 j = 0; j < posAccessor->count; j++) {
+                float normalf[3];
+
+                cgltf_accessor_read_float(normalAccessor, j, normalf, 3);
+
+                MFVec3 N = { normalf[0], normalf[1], normalf[2]};
+
+                MFVec3 T = mfVec3Normalize(tanAccum[j]);
+
+                MFVec3 B = mfVec3Normalize(bitanAccum[j]);
+
+                float w = mfVec3Dot(mfVec3Cross(N, T), B) < 0.0f ? -1.0f : 1.0f;
+
+                generatedTangents[j] = (MFVec4){ T.x, T.y, T.z, w };
+            }
         }
 
         for(u64 j = 0; j < posAccessor->count; j++) {
@@ -179,21 +182,47 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
 
             MFVec3 bitangent = {0};
 
+            MFVec3 n = { normal[0], normal[1], normal[2] };
             if(tangentAccessor && normalAccessor) {
-                MFVec3 n = { normal[0], normal[1], normal[2] };
                 MFVec3 t = { tangent[0], tangent[1], tangent[2] };
 
+                bitangent = mfVec3MulScalar(mfVec3Cross(n, t), tangent[3]);
+            }
+            else if(generatedTangents) {
+                tangent[0] = generatedTangents[j].x;
+                tangent[1] = generatedTangents[j].y;
+                tangent[2] = generatedTangents[j].z;
+                tangent[3] = generatedTangents[j].w;
+
+                MFVec3 t = { tangent[0], tangent[1], tangent[2] };
                 bitangent = mfVec3MulScalar(mfVec3Cross(n, t), tangent[3]);
             }
             MFModelVertexBuilderData data = {
                 .pos = { pos[0], pos[1], pos[2] },
                 .normal = { normal[0], normal[1], normal[2] },
-                .texCoord = { uv[0], uv[1] },
-                .tangent = { tangent[0], tangent[1], tangent[2] },
+                .texCoord = { uv[0], 1.0f - uv[1] },
+                .tangent = { tangent[0], tangent[1], tangent[2], tangent[3] },
                 .bitangent = bitangent
             };
 
             model->builder(vertices + j * model->perVertexSize, data);
+        }
+
+        cgltf_material* mat = prim->material;
+        if(mat) {
+            memcpy(matData.diffuse, mat->pbr_metallic_roughness.base_color_factor, sizeof(f32) * 3);
+            memcpy(matData.emission, mat->emissive_factor, sizeof(f32) * 3);
+            
+            matData.metallic = mat->pbr_metallic_roughness.metallic_factor;
+            matData.roughness = mat->pbr_metallic_roughness.roughness_factor;
+
+            if(mat->has_pbr_metallic_roughness) {
+                matData.diffuse_texpath = get_materialtex(mat->pbr_metallic_roughness.base_color_texture.texture);
+                matData.metallic_roughness_texpath = get_materialtex(mat->pbr_metallic_roughness.metallic_roughness_texture.texture);
+            }
+            matData.emission_texpath = get_materialtex(mat->emissive_texture.texture);
+            matData.lightmap_texpath = get_materialtex(mat->occlusion_texture.texture);
+            matData.normal_texpath = get_materialtex(mat->normal_texture.texture);
         }
     
         model->meshes[model->_meshIdx].mat = matData;
@@ -201,89 +230,19 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
         mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * posAccessor->count, vertices, indexAccessor->count, indices);
         model->_meshIdx++;
 
+        if(generatedTangents)
+            MF_FREEMEM(generatedTangents);
         MF_FREEMEM(vertices);
         MF_FREEMEM(indices);
+        MF_FREEMEM(tanAccum);
+        MF_FREEMEM(bitanAccum);
     }
-
-    // for(u32 j = 0; j < mesh->mNumVertices; j++) {
-    //     struct aiVector3D pos = mesh->mVertices[j];
-    //     struct aiVector3D normals = mesh->mNormals[j];
-    //     struct aiVector3D tangents = mesh->mTangents[j];
-    //     struct aiVector3D bitangents = mesh->mBitangents[j];
-
-    //     struct aiVector3D texCoords = {0};
-    //     if (mesh->mTextureCoords[0]) {
-    //         texCoords = mesh->mTextureCoords[0][j];
-    //     }
-
-    //     MFModelVertexBuilderData data = {
-    //         .pos = (MFVec3){ pos.x, pos.y, pos.z },
-    //         .normal = (MFVec3){ normals.x, normals.y, normals.z },
-    //         .texCoord = (MFVec2){ texCoords.x, texCoords.y },
-    //         .tangent = (MFVec3){ tangents.x, tangents.y, tangents.z },
-    //         .bitangent = (MFVec3){ bitangents.x, bitangents.y, bitangents.z }
-    //     };
-        
-    //     model->builder(vertices + j * model->perVertexSize, data);
-    // }
-    // for(u32 j = 0; j < mesh->mNumFaces; j++) {
-    //     struct aiFace face = mesh->mFaces[j];
-    //     for(u32  k = 0; k < face.mNumIndices; k++) {
-    //         indices[j * 3 + k] = face.mIndices[k];
-    //     }
-    // }
-    
-    // if(scene->mMaterials[mesh->mMaterialIndex] && (scene->mNumMaterials > 0)) {
-    //     struct aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-
-    //     matData.ambient_texpath = get_materialtex(scene, mat, aiTextureType_AMBIENT);
-    //     matData.diffuse_texpath = get_materialtex(scene, mat, aiTextureType_DIFFUSE);
-    //     matData.displacement_texpath = get_materialtex(scene, mat, aiTextureType_DISPLACEMENT);
-    //     matData.specular_texpath = get_materialtex(scene, mat, aiTextureType_SPECULAR);
-    //     matData.normal_texpath = get_materialtex(scene, mat, aiTextureType_NORMALS);
-    //     matData.shininess_texpath = get_materialtex(scene, mat, aiTextureType_SHININESS);
-    //     matData.emission_texpath = get_materialtex(scene, mat, aiTextureType_EMISSIVE);
-    //     matData.metalness_texpath = get_materialtex(scene, mat, aiTextureType_METALNESS);
-    //     matData.lightmap_texpath = get_materialtex(scene, mat, aiTextureType_LIGHTMAP);
-
-    //     struct aiColor4D color;
-    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
-    //         matData.specular[0] = color.r;
-    //         matData.specular[1] = color.g;
-    //         matData.specular[2] = color.b;
-    //     }
-    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
-    //         matData.emission[0] = color.r;
-    //         matData.emission[1] = color.g;
-    //         matData.emission[2] = color.b;
-    //     }
-    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
-    //         matData.diffuse[0] = color.r;
-    //         matData.diffuse[1] = color.g;
-    //         matData.diffuse[2] = color.b;
-    //     }
-    //     if(aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
-    //         matData.ambient[0] = color.r;
-    //         matData.ambient[1] = color.g;
-    //         matData.ambient[2] = color.b;
-    //     }
-
-    //     float f = 0.0f;
-    //     if(aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &f) == AI_SUCCESS) {
-    //         matData.shininess = f;
-    //     }
-    //     f = 1.0f;
-    //     if(aiGetMaterialFloat(mat, AI_MATKEY_REFRACTI, &f) == AI_SUCCESS) {
-    //         matData.ior = f;
-    //     }
-    //     f = 1.0f;
-    //     if(aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f) == AI_SUCCESS) {
-    //         matData.opaque = (f >= 1.0f);
-    //     }
-    // }
 }
 
 void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node, MFMat4 transform) {
+    if(!node)
+        return;
+
     MFMat4 mat = transform;
     {
         MFMat4 out = mfMat4Identity();
@@ -292,13 +251,13 @@ void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node, MFMat4 tr
         mat = mfMat4Mul(mat, out);
     }
 
+    if(node->mesh)
+        processMesh(model, scene, node->mesh, mat);
     if(!node->mesh) {
         for(u32 i = 0; i < node->children_count; i++) {
             processNode(model, scene, node->children[i], mat);
         }
     }
-    else
-        processMesh(model, scene, node->mesh, mat);
 }
 
 u64 getNodeMeshCount(cgltf_node* node) {

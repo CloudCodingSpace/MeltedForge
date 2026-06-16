@@ -91,16 +91,11 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
         MFMeshMaterial mat = model->meshes[i].mat;
 
         const char* paths[] = {
-            mat.ambient_texpath,
             mat.diffuse_texpath,
-            mat.specular_texpath,
             mat.normal_texpath,
-            mat.displacement_texpath,
             mat.lightmap_texpath,
-            mat.metalness_texpath,
-            mat.shininess_texpath,
             mat.emission_texpath,
-            mat.alpha_texpath
+            mat.metallic_roughness_texpath
         };
 
         for(int j = 0; j < MF_MODEL_MAT_TEXTURE_MAX; j++) {
@@ -114,17 +109,13 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
                         if(mat.diffuse[0] != -1)
                             memcpy(color, mat.diffuse, sizeof(f32) * 3);
                         break;
-                    case MF_MODEL_MAT_TEXTURE_AMBIENT:
-                        if(mat.ambient[0] != -1)
-                            memcpy(color, mat.ambient, sizeof(f32) * 3);
-                        break;
-                    case MF_MODEL_MAT_TEXTURE_SPECULAR:
-                        if(mat.specular[0] != -1)
-                            memcpy(color, mat.specular, sizeof(f32) * 3);
-                        break;
                     case MF_MODEL_MAT_TEXTURE_EMISSIVE:
                         if(mat.emission[0] != -1)
                             memcpy(color, mat.emission, sizeof(f32) * 3);
+                        break;
+                    case MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS:
+                        color[1] = mat.roughness;
+                        color[2] = mat.metallic;
                         break;
                 };
 
@@ -242,24 +233,17 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
                 memcpy(colorF, mat->diffuse, sizeof(colorF));
             break;
 
-        case MF_MODEL_MAT_TEXTURE_AMBIENT:
-            validColor = mat->ambient[0] != -1;
-            if(validColor) 
-                memcpy(colorF, mat->ambient, sizeof(colorF));
-            break;
-
-        case MF_MODEL_MAT_TEXTURE_SPECULAR:
-            validColor = mat->specular[0] != -1;
-            if(validColor) 
-                memcpy(colorF, mat->specular, sizeof(colorF));
-            break;
-
         case MF_MODEL_MAT_TEXTURE_EMISSIVE:
             validColor = mat->emission[0] != -1;
             if(validColor) 
                 memcpy(colorF, mat->emission, sizeof(colorF));
             break;
 
+        case MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS:
+            validColor = true;
+            colorF[1] = mat->roughness;
+            colorF[2] = mat->metallic;
+            break;
         default:
             validColor = false;
             break;
@@ -348,26 +332,16 @@ static MFGpuImage* loadImage(const char* path, MFModelMatTextures type, MFMeshMa
                 buff[1] = (u8)mat->diffuse[1] * 255;
                 buff[2] = (u8)mat->diffuse[2] * 255;
                 break;
-            case MF_MODEL_MAT_TEXTURE_AMBIENT:
-                if(mat->ambient[0] == -1)
-                    goto error_return;
-                buff[0] = (u8)mat->ambient[0] * 255;
-                buff[1] = (u8)mat->ambient[1] * 255;
-                buff[2] = (u8)mat->ambient[2] * 255;
-                break;
-            case MF_MODEL_MAT_TEXTURE_SPECULAR:
-                if(mat->specular[0] == -1)
-                    goto error_return;
-                buff[0] = (u8)mat->specular[0] * 255;
-                buff[1] = (u8)mat->specular[1] * 255;
-                buff[2] = (u8)mat->specular[2] * 255;
-                break;
             case MF_MODEL_MAT_TEXTURE_EMISSIVE:
                 if(mat->emission[0] == -1)
                     goto error_return;
                 buff[0] = (u8)mat->emission[0] * 255;
                 buff[1] = (u8)mat->emission[1] * 255;
                 buff[2] = (u8)mat->emission[2] * 255;
+                break;
+            case MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS:
+                buff[1] = (u8)mat->roughness * 255;
+                buff[2] = (u8)mat->metallic * 255;
                 break;
             };
 error_return:
@@ -392,7 +366,7 @@ error_return:
         .generateMipmaps = true
     };
 
-    if(type == MF_MODEL_MAT_TEXTURE_METALNESS || type == MF_MODEL_MAT_TEXTURE_NORMAL) {
+    if(type == MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS || type == MF_MODEL_MAT_TEXTURE_NORMAL) {
         config.generateMipmaps = false;
     }
 
