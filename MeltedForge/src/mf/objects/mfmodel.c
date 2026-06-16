@@ -85,40 +85,31 @@ extern "C" {
 // }
 
 void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 transform) {
-    MFMeshMaterial matData = {0};
-    MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
-    MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
-    MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
-    MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
 
-    u64 verticesCount = 0, indicesCount = 0;
+    // for(u64 i = 0; i < mesh->primitives_count; i++) {
+    //     cgltf_primitive* primitive = &mesh->primitives[i];
+    //     if(primitive->indices) {
+    //         indicesCount += primitive->indices->count;
+    //     }
 
-    for(u64 i = 0; i < mesh->primitives_count; i++) {
-        cgltf_primitive* primitive = &mesh->primitives[i];
-        if(primitive->indices) {
-            indicesCount += primitive->indices->count;
-        }
-
-        for(u64 j = 0; j < primitive->attributes_count; j++) {
-            cgltf_attribute* attrib = &primitive->attributes[j];
+    //     for(u64 j = 0; j < primitive->attributes_count; j++) {
+    //         cgltf_attribute* attrib = &primitive->attributes[j];
             
-            if(attrib->type == cgltf_attribute_type_position)
-            {
-                verticesCount += attrib->data->count;
-                break;
-            }
-        }
-    }
+    //         if(attrib->type == cgltf_attribute_type_position)
+    //         {
+    //             verticesCount += attrib->data->count;
+    //             break;
+    //         }
+    //     }
+    // }
 
-    if(verticesCount == 0)
-        return;
-
-    u8* vertices = MF_ALLOCMEM(u8, model->perVertexSize * verticesCount);
-    u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * indicesCount);
-
-    u32 vertexOffset = 0;
-    u32 indexOffset = 0;
     for(u64 i = 0; i < mesh->primitives_count; i++) {
+        MFMeshMaterial matData = {0};
+        MF_SETMEM(matData.ambient, -1, sizeof(f32) * 3);
+        MF_SETMEM(matData.specular, -1, sizeof(f32) * 3);
+        MF_SETMEM(matData.emission, -1, sizeof(f32) * 3);
+        MF_SETMEM(matData.diffuse, -1, sizeof(f32) * 3);
+
         cgltf_primitive* prim = &mesh->primitives[i];
         cgltf_accessor* posAccessor = mfnull;
         cgltf_accessor* normalAccessor = mfnull;
@@ -153,13 +144,19 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
             };
         }
 
+
         if(!posAccessor)
             continue;
-            
-        if(indexAccessor) {
-            for (u64 j = 0; j < indexAccessor->count; j++) {
-                indices[indexOffset + j] = (u32)cgltf_accessor_read_index(indexAccessor, j) + vertexOffset;
-            }
+        
+        if(!indexAccessor)
+            continue;
+
+        
+        u8* vertices = MF_ALLOCMEM(u8, model->perVertexSize * posAccessor->count);
+        u32* indices = MF_ALLOCMEM(u32, sizeof(u32) * indexAccessor->count);
+
+        for (u64 j = 0; j < indexAccessor->count; j++) {
+            indices[j] = (u32)cgltf_accessor_read_index(indexAccessor, j);
         }
 
         for(u64 j = 0; j < posAccessor->count; j++) {
@@ -196,12 +193,16 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
                 .bitangent = bitangent
             };
 
-            model->builder(vertices + (vertexOffset + j) * model->perVertexSize, data);
+            model->builder(vertices + j * model->perVertexSize, data);
         }
-        
-        vertexOffset += posAccessor->count;
-        if(indexAccessor)
-            indexOffset += indexAccessor->count;
+    
+        model->meshes[model->_meshIdx].mat = matData;
+        model->meshes[model->_meshIdx].transform = transform;
+        mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * posAccessor->count, vertices, indexAccessor->count, indices);
+        model->_meshIdx++;
+
+        MF_FREEMEM(vertices);
+        MF_FREEMEM(indices);
     }
 
     // for(u32 j = 0; j < mesh->mNumVertices; j++) {
@@ -280,14 +281,6 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
     //         matData.opaque = (f >= 1.0f);
     //     }
     // }
-
-    model->meshes[model->_meshIdx].mat = matData;
-    model->meshes[model->_meshIdx].transform = transform;
-    mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * verticesCount, vertices, indicesCount, indices);
-    model->_meshIdx++;
-
-    MF_FREEMEM(vertices);
-    MF_FREEMEM(indices);
 }
 
 void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node, MFMat4 transform) {
@@ -304,14 +297,23 @@ void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node, MFMat4 tr
             processNode(model, scene, node->children[i], mat);
         }
     }
+    else
+        processMesh(model, scene, node->mesh, mat);
+}
 
-    processMesh(model, scene, node->mesh, mat);
-    // for(u32 i = 0; i < node->mesh; i++) {
-    //     processMesh(model, scene, scene->mMeshes[node->mMeshes[i]], mat);
-    // }
-    // for(u32 i = 0; i < node->mNumChildren; i++) {
-    //     processNode(model, scene, node->mChildren[i], mat);
-    // }
+u64 getNodeMeshCount(cgltf_node* node) {
+    cgltf_mesh* mesh = node->mesh;
+    u64 count = 0;
+    if(mesh) {
+        count += mesh->primitives_count;
+    }
+
+    for(u64 i = 0; i < node->children_count; i++) {
+        cgltf_node* child = node->children[i];
+        count += getNodeMeshCount(child);
+    }
+
+    return count;
 }
 
 void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* renderer, u64 perVertSize, MFModelVertexBuilder builder) {
@@ -331,17 +333,20 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
         MF_FATAL_ABORT(mfGetLogger(), "Failed to parse gltf file!");
     }
 
-    model->meshCount = data->meshes_count;
-    model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * data->meshes_count);
+    cgltf_scene* scene = data->scene;
+
+    for(u32 i = 0; i < scene->nodes_count; i++)
+        model->meshCount += getNodeMeshCount(scene->nodes[i]);
+    model->meshes = MF_ALLOCMEM(MFMesh, sizeof(MFMesh) * model->meshCount);
     model->renderer = renderer;
     model->builder = builder;
     model->perVertexSize = perVertSize;
 
-    cgltf_scene* scene = data->scene;
     for(u32 i = 0; i < scene->nodes_count; i++) {
         processNode(model, scene, scene->nodes[i], mfMat4Identity());
     }
 
+    cgltf_free(data);
     model->init = true;
 }
 
