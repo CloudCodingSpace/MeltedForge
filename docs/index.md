@@ -91,5 +91,6 @@ The engine uses a few third party dependencies internally. They are:
  - Stb's single header utils (Single header utils by stb. Repository [here](https://github.com/CloudCodingSpace/stb))
  - Glfw (Cross-platform windowing/util library. Repository [here](https://github.com/CloudCodingSpace/GLFW/tree/73f09546ccd681047360e4e8bc5474adad55147f))
  - Tracy (For profiling. Repository [here](https://github.com/wolfpld/tracy/tree/05cceee0df3b8d7c6fa87e9638af311dbabc63cb))
- - Assimp (Model loader. Repository [here](https://github.com/assimp/assimp/tree/e0b52347c6e52de2827ec957a9ebf00ce3c54f79))
+ - CGLTF (Model loader. Repository [here](https://github.com/CloudCodingSpace/cgltf))
  - CImGui (C bindings for Dear ImGui, a immediate mode UI renderer. Repository [here](https://github.com/cimgui/cimgui/tree/094a55523a40fdb309f48b971a583ef02aeb56ab))
+ - VMA (Vulkan memory allocator. Repository [here](https://github.com/CloudCodingSpace/VMA))
