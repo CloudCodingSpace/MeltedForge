@@ -239,24 +239,19 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
     }
 }
 
-void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node, MFMat4 transform) {
+void processNode(MFModel* model, cgltf_scene* scene, cgltf_node* node) {
     if(!node)
         return;
 
-    MFMat4 mat = transform;
-    {
-        MFMat4 out = mfMat4Identity();
-        cgltf_node_transform_local(node, out.data);
-
-        mat = mfMat4Mul(mat, out);
+    MFMat4 mat = mfMat4Identity();
+    if(node->has_translation || node->has_rotation || node->has_scale) {
+        cgltf_node_transform_world(node, mat.data);
     }
 
     if(node->mesh)
         processMesh(model, scene, node->mesh, mat);
-    if(!node->mesh) {
-        for(u32 i = 0; i < node->children_count; i++) {
-            processNode(model, scene, node->children[i], mat);
-        }
+    for(u32 i = 0; i < node->children_count; i++) {
+        processNode(model, scene, node->children[i]);
     }
 }
 
@@ -302,7 +297,7 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
     model->perVertexSize = perVertSize;
 
     for(u32 i = 0; i < scene->nodes_count; i++) {
-        processNode(model, scene, scene->nodes[i], mfMat4Identity());
+        processNode(model, scene, scene->nodes[i]);
     }
 
     cgltf_free(data);
