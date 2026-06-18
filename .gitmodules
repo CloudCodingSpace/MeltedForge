@@ -19,3 +19,6 @@
 [submodule "cgltf"]
 	path = MeltedForge/libs/cgltf
 	url = https://github.com/CloudCodingSpace/cgltf
+[submodule "DeccerCubes"]
+	path = MFTest/mftmeshes/DeccerCubes
+	url = https://github.com/GraphicsProgramming/deccer-cubes
