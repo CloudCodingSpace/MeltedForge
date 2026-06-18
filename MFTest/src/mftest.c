@@ -300,8 +300,8 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entities[1] = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes_Textured_Complex.gltf",
-            .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes.gltf",
+            .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes_Textured_Complex.gltf",
+            // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes.gltf",
             // .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
             // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
             // .path = "mftmeshes/pistol/service_pistol.gltf",

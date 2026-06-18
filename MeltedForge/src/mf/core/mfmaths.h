@@ -389,7 +389,7 @@ MF_INLINE MFMat2 mfMat2Inverse(MFMat2 mat) {
 
     f32 d = mat.data[0] * mat.data[3] - mat.data[1] * mat.data[2];
 
-    if(fabsf(d) < MF_FLOAT_EPSILON) {
+    if(fabsf(d) < 1e-12f) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
@@ -514,7 +514,7 @@ MF_INLINE MFMat3 mfMat3Inverse(MFMat3 m) {
     f32 c = m.data[3], d = m.data[4], ty = m.data[5];
 
     f32 det = a * d - b * c;
-    if (fabsf(det) < MF_FLOAT_EPSILON) {
+    if (fabsf(det) < 1e-12f) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
@@ -751,7 +751,7 @@ MF_INLINE MFMat4 mfMat4Inverse(MFMat4 m) {
     o[15] = a[0]*a[5]*a[10] - a[0]*a[6]*a[9] - a[4]*a[1]*a[10] + a[4]*a[2]*a[9] + a[8]*a[1]*a[6] - a[8]*a[2]*a[5];
 
     f32 det = a[0]*o[0] + a[1]*o[4] + a[2]*o[8] + a[3]*o[12];
-    if (det < MF_FLOAT_EPSILON) {
+    if (fabsf(det) < 1e-12f) {
         MF_FATAL_ABORT(mfGetLogger(), "The inverse determinant is undefined! Aborting!");
     }
 
