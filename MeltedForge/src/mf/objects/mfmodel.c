@@ -21,8 +21,28 @@ const char* get_materialtex(cgltf_texture* tex) {
     if(!image)
         return mfnull;
     
-    if(!image->uri)
-        return mfnull;
+    if(!image->uri) {
+        if(!image->mime_type)
+            return mfnull;
+        if(!image->name)
+            return mfnull;
+        
+        u64 slashIdx = mfStringFindLast(mfGetLogger(), image->mime_type, '/');
+        u64 extLen = mfStringLen(image->mime_type) - slashIdx;
+        u64 len = mfStringLen(image->name) + extLen + 2;
+        char* str = MF_ALLOCMEM(char, sizeof(char) * len);
+        u64 idx = 0;
+        for(u64 i = 0; i < mfStringLen(image->name); i++) {
+            str[idx++] = image->name[i];
+        }
+        str[idx++] = '.';
+        for(u64 i = slashIdx + 1; i < mfStringLen(image->mime_type); i++) {
+            str[idx++] = image->mime_type[i];
+        }
+        str[idx++] = '\0';
+
+        return str;
+    }
 
     return mfStringDuplicate(image->uri);
 }

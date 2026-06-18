@@ -293,7 +293,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     MFCamera camera = {};
     mfCameraCreate(&camera, appState->window, mfWindowGetConfig(appState->window)->width, mfWindowGetConfig(appState->window)->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
     mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
-    // if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
+    if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
         state->entityCount = 2;
         state->entities = MF_ALLOCMEM(u64, sizeof(u64) * state->entityCount);
         state->entities[0] = mfSceneCreateEntity(&state->scene);
@@ -335,20 +335,20 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 
         mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp2);
         mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[1], &tComp);
-    // } else {
-    //     u64 entityCount = 0;
-    //     mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
-    //     MFEntity* entities = MF_ALLOCMEM(MFEntity, sizeof(MFEntity) * entityCount);
-    //     mfSceneGetValidEntities(&state->scene, &entityCount, entities);
+    } else {
+        u64 entityCount = 0;
+        mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
+        MFEntity* entities = MF_ALLOCMEM(MFEntity, sizeof(MFEntity) * entityCount);
+        mfSceneGetValidEntities(&state->scene, &entityCount, entities);
 
-    //     state->entities = MF_ALLOCMEM(u64, sizeof(u64) * entityCount);
-    //     for(u64 i = 0; i < entityCount; i++) {
-    //         state->entities[i] = entities[i].id;
-    //     }
-    //     state->entityCount = entityCount;
+        state->entities = MF_ALLOCMEM(u64, sizeof(u64) * entityCount);
+        for(u64 i = 0; i < entityCount; i++) {
+            state->entities[i] = entities[i].id;
+        }
+        state->entityCount = entityCount;
 
-    //     MF_FREEMEM(entities);
-    // }
+        MF_FREEMEM(entities);
+    }
 }
 
 #pragma endregion
