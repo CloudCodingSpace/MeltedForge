@@ -365,10 +365,6 @@ error_return:
         .generateMipmaps = true
     };
 
-    if(type == MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS || type == MF_MODEL_MAT_TEXTURE_NORMAL) {
-        config.generateMipmaps = false;
-    }
-
     MFGpuImage* image = mfGpuImageCreate(renderer, config);
     if(pixels == img_pixels)
         stbi_image_free(pixels);
