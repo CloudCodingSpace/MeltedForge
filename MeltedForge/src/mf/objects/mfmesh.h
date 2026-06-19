@@ -18,7 +18,7 @@ typedef struct MFMeshMaterial_s {
 
     const char* diffuse_texpath;
     const char* normal_texpath;
-    const char* lightmap_texpath;
+    const char* ao_texpath;
     const char* emission_texpath;
     const char* metallic_roughness_texpath;
     MFResourceSet* set; // TODO: Baked resource set manually by client for now. So change this later by using a resource set helper system

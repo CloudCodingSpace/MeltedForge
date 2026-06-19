@@ -241,7 +241,7 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
                 matData.metallic_roughness_texpath = get_materialtex(mat->pbr_metallic_roughness.metallic_roughness_texture.texture);
             }
             matData.emission_texpath = get_materialtex(mat->emissive_texture.texture);
-            matData.lightmap_texpath = get_materialtex(mat->occlusion_texture.texture);
+            matData.ao_texpath = get_materialtex(mat->occlusion_texture.texture);
             matData.normal_texpath = get_materialtex(mat->normal_texture.texture);
         }
     

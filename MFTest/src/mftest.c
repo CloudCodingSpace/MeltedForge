@@ -134,7 +134,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
             MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS, &state->materialImages[0], &component->model, 0, appState->renderer);
             MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[0], &component->model, 0, appState->renderer);
-            MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_LIGHTMAP, &state->materialImages[0], &component->model, 0, appState->renderer);
+            MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_AO, &state->materialImages[0], &component->model, 0, appState->renderer);
 
             MFResourceSetBindings bindings[] = {
                 { mfGpuImageGetDescription(diffuseImage), 0 }, // NOTE: Description for one image is enough since they have the same bindings 
@@ -179,7 +179,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[k], &component->model, i, appState->renderer);
                 MFGpuImage* metallicRoughnessImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_METALLIC_ROUGHNESS, &state->materialImages[k], &component->model, 0, appState->renderer);
                 MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[k], &component->model, 0, appState->renderer);
-                MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_LIGHTMAP, &state->materialImages[k], &component->model, 0, appState->renderer);
+                MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_AO, &state->materialImages[k], &component->model, 0, appState->renderer);
 
                 MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
                 mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
@@ -300,9 +300,9 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entities[1] = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
-            .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes_Textured_Complex.gltf",
+            // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes_Textured_Complex.gltf",
             // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes.gltf",
-            // .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
+            .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
             // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
             // .path = "mftmeshes/pistol/service_pistol.gltf",
             // .path = "mftmeshes/sofa/sofa_1k.gltf",

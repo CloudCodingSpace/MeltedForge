@@ -93,7 +93,7 @@ MFArray mfMaterialSystemLoadModelMatImages(MFModel* model, const char* basePath,
         const char* paths[] = {
             mat.diffuse_texpath,
             mat.normal_texpath,
-            mat.lightmap_texpath,
+            mat.ao_texpath,
             mat.emission_texpath,
             mat.metallic_roughness_texpath
         };

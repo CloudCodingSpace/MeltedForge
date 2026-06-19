@@ -42,7 +42,7 @@ void mfMeshDestroy(MFMesh* mesh) {
     MF_FREEMEM(mesh->mat.normal_texpath);
     MF_FREEMEM(mesh->mat.diffuse_texpath);
     MF_FREEMEM(mesh->mat.emission_texpath);
-    MF_FREEMEM(mesh->mat.lightmap_texpath);
+    MF_FREEMEM(mesh->mat.ao_texpath);
     MF_FREEMEM(mesh->mat.metallic_roughness_texpath);
     
     MF_SETMEM(mesh, 0, sizeof(MFMesh));
