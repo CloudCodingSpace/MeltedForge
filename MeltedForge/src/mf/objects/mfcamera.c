@@ -8,30 +8,31 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
     MF_PANIC_IF(!camera->init, mfGetLogger(), "The camera handle provided isn't initialised!");
     bool moved = false;
     
+    MFVec3 pos = camera->pos;
     // Key input
     {
         if(mfInputIsKeyPressed(camera->window, MF_KEY_W)) {
-            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->front, camera->speed * (f32)deltaTime));
+            pos = mfVec3Add(pos, mfVec3MulScalar(camera->front, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_S)) {
-            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->front, camera->speed * (f32)deltaTime));
+            pos = mfVec3Sub(pos, mfVec3MulScalar(camera->front, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_A)) {
-            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->right, camera->speed * (f32)deltaTime));
+            pos = mfVec3Add(pos, mfVec3MulScalar(camera->right, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_D)) {
-            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->right, camera->speed * (f32)deltaTime));
+            pos = mfVec3Sub(pos, mfVec3MulScalar(camera->right, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_SPACE)) {
-            camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(camera->up, camera->speed * (f32)deltaTime));
+            pos = mfVec3Add(pos, mfVec3MulScalar(camera->up, camera->speed * (f32)deltaTime));
             moved = true;
         }
         if(mfInputIsKeyPressed(camera->window, MF_KEY_LEFT_SHIFT)) {
-            camera->pos = mfVec3Sub(camera->pos, mfVec3MulScalar(camera->up, camera->speed * (f32)deltaTime));
+            pos = mfVec3Sub(pos, mfVec3MulScalar(camera->up, camera->speed * (f32)deltaTime));
             moved = true;
         }
     }
@@ -90,6 +91,9 @@ void default_update(MFCamera* camera, f64 deltaTime, void* userData) {
         
         if(!moved)
             return;
+        
+        float transition = 10.0f;
+        camera->pos = mfVec3Add(camera->pos, mfVec3MulScalar(mfVec3Sub(pos, camera->pos), 1.0f - exp(-transition * deltaTime)));
         
         if(camera->height == 0 && camera->width == 0)
             return;
