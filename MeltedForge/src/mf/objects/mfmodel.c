@@ -222,7 +222,8 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
                 .normal = { normal[0], normal[1], normal[2] },
                 .texCoord = { uv[0], 1.0f - uv[1] },
                 .tangent = { tangent[0], tangent[1], tangent[2], tangent[3] },
-                .bitangent = bitangent
+                .bitangent = bitangent,
+                .color = { color[0], color[1], color[2] }
             };
 
             model->builder(vertices + j * model->perVertexSize, data);

@@ -11,9 +11,10 @@ extern "C" {
 typedef struct MFModelVertexBuilderData_s {
     MFVec3 pos;
     MFVec3 normal;
+    MFVec3 bitangent;
     MFVec2 texCoord;
     MFVec4 tangent;
-    MFVec3 bitangent;
+    MFVec3 color;
 } MFModelVertexBuilderData;
 
 typedef void (*MFModelVertexBuilder)(void* dst, MFModelVertexBuilderData data);
