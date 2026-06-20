@@ -251,7 +251,6 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .iblSpecularStrength = 0.3f,
         .useNormalMap = true,
         .useAoMap = true,
-        .useAcesTonemapping = true,
         .useIBL = true
     };
     
@@ -522,6 +521,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
 
         igCheckbox("Render to ImGui window", &state->enableRenderTarget);
+
         if(igButton("Take screenshot", (ImVec2){200, 35})) {
             state->takeScreenshot = true;
         }
@@ -543,17 +543,14 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
             bool useNormalMap = state->lightData.useNormalMap;
             bool useAoMap = state->lightData.useAoMap;
-            bool useAcesTonemapping = state->lightData.useAcesTonemapping;
             bool useIBL = state->lightData.useIBL;
 
             igCheckbox("Use normal map", &useNormalMap);
             igCheckbox("Use AO map", &useAoMap);
-            igCheckbox("Use ACES Tonemapping (Default tonemapper is Reinhard)", &useAcesTonemapping);
             igCheckbox("Use IBL", &useIBL);
 
             state->lightData.useIBL = useIBL;
             state->lightData.useAoMap = useAoMap;
-            state->lightData.useAcesTonemapping = useAcesTonemapping;
             state->lightData.useNormalMap = useNormalMap;
             state->lightData.lightPos = mfFloatArrToVec3(posData);
             state->lightData.lightColor = mfFloatArrToVec3(colorData);

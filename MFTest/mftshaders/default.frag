@@ -24,7 +24,6 @@ layout (set = 0, binding = 1, scalar) uniform LightUBO {
     float iblSpecularStrength;
     int useNormalMap;
     int useAoMap;
-    int useAcesTonemapping;
     int useIBL;
 } ubo;
 
@@ -81,6 +80,6 @@ void main() {
 
     outColor = vec4(mfComputePbrLighting(info), 1.0);
 
-    (ubo.useAcesTonemapping == 1) ? mfTonemapperAces(outColor.rgb) : mfTonemapperReinhard(outColor.rgb);
+    mfTonemapperAces(outColor.rgb);
     mfGammaCorrect(outColor.rgb);
 }

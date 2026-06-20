@@ -23,7 +23,6 @@ typedef struct LightUBOData_s {
     f32 iblSpecularStrength;
     int useNormalMap;
     int useAoMap;
-    int useAcesTonemapping;
     int useIBL;
 } LightUBOData;
 
