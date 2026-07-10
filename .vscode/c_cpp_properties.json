@@ -6,7 +6,6 @@
                 "${workspaceFolder}/MeltedForge/libs/GLFW/include",
                 "${workspaceFolder}/MeltedForge/libs/slog",
                 "${workspaceFolder}/MeltedForge/libs/stb/include",
-                "${workspaceFolder}/MeltedForge/libs/assimp/include",
                 "${workspaceFolder}/MeltedForge/libs/cimgui",
                 "${workspaceFolder}/MeltedForge/src",
                 "${workspaceFolder}/MeltedForge/src/mf",
