@@ -53,7 +53,6 @@ void main() {
 
     vec4 metallicRoughness = texture(u_MetallicRoughness, vi.oUv);
     vec4 emission = texture(u_EmissionTex, vi.oUv);
-    mfGammaCorrectedToLinear(metallicRoughness.rgb);
     mfGammaCorrectedToLinear(emission.rgb);
 
     MFPbrLightingInfo info;
@@ -66,19 +65,25 @@ void main() {
     info.metalness = metallicRoughness.b;
     info.lightIntensity = ubo.lightIntensity;
     info.albedoColor = albedo.rgb;
-    info.emissionColor = emission.rgb;
-    info.ambientOcclusion = (ubo.useAoMap == 1) ? texture(u_AoMap, vi.oUv).r : 1.0;
 
-    vec3 viewDir = normalize(info.camPos - info.fragPos);
+    vec3 color = mfComputePbrLighting(info);
+    color += emission.rgb;
 
-    info.useIBLSamples = (ubo.useIBL == 1) ? true : false;
-    info.iblDiffuseStrength = ubo.iblDiffuseStrength;
-    info.iblSpecularStrength = ubo.iblSpecularStrength;
-    info.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
-    info.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
-    info.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);
+    if(ubo.useIBL == 1) {
+        vec3 viewDir = normalize(info.camPos - info.fragPos);
 
-    outColor = vec4(mfComputePbrLighting(info), 1.0);
+        MFIBLInfo iblInfo;
+        iblInfo.ambientOcclusion = (ubo.useAoMap == 1) ? texture(u_AoMap, vi.oUv).r : 1.0;
+        iblInfo.iblDiffuseStrength = ubo.iblDiffuseStrength;
+        iblInfo.iblSpecularStrength = ubo.iblSpecularStrength;
+        iblInfo.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
+        iblInfo.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
+        iblInfo.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);        
+    
+        color += mfComputeIBL(iblInfo, info);
+    }
+
+    outColor = vec4(color, 1.0);
 
     mfTonemapperAces(outColor.rgb);
     mfGammaCorrect(outColor.rgb);

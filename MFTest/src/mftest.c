@@ -248,7 +248,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .lightColor = (MFVec3){1.0f, 1.0f, 1.0f},
         .lightIntensity = 100,
         .iblDiffuseStrength = 1,
-        .iblSpecularStrength = 0.3f,
+        .iblSpecularStrength = 1,
         .useNormalMap = true,
         .useAoMap = true,
         .useIBL = true
@@ -301,8 +301,8 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         MFMeshComponent mComp = {
             // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes_Textured_Complex.gltf",
             // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes.gltf",
-            // .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
-            .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
+            .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
+            // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
             // .path = "mftmeshes/pistol/service_pistol.gltf",
             // .path = "mftmeshes/sofa/sofa_1k.gltf",
             .perVertSize = sizeof(Vertex)

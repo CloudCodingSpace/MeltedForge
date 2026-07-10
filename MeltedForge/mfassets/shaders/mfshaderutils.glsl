@@ -43,18 +43,19 @@ struct MFPbrLightingInfo {
     vec3 normal;
     float roughness, metalness, lightIntensity;
     vec3 lightColor;
-    vec4 diffuseIrradianceSample;
-    vec4 prefilteredSample;
-    vec4 brdfLutSample;
     vec3 albedoColor;
-    vec3 emissionColor;
     vec3 camPos;
     vec3 fragPos;
     vec3 lightPos;
+};
+
+struct MFIBLInfo {
     float ambientOcclusion;
     float iblDiffuseStrength;
     float iblSpecularStrength;
-    bool useIBLSamples;
+    vec4 diffuseIrradianceSample;
+    vec4 prefilteredSample;
+    vec4 brdfLutSample;
 };
 
 vec4 mfSampleFromIrradianceMap(samplerCube map, vec3 normal) {
@@ -98,7 +99,7 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, info.albedoColor, info.metalness);
-    vec3 F = info.useIBLSamples ? _mfFresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness) : _mfFresnelSchlick(VdotH, F0);
+    vec3 F = _mfFresnelSchlick(VdotH, F0);
 
     float a = pow(roughness, 2);
     float a2 = a * a;
@@ -111,22 +112,43 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - info.metalness;
 
-    float distance2 = dot(info.lightPos - info.fragPos, info.lightPos - info.fragPos);
-    float attenuation = 1.0 / distance2;
+    float distance = dot(info.lightPos - info.fragPos, info.lightPos - info.fragPos);
+    float attenuation = 1.0 / distance;
     vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
     
-    vec3 irradiance = info.useIBLSamples ? info.diffuseIrradianceSample.rgb * info.iblDiffuseStrength : vec3(1.0);
     vec3 diffuse = info.albedoColor / PI;
 
-    vec3 diffuseIBL = diffuse * irradiance * info.ambientOcclusion;
+    return (kD * diffuse + specular) * radiance * NdotL; // LO
+}
+
+vec3 mfComputeIBL(in MFIBLInfo info, in MFPbrLightingInfo lightingInfo) {
+    float roughness = max(lightingInfo.roughness, 0.1);
+
+    vec3 N = normalize(lightingInfo.normal);
+    vec3 V = normalize(lightingInfo.camPos - lightingInfo.fragPos);
+    vec3 L = normalize(lightingInfo.lightPos - lightingInfo.fragPos);
+    vec3 H = normalize(V + L);
+
+    float NdotL = max(dot(N, L), 0.0);
+	float NdotV = max(dot(N, V), 0.0);
+	float NdotH = max(dot(N, H), 0.0);
+	float VdotH = max(dot(V, H), 0.0);
+
+    vec3 F0 = vec3(0.04);
+    vec3 F = _mfFresnelSchlickRoughness(NdotV, F0, roughness);
+
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - lightingInfo.metalness;
+
+    vec3 irradiance = info.diffuseIrradianceSample.rgb;
+    vec3 diffuse = irradiance * lightingInfo.albedoColor * info.iblDiffuseStrength;
     vec3 prefilteredColor = info.prefilteredSample.rgb;
     vec2 brdf = info.brdfLutSample.rg;
-    vec3 specularIBL = info.useIBLSamples ? prefilteredColor * (F * brdf.x + brdf.y) * info.iblSpecularStrength : vec3(0.0);
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * info.iblSpecularStrength;
+    vec3 ambient = (kD * diffuse + specular) * info.ambientOcclusion;
 
-    vec3 ambient = diffuseIBL + specularIBL;
-    vec3 LO = (kD * diffuse + specular) * radiance * NdotL;
-
-    return vec3(LO + ambient + info.emissionColor);
+    return ambient;
 }
 
 ////////////////////////             Gamma and Tonemappers                /////////////////////////////////
