@@ -7,15 +7,12 @@ struct MFPhongLightingInfo {
     vec3 fragPos;
     vec3 lightDir;
     vec3 camPos;
-    vec3 lightColor;
-    vec3 albedo;
-    float specularFactor;
+    float shininess;
     float ambientFactor;
-    float lightIntensity;
     bool isPoint;
 };
 
-vec3 mfComputePhongLighting(in MFPhongLightingInfo info) {
+float mfComputePhongLightingFactor(in MFPhongLightingInfo info) {
     vec3 norm = normalize(info.normal);
     vec3 dir = normalize(info.lightDir);
 
@@ -26,17 +23,17 @@ vec3 mfComputePhongLighting(in MFPhongLightingInfo info) {
 
     float spec = 0.0;
     if(diffuse > 0.0) {
-        spec = pow(max(dot(viewDir, reflectDir), 0.0), info.specularFactor);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), info.shininess);
     }
 
-    vec3 color = info.lightColor * (diffuse + spec + info.ambientFactor);
+    float phongFactor = diffuse + spec + info.ambientFactor;
 
     if(info.isPoint) {
         float dist = dot(info.lightDir, info.lightDir);
         float attenuation = 1.0 / dist;
-        color *= attenuation;
+        phongFactor *= attenuation;
     }
-    return color * info.lightIntensity * info.albedo;
+    return phongFactor;
 }
 
 ////////////////////////             Pbr lighting                /////////////////////////////////
