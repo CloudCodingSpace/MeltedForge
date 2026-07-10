@@ -26,6 +26,7 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
     MFGpuImage* image = MF_ALLOCMEM(MFGpuImage, sizeof(MFGpuImage));
     
     image->config = config;
+    image->config.pixels = mfnull;
     image->backend = ((VulkanBackend*)mfRendererGetBackend(renderer));
     image->ctx = &image->backend->ctx;
 
@@ -83,7 +84,6 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
 void mfGpuImageDestroy(MFGpuImage* image) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
- 
     
     if(image->config.forImguiTexture && image->backend->config.enableUI) {
         for(u32 j = 0; j < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); j++) {
@@ -134,12 +134,13 @@ void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels) {
     MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
 
     for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
-        VulkanImageSetPixels(&image->image[i], image->config.pixels);
+        VulkanImageSetPixels(&image->image[i], pixels);
 }
 
-void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
+void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height, u8* pixels) {
     MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
+    MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
     
     image->config.width = width;
     image->config.height = height;
@@ -152,7 +153,7 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height) {
         .width = image->config.width,
         .height = image->config.height,
         .gpuResource = true,
-        .pixels = image->config.pixels,
+        .pixels = pixels,
         .format = (VkFormat)(u32)(image->config.imageFormat),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,

@@ -20,6 +20,7 @@ extern "C" {
 void VulkanImageCreate(VulkanImage* image, VulkanImageInfo pinfo) {
     image->info = pinfo;
     image->info.mipLevels = pinfo.mipLevels = 1;
+    image->info.pixels = mfnull;
     image->stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     image->access = 0;
     image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -192,7 +193,6 @@ void VulkanImageDestroy(VulkanImage* image) {
 }
 
 void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
-    image->info.pixels = pixels;
     VulkanBackendCtx* ctx = image->info.ctx;
     VkDeviceSize size = image->info.arrayLayers * image->info.width * image->info.height * VulkanFormatBytesPerPixel(image->info.format);
 

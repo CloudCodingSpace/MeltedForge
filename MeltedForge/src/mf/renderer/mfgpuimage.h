@@ -32,7 +32,7 @@ void mfGpuImageDestroy(MFGpuImage* image);
 ImTextureID mfGpuImageGetImGuiTextureID(MFGpuImage* image);
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels);
 u8* mfGpuImageGetPixels(MFGpuImage* image, u32* width, u32* height, u32 mipLevel, u32 faceIndex);
-void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height);
+void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height, u8* pixels);
 
 const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image);
 bool mfGpuImageIsValid(MFGpuImage* image);
