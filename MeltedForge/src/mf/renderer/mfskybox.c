@@ -30,7 +30,8 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             .width = config.faceSize,
             .height = config.faceSize,
             .isCubemap = true,
-            .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM
+            .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
+            .addressMode = MF_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
         };
         skybox->image = mfGpuImageCreate(renderer, info);
         if(config.generatePbrMaps) {

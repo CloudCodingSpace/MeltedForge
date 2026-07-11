@@ -61,7 +61,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .generateMipmaps = false,
             .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .isCubemap = false,
-            .pixels = data
+            .pixels = data,
+            .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
         };
 
         image = mfGpuImageCreate(renderer, info);

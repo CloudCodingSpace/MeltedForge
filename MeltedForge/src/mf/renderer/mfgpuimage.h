@@ -18,6 +18,7 @@ typedef struct MFGpuImageConfig_s {
     u32 height;
     void* pixels;
     MFFormat imageFormat;
+    MFSamplerAddressMode addressMode;
     bool generateMipmaps;
     bool isCubemap;
     bool isColorAttachment;

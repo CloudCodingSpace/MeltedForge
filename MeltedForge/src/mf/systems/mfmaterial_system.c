@@ -283,7 +283,8 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         .width = 1,
         .height = 1,
         .pixels = color,
-        .imageFormat = MF_FORMAT_R8G8B8A8_UNORM
+        .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
+        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
     };
     img = mfGpuImageCreate(renderer, config);
 
@@ -362,7 +363,8 @@ error_return:
         .height = height,
         .pixels = pixels,
         .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
-        .generateMipmaps = true
+        .generateMipmaps = true,
+        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
     };
 
     MFGpuImage* image = mfGpuImageCreate(renderer, config);

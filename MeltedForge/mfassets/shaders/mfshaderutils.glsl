@@ -38,6 +38,7 @@ float mfComputePhongLightingFactor(in MFPhongLightingInfo info) {
 
 ////////////////////////             Pbr lighting                /////////////////////////////////
 const float PI = 3.14159265358979323846;
+const float TAU = 6.28318530718;
 
 struct MFPbrLightingInfo {
     vec3 normal;

@@ -47,9 +47,9 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
         .generateMipmaps = config.generateMipmaps,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .addressModes = {
-            VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLER_ADDRESS_MODE_REPEAT
+            (VkSamplerAddressMode)(u32)config.addressMode,
+            (VkSamplerAddressMode)(u32)config.addressMode,
+            (VkSamplerAddressMode)(u32)config.addressMode
         },
         .storageImage = config.isStorageImage
     };
@@ -211,7 +211,8 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
         .width = mfGetErrorImageWidth(),
         .height = mfGetErrorImageHeight(),
         .pixels = mfGetErrorImagePixels(),
-        .imageFormat = MF_FORMAT_R8G8B8A8_SRGB
+        .imageFormat = MF_FORMAT_R8G8B8A8_SRGB,
+        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
     };
 
     return mfGpuImageCreate(renderer, config);
