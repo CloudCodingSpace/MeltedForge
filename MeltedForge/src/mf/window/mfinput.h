@@ -144,21 +144,25 @@ extern "C" {
 // @brief Informs whether a key is pressed
 // @return Returns `true` if the key is pressed, else `false`
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function
+// @param key A valid macro for that specific key
 bool mfInputIsKeyPressed(MFWindow* window, i32 key);
 
 // @brief Informs whether a key is released
 // @return Returns `true` if the key is released, else `false`
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function
+// @param key A valid macro for that specific key
 bool mfInputIsKeyReleased(MFWindow* window, i32 key);
 
 // @brief Informs whether a mouse button is pressed
 // @return Returns `true` if the mouse button is pressed, else `false`
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function
+// @param button A valid macro for that specific button
 bool mfInputIsMBPressed(MFWindow* window, i32 button);
 
 // @brief Informs whether a mouse button is released
 // @return Returns `true` if the mouse button is released, else `false`
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function
+// @param button A valid macro for that specific button
 bool mfInputIsMBReleased(MFWindow* window, i32 button);
 
 // @brief Informs whether the mouse position

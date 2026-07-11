@@ -63,6 +63,7 @@ const char* mfWindowGetTitle(MFWindow* window);
 
 // @brief Sets the title of the window
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function
+// @param title A valid `const char*` which is the new title of the window
 void mfWindowSetTitle(MFWindow* window, const char* title);
 
 // @brief Queries the internal backend handle of the window
