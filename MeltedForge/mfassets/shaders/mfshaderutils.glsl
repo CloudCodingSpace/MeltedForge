@@ -69,7 +69,7 @@ vec4 mfSampleFromBRDFLUT(sampler2D map, vec3 viewDir, vec3 normal, float roughne
 
 vec4 mfSampleFromPrefiltered(samplerCube map, vec3 viewDir, vec3 normal, float roughness) {
     const float MAX_REFLECTION_LOD = 4.0;
-    return textureLod(map, normalize(reflect(-viewDir, normal)),  roughness * MAX_REFLECTION_LOD);
+    return textureLod(map, normalize(reflect(-viewDir, normal)),  roughness * MAX_REFLECTION_LOD) * 0.5;
 }
 
 float _mfGeoSmithApprox(float x, float roughness) {
