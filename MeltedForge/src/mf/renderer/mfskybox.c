@@ -52,6 +52,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
                 info.isCubemap = false;
                 info.isColorAttachment = true;
                 info.width = info.height = config.faceSize;
+                info.imageFormat = MF_FORMAT_R32G32B32A32_SFLOAT;
                 skybox->brdfLut = mfGpuImageCreate(renderer, info);
             }
         }

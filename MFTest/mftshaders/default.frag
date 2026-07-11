@@ -83,6 +83,9 @@ void main() {
         color += mfComputeIBL(iblInfo, info);
     }
 
+    // outColor = vec4(vec3((ubo.useIBL == 1) ? info.metalness : info.roughness), 1.0);
+    // outColor = vec4(vec3((ubo.useIBL == 1) ? iblInfo.brdfLutSample.r : iblInfo.brdfLutSample.g), 1.0);
+    // outColor = texture(u_BrdfLUT, vi.oUv);
     outColor = vec4(color, 1.0);
 
     mfTonemapperAces(outColor.rgb);

@@ -81,7 +81,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness) {
 
         if(NdotL > 0.0) {
             float G = GeometrySmith(N, V, L, roughness);
-            float G_Vis = (G * VdotH) / (NdotH * NdotV);
+            float G_Vis = (G * VdotH) / max(NdotH * NdotV, 1e-4);
             float Fc = pow(1.0 - VdotH, 5.0);
 
             A += (1.0 - Fc) * G_Vis;
