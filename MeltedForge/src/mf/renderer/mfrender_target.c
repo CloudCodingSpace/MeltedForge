@@ -120,17 +120,17 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
 
         {
             u32 count = 1;
-            VkImageView views[3] = {
-                renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view
+            VulkanImage attachments[3] = {
+                renderTarget->hasMsaa ? renderTarget->msaaImages[i] : renderTarget->images[i]
             };
 
             if(renderTarget->hasDepth) {
-                views[count++] = renderTarget->depthImage.view;
+                attachments[count++] = renderTarget->depthImage;
             }
             if(renderTarget->hasMsaa)
-                views[count++] = renderTarget->images[i].view;
+                attachments[count++] = renderTarget->images[i];
 
-            renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, renderTarget->backend->ctx.swapchainExtent);
+            VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass, count, attachments, renderTarget->backend->ctx.swapchainExtent);
         }
 
         if(renderTarget->backend->config.enableUI) {
@@ -194,7 +194,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
         if(renderTarget->backend->config.enableUI)
             ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
 
-        VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
+        VulkanFramebufferDestroy(&renderTarget->frameBuffers[i]);
         VulkanImageDestroy(&renderTarget->images[i]);
         if(renderTarget->hasMsaa)
             VulkanImageDestroy(&renderTarget->msaaImages[i]);
@@ -232,7 +232,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             if(renderTarget->backend->config.enableUI)
                 ImGui_ImplVulkan_RemoveTexture(renderTarget->igSets[i]);
             
-            VulkanFbDestroy(&renderTarget->backend->ctx, renderTarget->frameBuffers[i]);
+            VulkanFramebufferDestroy(&renderTarget->frameBuffers[i]);
             VulkanImageDestroy(&renderTarget->images[i]);
             if(renderTarget->hasMsaa)
                 VulkanImageDestroy(&renderTarget->msaaImages[i]);
@@ -296,17 +296,17 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             }
 
             u32 count = 1;
-            VkImageView views[3] = {
-                renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view
+            VulkanImage attachments[3] = {
+                renderTarget->hasMsaa ? renderTarget->msaaImages[i] : renderTarget->images[i]
             };
 
             if(renderTarget->hasDepth) {
-                views[count++] = renderTarget->depthImage.view;
+                attachments[count++] = renderTarget->depthImage;
             }
             if(renderTarget->hasMsaa)
-                views[count++] = renderTarget->images[i].view;
+                attachments[count++] = renderTarget->images[i];
 
-            renderTarget->frameBuffers[i] = VulkanFbCreate(&renderTarget->backend->ctx, renderTarget->renderPass, count, views, (VkExtent2D){extent.x, extent.y});
+            VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass, count, attachments, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI)
                 renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -380,7 +380,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
         .pClearValues = values,
         .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
         .renderPass = renderTarget->renderPass,
-        .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex]
+        .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex].buffer
     }; 
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);

@@ -43,7 +43,6 @@ typedef struct VulkanImage_s {
     VkPipelineStageFlagBits stage;
 
     VulkanImageInfo info;
-
 } VulkanImage;
 
 void VulkanImageCreate(VulkanImage* image, VulkanImageInfo info);

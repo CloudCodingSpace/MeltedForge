@@ -9,6 +9,7 @@ extern "C" {
 
 #include "ctx.h"
 #include "common.h"
+#include "fb.h"
 
 struct MFRenderTarget_s;
 
@@ -34,7 +35,7 @@ typedef struct VulkanBackend_s {
     VkRenderPass pass;
     bool renderPassBegun, dispatchBegun;
     u32 frameBufferCount;
-    VkFramebuffer* frameBuffers;
+    VulkanFramebuffer* frameBuffers;
 
     VkSemaphore imageAvailableSemas[FRAMES_IN_FLIGHT];
     VkSemaphore* renderFinishedSemas;

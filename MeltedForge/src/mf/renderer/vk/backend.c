@@ -38,7 +38,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             VulkanImageDestroy(&backend->msaaImages[i]);
-        VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
+        VulkanFramebufferDestroy(&backend->frameBuffers[i]);
     }
 
     VulkanBackendCtxResize(&backend->ctx, window);
@@ -66,16 +66,16 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         }
 
         u32 len = 1;
-        VkImageView views[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImages[i].view
+        VulkanImage attachments[3] = {
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i] : backend->ctx.swapchainImages[i]
         };
         if(backend->config.enableDepth) {
-            views[len++] = backend->ctx.depthImage.view;
+            attachments[len++] = backend->ctx.depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            views[len++] = backend->ctx.swapchainImages[i].view;
+            attachments[len++] = backend->ctx.swapchainImages[i];
 
-        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
+        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass, len, attachments, backend->ctx.swapchainExtent); 
     }
 
     if(backend->resizeCallback) {
@@ -134,19 +134,19 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
 
     // Framebuffers
     backend->frameBufferCount = backend->ctx.swapchainImageCount;
-    backend->frameBuffers = MF_ALLOCMEM(VkFramebuffer, sizeof(VkFramebuffer) * backend->frameBufferCount);
+    backend->frameBuffers = MF_ALLOCMEM(VulkanFramebuffer, sizeof(VulkanFramebuffer) * backend->frameBufferCount);
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
-        VkImageView views[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i].view : backend->ctx.swapchainImages[i].view
+        VulkanImage attachments[3] = {
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i] : backend->ctx.swapchainImages[i]
         };
         if(config->enableDepth) {
-            views[len++] = backend->ctx.depthImage.view;
+            attachments[len++] = backend->ctx.depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            views[len++] = backend->ctx.swapchainImages[i].view;
+            attachments[len++] = backend->ctx.swapchainImages[i];
 
-        backend->frameBuffers[i] = VulkanFbCreate(&backend->ctx, backend->pass, len, views, backend->ctx.swapchainExtent); 
+        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass, len, attachments, backend->ctx.swapchainExtent); 
     }
     
     // Sync objs
@@ -281,7 +281,7 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             VulkanImageDestroy(&backend->msaaImages[i]);
-        VulkanFbDestroy(&backend->ctx, backend->frameBuffers[i]);
+        VulkanFramebufferDestroy(&backend->frameBuffers[i]);
     }
     
     VulkanRenderPassDestroy(&backend->ctx, backend->pass);
@@ -329,7 +329,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = clearCount,
         .pClearValues = values,
-        .framebuffer = backend->frameBuffers[backend->swapchainImageIndex],
+        .framebuffer = backend->frameBuffers[backend->swapchainImageIndex].buffer,
         .renderArea = (VkRect2D){.extent = backend->ctx.swapchainExtent, .offset = (VkOffset2D){ 0, 0 }},
         .renderPass = backend->pass
     };
