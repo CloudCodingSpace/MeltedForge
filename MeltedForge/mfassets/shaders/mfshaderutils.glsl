@@ -56,15 +56,15 @@ struct MFIBLInfo {
     float iblSpecularStrength;
     vec4 diffuseIrradianceSample;
     vec4 prefilteredSample;
-    vec4 brdfLutSample;
+    vec2 brdfLutSample;
 };
 
 vec4 mfSampleFromIrradianceMap(samplerCube map, vec3 normal) {
     return texture(map, normal);
 }
 
-vec4 mfSampleFromBRDFLUT(sampler2D map, vec3 viewDir, vec3 normal, float roughness) {
-    return texture(map, vec2(max(dot(viewDir, normal), 0.0), roughness));
+vec2 mfSampleFromBRDFLUT(sampler2D map, vec3 viewDir, vec3 normal, float roughness) {
+    return texture(map, vec2(max(dot(viewDir, normal), 0.0), roughness)).rg;
 }
 
 vec4 mfSampleFromPrefiltered(samplerCube map, vec3 viewDir, vec3 normal, float roughness) {
@@ -145,8 +145,7 @@ vec3 mfComputeIBL(in MFIBLInfo info, in MFPbrLightingInfo lightingInfo) {
     vec3 irradiance = info.diffuseIrradianceSample.rgb;
     vec3 diffuse = irradiance * lightingInfo.albedoColor * info.iblDiffuseStrength;
     vec3 prefilteredColor = info.prefilteredSample.rgb;
-    vec2 brdf = info.brdfLutSample.rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * info.iblSpecularStrength;
+    vec3 specular = prefilteredColor * (F * info.brdfLutSample.x + info.brdfLutSample.y) * info.iblSpecularStrength;
     vec3 ambient = (kD * diffuse + specular) * info.ambientOcclusion;
 
     return ambient;

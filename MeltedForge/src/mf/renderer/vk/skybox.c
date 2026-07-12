@@ -929,7 +929,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .format = MF_FORMAT_R32G32B32A32_SFLOAT,
+            .format = MF_FORMAT_R32G32_SFLOAT,
             .hasDepth = false
         };
         pass = VulkanRenderPassCreate(ctx, info);
