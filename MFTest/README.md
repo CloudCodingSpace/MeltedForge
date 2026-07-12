@@ -15,5 +15,8 @@ not be much readable or elegant, since its purpose is to just stress test the en
  - **Sponza scene (With PBR and IBL)**
 ![pbr_sponza](./screenshots/sponza_pbr.png)
 
+ - **Multiple Entities with different mesh components**
+ ![multiple_entities_ss](./screenshots/multiple_entities2.png)
+
  - **Multiple Entities with different mesh components *(With 4X MSAA on Forward render)***
 ![4x_msaa_multiple_entities_ss](./screenshots/4x_msaa_multiple_entities.png)
