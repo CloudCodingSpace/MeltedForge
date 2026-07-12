@@ -13,8 +13,8 @@ MFArray mfArrayCreate(u64 capacity, u64 elementSize) {
     array.elementSize = elementSize;
     array.capacity = capacity;
 
-    array.data = malloc(elementSize * capacity);
-    memset(array.data, 0, elementSize * capacity);
+    array.data = calloc(capacity, elementSize);
+    MF_PANIC_IF(array.data == mfnull, mfGetLogger(), "Array allocation failed!");
 
     array.init = true;
     return array;
@@ -73,6 +73,7 @@ void mfArrayInsertAt(MFArray* array, u64 index, void* element) {
         mfArrayResize(array, (array->capacity == 0) ? 1 : (array->capacity * 2));
     }
 
+    MF_PANIC_IF(index + 1 > array->capacity, mfGetLogger(), "The index provided exceeds the array's buffer capacity!");
     u8* base = (u8*)array->data;
     memmove(base + (index + 1) * array->elementSize, base + index * array->elementSize, (array->len - index) * array->elementSize);
 
