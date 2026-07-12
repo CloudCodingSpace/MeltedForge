@@ -78,7 +78,7 @@ void main() {
         iblInfo.iblSpecularStrength = ubo.iblSpecularStrength;
         iblInfo.diffuseIrradianceSample = mfSampleFromIrradianceMap(u_IrradianceMap, normal);
         iblInfo.prefilteredSample = mfSampleFromPrefiltered(u_PrefilteredMap, viewDir, info.normal, info.roughness);
-        iblInfo.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);        
+        iblInfo.brdfLutSample = mfSampleFromBRDFLUT(u_BrdfLUT, viewDir, normal, info.roughness);
     
         color += mfComputeIBL(iblInfo, info);
     }
