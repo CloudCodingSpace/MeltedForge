@@ -374,16 +374,27 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     if(renderTarget->hasMsaa)
         values[count++] = values[0];
 
-    VkRenderPassBeginInfo beginInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .clearValueCount = count,
-        .pClearValues = values,
-        .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
-        .renderPass = renderTarget->renderPass.handle,
-        .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex].buffer
-    }; 
 
-    vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    VulkanRenderPassBeginInfo beginInfo = {
+        .clearValueCount = count,
+        .clearValues = values,
+        .cmdBuff = commandBuffer,
+        .extent = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
+        .fb = &renderTarget->frameBuffers[renderTarget->backend->frameIndex]
+    };
+
+    VulkanRenderPassBegin(&renderTarget->renderPass, beginInfo);
+
+    // VkRenderPassBeginInfo beginInfo = {
+    //     .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+    //     .clearValueCount = count,
+    //     .pClearValues = values,
+    //     .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
+    //     .renderPass = renderTarget->renderPass.handle,
+    //     .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex].buffer
+    // }; 
+
+    // vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     // TODO: Make this search faster if required
     bool exists = false;
@@ -399,8 +410,9 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     renderTarget->backend->renderTarget = renderTarget;
     renderTarget->backend->hadRenderTargetUsage = true;
     renderTarget->begun = true;
-    renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    // renderTarget->images[renderTarget->backend->frameIndex].access = 0;
+    // renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    // renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
 void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
@@ -410,7 +422,8 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
 
     VkCommandBuffer commandBuffer = renderTarget->commandBuffers[renderTarget->backend->frameIndex];
 
-    vkCmdEndRenderPass(commandBuffer);
+    VulkanRenderPassEnd(&renderTarget->renderPass, commandBuffer, &renderTarget->frameBuffers[renderTarget->backend->frameIndex]);
+    // vkCmdEndRenderPass(commandBuffer);
     VulkanCommandBufferEnd(commandBuffer);
 
     VkPipelineStageFlags waitDstFlags[] = {
@@ -441,9 +454,9 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
 
     renderTarget->backend->renderTarget = mfnull;
     renderTarget->begun = false;
-    renderTarget->images[renderTarget->backend->frameIndex].access = VK_ACCESS_SHADER_READ_BIT;
-    renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    // renderTarget->images[renderTarget->backend->frameIndex].access = VK_ACCESS_SHADER_READ_BIT;
+    // renderTarget->images[renderTarget->backend->frameIndex].stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    // renderTarget->images[renderTarget->backend->frameIndex].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {
