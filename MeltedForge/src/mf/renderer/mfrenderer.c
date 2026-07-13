@@ -173,7 +173,7 @@ void* mfRendererGetRenderPass(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
     
-    return (void*)renderer->backend.pass;
+    return (void*)renderer->backend.pass.handle;
 }
 
 u32 mfRendererGetImageBytesPerPixel(MFRenderer* renderer) {

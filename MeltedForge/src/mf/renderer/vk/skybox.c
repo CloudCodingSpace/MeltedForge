@@ -26,7 +26,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     MFResourceSetLayout* layout = mfnull; 
     VulkanImage depthImage, tempImage;
     VulkanPipeline pipeline;
-    VkRenderPass pass = mfnull;
+    VulkanRenderPass pass = {};
     VkFramebuffer fb = mfnull;
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
@@ -40,7 +40,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
-        pass = VulkanRenderPassCreate(ctx, info);
+        VulkanRenderPassCreate(&pass, ctx, info);
     }
     // 2D env map
     {
@@ -145,7 +145,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
                 .depthCompareOp = VK_COMPARE_OP_LESS,
                 .cullMode = VK_CULL_MODE_NONE,
                 .samples = VK_SAMPLE_COUNT_1_BIT,
-                .renderpass = pass,
+                .renderpass = pass.handle,
                 .extent = (VkExtent2D){ .width = config.faceSize, .height = config.faceSize },
                 .hasDepth = true,
             },
@@ -173,7 +173,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .width = config.faceSize,
             .height = config.faceSize,
             .layers = 1,
-            .renderPass = pass
+            .renderPass = pass.handle
         };
         VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
     }
@@ -224,7 +224,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
                     .extent = { .width = config.faceSize, .height = config.faceSize },
                     .offset = {0, 0}
                 },
-                .renderPass = pass
+                .renderPass = pass.handle
             };
             vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
             
@@ -334,7 +334,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         VulkanImageDestroy(&tempImage);
         VulkanImageDestroy(&depthImage);
         VulkanPipelineDestroy(ctx, &pipeline);
-        VulkanRenderPassDestroy(ctx, pass);
+        VulkanRenderPassDestroy(&pass);
         mfResourceSetDestroy(set);
         mfResourceSetLayoutDestroy(layout);
         mfGpuImageDestroy(image);
@@ -345,7 +345,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     VulkanBackendCtx* ctx = &skybox->backend->ctx;
     VulkanImage depthImage, tempImage;
     VulkanPipeline pipeline;
-    VkRenderPass pass = mfnull;
+    VulkanRenderPass pass = {};
     VkFramebuffer fb = mfnull;
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
@@ -359,7 +359,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
-        pass = VulkanRenderPassCreate(ctx, info);
+        VulkanRenderPassCreate(&pass, ctx, info);
     }
     // Depth & temp image
     {
@@ -422,7 +422,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                 .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
                 .fragPath = "mfassets/shaders/mfIrradianceConvert.frag.spv",
                 .depthCompareOp = VK_COMPARE_OP_LESS,
-                .renderpass = pass,
+                .renderpass = pass.handle,
                 .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
                 .samples = VK_SAMPLE_COUNT_1_BIT,
                 .hasDepth = true,
@@ -449,7 +449,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .width = cubemapImage->info.width,
             .height = cubemapImage->info.height,
             .layers = 1,
-            .renderPass = pass
+            .renderPass = pass.handle
         };
         VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
     }
@@ -501,7 +501,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                     .extent = { .width = cubemapImage->info.width, .height = cubemapImage->info.height },
                     .offset = {0, 0}
                 },
-                .renderPass = pass
+                .renderPass = pass.handle
             };
             vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
             
@@ -609,14 +609,14 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         VulkanImageDestroy(&tempImage);
         VulkanImageDestroy(&depthImage);
         VulkanPipelineDestroy(ctx, &pipeline);
-        VulkanRenderPassDestroy(ctx, pass);
+        VulkanRenderPassDestroy(&pass);
     }
 }
 
 void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer) {
     VulkanBackendCtx* ctx = &skybox->backend->ctx;
     VulkanPipeline pipeline;
-    VkRenderPass pass = mfnull;
+    VulkanRenderPass pass = {};
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
     VulkanImage* cubemapImage = (VulkanImage*)mfGpuImageGetBackend(skybox->prefilteredMap);
@@ -633,7 +633,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
-        pass = VulkanRenderPassCreate(ctx, info);
+        VulkanRenderPassCreate(&pass, ctx, info);
     }
     // Depth & temp image
     for(u32 i = 0; i < maxMipLevels; i++) {
@@ -693,7 +693,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                 .vertPath = "mfassets/shaders/mfskyboxConvert.vert.spv",
                 .fragPath = "mfassets/shaders/mfPrefilterEnvMap.frag.spv",
                 .depthCompareOp = VK_COMPARE_OP_LESS,
-                .renderpass = pass,
+                .renderpass = pass.handle,
                 .extent = (VkExtent2D){ .width = cubemapImage->info.width, .height = cubemapImage->info.height },
                 .hasDepth = true,
                 .cullMode = VK_CULL_MODE_NONE,
@@ -723,7 +723,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .width = cubemapImage->info.width * pow(0.5, i),
             .height = cubemapImage->info.height * pow(0.5, i),
             .layers = 1,
-            .renderPass = pass
+            .renderPass = pass.handle
         };
         VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb[i]));
     }
@@ -779,7 +779,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                         .extent = { .width = mipSize, .height = mipSize },
                         .offset = {0, 0}
                     },
-                    .renderPass = pass
+                    .renderPass = pass.handle
                 };
                 vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
                 
@@ -889,14 +889,14 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
 
         VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
         VulkanPipelineDestroy(ctx, &pipeline);
-        VulkanRenderPassDestroy(ctx, pass);
+        VulkanRenderPassDestroy(&pass);
     }   
 }
 
 void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* renderer) {
     VulkanBackendCtx* ctx = &skybox->backend->ctx;
     VulkanPipeline pipeline;
-    VkRenderPass pass = mfnull;
+    VulkanRenderPass pass = {};
     VkFramebuffer fb = mfnull;
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
@@ -932,7 +932,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
             .format = MF_FORMAT_R32G32_SFLOAT,
             .hasDepth = false
         };
-        pass = VulkanRenderPassCreate(ctx, info);
+        VulkanRenderPassCreate(&pass, ctx, info);
     }
     // Pipeline
     {
@@ -964,7 +964,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
                 .bindings = &binding,
                 .vertPath = "mfassets/shaders/mfbrdflut.vert.spv",
                 .fragPath = "mfassets/shaders/mfbrdflut.frag.spv",
-                .renderpass = pass,
+                .renderpass = pass.handle,
                 .extent = (VkExtent2D){ .width = outImage->info.width, .height = outImage->info.height },
                 .hasDepth = false,
                 .cullMode = VK_CULL_MODE_NONE,
@@ -990,7 +990,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
             .width = outImage->info.width,
             .height = outImage->info.height,
             .layers = 1,
-            .renderPass = pass
+            .renderPass = pass.handle
         };
         VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
     }
@@ -1019,7 +1019,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
                 .extent = { .width = outImage->info.width, .height = outImage->info.height },
                 .offset = {0, 0}
             },
-            .renderPass = pass
+            .renderPass = pass.handle
         };
         vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
         
@@ -1077,7 +1077,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         VulkanBufferFree(&vertexBuffer);
         VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
         VulkanPipelineDestroy(ctx, &pipeline);
-        VulkanRenderPassDestroy(ctx, pass);
+        VulkanRenderPassDestroy(&pass);
     }
 }
 

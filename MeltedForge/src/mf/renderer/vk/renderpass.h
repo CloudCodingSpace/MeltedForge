@@ -14,8 +14,16 @@ typedef struct VulkanRenderPassInfo_s {
     bool hasMsaa;
 } VulkanRenderPassInfo;
 
-VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo info);
-void VulkanRenderPassDestroy(VulkanBackendCtx* ctx, VkRenderPass pass);
+typedef struct VulkanRenderPass_s {
+    VkRenderPass handle;
+    VulkanRenderPassInfo info;
+    VulkanBackendCtx* ctx;
+} VulkanRenderPass;
+
+void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, VulkanRenderPassInfo info);
+void VulkanRenderPassDestroy(VulkanRenderPass* pass);
+// VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo info);
+// void VulkanRenderPassDestroy(VulkanBackendCtx* ctx, VkRenderPass pass);
 
 #ifdef __cplusplus
 }

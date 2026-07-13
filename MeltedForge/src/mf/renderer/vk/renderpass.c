@@ -6,7 +6,10 @@ extern "C" {
 
 #include "common.h"
 
-VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo pinfo) {
+void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, VulkanRenderPassInfo pinfo) {
+    pass->ctx = ctx;
+    pass->info = pinfo;
+
     VkAttachmentDescription colorAttachment = {
         .format = pinfo.format,
         .initialLayout = pinfo.initialLayout,
@@ -90,13 +93,12 @@ VkRenderPass VulkanRenderPassCreate(VulkanBackendCtx* ctx, VulkanRenderPassInfo 
         .pDependencies = &dependency
     };
 
-    VkRenderPass pass;
-    VK_CHECK(vkCreateRenderPass(ctx->device, &info, ctx->allocator, &pass));
-    return pass;
+    VK_CHECK(vkCreateRenderPass(ctx->device, &info, ctx->allocator, &pass->handle));
 }
 
-void VulkanRenderPassDestroy(VulkanBackendCtx* ctx, VkRenderPass pass) {
-    vkDestroyRenderPass(ctx->device, pass, ctx->allocator);
+void VulkanRenderPassDestroy(VulkanRenderPass* pass) {
+    vkDestroyRenderPass(pass->ctx->device, pass->handle, pass->ctx->allocator);
+    MF_SETMEM(pass, 0, sizeof(VulkanRenderPass));
 }
 
 #ifdef __cplusplus

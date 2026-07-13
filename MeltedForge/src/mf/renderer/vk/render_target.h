@@ -7,6 +7,7 @@ extern "C" {
 #include "common.h"
 #include "gpu_res.h"
 #include "fb.h"
+#include "renderpass.h"
 
 struct VulkanBackend_s;
 
@@ -20,7 +21,7 @@ struct MFRenderTarget_s {
     VulkanImage msaaImages[FRAMES_IN_FLIGHT];
     VulkanImage images[FRAMES_IN_FLIGHT];
     VulkanFramebuffer frameBuffers[FRAMES_IN_FLIGHT];
-    VkRenderPass renderPass;
+    VulkanRenderPass renderPass;
     VkSampleCountFlagBits samples;
     VkDescriptorSet igSets[FRAMES_IN_FLIGHT];
     MFResourceSetLayout* layout;

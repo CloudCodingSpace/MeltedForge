@@ -66,7 +66,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .hasMsaa = renderTarget->hasMsaa
         };
 
-        renderTarget->renderPass = VulkanRenderPassCreate(&renderTarget->backend->ctx, info);
+        VulkanRenderPassCreate(&renderTarget->renderPass, &renderTarget->backend->ctx, info);
     }
 
     {
@@ -130,7 +130,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             if(renderTarget->hasMsaa)
                 attachments[count++] = renderTarget->images[i];
 
-            VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass, count, attachments, renderTarget->backend->ctx.swapchainExtent);
+            VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, renderTarget->backend->ctx.swapchainExtent);
         }
 
         if(renderTarget->backend->config.enableUI) {
@@ -204,7 +204,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
         VulkanImageDestroy(&renderTarget->depthImage);
 
     mfResourceSetLayoutDestroy(renderTarget->layout);
-    VulkanRenderPassDestroy(&renderTarget->backend->ctx, renderTarget->renderPass);
+    VulkanRenderPassDestroy(&renderTarget->renderPass);
     
     MF_FREEMEM(renderTarget->renderFinishedSemas);    
     MF_SETMEM(renderTarget, 0, sizeof(MFRenderTarget));
@@ -306,7 +306,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             if(renderTarget->hasMsaa)
                 attachments[count++] = renderTarget->images[i];
 
-            VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass, count, attachments, (VkExtent2D){extent.x, extent.y});
+            VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI)
                 renderTarget->igSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -379,7 +379,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
         .clearValueCount = count,
         .pClearValues = values,
         .renderArea = (VkRect2D){.extent = (VkExtent2D){renderTarget->images[0].info.width, renderTarget->images[0].info.height}, .offset = (VkOffset2D){0, 0}},
-        .renderPass = renderTarget->renderPass,
+        .renderPass = renderTarget->renderPass.handle,
         .framebuffer = renderTarget->frameBuffers[renderTarget->backend->frameIndex].buffer
     }; 
 
@@ -460,7 +460,7 @@ void* mfRenderTargetGetPass(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
 
-    return (void*)renderTarget->renderPass;
+    return (void*)renderTarget->renderPass.handle;
 }
 
 u8* mfRenderTargetGetCurrentImagePixels(MFRenderTarget* renderTarget, u32* width, u32* height) {

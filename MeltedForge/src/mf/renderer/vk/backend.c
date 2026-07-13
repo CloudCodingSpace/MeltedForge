@@ -75,7 +75,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             attachments[len++] = backend->ctx.swapchainImages[i];
 
-        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass, len, attachments, backend->ctx.swapchainExtent); 
+        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
     }
 
     if(backend->resizeCallback) {
@@ -105,7 +105,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
         };
 
-        backend->pass = VulkanRenderPassCreate(&backend->ctx, info);
+        VulkanRenderPassCreate(&backend->pass, &backend->ctx, info);
     }
 
     // Color images
@@ -146,7 +146,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             attachments[len++] = backend->ctx.swapchainImages[i];
 
-        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass, len, attachments, backend->ctx.swapchainExtent); 
+        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
     }
     
     // Sync objs
@@ -226,7 +226,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .PhysicalDevice = backend->ctx.physicalDevice,
             .MSAASamples = backend->ctx.samples,
             .Subpass = 0,
-            .RenderPass = backend->pass,
+            .RenderPass = backend->pass.handle,
             .Queue = backend->ctx.queueData.graphicsQueue,
             .QueueFamily = backend->ctx.queueData.graphicsQueueIdx
         };
@@ -284,7 +284,7 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
         VulkanFramebufferDestroy(&backend->frameBuffers[i]);
     }
     
-    VulkanRenderPassDestroy(&backend->ctx, backend->pass);
+    VulkanRenderPassDestroy(&backend->pass);
     VulkanBackendCtxDestroy(&backend->ctx);
 
     if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
@@ -331,7 +331,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
         .pClearValues = values,
         .framebuffer = backend->frameBuffers[backend->swapchainImageIndex].buffer,
         .renderArea = (VkRect2D){.extent = backend->ctx.swapchainExtent, .offset = (VkOffset2D){ 0, 0 }},
-        .renderPass = backend->pass
+        .renderPass = backend->pass.handle
     };
 
     vkCmdBeginRenderPass(backend->commandBuffers[backend->frameIndex], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);

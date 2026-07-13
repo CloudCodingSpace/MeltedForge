@@ -107,7 +107,7 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
         };
 
         if(info.graphicsConfig.renderTarget != mfnull) {
-            binfo.ginfo.renderpass = info.graphicsConfig.renderTarget->renderPass;
+            binfo.ginfo.renderpass = info.graphicsConfig.renderTarget->renderPass.handle;
         }
     }
     else if(info.type == MF_PIPELINE_TYPE_COMPUTE) {
