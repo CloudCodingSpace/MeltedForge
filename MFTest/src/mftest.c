@@ -330,9 +330,9 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
             .path = "mftmeshes/sofa/sofa_1k.gltf",
             .perVertSize = sizeof(Vertex)
         };
-        // mfSceneAddMeshComponent(&state->scene, &mComp2);
+        mfSceneAddMeshComponent(&state->scene, &mComp2);
 
-        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp);
+        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp2);
         mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[1], &tComp);
     } else {
         u64 entityCount = 0;
