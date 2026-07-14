@@ -334,22 +334,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     };
 
     VulkanRenderPassBegin(&backend->pass, rpInfo);
-
-    // VkRenderPassBeginInfo rpInfo = {
-    //     .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-    //     .clearValueCount = clearCount,
-    //     .pClearValues = values,
-    //     .framebuffer = backend->frameBuffers[backend->swapchainImageIndex].buffer,
-    //     .renderArea = (VkRect2D){.extent = backend->ctx.swapchainExtent, .offset = (VkOffset2D){ 0, 0 }},
-    //     .renderPass = backend->pass.handle
-    // };
-
-    // vkCmdBeginRenderPass(backend->commandBuffers[backend->frameIndex], &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
-
     backend->renderPassBegun = true;
-    // backend->ctx.swapchainImages[backend->swapchainImageIndex].access = 0;
-    // backend->ctx.swapchainImages[backend->swapchainImageIndex].layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // backend->ctx.swapchainImages[backend->swapchainImageIndex].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     if(!backend->config.enableUI)
         return true;
@@ -375,7 +360,6 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     }
 
     VulkanRenderPassEnd(&backend->pass, backend->commandBuffers[backend->frameIndex], &backend->frameBuffers[backend->swapchainImageIndex]);
-    // vkCmdEndRenderPass(backend->commandBuffers[backend->frameIndex]);
     VulkanCommandBufferEnd(backend->commandBuffers[backend->frameIndex]);
 
     if(!backend->hadRenderTargetUsage) {
@@ -424,11 +408,6 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 void VulkanBackendWaitForFrame(VulkanBackend* backend) {
     VK_CHECK(vkWaitForFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex], VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
-
-    // NOTE: Manually setting these here even tho the renderPass backend does it
-    // backend->ctx.swapchainImages[backend->swapchainImageIndex].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    // backend->ctx.swapchainImages[backend->swapchainImageIndex].layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    // backend->ctx.swapchainImages[backend->swapchainImageIndex].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 }
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
