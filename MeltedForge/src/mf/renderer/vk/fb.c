@@ -6,19 +6,19 @@ extern "C" {
 
 #include "common.h"
 
-void VulkanFramebufferCreate(VulkanFramebuffer* fb, VulkanBackendCtx* ctx, VkRenderPass pass, u32 attachmentCount, VulkanImage* attachments, VkExtent2D extent) {
+void VulkanFramebufferCreate(VulkanFramebuffer* fb, VulkanBackendCtx* ctx, VkRenderPass pass, u32 attachmentCount, VulkanImage** attachments, VkExtent2D extent) {
     MF_SETMEM(fb, 0, sizeof(VulkanFramebuffer));
     
     fb->ctx = ctx;
     fb->attachmentCount = attachmentCount;
     fb->pass = pass;
     fb->extent = extent;
-    fb->attachments = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * attachmentCount);
-    memcpy(fb->attachments, attachments, sizeof(VulkanImage) * attachmentCount);
+    fb->attachments = MF_ALLOCMEM(VulkanImage*, sizeof(VulkanImage*) * attachmentCount);
+    memcpy(fb->attachments, attachments, sizeof(VulkanImage*) * attachmentCount);
 
     VkImageView* views = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * attachmentCount);
     for(u32 i = 0; i < attachmentCount; i++) {
-        views[i] = attachments[i].view;
+        views[i] = attachments[i]->view;
     }
 
     VkFramebufferCreateInfo info = {

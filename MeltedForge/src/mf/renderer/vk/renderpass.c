@@ -131,24 +131,24 @@ void VulkanRenderPassBegin(VulkanRenderPass* pass, VulkanRenderPassBeginInfo inf
 
     u32 idx = 0;
     // Color attachment
-    info.fb->attachments[idx].access = 0;
-    info.fb->attachments[idx].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    info.fb->attachments[idx].layout = pass->info.initialLayout;
+    info.fb->attachments[idx]->access = 0;
+    info.fb->attachments[idx]->stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    info.fb->attachments[idx]->layout = pass->info.initialLayout;
 
     // Depth attachment
     if(pass->info.hasDepth) {
         idx++;
-        info.fb->attachments[idx].access = 0;
-        info.fb->attachments[idx].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        info.fb->attachments[idx].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.fb->attachments[idx]->access = 0;
+        info.fb->attachments[idx]->stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        info.fb->attachments[idx]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
     }
 
     // Resolve attachment
     if(pass->info.hasMsaa) {
         idx++;
-        info.fb->attachments[idx].access = 0;
-        info.fb->attachments[idx].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        info.fb->attachments[idx].layout = pass->info.initialLayout;
+        info.fb->attachments[idx]->access = 0;
+        info.fb->attachments[idx]->stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        info.fb->attachments[idx]->layout = pass->info.initialLayout;
     }
 }
 
@@ -173,24 +173,24 @@ void VulkanRenderPassEnd(VulkanRenderPass* pass, VkCommandBuffer cmdBuff, Vulkan
 
     u32 idx = 0;
     // Color attachment
-    fb->attachments[idx].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    fb->attachments[idx].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    fb->attachments[idx].layout = pass->info.finalLayout;
+    fb->attachments[idx]->access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    fb->attachments[idx]->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    fb->attachments[idx]->layout = pass->info.finalLayout;
 
     // Depth attachment
     if(pass->info.hasDepth) {
         idx++;
-        fb->attachments[idx].access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        fb->attachments[idx].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        fb->attachments[idx].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        fb->attachments[idx]->access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        fb->attachments[idx]->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        fb->attachments[idx]->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     }
 
     // Resolve attachment
     if(pass->info.hasMsaa) {
         idx++;
-        fb->attachments[idx].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        fb->attachments[idx].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        fb->attachments[idx].layout = pass->info.finalLayout;
+        fb->attachments[idx]->access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        fb->attachments[idx]->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        fb->attachments[idx]->layout = pass->info.finalLayout;
     }
 }
 

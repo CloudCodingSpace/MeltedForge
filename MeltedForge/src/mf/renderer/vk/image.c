@@ -333,6 +333,7 @@ u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex, u32* w
 
     VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &submitInfo, image->fence));
     VK_CHECK(vkWaitForFences(ctx->device, 1, &image->fence, VK_TRUE, UINT64_MAX));
+    VK_CHECK(vkResetFences(ctx->device, 1, &image->fence));
 
     memcpy(buffer, staging.mappedMem, size);
 

@@ -66,14 +66,14 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         }
 
         u32 len = 1;
-        VulkanImage attachments[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i] : backend->ctx.swapchainImages[i]
+        VulkanImage* attachments[3] = {
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? &backend->msaaImages[i] : &backend->ctx.swapchainImages[i]
         };
         if(backend->config.enableDepth) {
-            attachments[len++] = backend->ctx.depthImage;
+            attachments[len++] = &backend->ctx.depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            attachments[len++] = backend->ctx.swapchainImages[i];
+            attachments[len++] = &backend->ctx.swapchainImages[i];
 
         VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
     }
@@ -137,14 +137,14 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     backend->frameBuffers = MF_ALLOCMEM(VulkanFramebuffer, sizeof(VulkanFramebuffer) * backend->frameBufferCount);
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
-        VulkanImage attachments[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? backend->msaaImages[i] : backend->ctx.swapchainImages[i]
+        VulkanImage* attachments[3] = {
+            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? &backend->msaaImages[i] : &backend->ctx.swapchainImages[i]
         };
         if(config->enableDepth) {
-            attachments[len++] = backend->ctx.depthImage;
+            attachments[len++] = &backend->ctx.depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            attachments[len++] = backend->ctx.swapchainImages[i];
+            attachments[len++] = &backend->ctx.swapchainImages[i];
 
         VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
     }
@@ -426,9 +426,9 @@ void VulkanBackendWaitForFrame(VulkanBackend* backend) {
     VK_CHECK(vkResetFences(backend->ctx.device, 1, &backend->inFlightFences[backend->frameIndex]));
 
     // NOTE: Manually setting these here even tho the renderPass backend does it
-    backend->ctx.swapchainImages[backend->swapchainImageIndex].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    backend->ctx.swapchainImages[backend->swapchainImageIndex].layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    backend->ctx.swapchainImages[backend->swapchainImageIndex].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    // backend->ctx.swapchainImages[backend->swapchainImageIndex].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    // backend->ctx.swapchainImages[backend->swapchainImageIndex].layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    // backend->ctx.swapchainImages[backend->swapchainImageIndex].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 }
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {

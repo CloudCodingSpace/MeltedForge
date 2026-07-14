@@ -11,11 +11,11 @@ typedef struct VulkanFramebuffer_s {
     VulkanBackendCtx* ctx;
     VkRenderPass pass;
     u32 attachmentCount;
-    VulkanImage* attachments;
+    VulkanImage** attachments;
     VkExtent2D extent;
 } VulkanFramebuffer;
 
-void VulkanFramebufferCreate(VulkanFramebuffer* fb, VulkanBackendCtx* ctx, VkRenderPass pass, u32 attachmentCount, VulkanImage* attachments, VkExtent2D extent);
+void VulkanFramebufferCreate(VulkanFramebuffer* fb, VulkanBackendCtx* ctx, VkRenderPass pass, u32 attachmentCount, VulkanImage** attachments, VkExtent2D extent);
 void VulkanFramebufferDestroy(VulkanFramebuffer* fb);
 
 #ifdef __cplusplus
