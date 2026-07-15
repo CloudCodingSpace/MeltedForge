@@ -67,6 +67,14 @@ void main() {
     info.albedoColor = albedo.rgb;
 
     vec3 color = mfComputePbrLighting(info);
+    // Point lighting radiance
+    {
+        float distance = dot(-info.lightDir, -info.lightDir);
+        float attenuation = 1.0 / distance;
+        vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
+        color *= radiance;
+    }
+
     color += emission.rgb;
 
     if(ubo.useIBL == 1) {

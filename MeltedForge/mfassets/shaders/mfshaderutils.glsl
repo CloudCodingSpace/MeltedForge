@@ -112,14 +112,10 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - info.metalness;
-
-    float distance = dot(-info.lightDir, -info.lightDir);
-    float attenuation = 1.0 / distance;
-    vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
     
     vec3 diffuse = info.albedoColor / PI;
 
-    return (kD * diffuse + specular) * radiance * NdotL; // LO
+    return (kD * diffuse + specular) * NdotL; // LO
 }
 
 vec3 mfComputeIBL(in MFIBLInfo info, in MFPbrLightingInfo lightingInfo) {
