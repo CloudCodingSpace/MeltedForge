@@ -60,7 +60,7 @@ void main() {
     info.camPos = ubo.camPos;
     info.fragPos = vi.oFragPos;
     info.lightColor = ubo.lightColor;
-    info.lightPos = ubo.lightPos;
+    info.lightDir = vi.oFragPos - ubo.lightPos;
     info.roughness = metallicRoughness.g;
     info.metalness = metallicRoughness.b;
     info.lightIntensity = ubo.lightIntensity;

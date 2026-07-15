@@ -14,7 +14,7 @@ struct MFPhongLightingInfo {
 
 float mfComputePhongLightingFactor(in MFPhongLightingInfo info) {
     vec3 norm = normalize(info.normal);
-    vec3 dir = normalize(info.lightDir);
+    vec3 dir = normalize(-info.lightDir);
 
     float diffuse = max(dot(norm, dir), 0.0);
 
@@ -29,7 +29,7 @@ float mfComputePhongLightingFactor(in MFPhongLightingInfo info) {
     float phongFactor = diffuse + spec + info.ambientFactor;
 
     if(info.isPoint) {
-        float dist = dot(info.lightDir, info.lightDir);
+        float dist = dot(-info.lightDir, -info.lightDir);
         float attenuation = 1.0 / dist;
         phongFactor *= attenuation;
     }
@@ -47,7 +47,7 @@ struct MFPbrLightingInfo {
     vec3 albedoColor;
     vec3 camPos;
     vec3 fragPos;
-    vec3 lightPos;
+    vec3 lightDir;
 };
 
 struct MFIBLInfo {
@@ -90,7 +90,7 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
 
     vec3 N = normalize(info.normal);
     vec3 V = normalize(info.camPos - info.fragPos);
-    vec3 L = normalize(info.lightPos - info.fragPos);
+    vec3 L = normalize(-info.lightDir);
     vec3 H = normalize(V + L);
 
     float NdotL = max(dot(N, L), 0.0);
@@ -113,7 +113,7 @@ vec3 mfComputePbrLighting(in MFPbrLightingInfo info) {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - info.metalness;
 
-    float distance = dot(info.lightPos - info.fragPos, info.lightPos - info.fragPos);
+    float distance = dot(-info.lightDir, -info.lightDir);
     float attenuation = 1.0 / distance;
     vec3 radiance = info.lightColor * info.lightIntensity * attenuation;
     
@@ -127,7 +127,7 @@ vec3 mfComputeIBL(in MFIBLInfo info, in MFPbrLightingInfo lightingInfo) {
 
     vec3 N = normalize(lightingInfo.normal);
     vec3 V = normalize(lightingInfo.camPos - lightingInfo.fragPos);
-    vec3 L = normalize(lightingInfo.lightPos - lightingInfo.fragPos);
+    vec3 L = normalize(-lightingInfo.lightDir);
     vec3 H = normalize(V + L);
 
     float NdotL = max(dot(N, L), 0.0);
