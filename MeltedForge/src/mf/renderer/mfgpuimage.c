@@ -4,9 +4,10 @@ extern "C" {
 
 #include "mfgpuimage.h"
 
-#include "vk/image.h"
-#include "vk/ctx.h"
 #include "vk/backend.h"
+#include "vk/ctx.h"
+#include "vk/image.h"
+#include "vk/command_buffer.h"
 
 #include <cimgui.h>
 #include <cimgui_impl.h>
@@ -216,6 +217,98 @@ MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer) {
     };
 
     return mfGpuImageCreate(renderer, config);
+}
+
+void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
+    MF_PANIC_IF(src == mfnull, mfGetLogger(), "The provided src MFGpuImage provided for copy shouldn't be null!");
+    MF_PANIC_IF(!src->init, mfGetLogger(), "The provided src MFGpuImage provided for copy should be initialised!");
+    MF_PANIC_IF(dst == mfnull, mfGetLogger(), "The provided dst MFGpuImage provided for copy shouldn't be null!");
+    MF_PANIC_IF(!dst->init, mfGetLogger(), "The provided dst MFGpuImage provided for copy should be initialised!");
+
+    bool sameParameters = (src->config.width == dst->config.width) && (src->config.height == dst->config.height) && (src->config.imageFormat == dst->config.imageFormat);// &&
+                        //   (src->image->info.);
+    MF_PANIC_IF(!sameParameters, mfGetLogger(), "The src and dst MFGpuImage for copy must be identical like same dimensions and image format!");
+
+    VulkanBackend* backend = src->backend;
+    VulkanBackendCtx* ctx = &backend->ctx;
+    VulkanImage* srcImg = &src->image[src->config.frameSynced ? backend->frameIndex : 0];
+    VulkanImage* dstImg = &dst->image[dst->config.frameSynced ? backend->frameIndex : 0];
+
+    VkImageLayout srcLayout = srcImg->layout;
+    VkImageLayout dstLayout = dstImg->layout;
+    VkAccessFlagBits srcAccess = srcImg->access;
+    VkAccessFlagBits dstAccess = dstImg->access;
+    VkPipelineStageFlagBits srcStage = srcImg->stage;
+    VkPipelineStageFlagBits dstStage = dstImg->stage;
+
+    VkCommandBuffer cmdBuff = srcImg->cmdBuff;
+    VkFence fence = srcImg->fence;
+
+    {
+        VulkanCommandBufferBegin(cmdBuff, true);
+
+        VulkanImageTransitionLayout(srcImg, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
+            .baseArrayLayer = 0,
+            .baseMipLevel = 0,
+            .layerCount = 1, // TODO: Make it configurable if required
+            .levelCount = 1 // TODO: Make it configurable if required
+        });
+
+        VulkanImageTransitionLayout(dstImg, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
+            .baseArrayLayer = 0,
+            .baseMipLevel = 0,
+            .layerCount = 1, // TODO: Make it configurable if required
+            .levelCount = 1 // TODO: Make it configurable if required
+        });
+        
+        VkImageCopy region = {
+            .srcOffset = {0, 0, 0},
+            .dstOffset = {0, 0, 0},
+            .extent = { srcImg->info.width, srcImg->info.height, 1 },
+            .srcSubresource = {
+                .mipLevel = 0, // TODO: Make it configurable if required
+                .layerCount = 1, // TODO: Make it configurable if required
+                .baseArrayLayer = 0, // TODO: Make it configurable if required
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT // TODO: Make it configurable if required
+            },
+            .dstSubresource = {
+                .mipLevel = 0, // TODO: Make it configurable if required
+                .layerCount = 1, // TODO: Make it configurable if required
+                .baseArrayLayer = 0, // TODO: Make it configurable if required
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT // TODO: Make it configurable if required
+            }
+        };
+        vkCmdCopyImage(cmdBuff, srcImg->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        VulkanImageTransitionLayout(srcImg, cmdBuff, srcLayout, srcAccess, srcStage, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
+            .baseArrayLayer = 0,
+            .baseMipLevel = 0,
+            .layerCount = 1, // TODO: Make it configurable if required
+            .levelCount = 1 // TODO: Make it configurable if required
+        });
+
+        VulkanImageTransitionLayout(dstImg, cmdBuff, dstLayout, dstAccess, dstStage, (VkImageSubresourceRange){
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
+            .baseArrayLayer = 0,
+            .baseMipLevel = 0,
+            .layerCount = 1, // TODO: Make it configurable if required
+            .levelCount = 1 // TODO: Make it configurable if required
+        });
+        
+        VulkanCommandBufferEnd(cmdBuff);
+    }
+
+    VkSubmitInfo sInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmdBuff
+    };
+    VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &sInfo, fence));
+    VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+    VK_CHECK(vkResetFences(ctx->device, 1, &fence));
 }
 
 #ifdef __cplusplus

@@ -43,6 +43,7 @@ MFResourceDescription mfGpuImageGetDescription(MFGpuImage* image);
 void* mfGpuImageGetBackend(MFGpuImage* image);
 
 MFGpuImage* mfCreateErrorGpuImage(MFRenderer* renderer);
+void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst);
 
 #ifdef __cplusplus
 }
