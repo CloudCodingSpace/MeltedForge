@@ -23,7 +23,8 @@ struct MFRenderTarget_s {
     VulkanFramebuffer frameBuffers[FRAMES_IN_FLIGHT];
     VulkanRenderPass renderPass;
     VkSampleCountFlagBits samples;
-    VkDescriptorSet igSets[FRAMES_IN_FLIGHT];
+    VkDescriptorSet igColorSets[FRAMES_IN_FLIGHT];
+    VkDescriptorSet igDepthSets[FRAMES_IN_FLIGHT];
     MFResourceSetLayout* layout;
     VkDescriptorSet sets[FRAMES_IN_FLIGHT];
 
