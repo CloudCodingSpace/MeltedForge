@@ -12,6 +12,8 @@ extern "C" {
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
+#include <math.h>
+
 struct MFGpuImage_s {
     VulkanImage image[FRAMES_IN_FLIGHT];
     VulkanBackend* backend;
@@ -225,14 +227,15 @@ void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
     MF_PANIC_IF(dst == mfnull, mfGetLogger(), "The provided dst MFGpuImage provided for copy shouldn't be null!");
     MF_PANIC_IF(!dst->init, mfGetLogger(), "The provided dst MFGpuImage provided for copy should be initialised!");
 
-    bool sameParameters = (src->config.width == dst->config.width) && (src->config.height == dst->config.height) && (src->config.imageFormat == dst->config.imageFormat);// &&
-                        //   (src->image->info.);
+    bool sameParameters = (src->config.width == dst->config.width) && (src->config.height == dst->config.height) && (src->config.imageFormat == dst->config.imageFormat);
     MF_PANIC_IF(!sameParameters, mfGetLogger(), "The src and dst MFGpuImage for copy must be identical like same dimensions and image format!");
 
     VulkanBackend* backend = src->backend;
     VulkanBackendCtx* ctx = &backend->ctx;
     VulkanImage* srcImg = &src->image[src->config.frameSynced ? backend->frameIndex : 0];
     VulkanImage* dstImg = &dst->image[dst->config.frameSynced ? backend->frameIndex : 0];
+    u32 minArrayLayers = srcImg->info.arrayLayers < dstImg->info.arrayLayers ? srcImg->info.arrayLayers : dstImg->info.arrayLayers;
+    u32 minMipLevels = srcImg->info.mipLevels < dstImg->info.mipLevels ? srcImg->info.mipLevels : dstImg->info.mipLevels;
 
     VkImageLayout srcLayout = srcImg->layout;
     VkImageLayout dstLayout = dstImg->layout;
@@ -251,16 +254,16 @@ void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
             .baseArrayLayer = 0,
             .baseMipLevel = 0,
-            .layerCount = 1, // TODO: Make it configurable if required
-            .levelCount = 1 // TODO: Make it configurable if required
+            .layerCount = minArrayLayers, // TODO: Make it configurable if required
+            .levelCount = minMipLevels // TODO: Make it configurable if required
         });
 
         VulkanImageTransitionLayout(dstImg, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
             .baseArrayLayer = 0,
             .baseMipLevel = 0,
-            .layerCount = 1, // TODO: Make it configurable if required
-            .levelCount = 1 // TODO: Make it configurable if required
+            .layerCount = minArrayLayers, // TODO: Make it configurable if required
+            .levelCount = minMipLevels // TODO: Make it configurable if required
         });
         
         VkImageCopy region = {
@@ -269,13 +272,13 @@ void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
             .extent = { srcImg->info.width, srcImg->info.height, 1 },
             .srcSubresource = {
                 .mipLevel = 0, // TODO: Make it configurable if required
-                .layerCount = 1, // TODO: Make it configurable if required
+                .layerCount = minArrayLayers, // TODO: Make it configurable if required
                 .baseArrayLayer = 0, // TODO: Make it configurable if required
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT // TODO: Make it configurable if required
             },
             .dstSubresource = {
                 .mipLevel = 0, // TODO: Make it configurable if required
-                .layerCount = 1, // TODO: Make it configurable if required
+                .layerCount = minArrayLayers, // TODO: Make it configurable if required
                 .baseArrayLayer = 0, // TODO: Make it configurable if required
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT // TODO: Make it configurable if required
             }
@@ -286,16 +289,16 @@ void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
             .baseArrayLayer = 0,
             .baseMipLevel = 0,
-            .layerCount = 1, // TODO: Make it configurable if required
-            .levelCount = 1 // TODO: Make it configurable if required
+            .layerCount = minArrayLayers, // TODO: Make it configurable if required
+            .levelCount = minMipLevels // TODO: Make it configurable if required
         });
 
         VulkanImageTransitionLayout(dstImg, cmdBuff, dstLayout, dstAccess, dstStage, (VkImageSubresourceRange){
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, // TODO: Make it configurable if required
             .baseArrayLayer = 0,
             .baseMipLevel = 0,
-            .layerCount = 1, // TODO: Make it configurable if required
-            .levelCount = 1 // TODO: Make it configurable if required
+            .layerCount = minArrayLayers, // TODO: Make it configurable if required
+            .levelCount = minMipLevels // TODO: Make it configurable if required
         });
         
         VulkanCommandBufferEnd(cmdBuff);
@@ -309,6 +312,9 @@ void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
     VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &sInfo, fence));
     VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(ctx->device, 1, &fence));
+
+    if(dstImg->info.generateMipmaps)
+        VulkanImageGenerateMipmaps(dstImg, dstLayout, dstAccess, dstStage);
 }
 
 #ifdef __cplusplus
