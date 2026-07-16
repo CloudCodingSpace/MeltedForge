@@ -101,6 +101,8 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .format = backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .hasDepth = config->enableDepth,
             .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
         };

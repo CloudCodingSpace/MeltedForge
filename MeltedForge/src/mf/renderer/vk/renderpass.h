@@ -9,8 +9,8 @@ extern "C" {
 
 typedef struct VulkanRenderPassInfo_s {
     VkFormat format; 
-    VkImageLayout initialLayout; 
-    VkImageLayout finalLayout; 
+    VkImageLayout initialLayout, initialDepthLayout; 
+    VkImageLayout finalLayout, finalDepthLayout;
     bool hasDepth;
     bool hasMsaa;
 } VulkanRenderPassInfo;

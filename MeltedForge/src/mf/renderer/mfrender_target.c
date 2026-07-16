@@ -45,7 +45,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .pixels = mfnull,
             .format = renderTarget->backend->ctx.depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
             .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
             .type = VK_IMAGE_TYPE_2D,
@@ -62,6 +62,8 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .format = renderTarget->backend->ctx.swapchainFormat.format,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .hasDepth = renderTarget->hasDepth,
             .hasMsaa = renderTarget->hasMsaa
         };
@@ -258,7 +260,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 .pixels = mfnull,
                 .format = renderTarget->backend->ctx.depthFormat,
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
-                .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
                 .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                 .type = VK_IMAGE_TYPE_2D,

@@ -28,8 +28,8 @@ void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, Vulka
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        .initialLayout = pinfo.initialDepthLayout,
+        .finalLayout = pinfo.finalDepthLayout
     };
 
     VkAttachmentDescription resolveAttachment = colorAttachment;
@@ -140,7 +140,7 @@ void VulkanRenderPassBegin(VulkanRenderPass* pass, VulkanRenderPassBeginInfo inf
         idx++;
         info.fb->attachments[idx]->access = 0;
         info.fb->attachments[idx]->stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        info.fb->attachments[idx]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.fb->attachments[idx]->layout = pass->info.initialDepthLayout;
     }
 
     // Resolve attachment
@@ -182,7 +182,7 @@ void VulkanRenderPassEnd(VulkanRenderPass* pass, VkCommandBuffer cmdBuff, Vulkan
         idx++;
         fb->attachments[idx]->access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         fb->attachments[idx]->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        fb->attachments[idx]->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        fb->attachments[idx]->layout = pass->info.finalDepthLayout;
     }
 
     // Resolve attachment

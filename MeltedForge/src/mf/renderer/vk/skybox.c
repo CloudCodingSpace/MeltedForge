@@ -37,6 +37,8 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
@@ -356,6 +358,8 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
@@ -630,6 +634,8 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
@@ -929,6 +935,8 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         VulkanRenderPassInfo info = {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .format = MF_FORMAT_R32G32_SFLOAT,
             .hasDepth = false
         };
