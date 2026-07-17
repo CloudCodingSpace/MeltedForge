@@ -17,7 +17,7 @@ struct MFRenderTarget_s {
 
     void* userData;
     void (*resizeCallback)(void* userData);
-    VulkanImage depthImage;
+    VulkanImage depthImages[FRAMES_IN_FLIGHT];
     VulkanImage msaaImages[FRAMES_IN_FLIGHT];
     VulkanImage images[FRAMES_IN_FLIGHT];
     VulkanFramebuffer frameBuffers[FRAMES_IN_FLIGHT];

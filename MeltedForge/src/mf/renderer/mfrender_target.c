@@ -54,7 +54,8 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .samples = renderTarget->samples
         };
 
-        VulkanImageCreate(&renderTarget->depthImage, info);
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+            VulkanImageCreate(&renderTarget->depthImages[i], info);
     }
 
     {
@@ -130,7 +131,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             };
 
             if(renderTarget->hasDepth) {
-                attachments[count++] = &renderTarget->depthImage;
+                attachments[count++] = &renderTarget->depthImages[i];
             }
             if(renderTarget->hasMsaa)
                 attachments[count++] = &renderTarget->images[i];
@@ -160,8 +161,8 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
 
             vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
             
-            imgInfo.imageView = renderTarget->depthImage.view;
-            imgInfo.sampler = renderTarget->depthImage.sampler;
+            imgInfo.imageView = renderTarget->depthImages[i].view;
+            imgInfo.sampler = renderTarget->depthImages[i].sampler;
             write.dstBinding = 1;
             if(renderTarget->hasDepth)
                 vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
@@ -212,8 +213,10 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
             VulkanImageDestroy(&renderTarget->msaaImages[i]);
     }
 
-    if(renderTarget->hasDepth)
-        VulkanImageDestroy(&renderTarget->depthImage);
+    if(renderTarget->hasDepth) {
+        for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+            VulkanImageDestroy(&renderTarget->depthImages[i]);
+    }
 
     mfResourceSetLayoutDestroy(renderTarget->layout);
     VulkanRenderPassDestroy(&renderTarget->renderPass);
@@ -251,15 +254,17 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 VulkanImageDestroy(&renderTarget->msaaImages[i]);
         }
         
-        if(renderTarget->hasDepth)
-            VulkanImageDestroy(&renderTarget->depthImage);
+        if(renderTarget->hasDepth) {
+            for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+                VulkanImageDestroy(&renderTarget->depthImages[i]);
+        }
         if(renderTarget->backend->config.enableUI) {
             MF_SETMEM(renderTarget->igColorSets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
         }
         MF_SETMEM(renderTarget->frameBuffers, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->msaaImages, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
-        MF_SETMEM(&renderTarget->depthImage, 0, sizeof(VulkanImage));
+        MF_SETMEM(renderTarget->depthImages, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
     }
     // Re-creating
     {
@@ -281,7 +286,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 .samples = renderTarget->samples
             };
 
-            VulkanImageCreate(&renderTarget->depthImage, info);
+            for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+                VulkanImageCreate(&renderTarget->depthImages[i], info);
         }
 
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -315,7 +321,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             };
 
             if(renderTarget->hasDepth) {
-                attachments[count++] = &renderTarget->depthImage;
+                attachments[count++] = &renderTarget->depthImages[i];
             }
             if(renderTarget->hasMsaa)
                 attachments[count++] = &renderTarget->images[i];
@@ -342,8 +348,8 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 };
                 vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
 
-                imgInfo.imageView = renderTarget->depthImage.view;
-                imgInfo.sampler = renderTarget->depthImage.sampler;
+                imgInfo.imageView = renderTarget->depthImages[i].view;
+                imgInfo.sampler = renderTarget->depthImages[i].sampler;
                 write.dstBinding = 1;
                 if(renderTarget->hasDepth)
                     vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
