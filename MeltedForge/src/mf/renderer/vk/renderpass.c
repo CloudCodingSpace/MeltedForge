@@ -25,9 +25,9 @@ void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, Vulka
         .format = ctx->depthFormat,
         .samples = pinfo.hasMsaa ? ctx->samples : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
         .initialLayout = pinfo.initialDepthLayout,
         .finalLayout = pinfo.finalDepthLayout
     };
@@ -181,7 +181,7 @@ void VulkanRenderPassEnd(VulkanRenderPass* pass, VkCommandBuffer cmdBuff, Vulkan
     if(pass->info.hasDepth) {
         idx++;
         fb->attachments[idx]->access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        fb->attachments[idx]->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        fb->attachments[idx]->stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         fb->attachments[idx]->layout = pass->info.finalDepthLayout;
     }
 
