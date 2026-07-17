@@ -85,7 +85,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         bindings[1].description = desc;
         bindings[1].binding = 1;
 
-        renderTarget->layout = mfResourceSetLayoutCreate(2, bindings, 1, renderer);
+        renderTarget->layout = mfResourceSetLayoutCreate(renderTarget->hasDepth ? 2 : 1, bindings, 2, renderer);
 
         VkDescriptorSetAllocateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -140,7 +140,6 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
 
         if(renderTarget->backend->config.enableUI) {
             renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            renderTarget->igDepthSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->depthImage.sampler, renderTarget->depthImage.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
         {
@@ -160,6 +159,12 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             };
 
             vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
+            
+            imgInfo.imageView = renderTarget->depthImage.view;
+            imgInfo.sampler = renderTarget->depthImage.sampler;
+            write.dstBinding = 1;
+            if(renderTarget->hasDepth)
+                vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
         }
 
         renderTarget->commandBuffers[i] = VulkanCommandBufferAllocate(&renderTarget->backend->ctx, renderTarget->backend->ctx.commandPool, true);
@@ -199,7 +204,6 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
         VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
         if(renderTarget->backend->config.enableUI) {
             ImGui_ImplVulkan_RemoveTexture(renderTarget->igColorSets[i]);
-            ImGui_ImplVulkan_RemoveTexture(renderTarget->igDepthSets[i]);
         }
 
         VulkanFramebufferDestroy(&renderTarget->frameBuffers[i]);
@@ -239,7 +243,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             if(renderTarget->backend->config.enableUI) {
                 ImGui_ImplVulkan_RemoveTexture(renderTarget->igColorSets[i]);
-                ImGui_ImplVulkan_RemoveTexture(renderTarget->igDepthSets[i]);
             }
             
             VulkanFramebufferDestroy(&renderTarget->frameBuffers[i]);
@@ -252,7 +255,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             VulkanImageDestroy(&renderTarget->depthImage);
         if(renderTarget->backend->config.enableUI) {
             MF_SETMEM(renderTarget->igColorSets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
-            MF_SETMEM(renderTarget->igDepthSets, 0, sizeof(VkDescriptorSet) * FRAMES_IN_FLIGHT);
         }
         MF_SETMEM(renderTarget->frameBuffers, 0, sizeof(VkFramebuffer) * FRAMES_IN_FLIGHT);
         MF_SETMEM(renderTarget->images, 0, sizeof(VulkanImage) * FRAMES_IN_FLIGHT);
@@ -321,7 +323,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI) {
                 renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                renderTarget->igDepthSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->depthImage.sampler, renderTarget->depthImage.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
 
             {
@@ -339,8 +340,13 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                     .dstSet = renderTarget->sets[i],
                     .pImageInfo = &imgInfo
                 };
-
                 vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
+
+                imgInfo.imageView = renderTarget->depthImage.view;
+                imgInfo.sampler = renderTarget->depthImage.sampler;
+                write.dstBinding = 1;
+                if(renderTarget->hasDepth)
+                    vkUpdateDescriptorSets(renderTarget->backend->ctx.device, 1, &write, 0, mfnull);
             }
         }
     }
@@ -533,15 +539,6 @@ ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget
     if(!renderTarget->backend->config.enableUI)
         return mfnull;
     return (ImTextureID)renderTarget->igColorSets[renderTarget->backend->frameIndex];
-}
-
-ImTextureID mfRenderTargetGetDepthAttachmentImTexID(MFRenderTarget* renderTarget) {
-    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
-
-    if(!renderTarget->backend->config.enableUI)
-        return mfnull;
-    return (ImTextureID)renderTarget->igDepthSets[renderTarget->backend->frameIndex];
 }
 
 size_t mfRenderTargetGetSizeInBytes(void) {
