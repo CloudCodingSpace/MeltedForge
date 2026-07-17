@@ -29,6 +29,9 @@ typedef struct VulkanBackend_s {
     u32 swapchainImageIndex, frameIndex;
     VkClearValue clearColor;
 
+    VkFormat depthFormat;
+    VulkanImage depthImage;
+
     VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
     VkCommandBuffer computeCmdBuffers[FRAMES_IN_FLIGHT];
 

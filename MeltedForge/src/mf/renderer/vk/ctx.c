@@ -328,34 +328,6 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     MF_FREEMEM(caps.modes);
 }
 
-static void GetDepthFormat(VulkanBackendCtx* ctx) {
-    ctx->depthFormat = VK_FORMAT_UNDEFINED;
-
-    VkFormat reqFormats[] = {
-        VK_FORMAT_D32_SFLOAT,
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
-        VK_FORMAT_D24_UNORM_S8_UINT
-    };
-
-    u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-
-    for(u32 i = 0; i < MF_ARRAYLEN(reqFormats); i++) {
-        VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(ctx->physicalDevice, reqFormats[i], &props);
-
-        if((props.linearTilingFeatures & flags) == flags) {
-            ctx->depthFormat = reqFormats[i];
-            return;
-        }
-        if((props.optimalTilingFeatures & flags) == flags) {
-            ctx->depthFormat = reqFormats[i];
-            return;
-        }
-    }
-
-    MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
-}
-
 static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device) {
     VkPhysicalDeviceProperties props = {};
     vkGetPhysicalDeviceProperties(device, &props);
@@ -371,10 +343,9 @@ static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool enableDepth, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->vsync = vsync;
-    ctx->enableDepth = enableDepth;
 
     // Checking supported vulkan version
     {
@@ -637,35 +608,9 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 
         VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->uiDescriptorPool));
     }
-    // Depth
-    if(enableDepth) {
-        GetDepthFormat(ctx);
-
-        VulkanImageInfo info = {
-            .ctx = ctx,
-            .width = ctx->swapchainExtent.width,
-            .height = ctx->swapchainExtent.height,
-            .gpuResource = false,
-            .pixels = mfnull,
-            .format = ctx->depthFormat,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .arrayLayers = 1,
-            .type = VK_IMAGE_TYPE_2D,
-            .samples = ctx->samples
-        };
-
-        VulkanImageCreate(&ctx->depthImage, info);
-    }
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
-    if(ctx->enableDepth)
-        VulkanImageDestroy(&ctx->depthImage);
-
     VulkanCommandPoolDestroy(ctx, ctx->commandPool);
     VulkanCommandPoolDestroy(ctx, ctx->computeCommandPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);
@@ -693,9 +638,6 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
-    
-    if(ctx->enableDepth)
-        VulkanImageDestroy(&ctx->depthImage);
    
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
         vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
@@ -706,27 +648,6 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
     vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
 
     CreateSwapchain(ctx, mfWindowGetHandle(window));
-
-    if(ctx->enableDepth) {
-        VulkanImageInfo info = {
-            .ctx = ctx,
-            .width = ctx->swapchainExtent.width,
-            .height = ctx->swapchainExtent.height,
-            .gpuResource = false,
-            .pixels = mfnull,
-            .format = ctx->depthFormat,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
-            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
-            .type = VK_IMAGE_TYPE_2D,
-            .arrayLayers = 1,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .samples = ctx->samples
-        };
-
-        VulkanImageCreate(&ctx->depthImage, info);
-    }
 }
 
 #ifdef __cplusplus

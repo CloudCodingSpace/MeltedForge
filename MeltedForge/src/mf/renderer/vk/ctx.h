@@ -48,17 +48,14 @@ typedef struct VulkanBackendCtx_s {
     u32 swapchainImageCount;
     VulkanImage* swapchainImages;
     
-    bool vsync, enableDepth;
+    bool vsync;
     VkSampleCountFlagBits maxSupportedSamples, samples;
-
-    VkFormat depthFormat;
-    VulkanImage depthImage;
 
     VkDescriptorPool uiDescriptorPool;
     VkCommandPool commandPool, computeCommandPool;
 } VulkanBackendCtx;
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool enableDepth, MFWindow* window);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, MFWindow* window);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);

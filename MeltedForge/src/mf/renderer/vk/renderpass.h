@@ -4,8 +4,9 @@
 extern "C" {
 #endif
 
-#include "ctx.h"
 #include "fb.h"
+
+struct VulkanBackend_s;
 
 typedef struct VulkanRenderPassInfo_s {
     VkFormat format; 
@@ -25,12 +26,13 @@ typedef struct VulkanRenderPassBeginInfo_s {
 
 typedef struct VulkanRenderPass_s {
     VkRenderPass handle;
+    struct VulkanBackend_s* backend;
     VulkanBackendCtx* ctx;
     VulkanRenderPassInfo info;
     bool begun;
 } VulkanRenderPass;
 
-void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, VulkanRenderPassInfo info);
+void VulkanRenderPassCreate(VulkanRenderPass* pass, struct VulkanBackend_s* backend, VulkanRenderPassInfo info);
 void VulkanRenderPassDestroy(VulkanRenderPass* pass);
 
 void VulkanRenderPassBegin(VulkanRenderPass* pass, VulkanRenderPassBeginInfo info);

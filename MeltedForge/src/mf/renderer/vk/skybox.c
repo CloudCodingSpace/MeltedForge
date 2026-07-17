@@ -42,7 +42,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
-        VulkanRenderPassCreate(&pass, ctx, info);
+        VulkanRenderPassCreate(&pass, skybox->backend, info);
     }
     // 2D env map
     {
@@ -79,7 +79,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .height = config.faceSize,
             .gpuResource = false,
             .pixels = mfnull,
-            .format = ctx->depthFormat,
+            .format = skybox->backend->depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -363,7 +363,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
-        VulkanRenderPassCreate(&pass, ctx, info);
+        VulkanRenderPassCreate(&pass, skybox->backend, info);
     }
     // Depth & temp image
     {
@@ -373,7 +373,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .height = cubemapImage->info.height,
             .gpuResource = false,
             .pixels = mfnull,
-            .format = ctx->depthFormat,
+            .format = skybox->backend->depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -639,7 +639,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .format = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .hasDepth = true
         };
-        VulkanRenderPassCreate(&pass, ctx, info);
+        VulkanRenderPassCreate(&pass, skybox->backend, info);
     }
     // Depth & temp image
     for(u32 i = 0; i < maxMipLevels; i++) {
@@ -649,7 +649,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .height = cubemapImage->info.height * pow(0.5, i),
             .gpuResource = false,
             .pixels = mfnull,
-            .format = ctx->depthFormat,
+            .format = skybox->backend->depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -940,7 +940,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
             .format = MF_FORMAT_R32G32_SFLOAT,
             .hasDepth = false
         };
-        VulkanRenderPassCreate(&pass, ctx, info);
+        VulkanRenderPassCreate(&pass, skybox->backend, info);
     }
     // Pipeline
     {

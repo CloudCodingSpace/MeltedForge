@@ -3,18 +3,19 @@ extern "C" {
 #endif
 
 #include "renderpass.h"
-
+#include "backend.h"
 #include "common.h"
 
-void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, VulkanRenderPassInfo pinfo) {
-    pass->ctx = ctx;
+void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackend* backend, VulkanRenderPassInfo pinfo) {
+    pass->backend = backend;
+    pass->ctx = &backend->ctx;
     pass->info = pinfo;
 
     VkAttachmentDescription colorAttachment = {
         .format = pinfo.format,
         .initialLayout = pinfo.initialLayout,
         .finalLayout = pinfo.finalLayout,
-        .samples = pinfo.hasMsaa ? ctx->samples : VK_SAMPLE_COUNT_1_BIT,
+        .samples = pinfo.hasMsaa ? pass->ctx->samples : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -22,8 +23,8 @@ void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, Vulka
     };
 
     VkAttachmentDescription depthAttachment = {
-        .format = ctx->depthFormat,
-        .samples = pinfo.hasMsaa ? ctx->samples : VK_SAMPLE_COUNT_1_BIT,
+        .format = backend->depthFormat,
+        .samples = pinfo.hasMsaa ? pass->ctx->samples : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -93,7 +94,7 @@ void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackendCtx* ctx, Vulka
         .pDependencies = &dependency
     };
 
-    VK_CHECK(vkCreateRenderPass(ctx->device, &info, ctx->allocator, &pass->handle));
+    VK_CHECK(vkCreateRenderPass(pass->ctx->device, &info, pass->ctx->allocator, &pass->handle));
 }
 
 void VulkanRenderPassDestroy(VulkanRenderPass* pass) {

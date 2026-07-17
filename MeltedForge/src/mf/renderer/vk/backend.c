@@ -19,6 +19,34 @@ extern "C" {
 #include "render_target.h"
 #include "buffer.h"
 
+static void GetDepthFormat(VulkanBackend* backend) {
+    backend->depthFormat = VK_FORMAT_UNDEFINED;
+
+    VkFormat reqFormats[] = {
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT
+    };
+
+    u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    for(u32 i = 0; i < MF_ARRAYLEN(reqFormats); i++) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(backend->ctx.physicalDevice, reqFormats[i], &props);
+
+        if((props.linearTilingFeatures & flags) == flags) {
+            backend->depthFormat = reqFormats[i];
+            return;
+        }
+        if((props.optimalTilingFeatures & flags) == flags) {
+            backend->depthFormat = reqFormats[i];
+            return;
+        }
+    }
+
+    MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
+}
+
 void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     if(backend->ctx.swapchainExtent.width == width && backend->ctx.swapchainExtent.height == height)
         return;
@@ -35,6 +63,10 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 
     VK_CHECK(vkDeviceWaitIdle(backend->ctx.device));
 
+    if(backend->config.enableDepth) {
+        VulkanImageDestroy(&backend->depthImage);
+    }
+
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             VulkanImageDestroy(&backend->msaaImages[i]);
@@ -42,6 +74,28 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
     }
 
     VulkanBackendCtxResize(&backend->ctx, window);
+
+    // Depth image
+    if(backend->config.enableDepth) {
+        VulkanImageInfo info = {
+            .ctx = &backend->ctx,
+            .width = backend->ctx.swapchainExtent.width,
+            .height = backend->ctx.swapchainExtent.height,
+            .gpuResource = false,
+            .pixels = mfnull,
+            .format = backend->depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .arrayLayers = 1,
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = backend->ctx.samples
+        };
+
+        VulkanImageCreate(&backend->depthImage, info);
+    }
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         // MSAA Images
@@ -70,7 +124,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
             (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? &backend->msaaImages[i] : &backend->ctx.swapchainImages[i]
         };
         if(backend->config.enableDepth) {
-            attachments[len++] = &backend->ctx.depthImage;
+            attachments[len++] = &backend->depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             attachments[len++] = &backend->ctx.swapchainImages[i];
@@ -89,25 +143,11 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     backend->waitStages = mfArrayCreate(5, sizeof(VkPipelineStageFlags));
     backend->descSetBindingPool = mfArrayCreate(5, sizeof(VkDescriptorSet));
 
-    VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->enableDepth, config->window);
+    VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         backend->commandBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true);
         backend->computeCmdBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.computeCommandPool, true);
-    }
-
-    {
-        VulkanRenderPassInfo info = {
-            .format = backend->ctx.swapchainFormat.format,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            .hasDepth = config->enableDepth,
-            .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
-        };
-
-        VulkanRenderPassCreate(&backend->pass, &backend->ctx, info);
     }
 
     // Color images
@@ -134,6 +174,44 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
         }
     }
 
+    // Depth image
+    if(backend->config.enableDepth) {
+        GetDepthFormat(backend);
+
+        VulkanImageInfo info = {
+            .ctx = &backend->ctx,
+            .width = backend->ctx.swapchainExtent.width,
+            .height = backend->ctx.swapchainExtent.height,
+            .gpuResource = false,
+            .pixels = mfnull,
+            .format = backend->depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .arrayLayers = 1,
+            .type = VK_IMAGE_TYPE_2D,
+            .samples = backend->ctx.samples
+        };
+
+        VulkanImageCreate(&backend->depthImage, info);
+    }
+
+    {
+        VulkanRenderPassInfo info = {
+            .format = backend->ctx.swapchainFormat.format,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .initialDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalDepthLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .hasDepth = config->enableDepth,
+            .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
+        };
+
+        VulkanRenderPassCreate(&backend->pass, backend, info);
+    }
+
     // Framebuffers
     backend->frameBufferCount = backend->ctx.swapchainImageCount;
     backend->frameBuffers = MF_ALLOCMEM(VulkanFramebuffer, sizeof(VulkanFramebuffer) * backend->frameBufferCount);
@@ -143,7 +221,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? &backend->msaaImages[i] : &backend->ctx.swapchainImages[i]
         };
         if(config->enableDepth) {
-            attachments[len++] = &backend->ctx.depthImage;
+            attachments[len++] = &backend->depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             attachments[len++] = &backend->ctx.swapchainImages[i];
@@ -278,6 +356,10 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
 
     for(u32 i = 0; i < backend->ctx.swapchainImageCount; i++) {
         vkDestroySemaphore(backend->ctx.device, backend->renderFinishedSemas[i], backend->ctx.allocator);
+    }
+
+    if(backend->config.enableDepth) {
+        VulkanImageDestroy(&backend->depthImage);
     }
 
     for(u32 i = 0; i < backend->frameBufferCount; i++) {

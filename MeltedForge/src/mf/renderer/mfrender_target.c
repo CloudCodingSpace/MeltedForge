@@ -31,7 +31,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
     
     renderTarget->samples = renderTarget->backend->ctx.samples;
     renderTarget->hasMsaa = renderTarget->backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT;
-    renderTarget->hasDepth = hasDepth && renderTarget->backend->ctx.enableDepth;
+    renderTarget->hasDepth = hasDepth && renderTarget->backend->config.enableDepth;
     renderTarget->resizeCallback = mfnull;
 
     renderTarget->begun = false;
@@ -43,7 +43,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .height = renderTarget->backend->ctx.swapchainExtent.height,
             .gpuResource = true,
             .pixels = mfnull,
-            .format = renderTarget->backend->ctx.depthFormat,
+            .format = renderTarget->backend->depthFormat,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -68,7 +68,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .hasMsaa = renderTarget->hasMsaa
         };
 
-        VulkanRenderPassCreate(&renderTarget->renderPass, &renderTarget->backend->ctx, info);
+        VulkanRenderPassCreate(&renderTarget->renderPass, renderTarget->backend, info);
     }
 
     {
@@ -270,7 +270,7 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 .height = extent.y,
                 .gpuResource = true,
                 .pixels = mfnull,
-                .format = renderTarget->backend->ctx.depthFormat,
+                .format = renderTarget->backend->depthFormat,
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
                 .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
