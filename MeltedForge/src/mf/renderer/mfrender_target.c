@@ -51,7 +51,9 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
             .type = VK_IMAGE_TYPE_2D,
             .arrayLayers = 1,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .samples = renderTarget->samples
+            .samples = renderTarget->samples,
+            .magFilter = VK_FILTER_NEAREST,
+            .minFilter = VK_FILTER_NEAREST
         };
 
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -115,7 +117,9 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
                 .type = VK_IMAGE_TYPE_2D,
                 .arrayLayers = 1,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .samples = VK_SAMPLE_COUNT_1_BIT
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST
             };
 
             VulkanImageCreate(&renderTarget->images[i], info);
@@ -140,7 +144,9 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         }
 
         if(renderTarget->backend->config.enableUI) {
-            renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            VkSampler sampler = renderTarget->hasMsaa ? renderTarget->msaaImages[i].sampler : renderTarget->images[i].sampler;
+            VkImageView view = renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view;
+            renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(sampler, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
         {
@@ -283,7 +289,9 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                 .type = VK_IMAGE_TYPE_2D,
                 .arrayLayers = 1,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .samples = renderTarget->samples
+                .samples = renderTarget->samples,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST
             };
 
             for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -306,7 +314,9 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
                     .type = VK_IMAGE_TYPE_2D,
                     .arrayLayers = 1,
                     .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                    .samples = VK_SAMPLE_COUNT_1_BIT
+                    .samples = VK_SAMPLE_COUNT_1_BIT,
+                    .magFilter = VK_FILTER_NEAREST,
+                    .minFilter = VK_FILTER_NEAREST
                 };
 
                 VulkanImageCreate(&renderTarget->images[i], info);
@@ -328,7 +338,9 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 
             VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI) {
-                renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                VkSampler sampler = renderTarget->hasMsaa ? renderTarget->msaaImages[i].sampler : renderTarget->images[i].sampler;
+                VkImageView view = renderTarget->hasMsaa ? renderTarget->msaaImages[i].view : renderTarget->images[i].view;
+                renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(sampler, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
 
             {

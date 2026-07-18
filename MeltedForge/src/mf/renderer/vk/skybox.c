@@ -64,7 +64,9 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
             .isCubemap = false,
             .pixels = data,
-            .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
+            .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT,
+            .magFilter = MF_FILTER_LINEAR,
+            .minFilter = MF_FILTER_LINEAR
         };
 
         image = mfGpuImageCreate(renderer, info);
@@ -87,7 +89,9 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .magFilter = VK_FILTER_LINEAR,
+            .minFilter = VK_FILTER_LINEAR
         };
 
         VulkanImageCreate(&depthImage, info);
@@ -381,7 +385,9 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .magFilter = VK_FILTER_LINEAR,
+            .minFilter = VK_FILTER_LINEAR
         };
 
         VulkanImageCreate(&depthImage, info);
@@ -657,7 +663,9 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .arrayLayers = 1,
             .type = VK_IMAGE_TYPE_2D,
-            .samples = VK_SAMPLE_COUNT_1_BIT
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .magFilter = VK_FILTER_LINEAR,
+            .minFilter = VK_FILTER_LINEAR
         };
 
         VulkanImageCreate(&depthImage[i], info);

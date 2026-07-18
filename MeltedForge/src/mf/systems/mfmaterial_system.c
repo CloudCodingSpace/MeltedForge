@@ -284,7 +284,9 @@ MFGpuImage* mfMaterialSystemGetImageFromArray(MFModelMatTextures type, MFArray* 
         .height = 1,
         .pixels = color,
         .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
-        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
+        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT,
+        .magFilter = MF_FILTER_LINEAR,
+        .minFilter = MF_FILTER_LINEAR
     };
     img = mfGpuImageCreate(renderer, config);
 
@@ -364,7 +366,9 @@ error_return:
         .pixels = pixels,
         .imageFormat = MF_FORMAT_R8G8B8A8_UNORM,
         .generateMipmaps = true,
-        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT
+        .addressMode = MF_SAMPLER_ADDRESS_MODE_REPEAT,
+        .magFilter = MF_FILTER_LINEAR,
+        .minFilter = MF_FILTER_LINEAR
     };
 
     MFGpuImage* image = mfGpuImageCreate(renderer, config);

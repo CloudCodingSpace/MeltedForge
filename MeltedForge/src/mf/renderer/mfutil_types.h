@@ -16,6 +16,14 @@ typedef enum MFSamples_e {
     MF_SAMPLE_COUNT_64 = 0x00000040
 } MFSamples;
 
+typedef enum MFFilter_e {
+    MF_FILTER_NEAREST = 0,
+    MF_FILTER_LINEAR = 1,
+    MF_FILTER_CUBIC_EXT = 1000015000,
+    MF_FILTER_CUBIC_IMG = MF_FILTER_CUBIC_EXT,
+    MF_FILTER_MAX_ENUM = 0x7FFFFFFF
+} MFFilter;
+
 typedef enum MFSamplerAddressMode_e {
     MF_SAMPLER_ADDRESS_MODE_REPEAT = 0,
     MF_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT = 1,

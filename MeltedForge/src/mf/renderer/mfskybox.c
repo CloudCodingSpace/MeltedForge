@@ -31,7 +31,9 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             .height = config.faceSize,
             .isCubemap = true,
             .imageFormat = skybox->isHdr ? MF_FORMAT_R32G32B32A32_SFLOAT : MF_FORMAT_R8G8B8A8_UNORM,
-            .addressMode = MF_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+            .addressMode = MF_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            .magFilter = MF_FILTER_LINEAR,
+            .minFilter = MF_FILTER_LINEAR
         };
         skybox->image = mfGpuImageCreate(renderer, info);
         if(config.generatePbrMaps) {
@@ -54,6 +56,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
                 info.isColorAttachment = true;
                 info.width = info.height = config.faceSize;
                 info.imageFormat = MF_FORMAT_R32G32_SFLOAT;
+                info.magFilter = info.minFilter = MF_FILTER_NEAREST;
                 skybox->brdfLut = mfGpuImageCreate(renderer, info);
             }
         }

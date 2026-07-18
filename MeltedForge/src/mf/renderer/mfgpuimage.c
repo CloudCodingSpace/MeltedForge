@@ -54,7 +54,9 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
             (VkSamplerAddressMode)(u32)config.addressMode,
             (VkSamplerAddressMode)(u32)config.addressMode
         },
-        .storageImage = config.isStorageImage
+        .storageImage = config.isStorageImage,
+        .magFilter = (VkFilter)(u32)config.magFilter,
+        .minFilter = (VkFilter)(u32)config.minFilter
     };
 
     if(config.isCubemap) {
@@ -151,10 +153,18 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height, u8* pixels) {
     for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanImageDestroy(&image->image[i]);
 
+    if(image->config.forImguiTexture && image->backend->config.enableUI) {
+        for(u32 j = 0; j < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); j++) {
+            for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+                ImGui_ImplVulkan_RemoveTexture(image->igSets[j][i]);
+            }
+        }
+    }
+
     VulkanImageInfo info = {
         .ctx = image->ctx,
-        .width = image->config.width,
-        .height = image->config.height,
+        .width = width,
+        .height = height,
         .gpuResource = true,
         .pixels = pixels,
         .format = (VkFormat)(u32)(image->config.imageFormat),
@@ -162,12 +172,43 @@ void mfGpuImageResize(MFGpuImage* image, u32 width, u32 height, u8* pixels) {
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
         .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
         .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+        .arrayLayers = 1,
+        .type = VK_IMAGE_TYPE_2D,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .generateMipmaps = image->config.generateMipmaps,
-        .samples = VK_SAMPLE_COUNT_1_BIT
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .addressModes = {
+            (VkSamplerAddressMode)(u32)image->config.addressMode,
+            (VkSamplerAddressMode)(u32)image->config.addressMode,
+            (VkSamplerAddressMode)(u32)image->config.addressMode
+        },
+        .storageImage = image->config.isStorageImage,
+        .magFilter = (VkFilter)(u32)image->config.magFilter,
+        .minFilter = (VkFilter)(u32)image->config.minFilter
     };
+
+    if(image->config.isCubemap) {
+        info.arrayLayers = 6;
+        info.imageFlags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        info.addressModes[0] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.addressModes[1] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.addressModes[2] = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    }
+
+    if(image->config.isColorAttachment)
+        info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     
     for(u32 i = 0; i < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
         VulkanImageCreate(&image->image[i], info);
+   
+    if(image->config.forImguiTexture && image->backend->config.enableUI) {
+        for(u32 j = 0; j < (image->config.frameSynced ? FRAMES_IN_FLIGHT : 1); j++) {
+            for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+                image->igSets[j][i] = ImGui_ImplVulkan_AddTexture(image->image[j].sampler, image->image[j].view, image->config.isStorageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
+        }
+    }
 }
 
 const MFGpuImageConfig* mfGpuImageGetConfig(MFGpuImage* image) {

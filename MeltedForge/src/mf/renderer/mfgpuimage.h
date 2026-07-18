@@ -19,6 +19,7 @@ typedef struct MFGpuImageConfig_s {
     void* pixels;
     MFFormat imageFormat;
     MFSamplerAddressMode addressMode;
+    MFFilter magFilter, minFilter;
     bool generateMipmaps;
     bool isCubemap;
     bool isColorAttachment;
