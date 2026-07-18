@@ -21,7 +21,7 @@ float LinearizeDepth(float d,float zNear,float zFar) {
 void main() {
     if(pc.showDepthAttachment == 1) {
         float depth = texture(u_DepthAttachment, vec2(uv.x, 1.0 - uv.y)).r;
-        depth = LinearizeDepth(depth, pc.zNear, pc.zFar);
+        depth = LinearizeDepth(depth, pc.zNear, pc.zFar) * 25 / pc.zFar; // * 25 / pc.fFar only for demonstration
         FragColor = vec4(vec3(depth), 1.0);
     } else {
         FragColor = texture(u_ColorAttachment, vec2(uv.x, 1.0 - uv.y));

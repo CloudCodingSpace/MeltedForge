@@ -52,7 +52,7 @@ typedef struct MFTState_s {
     UBOData cameraUboData;
     
     MFRenderTarget* renderTarget;
-    bool takeScreenshot;
+    bool takeScreenshot, showDepthAttachment;
     
     MFWindow* window;
     void* renderer;

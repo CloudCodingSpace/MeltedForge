@@ -463,6 +463,11 @@ void MFTOnRender(void* pstate, void* pappState) {
 
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
+    const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
+
+    if((mfRenderTargetGetWidth(state->renderTarget) != winConfig->width) || ((mfRenderTargetGetHeight(state->renderTarget) != winConfig->height))) {
+        mfRenderTargetResize(state->renderTarget, (MFVec2){ winConfig->width, winConfig->height });
+    }
 
     mfRenderTargetBegin(state->renderTarget);
 
@@ -485,7 +490,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
 
     FSPushConstantData fsPcData = {
-        .showDepthAttachment = 0,
+        .showDepthAttachment = state->showDepthAttachment ? 1 : 0,
         .zNear = state->scene.camera.nearPlane,
         .zFar = state->scene.camera.farPlane
     };
@@ -520,7 +525,9 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             state->takeScreenshot = true;
         }
 
-        igDummy((ImVec2){ 0.0f, 50.0f });
+        igDummy((ImVec2){ 0.0f, 20.0f });
+
+        igCheckbox("Show depth attachment", &state->showDepthAttachment);
 
         if(igCollapsingHeader_BoolPtr("Light settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             f32 posData[3] = {0};
