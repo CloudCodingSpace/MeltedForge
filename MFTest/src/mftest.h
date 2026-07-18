@@ -14,6 +14,12 @@ typedef struct PushConstantData_s {
     MFMat3 normalMat;
 } PushConstantData;
 
+typedef struct FSPushConstantData_s {
+    int showDepthAttachment;
+    float zNear;
+    float zFar;
+} FSPushConstantData;
+
 typedef struct LightUBOData_s {
     MFVec3 lightPos;
     MFVec3 camPos;

@@ -19,6 +19,12 @@ static void CreatePipeline(MFTState* state) {
         .stage = MF_SHADER_STAGE_VERTEX
     };
 
+    MFPushConstantRange fsRange = {
+        .offset = 0,
+        .size = sizeof(FSPushConstantData),
+        .stage = MF_SHADER_STAGE_FRAGMENT
+    };
+
     MFResourceSetLayout* fsLayouts[] = {
         mfRenderTargetGetResourceSetLayout(state->renderTarget)
     };
@@ -41,7 +47,9 @@ static void CreatePipeline(MFTState* state) {
         },
         .type = MF_PIPELINE_TYPE_GRAPHICS,
         .resourceLayoutCount = MF_ARRAYLEN(fsLayouts),
-        .resourceLayouts = fsLayouts
+        .resourceLayouts = fsLayouts,
+        .pushConstRangeCount = 1,
+        .pushConstRanges = &fsRange
     };
 
     state->fsPipeline = mfPipelineCreate(state->renderer, info);
@@ -469,12 +477,20 @@ void MFTOnRender(void* pstate, void* pappState) {
     };
 
     mfSceneRender(&state->scene, &config);
-
     mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
+    
     mfRenderTargetEnd(state->renderTarget, false);
 
     mfPipelineBind(state->fsPipeline, mfRendererGetViewport(appState->renderer), mfRendererGetScissor(appState->renderer));
     mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
+
+    FSPushConstantData fsPcData = {
+        .showDepthAttachment = 0,
+        .zNear = state->scene.camera.nearPlane,
+        .zFar = state->scene.camera.farPlane
+    };
+
+    mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &fsPcData);
     mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
 
     MF_PROFILE_ZONE_END(__temp);
