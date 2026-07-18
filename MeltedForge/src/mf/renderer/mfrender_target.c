@@ -141,8 +141,6 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
 
         if(renderTarget->backend->config.enableUI) {
             renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            if(renderTarget->hasDepth)
-                renderTarget->igDepthSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->depthImages[i].sampler, renderTarget->depthImages[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
         {
@@ -207,8 +205,6 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
         VulkanCommandBufferFree(&renderTarget->backend->ctx, renderTarget->commandBuffers[i], renderTarget->backend->ctx.commandPool);
         if(renderTarget->backend->config.enableUI) {
             ImGui_ImplVulkan_RemoveTexture(renderTarget->igColorSets[i]);
-            if(renderTarget->hasDepth)
-                ImGui_ImplVulkan_RemoveTexture(renderTarget->igDepthSets[i]);
         }
 
         VulkanFramebufferDestroy(&renderTarget->frameBuffers[i]);
@@ -250,8 +246,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             if(renderTarget->backend->config.enableUI) {
                 ImGui_ImplVulkan_RemoveTexture(renderTarget->igColorSets[i]);
-                if(renderTarget->hasDepth)
-                    ImGui_ImplVulkan_RemoveTexture(renderTarget->igDepthSets[i]);
             }
             
             VulkanFramebufferDestroy(&renderTarget->frameBuffers[i]);
@@ -335,8 +329,6 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
             VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI) {
                 renderTarget->igColorSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->images[i].sampler, renderTarget->images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                if(renderTarget->hasDepth)
-                    renderTarget->igDepthSets[i] = ImGui_ImplVulkan_AddTexture(renderTarget->depthImages[i].sampler, renderTarget->depthImages[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
 
             {
@@ -553,18 +545,6 @@ ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget
     if(!renderTarget->backend->config.enableUI)
         return mfnull;
     return (ImTextureID)renderTarget->igColorSets[renderTarget->backend->frameIndex];
-}
-
-ImTextureID mfRenderTargetGetDepthAttachmentImTexID(MFRenderTarget* renderTarget) {
-    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
-
-    if(!renderTarget->backend->config.enableUI)
-        return mfnull;
-    if(!renderTarget->hasDepth)
-        return mfnull;
-
-    return (ImTextureID)renderTarget->igDepthSets[renderTarget->backend->frameIndex];
 }
 
 size_t mfRenderTargetGetSizeInBytes(void) {
