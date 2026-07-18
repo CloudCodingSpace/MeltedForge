@@ -19,6 +19,10 @@ static void CreatePipeline(MFTState* state) {
         .stage = MF_SHADER_STAGE_VERTEX
     };
 
+    MFResourceSetLayout* fsLayouts[] = {
+        mfRenderTargetGetResourceSetLayout(state->renderTarget)
+    };
+
     MFResourceSetLayout* layouts[] = {
         state->cameraLayout,
         state->skyboxLayout,
@@ -31,25 +35,29 @@ static void CreatePipeline(MFTState* state) {
             .hasDepth = true,
             .depthCompareOp = MF_COMPARE_OP_DEFAULT,
             .transparent = true,
-            .vertPath = "mftshaders/default.vert.spv",
-            .fragPath = "mftshaders/default.frag.spv",
-            .attributesCount = attributeCount,
-            .attributes = attributes,
-            .bindingsCount = bindingCount,
-            .bindings = &bindings,
+            .vertPath = "mftshaders/fs.vert.spv",
+            .fragPath = "mftshaders/fs.frag.spv",
             .cullMode = MF_CULL_MODE_BACK_BIT
         },
-        .resourceLayoutCount = MF_ARRAYLEN(layouts),
-        .resourceLayouts = layouts,
-        .pushConstRangeCount = 1,
-        .pushConstRanges = &range,
-        .type = MF_PIPELINE_TYPE_GRAPHICS
+        .type = MF_PIPELINE_TYPE_GRAPHICS,
+        .resourceLayoutCount = MF_ARRAYLEN(fsLayouts),
+        .resourceLayouts = fsLayouts
     };
 
-    state->pipeline = mfPipelineCreate(state->renderer, info);
+    state->fsPipeline = mfPipelineCreate(state->renderer, info);
 
-    info.graphicsConfig.extent = (MFVec2){ .x = state->sceneViewport.x, .y = state->sceneViewport.y };
     info.graphicsConfig.renderTarget = state->renderTarget;
+    info.graphicsConfig.vertPath = "mftshaders/default.vert.spv";
+    info.graphicsConfig.fragPath = "mftshaders/default.frag.spv";
+    info.graphicsConfig.attributesCount = attributeCount;
+    info.graphicsConfig.attributes = attributes,
+    info.graphicsConfig.bindingsCount = bindingCount,
+    info.graphicsConfig.bindings = &bindings,
+    info.graphicsConfig.cullMode = MF_CULL_MODE_BACK_BIT;
+    info.pushConstRangeCount = 1;
+    info.pushConstRanges = &range;
+    info.resourceLayoutCount = MF_ARRAYLEN(layouts);
+    info.resourceLayouts = layouts;
 
     state->rtPipeline = mfPipelineCreate(state->renderer, info);
 
@@ -61,14 +69,9 @@ static void ResizeCallback(void* pstate) {
 
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* config = mfWindowGetConfig(state->window);
-    
-    if(state->enableRenderTarget) {
-        state->scene.camera.width = state->sceneViewport.x;
-        state->scene.camera.height = state->sceneViewport.y;
-    } else {
-        state->scene.camera.width = config->width;
-        state->scene.camera.height = config->height;
-    }
+
+    state->scene.camera.width = config->width;
+    state->scene.camera.height = config->height;
 
     state->scene.camera.constructMatrices(&state->scene.camera);
 
@@ -361,7 +364,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     MFTState* state = (MFTState*)pstate;
 
-    state->enableRenderTarget = true;
     state->renderer = appState->renderer;
     state->window = appState->window;
    
@@ -376,9 +378,6 @@ void MFTOnInit(void* pstate, void* pappState) {
         state->renderTarget = mfRenderTargetCreate(appState->renderer, true);
         mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.01f));
         mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
-
-        state->sceneViewport.x = mfRenderTargetGetWidth(state->renderTarget);
-        state->sceneViewport.y = mfRenderTargetGetHeight(state->renderTarget);
     }
 
     // Skybox
@@ -386,11 +385,10 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFSkyboxConfig config = {
             .faceSize = 512,
             .environmentPath = "mftskyboxes/3.hdr",
-            .generatePbrMaps = true
+            .generatePbrMaps = true,
+            .renderTarget = state->renderTarget
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
-        config.renderTarget = state->renderTarget;
-        state->skybox2 = mfSkyboxCreate(config, appState->renderer);
     }
 
     CreateScene(state, appState);
@@ -441,12 +439,11 @@ void MFTOnDeinit(void* pstate, void* pappState) {
         mfSceneDeleteEntity(&state->scene, &state->entities[i]);
     mfSceneDestroy(&state->scene);
 
-    mfSkyboxDestroy(state->skybox2);
     mfSkyboxDestroy(state->skybox);
 
     mfRenderTargetDestroy(state->renderTarget);
 
-    mfPipelineDestroy(state->pipeline);
+    mfPipelineDestroy(state->fsPipeline);
     mfPipelineDestroy(state->rtPipeline);
 
     MF_FREEMEM(state->entities);
@@ -459,17 +456,11 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
 
-    if((state->sceneViewport.x != mfRenderTargetGetWidth(state->renderTarget)) || (state->sceneViewport.y != mfRenderTargetGetHeight(state->renderTarget))) {
-        if(state->enableRenderTarget)
-            mfRenderTargetResize(state->renderTarget, (MFVec2){state->sceneViewport.x, state->sceneViewport.y});
-    }
-
-    if(state->enableRenderTarget)
-        mfRenderTargetBegin(state->renderTarget);
+    mfRenderTargetBegin(state->renderTarget);
 
     MFSceneRenderConfig config = {
         .state = state,
-        .entityPipeline = (state->enableRenderTarget) ? state->rtPipeline : state->pipeline,
+        .entityPipeline = state->rtPipeline,
         .scissor = mfRendererGetScissor(state->renderer),
         .viewport = mfRendererGetViewport(state->renderer),
         .perMeshDrawCallback = &MeshCallback,
@@ -479,13 +470,12 @@ void MFTOnRender(void* pstate, void* pappState) {
 
     mfSceneRender(&state->scene, &config);
 
-    if(state->enableRenderTarget) {
-        mfSkyboxRender(state->skybox2, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
-        mfRenderTargetEnd(state->renderTarget, false);
-    }
-    else {
-        mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
-    }
+    mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
+    mfRenderTargetEnd(state->renderTarget, false);
+
+    mfPipelineBind(state->fsPipeline, mfRendererGetViewport(appState->renderer), mfRendererGetScissor(appState->renderer));
+    mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
+    mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
 
     MF_PROFILE_ZONE_END(__temp);
 }
@@ -495,16 +485,6 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
-
-    // Scene window
-    if(state->enableRenderTarget) {
-        igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
-
-        igBegin("Scene", mfnull, ImGuiWindowFlags_None);
-        igGetContentRegionAvail(&state->sceneViewport);
-        igImage(mfRenderTargetGetColorAttachmentImTexID(state->renderTarget), (ImVec2){mfRenderTargetGetWidth(state->renderTarget), mfRenderTargetGetHeight(state->renderTarget)}, (ImVec2){0, 0}, (ImVec2){1, 1});
-        igEnd();
-    }
 
     // Perf window
     {
@@ -519,8 +499,6 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     // Settings window
     {
         igBegin("Settings", mfnull, ImGuiWindowFlags_None);
-
-        igCheckbox("Render to ImGui window", &state->enableRenderTarget);
 
         if(igButton("Take screenshot", (ImVec2){200, 35})) {
             state->takeScreenshot = true;
@@ -609,13 +587,8 @@ void MFTOnUpdate(void* pstate, void* pappState) {
         state->takeScreenshot = false;
     }
 
-    if(state->enableRenderTarget) {
-        state->scene.camera.width = state->sceneViewport.x;
-        state->scene.camera.height = state->sceneViewport.y;
-    } else {
-        state->scene.camera.width = winConfig->width;
-        state->scene.camera.height = winConfig->height;
-    }
+    state->scene.camera.width = winConfig->width;
+    state->scene.camera.height = winConfig->height;
 
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
 

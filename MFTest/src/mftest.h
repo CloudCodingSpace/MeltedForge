@@ -32,12 +32,10 @@ typedef struct MFTState_s {
     MFResourceSetLayout* layout, *skyboxLayout, *cameraLayout;
     MFResourceSet* skyboxSet, *cameraSet;
 
-    MFPipeline* pipeline;
-    MFPipeline* rtPipeline;
+    MFPipeline* fsPipeline, *rtPipeline;
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
     MFSkybox* skybox;
-    MFSkybox* skybox2;
 
     MFScene scene;
     u64 entityCount;
@@ -48,8 +46,7 @@ typedef struct MFTState_s {
     UBOData cameraUboData;
     
     MFRenderTarget* renderTarget;
-    ImVec2 sceneViewport;
-    bool enableRenderTarget, takeScreenshot;
+    bool takeScreenshot;
     
     MFWindow* window;
     void* renderer;
