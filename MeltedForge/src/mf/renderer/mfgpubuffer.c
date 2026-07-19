@@ -6,6 +6,7 @@ extern "C" {
 
 #include "vk/backend.h"
 #include "vk/ctx.h"
+#include "vk/command_buffer.h"
 #include "vk/buffer.h"
 #include "vk/render_target.h"
 
@@ -61,6 +62,68 @@ void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
 
     u32 idx = buffer->config.frameSynced ? buffer->backend->frameIndex : 0;
     VulkanBufferUploadData(&buffer->buffer[idx], data);
+}
+
+void* mfGpuBufferGetData(MFGpuBuffer* buffer) {
+    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
+
+    VulkanBackendCtx* ctx = buffer->ctx;
+    VulkanBuffer* bufferBackend = &buffer->buffer[buffer->config.frameSynced ? buffer->backend->frameIndex : 0];
+
+    if(buffer->config.frequentUpdates) {
+        void* data = MF_ALLOCMEM(void, buffer->config.size);
+        memcpy(data, bufferBackend->mappedMem, buffer->config.size);
+        return data;
+    }
+
+    VulkanBuffer stagingBuffer = {};
+    {
+        VulkanBufferInfo info = {
+            .ctx = ctx,
+            .frequentUpdates = true,
+            .pool = ctx->commandPool,
+            .size = buffer->config.size,
+            .type = VULKAN_BUFFER_TYPE_STAGING
+        };
+        VulkanBufferAllocate(&stagingBuffer, info);
+    }
+    VkCommandBuffer cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
+    VkFence fence = mfnull;
+    {
+        VkFenceCreateInfo info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &fence)); 
+    }
+
+    VulkanCommandBufferBegin(cmdBuff, true);
+
+    VkBufferCopy region = {
+        .size = buffer->config.size,
+        .srcOffset = 0, // TODO: Make it configurable if required
+        .dstOffset = 0
+    };
+
+    vkCmdCopyBuffer(cmdBuff, bufferBackend->handle, stagingBuffer.handle, 1, &region);
+
+    VulkanCommandBufferEnd(cmdBuff);
+
+    VkSubmitInfo info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmdBuff
+    };
+
+    VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, fence));
+    VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+    void* data = MF_ALLOCMEM(void, buffer->config.size);
+    memcpy(data, stagingBuffer.mappedMem, buffer->config.size);
+
+    vkDestroyFence(ctx->device, fence, ctx->allocator);
+    VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
+    VulkanBufferFree(&stagingBuffer);
+
+    return data;
 }
 
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data) {

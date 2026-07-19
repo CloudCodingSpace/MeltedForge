@@ -32,6 +32,7 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
 void mfGpuBufferFree(MFGpuBuffer* buffer);
 
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data);
+void* mfGpuBufferGetData(MFGpuBuffer* buffer);
 void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data);
 
 void mfGpuBufferBind(MFGpuBuffer* buffer);
