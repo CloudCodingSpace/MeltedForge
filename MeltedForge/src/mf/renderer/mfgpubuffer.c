@@ -24,6 +24,7 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
     MFGpuBuffer* buffer = MF_ALLOCMEM(MFGpuBuffer, sizeof(MFGpuBuffer));
 
     buffer->config = config;
+    buffer->config.data = mfnull;
     buffer->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     buffer->ctx = &buffer->backend->ctx;
 
@@ -57,8 +58,6 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
-
-    buffer->config.data = data;
 
     u32 idx = buffer->config.frameSynced ? buffer->backend->frameIndex : 0;
     VulkanBufferUploadData(&buffer->buffer[idx], data);
@@ -110,20 +109,16 @@ const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer) {
     return &buffer->config;
 }
 
-size_t mfGpuBufferGetSizeInBytes(void) {
-    return sizeof(MFGpuBuffer);
-}
-
 MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer) {
     MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     MFResourceDescriptionType type = MF_RES_DESCRIPTION_TYPE_MAX_ENUM;
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_UBO)
-        type = MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER;
+    type = MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER;
     else if(buffer->config.type == MF_GPU_BUFFER_TYPE_SSBO)
-        type = MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER;
-
+    type = MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER;
+    
     return (MFResourceDescription) {
         .descriptorCount = 1,
         .descriptorType = type,
@@ -136,6 +131,10 @@ void* mfGpuBufferGetBackend(MFGpuBuffer* buffer) {
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
 
     return buffer->buffer;
+}
+
+size_t mfGpuBufferGetSizeInBytes(void) {
+    return sizeof(MFGpuBuffer);
 }
 
 #ifdef __cplusplus

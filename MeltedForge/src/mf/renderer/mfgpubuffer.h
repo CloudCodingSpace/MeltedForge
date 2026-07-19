@@ -37,10 +37,10 @@ void mfGpuBufferResize(MFGpuBuffer* buffer, u64 size, void* data);
 void mfGpuBufferBind(MFGpuBuffer* buffer);
 
 const MFGpuBufferConfig* mfGpuBufferGetConfig(MFGpuBuffer* buffer);
-
-size_t mfGpuBufferGetSizeInBytes(void);
 MFResourceDescription mfGpuBufferGetDescription(MFGpuBuffer* buffer);
 void* mfGpuBufferGetBackend(MFGpuBuffer* buffer);
+
+size_t mfGpuBufferGetSizeInBytes(void);
 
 #ifdef __cplusplus
 }
