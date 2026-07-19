@@ -32,6 +32,8 @@ typedef struct VulkanBuffer_s {
     VmaAllocation allocation;
     void* mappedMem;
     VulkanBufferInfo info;
+    VkCommandBuffer cmdBuff;
+    VkFence fence;
 } VulkanBuffer;
 
 void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info);

@@ -150,6 +150,13 @@ void index_buff(VulkanBuffer* buffer, VulkanBackendCtx* ctx, VkCommandPool pool)
 
 void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info) {
     buffer->info = info;
+    
+    // Persistent objects
+    {
+        buffer->cmdBuff = VulkanCommandBufferAllocate(info.ctx, info.pool, true);
+        VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        VK_CHECK(vkCreateFence(info.ctx->device, &fenceInfo, info.ctx->allocator, &buffer->fence));
+    }
 
     if(info.type == VULKAN_BUFFER_TYPE_VERTEX) {
         vertex_buff(buffer, info.ctx, info.pool);
@@ -170,6 +177,9 @@ void VulkanBufferAllocate(VulkanBuffer* buffer, VulkanBufferInfo info) {
 
 void VulkanBufferFree(VulkanBuffer* buffer) {
     VulkanBackendCtx* ctx = buffer->info.ctx;
+
+    vkDestroyFence(ctx->device, buffer->fence, ctx->allocator);
+    VulkanCommandBufferFree(ctx, buffer->cmdBuff, buffer->info.pool);
 
     if(buffer->info.frequentUpdates || (buffer->info.type == VULKAN_BUFFER_TYPE_STAGING))
         vmaUnmapMemory(ctx->vmaAllocator, buffer->allocation);
@@ -196,7 +206,9 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, void* data) {
             .data = buffer->info.data,
             .size = buffer->info.size,
             .type = VULKAN_BUFFER_TYPE_STAGING,
-            .ctx = ctx
+            .ctx = ctx,
+            .frequentUpdates = true,
+            .pool = buffer->info.pool
         }
     };
 
@@ -209,10 +221,7 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, void* data) {
 
     // Copy
     {
-        VkSemaphore semaphore = VK_NULL_HANDLE;
-        VkCommandBuffer buff = VulkanCommandBufferAllocate(ctx, buffer->info.pool, true);
-
-        VulkanCommandBufferBegin(buff, true);
+        VulkanCommandBufferBegin(buffer->cmdBuff, true);
 
         VkBufferCopy region = {
             .size = staging.info.size,
@@ -220,31 +229,20 @@ void VulkanBufferUploadData(VulkanBuffer* buffer, void* data) {
             .srcOffset = 0 // NOTE: Make the offset configurable if necessary
         };
 
-        vkCmdCopyBuffer(buff, staging.handle, buffer->handle, 1, &region);
+        vkCmdCopyBuffer(buffer->cmdBuff, staging.handle, buffer->handle, 1, &region);
 
-        VulkanCommandBufferEnd(buff);
-
-        VkFence fence;
-        {
-            VkFenceCreateInfo info = {
-                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
-            };
-
-            VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &fence));
-        }
+        VulkanCommandBufferEnd(buffer->cmdBuff);
 
         VkSubmitInfo info = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
             .commandBufferCount = 1,
-            .pCommandBuffers = &buff
+            .pCommandBuffers = &buffer->cmdBuff
         };
 
-        VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, fence));
-        VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
-        VK_CHECK(vkResetFences(ctx->device, 1, &fence));
-
-        vkDestroyFence(ctx->device, fence, ctx->allocator);
-        VulkanCommandBufferFree(ctx, buff, buffer->info.pool);
+        VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, buffer->fence));
+        VK_CHECK(vkWaitForFences(ctx->device, 1, &buffer->fence, VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(ctx->device, 1, &buffer->fence));
+        VK_CHECK(vkResetCommandBuffer(buffer->cmdBuff, 0));
     }
 
     VulkanBufferFree(&staging);

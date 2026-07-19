@@ -353,6 +353,7 @@ void mfGpuImageCopy(MFGpuImage* src, MFGpuImage* dst) {
     VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &sInfo, fence));
     VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
     VK_CHECK(vkResetFences(ctx->device, 1, &fence));
+    VK_CHECK(vkResetCommandBuffer(cmdBuff, 0));
 
     if(dstImg->info.generateMipmaps)
         VulkanImageGenerateMipmaps(dstImg, dstLayout, dstAccess, dstStage);
