@@ -38,6 +38,10 @@ layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
 layout (set = 1, binding = 2) uniform samplerCube u_PrefilteredMap;
 layout (set = 1, binding = 3) uniform sampler2D u_BrdfLUT;
 
+float LinearizeDepth(float d,float zNear,float zFar) {
+    return zNear * zFar / (zFar + d * (zNear - zFar));
+}
+
 void main() {
     vec4 albedo = texture(u_DiffuseTex, vi.oUv);
     if(albedo.a < 0.5)
@@ -91,7 +95,7 @@ void main() {
         color += mfComputeIBL(iblInfo, info);
     }
 
-    outColor = vec4(color, 1.0);
+    outColor = vec4(mix(color, vec3(0.78), vec3(LinearizeDepth(gl_FragCoord.z, 0.01, 1000.0) / 256)), 1.0);
 
     mfTonemapperAces(outColor.rgb);
     mfGammaCorrect(outColor.rgb);
