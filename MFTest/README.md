@@ -12,8 +12,11 @@ not be much readable or elegant, since its purpose is to just stress test the en
  - **PBR *(With Specular IBL)***
 ![pbr_screenshot](./screenshots/pbr_with_ibl.png)
 
+ - **Sponza scene (With PBR but not IBL)**
+![pbr_sponza_no_ibl](./screenshots/sponza_pbr.png)
+
  - **Sponza scene (With PBR and IBL)**
-![pbr_sponza](./screenshots/sponza_pbr.png)
+![pbr_sponza](./screenshots/sponza_pbr_ibl.png)
 
  - **Multiple Entities with different mesh components**
  ![multiple_entities_ss](./screenshots/multiple_entities2.png)
