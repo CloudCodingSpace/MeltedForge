@@ -78,8 +78,10 @@ void VulkanRenderPassCreate(VulkanRenderPass* pass, VulkanBackend* backend, Vulk
     }
 
     if(pinfo.hasMsaa) {
-        resolveRef.attachment = attachmentCount;
-        attachments[attachmentCount++] = resolveAttachment;
+        resolveRef.attachment = 0;
+        attachments[0] = resolveAttachment;
+        colRef.attachment = attachmentCount;
+        attachments[attachmentCount++] = colorAttachment;
         subpass.pResolveAttachments = &resolveRef;
         dependency.srcAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     }

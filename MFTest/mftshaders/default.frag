@@ -95,7 +95,6 @@ void main() {
         color += mfComputeIBL(iblInfo, info);
     }
 
-    // outColor = vec4(mix(color, vec3(0.78), vec3(LinearizeDepth(gl_FragCoord.z, 0.01, 1000.0) / 256)), 1.0);
     outColor = vec4(color, 1.0);
 
     mfTonemapperAces(outColor.rgb);

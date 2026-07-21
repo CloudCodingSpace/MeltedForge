@@ -131,14 +131,14 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         {
             u32 count = 1;
             VulkanImage* attachments[3] = {
-                renderTarget->hasMsaa ? &renderTarget->msaaImages[i] : &renderTarget->images[i]
+                &renderTarget->images[i]
             };
 
             if(renderTarget->hasDepth) {
                 attachments[count++] = &renderTarget->depthImages[i];
             }
             if(renderTarget->hasMsaa)
-                attachments[count++] = &renderTarget->images[i];
+                attachments[count++] = &renderTarget->msaaImages[i];
 
             VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, renderTarget->backend->ctx.swapchainExtent);
         }
@@ -327,14 +327,14 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 
             u32 count = 1;
             VulkanImage* attachments[3] = {
-                renderTarget->hasMsaa ? &renderTarget->msaaImages[i] : &renderTarget->images[i]
+                &renderTarget->images[i]
             };
 
             if(renderTarget->hasDepth) {
                 attachments[count++] = &renderTarget->depthImages[i];
             }
             if(renderTarget->hasMsaa)
-                attachments[count++] = &renderTarget->images[i];
+                attachments[count++] = &renderTarget->msaaImages[i];
 
             VulkanFramebufferCreate(&renderTarget->frameBuffers[i], &renderTarget->backend->ctx, renderTarget->renderPass.handle, count, attachments, (VkExtent2D){extent.x, extent.y});
             if(renderTarget->backend->config.enableUI) {

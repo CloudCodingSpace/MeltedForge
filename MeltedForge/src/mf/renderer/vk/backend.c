@@ -121,13 +121,13 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
 
         u32 len = 1;
         VulkanImage* attachments[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? &backend->msaaImages[i] : &backend->ctx.swapchainImages[i]
+            &backend->ctx.swapchainImages[i]
         };
         if(backend->config.enableDepth) {
             attachments[len++] = &backend->depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            attachments[len++] = &backend->ctx.swapchainImages[i];
+            attachments[len++] = &backend->msaaImages[i];
 
         VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
     }
@@ -218,13 +218,13 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     for(u32 i = 0; i < backend->frameBufferCount; i++) {
         u32 len = 1;
         VulkanImage* attachments[3] = {
-            (backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT) ? &backend->msaaImages[i] : &backend->ctx.swapchainImages[i]
+            &backend->ctx.swapchainImages[i]
         };
-        if(config->enableDepth) {
+        if(backend->config.enableDepth) {
             attachments[len++] = &backend->depthImage;
         }
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
-            attachments[len++] = &backend->ctx.swapchainImages[i];
+            attachments[len++] = &backend->msaaImages[i];
 
         VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
     }
