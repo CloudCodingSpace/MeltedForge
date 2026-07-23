@@ -16,6 +16,7 @@ typedef struct PushConstantData_s {
 
 typedef struct FSPushConstantData_s {
     int showDepthAttachment;
+    int showChromaticAberration;
     float zNear;
     float zFar;
 } FSPushConstantData;
@@ -52,7 +53,7 @@ typedef struct MFTState_s {
     UBOData cameraUboData;
     
     MFRenderTarget* renderTarget;
-    bool takeScreenshot, showDepthAttachment;
+    bool takeScreenshot, showDepthAttachment, showColorAberration;
     
     MFWindow* window;
     void* renderer;
