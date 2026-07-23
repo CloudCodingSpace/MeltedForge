@@ -182,6 +182,10 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
             }
         }
 
+        MFVec3 aabb[2] = {0};
+        aabb[0].x = aabb[0].y = aabb[0].z = 1e10f;
+        aabb[1].x = aabb[1].y = aabb[1].z = 1e-5f;
+
         for(u64 j = 0; j < posAccessor->count; j++) {
             float pos[3] = {0};
             float tangent[4] = {0};
@@ -190,6 +194,13 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
             float color[3] = {0};
 
             cgltf_accessor_read_float(posAccessor, j, pos, 3);
+            aabb[0].x = fmin(pos[0], aabb[0].x);
+            aabb[0].y = fmin(pos[1], aabb[0].y);
+            aabb[0].z = fmin(pos[2], aabb[0].z);
+
+            aabb[1].x = fmax(pos[0], aabb[1].x);
+            aabb[1].y = fmax(pos[1], aabb[1].y);
+            aabb[1].z = fmax(pos[2], aabb[1].z);
 
             if(normalAccessor)
                 cgltf_accessor_read_float(normalAccessor, j, normal, 3);
@@ -245,7 +256,8 @@ void processMesh(MFModel* model, cgltf_scene* scene, cgltf_mesh* mesh, MFMat4 tr
             matData.ao_texpath = get_materialtex(mat->occlusion_texture.texture);
             matData.normal_texpath = get_materialtex(mat->normal_texture.texture);
         }
-    
+   
+        memcpy(model->meshes[model->_meshIdx].localAABB, aabb, sizeof(MFVec3) * 2);
         model->meshes[model->_meshIdx].mat = matData;
         model->meshes[model->_meshIdx].transform = transform;
         mfMeshCreate(&model->meshes[model->_meshIdx], model->renderer, model->perVertexSize * posAccessor->count, vertices, indexAccessor->count, indices);

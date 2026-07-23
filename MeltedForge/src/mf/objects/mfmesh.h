@@ -32,6 +32,7 @@ typedef struct MFMesh_s {
     u64 vertSize;
     u32 vertCount;
 
+    MFVec3 localAABB[2];
     MFMat4 transform;
     MFMeshMaterial mat;
     bool init;
