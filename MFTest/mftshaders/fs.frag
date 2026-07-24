@@ -19,6 +19,7 @@ layout (push_constant, scalar) uniform PushConstant {
     int showDepthAttachment;
     int showChromaticAberration;
     int enableMotionBlur;
+    int motionBlurSamples;
     float zNear;
     float zFar;
 } pc;
@@ -56,7 +57,7 @@ void main() {
             return;
         }
 
-        const uint SAMPLES = 20;
+        int SAMPLES = pc.motionBlurSamples;
         vec3 color = vec3(0.0);
         for(int i = 0; i < SAMPLES; i++) {
             float t = float(i) / float(SAMPLES - 1);

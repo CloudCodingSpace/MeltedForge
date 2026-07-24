@@ -4,12 +4,12 @@
 
 #include <stb/stb_image.h>
 
-typedef struct UBOData_s {
+typedef struct CameraUBOData_s {
     MFMat4 prevProj;
     MFMat4 prevView;
     MFMat4 proj;
     MFMat4 view;
-} UBOData;
+} CameraUBOData;
 
 typedef struct PushConstantData_s {
     MFMat4 model;
@@ -20,6 +20,7 @@ typedef struct FSPushConstantData_s {
     int showDepthAttachment;
     int showChromaticAberration;
     int enableMotionBlur;
+    int motionBlurSamples;
     float zNear;
     float zFar;
 } FSPushConstantData;
@@ -53,12 +54,13 @@ typedef struct MFTState_s {
     MFArray* materialImages;
     
     LightUBOData lightData;
-    UBOData cameraUboData;
+    CameraUBOData cameraUboData;
+    FSPushConstantData fsPcData;
     MFMat4 prevProj, prevView;
     
     MFRenderTarget* renderTarget;
-    bool takeScreenshot, showDepthAttachment, showColorAberration, enableMotionBlur;
-    
+    bool takeScreenshot;
+
     MFWindow* window;
     void* renderer;
 } MFTState;

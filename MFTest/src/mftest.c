@@ -239,7 +239,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
 static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     MFGpuBufferConfig config = {
         .type = MF_GPU_BUFFER_TYPE_UBO,
-        .size = sizeof(UBOData),
+        .size = sizeof(CameraUBOData),
         .stage = MF_SHADER_STAGE_VERTEX | MF_SHADER_STAGE_FRAGMENT,
         .frequentUpdates = true,
         .frameSynced = true
@@ -303,6 +303,10 @@ static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
 static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     MFCamera camera = {};
     mfCameraCreate(&camera, appState->window, mfWindowGetConfig(appState->window)->width, mfWindowGetConfig(appState->window)->height, 60, 0.01f, 1000.0f, 0.025f, 0.075f, (MFVec3){0.0f, 0.0f, 2.0f});
+    
+    state->fsPcData.zNear = camera.nearPlane;
+    state->fsPcData.zFar = camera.farPlane;
+
     mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
     if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
         state->entityCount = 2;
@@ -376,6 +380,12 @@ void MFTOnInit(void* pstate, void* pappState) {
     state->renderer = appState->renderer;
     state->window = appState->window;
     state->prevView = state->prevProj = mfMat4Identity();
+    state->fsPcData = (FSPushConstantData) {
+        .motionBlurSamples = 10,
+        .enableMotionBlur = 1,
+        .zNear = 0.01f,
+        .zFar = 1000.0f
+    };
    
     slogLoggerCreate(&state->logger, "MFTest", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE);
     slogLoggerSetName(&state->logger, "MFTest");
@@ -492,15 +502,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
     mfResourceSetsBind(1, 1, &state->cameraSet, state->fsPipeline);
 
-    FSPushConstantData fsPcData = {
-        .showDepthAttachment = state->showDepthAttachment ? 1 : 0,
-        .showChromaticAberration = state->showColorAberration ? 1 : 0,
-        .enableMotionBlur = state->enableMotionBlur ? 1 : 0,
-        .zNear = state->scene.camera.nearPlane,
-        .zFar = state->scene.camera.farPlane
-    };
-
-    mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &fsPcData);
+    mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &state->fsPcData);
     mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
 
     MF_PROFILE_ZONE_END(__temp);
@@ -532,9 +534,23 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
         igDummy((ImVec2){ 0.0f, 20.0f });
 
-        igCheckbox("Show depth attachment", &state->showDepthAttachment);
-        igCheckbox("Enable motion blur", &state->enableMotionBlur);
-        igCheckbox("Enable color aberration", &state->showColorAberration);
+        // Some settings
+        if(igCollapsingHeader_BoolPtr("Camera effects", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
+            bool showDepthAttachment = state->fsPcData.showDepthAttachment;
+            bool showChromaticAberration = state->fsPcData.showChromaticAberration;
+            bool enableMotionBlur = state->fsPcData.enableMotionBlur;
+            float motionBlurSamples = state->fsPcData.motionBlurSamples;
+
+            igCheckbox("Show depth attachment", &showDepthAttachment);
+            igCheckbox("Enable motion blur", &enableMotionBlur);
+            igCheckbox("Enable chromatic aberration", &showChromaticAberration);
+            igDragFloat("Motion Blur Samples", &motionBlurSamples, 1.0f, 2.0f, 80.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
+        
+            state->fsPcData.motionBlurSamples = (int)motionBlurSamples;
+            state->fsPcData.showDepthAttachment = showDepthAttachment;
+            state->fsPcData.showChromaticAberration = showChromaticAberration;
+            state->fsPcData.enableMotionBlur = enableMotionBlur;
+        }
 
         if(igCollapsingHeader_BoolPtr("Light settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             f32 posData[3] = {0};
