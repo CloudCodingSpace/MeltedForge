@@ -66,7 +66,14 @@ void main() {
             else if((1.0 - uv.y) < offset.y)
                 offset.y = 0;
 
-            color += texture(u_ColorAttachment, uv + offset).rgb;
+            if(pc.showChromaticAberration == 1) {
+                offset *= 0.5;
+                color.r += texture(u_ColorAttachment, uv + offset).r;
+                color.g += texture(u_ColorAttachment, uv).g;
+                color.b += texture(u_ColorAttachment, uv - offset).b;
+            } else {
+                color += texture(u_ColorAttachment, uv + offset).rgb;
+            }
         }
         color /= float(SAMPLES);
         FragColor = vec4(color, 1.0);
