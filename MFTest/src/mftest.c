@@ -495,6 +495,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     FSPushConstantData fsPcData = {
         .showDepthAttachment = state->showDepthAttachment ? 1 : 0,
         .showChromaticAberration = state->showColorAberration ? 1 : 0,
+        .enableMotionBlur = state->enableMotionBlur ? 1 : 0,
         .zNear = state->scene.camera.nearPlane,
         .zFar = state->scene.camera.farPlane
     };
@@ -532,6 +533,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         igDummy((ImVec2){ 0.0f, 20.0f });
 
         igCheckbox("Show depth attachment", &state->showDepthAttachment);
+        igCheckbox("Enable motion blur", &state->enableMotionBlur);
         igCheckbox("Enable color aberration", &state->showColorAberration);
 
         if(igCollapsingHeader_BoolPtr("Light settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {

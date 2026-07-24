@@ -18,6 +18,7 @@ layout (set = 1, binding = 0, scalar) uniform CameraUBO {
 layout (push_constant, scalar) uniform PushConstant {
     int showDepthAttachment;
     int showChromaticAberration;
+    int enableMotionBlur;
     float zNear;
     float zFar;
 } pc;
@@ -33,10 +34,7 @@ void main() {
         depth = LinearizeDepth(depth, pc.zNear, pc.zFar) * 25 / pc.zFar; // * 25 / pc.zFar only for demonstration
         FragColor = vec4(vec3(depth), 1.0);
         return;
-    }
-
-    // Motion blur
-    {
+    } else if(pc.enableMotionBlur == 1) {
         mat4 prevVP = camUbo.prevProj  * camUbo.prevView;
         mat4 invVP = inverse(camUbo.proj * camUbo.view);
         float depth = texture(u_DepthAttachment, uv).r;
@@ -72,10 +70,7 @@ void main() {
         }
         color /= float(SAMPLES);
         FragColor = vec4(color, 1.0);
-        return;
-    }
-
-    if(pc.showChromaticAberration == 1) {
+    } else if(pc.showChromaticAberration == 1) {
         vec4 color = vec4(1.0);
         vec2 offset = vec2(2e-3);
         if((1.0 - uv.x) < offset.x)
