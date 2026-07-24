@@ -26,7 +26,8 @@ static void CreatePipeline(MFTState* state) {
     };
 
     MFResourceSetLayout* fsLayouts[] = {
-        mfRenderTargetGetResourceSetLayout(state->renderTarget)
+        mfRenderTargetGetResourceSetLayout(state->renderTarget),
+        state->cameraLayout
     };
 
     MFResourceSetLayout* layouts[] = {
@@ -239,7 +240,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
     MFGpuBufferConfig config = {
         .type = MF_GPU_BUFFER_TYPE_UBO,
         .size = sizeof(UBOData),
-        .stage = MF_SHADER_STAGE_VERTEX,
+        .stage = MF_SHADER_STAGE_VERTEX | MF_SHADER_STAGE_FRAGMENT,
         .frequentUpdates = true,
         .frameSynced = true
     };
@@ -374,6 +375,7 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     state->renderer = appState->renderer;
     state->window = appState->window;
+    state->prevView = state->prevProj = mfMat4Identity();
    
     slogLoggerCreate(&state->logger, "MFTest", mfnull, SLOG_LOGGER_FEATURE_LOG2CONSOLE);
     slogLoggerSetName(&state->logger, "MFTest");
@@ -488,6 +490,7 @@ void MFTOnRender(void* pstate, void* pappState) {
 
     mfPipelineBind(state->fsPipeline, mfRendererGetViewport(appState->renderer), mfRendererGetScissor(appState->renderer));
     mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
+    mfResourceSetsBind(1, 1, &state->cameraSet, state->fsPipeline);
 
     FSPushConstantData fsPcData = {
         .showDepthAttachment = state->showDepthAttachment ? 1 : 0,
@@ -617,12 +620,17 @@ void MFTOnUpdate(void* pstate, void* pappState) {
 
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
 
+    state->cameraUboData.prevProj = state->prevProj;
+    state->cameraUboData.prevView = state->prevView;
     state->cameraUboData.proj = state->scene.camera.proj;
     state->cameraUboData.view = state->scene.camera.view;
     state->lightData.camPos = state->scene.camera.pos;
 
     mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
+
+    state->prevProj = state->cameraUboData.proj;
+    state->prevView = state->cameraUboData.view;
 
     if(mfInputIsKeyPressed(appState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(appState->window);

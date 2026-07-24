@@ -5,6 +5,8 @@
 #include <stb/stb_image.h>
 
 typedef struct UBOData_s {
+    MFMat4 prevProj;
+    MFMat4 prevView;
     MFMat4 proj;
     MFMat4 view;
 } UBOData;
@@ -51,6 +53,7 @@ typedef struct MFTState_s {
     
     LightUBOData lightData;
     UBOData cameraUboData;
+    MFMat4 prevProj, prevView;
     
     MFRenderTarget* renderTarget;
     bool takeScreenshot, showDepthAttachment, showColorAberration;
