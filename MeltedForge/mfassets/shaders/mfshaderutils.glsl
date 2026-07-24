@@ -189,4 +189,21 @@ void mfTonemapperUncharted2Tonemap(inout vec3 color) {
     color = curr * whiteScale;
 }
 
+/////////////////// Other ///////////////////////////
+
+vec4 mfChromaticAberrate(sampler2D tex, vec2 uv, vec2 offset) {
+    vec4 color = vec4(0.0);
+
+    if((1.0 - uv.x) < offset.x)
+        offset.x = 0;
+    else if((1.0 - uv.y) < offset.y)
+        offset.y = 0;
+    color.r = texture(tex, uv + offset).r;
+    color.g = texture(tex, uv).g;
+    color.b = texture(tex, uv - offset).b;
+    color.a = texture(tex, uv).a;
+
+    return color;
+}
+
 #endif

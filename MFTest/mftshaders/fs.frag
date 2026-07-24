@@ -1,6 +1,9 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_scalar_block_layout : require
+
+#include <mfshaderutils.glsl>
 
 layout (location = 0) out vec4 FragColor;
 layout (location = 0) in vec2 st;
@@ -69,9 +72,7 @@ void main() {
 
             if(pc.showChromaticAberration == 1) {
                 offset *= 0.5;
-                color.r += texture(u_ColorAttachment, uv + offset).r;
-                color.g += texture(u_ColorAttachment, uv).g;
-                color.b += texture(u_ColorAttachment, uv - offset).b;
+                color += mfChromaticAberrate(u_ColorAttachment, uv, offset).rgb;
             } else {
                 color += texture(u_ColorAttachment, uv + offset).rgb;
             }
@@ -81,16 +82,8 @@ void main() {
     } else if(pc.showChromaticAberration == 1) {
         vec4 color = vec4(1.0);
         vec2 offset = vec2(2e-3);
-        if((1.0 - uv.x) < offset.x)
-            offset.x = 0;
-        else if((1.0 - uv.y) < offset.y)
-            offset.y = 0;
-        color.r = texture(u_ColorAttachment, uv + offset).r;
-        color.g = texture(u_ColorAttachment, uv).g;
-        color.b = texture(u_ColorAttachment, uv - offset).b;
-        color.a = texture(u_ColorAttachment, uv).a;
 
-        FragColor = color;
+        FragColor = mfChromaticAberrate(u_ColorAttachment, uv, offset);
     } else {
         FragColor = texture(u_ColorAttachment, uv);
     }
