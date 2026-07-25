@@ -826,6 +826,28 @@ MF_INLINE MFMat4 mfMat3ToMat4(MFMat3 mat) {
     return m;
 };
 
+MF_INLINE void mfTransformAABB(MFVec3 aabb[2], MFMat4 transform, MFVec3* outAabb) {
+    MF_PANIC_IF(outAabb == mfnull, mfGetLogger(), "The given outAabb pointer shouldn't be null!");
+
+    MFMat3 absMat = mfMat4ToMat3(transform);
+    // Setting absolute value
+    {
+        for(u32 i = 0; i < 9; i++) {
+            absMat.data[i] = fabs(absMat.data[i]);
+        }
+    }
+
+    MFVec3 center = mfVec3MulScalar(mfVec3Add(aabb[0], aabb[1]), 0.5);
+    MFVec3 extent = mfVec3MulScalar(mfVec3Sub(aabb[1], aabb[0]), 0.5);
+
+    MFVec4 worldCenterXYZW = mfMat4MulVec4(transform, (MFVec4){ center.x, center.y, center.z, 1.0f });
+    MFVec3 worldCenter = mfVec3Create(worldCenterXYZW.x, worldCenterXYZW.y, worldCenterXYZW.z);
+    MFVec3 worldExtent = mfMat3MulVec3(absMat, extent);
+
+    outAabb[0] = mfVec3Sub(worldCenter, worldExtent);
+    outAabb[1] = mfVec3Add(worldCenter, worldExtent);
+}
+
 MF_INLINE void mfCopyVec2ToFloatArr(f32* out, MFVec2 v) {
     MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     out[0] = v.x;
