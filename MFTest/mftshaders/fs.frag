@@ -54,8 +54,14 @@ void main() {
         vec2 prevNDCXY = prevNDC.xy;
         
         vec2 velocity = ndcXY - prevNDCXY;
+        
+        float speed = length(velocity);
 
-        if(length(velocity) < 0.075) {
+        float maxVelocity = 0.05;
+
+        if(speed > maxVelocity) {
+            velocity = normalize(velocity) * maxVelocity;
+        } else if(speed < 0.002) {
             FragColor = texture(u_ColorAttachment, uv);
             return;
         }
@@ -64,11 +70,8 @@ void main() {
         vec3 color = vec3(0.0);
         for(int i = 0; i < SAMPLES; i++) {
             float t = float(i) / float(SAMPLES - 1);
-            vec2 offset = velocity * t;
-            if((1.0 - uv.x) < offset.x)
-                offset.x = 0;
-            else if((1.0 - uv.y) < offset.y)
-                offset.y = 0;
+            vec2 offset = velocity * (t - 0.5);
+            vec2 sampleUv = clamp(uv + offset, vec2(0.001), vec2(0.999));
 
             if(pc.showChromaticAberration == 1) {
                 offset *= 0.5;
