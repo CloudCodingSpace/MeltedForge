@@ -85,35 +85,41 @@ void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
         if(config->computeModelMatrix)
             modelMatrix = config->computeModelMatrix(transformComp);
 
-        // Fustrum culling
         for(u64 meshIdx = 0; meshIdx < meshComp->model.meshCount; meshIdx++) {
             MFMesh* mesh = &meshComp->model.meshes[meshIdx];
             MFMat4 meshModelMat = mfMat4Mul(modelMatrix, mesh->transform);
-            MFVec3 aabb[2] = {0};
-            mfTransformAABB(mesh->localAABB, meshModelMat, aabb);
-
-            for(u32 j = 0; j < 6; j++) {
-                MFVec3 p = {0};
-                if(planes[j].x >= 0)
-                    p.x = aabb[1].x;
-                else
-                    p.x = aabb[0].x;
-
-                if(planes[j].y >= 0)
-                    p.y = aabb[1].y;
-                else
-                    p.y = aabb[0].y;
-                
-                if(planes[j].z >= 0)
-                    p.z = aabb[1].z;
-                else
-                    p.z = aabb[0].z;
             
-                if(mfDistancePlanePoint(planes[j], p) >= 0) {
-                    if(config->perMeshDrawCallback)
-                        config->perMeshDrawCallback(config->state, meshModelMat, meshComp, meshIdx, config->entityPipeline);
-                    mfMeshRender(mesh);
+            if(config->enableFustrumCulling) {
+                MFVec3 aabb[2] = {0};
+                mfTransformAABB(mesh->localAABB, meshModelMat, aabb);
+
+                for(u32 j = 0; j < 6; j++) {
+                    MFVec3 p = {0};
+                    if(planes[j].x >= 0)
+                        p.x = aabb[1].x;
+                    else
+                        p.x = aabb[0].x;
+
+                    if(planes[j].y >= 0)
+                        p.y = aabb[1].y;
+                    else
+                        p.y = aabb[0].y;
+                    
+                    if(planes[j].z >= 0)
+                        p.z = aabb[1].z;
+                    else
+                        p.z = aabb[0].z;
+                
+                    if(mfDistancePlanePoint(planes[j], p) > 0) {
+                        if(config->perMeshDrawCallback)
+                            config->perMeshDrawCallback(config->state, meshModelMat, meshComp, meshIdx, config->entityPipeline);
+                        mfMeshRender(mesh);
+                    }
                 }
+            } else {
+                if(config->perMeshDrawCallback)
+                    config->perMeshDrawCallback(config->state, meshModelMat, meshComp, meshIdx, config->entityPipeline);
+                mfMeshRender(mesh);
             }
         }
     }

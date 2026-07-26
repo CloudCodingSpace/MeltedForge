@@ -831,11 +831,11 @@ MF_INLINE void mfTransformAABB(MFVec3 aabb[2], MFMat4 transform, MFVec3* outAabb
 
     MFMat3 absMat = mfMat4ToMat3(transform);
     // Setting absolute value
-    {
-        for(u32 i = 0; i < 9; i++) {
-            absMat.data[i] = fabs(absMat.data[i]);
-        }
-    }
+    // {
+    //     for(u32 i = 0; i < 9; i++) {
+    //         absMat.data[i] = fabs(absMat.data[i]);
+    //     }
+    // }
 
     MFVec3 center = mfVec3MulScalar(mfVec3Add(aabb[0], aabb[1]), 0.5);
     MFVec3 extent = mfVec3MulScalar(mfVec3Sub(aabb[1], aabb[0]), 0.5);

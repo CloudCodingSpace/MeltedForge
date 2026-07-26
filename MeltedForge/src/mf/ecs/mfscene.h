@@ -19,6 +19,7 @@ typedef struct MFSceneRenderConfig_s {
     MFPipeline* entityPipeline;
     MFViewport viewport;
     MFRect2D scissor;
+    bool enableFustrumCulling;
     void* state;
 
     MFMat4 (*computeModelMatrix)(const MFTransformComponent* component);
