@@ -488,7 +488,8 @@ void MFTOnRender(void* pstate, void* pappState) {
         .viewport = mfRendererGetViewport(state->renderer),
         .perMeshDrawCallback = &MeshCallback,
         .computeModelMatrix = &ComputeModelMatrix,
-        .pipelineBindCallback = &PipelineBindCallback
+        .pipelineBindCallback = &PipelineBindCallback,
+        .enableFustrumCulling = state->enableFustrumCulling
     };
 
     mfSceneRender(&state->scene, &config);
@@ -532,7 +533,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
         igDummy((ImVec2){ 0.0f, 20.0f });
 
-        // Some settings
+        // Camera settings
         if(igCollapsingHeader_BoolPtr("Camera effects", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             bool showDepthAttachment = state->fsPcData.showDepthAttachment;
             bool showChromaticAberration = state->fsPcData.showChromaticAberration;
@@ -540,6 +541,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             float motionBlurSamples = state->fsPcData.motionBlurSamples;
 
             igCheckbox("Show depth attachment", &showDepthAttachment);
+            igCheckbox("Enable fustrum culling", &state->enableFustrumCulling);
             igCheckbox("Enable motion blur", &enableMotionBlur);
             igCheckbox("Enable chromatic aberration", &showChromaticAberration);
             igDragFloat("Motion Blur Samples", &motionBlurSamples, 1.0f, 2.0f, 80.0f, mfnull, ImGuiSliderFlags_ClampOnInput);

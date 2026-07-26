@@ -26,6 +26,7 @@ The link to tests and apps made using MeltedForge is her :-
    - Basic scene management
    - Scene load/save
    - Material system
+   - Support for fustrum culling (On the CPU as of now)
  - GLTF 2.0 model loading along with the material data
     - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
