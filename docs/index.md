@@ -50,6 +50,7 @@ Features of the engine as of now:
    - Basic scene management
    - Scene load/save
    - Material system
+   - Support for fustrum culling (Only on CPU as of now)
  - GLTF 2.0 model loading along with the material data
     - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
