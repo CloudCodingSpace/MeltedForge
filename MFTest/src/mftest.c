@@ -245,8 +245,7 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
         .frameSynced = true
     };
 
-    state->cameraUboData.proj = state->scene.camera.proj;
-    state->cameraUboData.view = state->scene.camera.view;
+    state->cameraUboData.viewProj = mfMat4Mul(state->scene.camera.proj, state->scene.camera.view);
 
     state->cameraUbo = mfGpuBufferAllocate(config, appState->renderer);
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
@@ -379,10 +378,9 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     state->renderer = appState->renderer;
     state->window = appState->window;
-    state->prevView = state->prevProj = mfMat4Identity();
     state->fsPcData = (FSPushConstantData) {
         .motionBlurSamples = 10,
-        .enableMotionBlur = 1,
+        .enableMotionBlur = 0,
         .zNear = 0.01f,
         .zFar = 1000.0f
     };
@@ -494,7 +492,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     };
 
     mfSceneRender(&state->scene, &config);
-    mfSkyboxRender(state->skybox, state->cameraUboData.proj, state->cameraUboData.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
+    mfSkyboxRender(state->skybox, state->scene.camera.proj, state->scene.camera.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
     
     mfRenderTargetEnd(state->renderTarget, false);
 
@@ -586,7 +584,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
             for(u64 i = 0; i < state->entityCount; i++) {
                 igPushID_Int((int)i);
                 char name[50];
-                sprintf(name, "Entity #%d ###%d", i, i);
+                sprintf(name, "Entity #%zu ###%zu", i, i);
                 if(igCollapsingHeader_BoolPtr(name, mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
                     MFTransformComponent* transformComponent = mfSceneEntityGetTransformComponent(&state->scene, &state->entities[i]);
 
@@ -638,17 +636,12 @@ void MFTOnUpdate(void* pstate, void* pappState) {
 
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
 
-    state->cameraUboData.prevProj = state->prevProj;
-    state->cameraUboData.prevView = state->prevView;
-    state->cameraUboData.proj = state->scene.camera.proj;
-    state->cameraUboData.view = state->scene.camera.view;
+    state->cameraUboData.prevViewProj = state->cameraUboData.viewProj;
+    state->cameraUboData.viewProj = mfMat4Mul(state->scene.camera.proj, state->scene.camera.view);
     state->lightData.camPos = state->scene.camera.pos;
 
     mfGpuBufferUploadData(state->lightUbo, &state->lightData);
     mfGpuBufferUploadData(state->cameraUbo, &state->cameraUboData);
-
-    state->prevProj = state->cameraUboData.proj;
-    state->prevView = state->cameraUboData.view;
 
     if(mfInputIsKeyPressed(appState->window, MF_KEY_ESCAPE)) {
         mfWindowClose(appState->window);

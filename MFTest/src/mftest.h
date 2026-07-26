@@ -5,10 +5,8 @@
 #include <stb/stb_image.h>
 
 typedef struct CameraUBOData_s {
-    MFMat4 prevProj;
-    MFMat4 prevView;
-    MFMat4 proj;
-    MFMat4 view;
+    MFMat4 prevViewProj;
+    MFMat4 viewProj;
 } CameraUBOData;
 
 typedef struct PushConstantData_s {
@@ -56,7 +54,6 @@ typedef struct MFTState_s {
     LightUBOData lightData;
     CameraUBOData cameraUboData;
     FSPushConstantData fsPcData;
-    MFMat4 prevProj, prevView;
     
     MFRenderTarget* renderTarget;
     bool takeScreenshot;

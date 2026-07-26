@@ -16,10 +16,8 @@ out VS_OUT {
 } vo;
 
 layout (set = 0, binding = 0, scalar) uniform CameraUBO {
-    mat4 prevProj;
-    mat4 prevView;
-    mat4 proj;
-    mat4 view;
+    mat4 prevViewProj;
+    mat4 viewProj;
 } camUbo;
 
 layout (push_constant, scalar) uniform ModelData {
@@ -29,7 +27,7 @@ layout (push_constant, scalar) uniform ModelData {
 
 void main() {
     vec4 worldPos = md.model * vec4(pos, 1.0);
-    gl_Position = camUbo.proj * camUbo.view * worldPos;
+    gl_Position = camUbo.viewProj * worldPos;
     
     vo.oNormal = normalize(md.normalMat * normal);
     vo.oTangent = normalize(md.normalMat * tangent);

@@ -12,10 +12,8 @@ layout (set = 0, binding = 0) uniform sampler2D u_ColorAttachment;
 layout (set = 0, binding = 1) uniform sampler2D u_DepthAttachment;
 
 layout (set = 1, binding = 0, scalar) uniform CameraUBO {
-    mat4 prevProj;
-    mat4 prevView;
-    mat4 proj;
-    mat4 view;
+    mat4 prevViewProj;
+    mat4 viewProj;
 } camUbo;
 
 layout (push_constant, scalar) uniform PushConstant {
@@ -39,8 +37,7 @@ void main() {
         FragColor = vec4(vec3(depth), 1.0);
         return;
     } else if(pc.enableMotionBlur == 1) {
-        mat4 prevVP = camUbo.prevProj  * camUbo.prevView;
-        mat4 invVP = inverse(camUbo.proj * camUbo.view);
+        mat4 invVP = inverse(camUbo.viewProj);
         float depth = texture(u_DepthAttachment, uv).r;
         
         vec2 ndcXY = uv * 2.0 - 1.0;
@@ -48,7 +45,7 @@ void main() {
         vec4 worldPos = invVP * ndc;
         worldPos /= worldPos.w;
 
-        vec4 prevNDC = prevVP * worldPos;
+        vec4 prevNDC = camUbo.prevViewProj * worldPos;
         prevNDC /= prevNDC.w;
 
         vec2 prevNDCXY = prevNDC.xy;
