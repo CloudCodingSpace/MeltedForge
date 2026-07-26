@@ -848,6 +848,44 @@ MF_INLINE void mfTransformAABB(MFVec3 aabb[2], MFMat4 transform, MFVec3* outAabb
     outAabb[1] = mfVec3Add(worldCenter, worldExtent);
 }
 
+// @param out A pointer to the first element of a MFVec4 array of length 6 since there are six planes in a fustrum
+MF_INLINE void mfGetFustrumPlanesFromViewProj(MFVec4* out, MFMat4 vp) {
+    MF_PANIC_IF(out == mfnull, mfGetLogger(), "The given out pointer for the fustrum planes shouldn't be null!");
+   
+    vp = mfMat4Transpose(vp);
+    MFVec4 rows[4] = {
+        { vp.data[0],  vp.data[1],  vp.data[2],  vp.data[3]  },
+        { vp.data[4],  vp.data[5],  vp.data[6],  vp.data[7]  },
+        { vp.data[8],  vp.data[9],  vp.data[10], vp.data[11] },
+        { vp.data[12], vp.data[13], vp.data[14], vp.data[15] }
+    };
+
+    out[0] = mfVec4Add(rows[3], rows[0]);
+    out[1] = mfVec4Sub(rows[3], rows[0]);
+    out[2] = mfVec4Add(rows[3], rows[1]);
+    out[3] = mfVec4Sub(rows[3], rows[1]);
+    out[4] = rows[2];
+    out[5] = mfVec4Sub(rows[3], rows[2]);
+
+    for(u32 i = 0; i < 6; i++) {
+        f32 len = mfVec3Length((MFVec3){ out[i].x, out[i].y, out[i].z });
+        if(len == 0.0f)
+            continue;
+        out[i].x /= len;
+        out[i].y /= len;
+        out[i].z /= len;
+        out[i].w /= len;
+    }
+}
+
+MF_INLINE f32 mfDistancePlanePoint(MFVec4 plane, MFVec3 p) {
+    return mfVec3Dot((MFVec3){plane.x, plane.y, plane.z}, p) + plane.w;
+}
+
+MF_INLINE f32 mfDistancePlaneSphere(MFVec4 plane, MFVec3 center, float radius) {
+    return mfVec3Dot((MFVec3){plane.x, plane.y, plane.z}, center) + plane.w - radius;
+}
+
 MF_INLINE void mfCopyVec2ToFloatArr(f32* out, MFVec2 v) {
     MF_PANIC_IF(out == mfnull, mfGetLogger(), "The provided f32* shouldn't be null!");
     out[0] = v.x;
