@@ -383,7 +383,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     {
         mfArrayReset(&backend->waitSemas);
         mfArrayReset(&backend->waitStages);
-        backend->hadRenderTargetUsage = false;
+        backend->ctx.hadRenderTargetUsage = false;
     }
 
     VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
@@ -418,7 +418,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     };
 
     VulkanRenderPassBegin(&backend->pass, rpInfo);
-    backend->renderPassBegun = true;
+    backend->ctx.renderPassBegun = true;
 
     if(!backend->config.enableUI)
         return true;
@@ -431,7 +431,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
 }
 
 void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
-    if(!backend->renderPassBegun)
+    if(!backend->ctx.renderPassBegun)
         return;
 
     if(backend->config.enableUI) {
@@ -446,7 +446,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VulkanRenderPassEnd(&backend->pass, backend->commandBuffers[backend->frameIndex], &backend->frameBuffers[backend->swapchainImageIndex]);
     VulkanCommandBufferEnd(backend->commandBuffers[backend->frameIndex]);
 
-    if(!backend->hadRenderTargetUsage) {
+    if(!backend->ctx.hadRenderTargetUsage) {
         mfArrayAddElement(&backend->waitSemas, VkSemaphore, backend->imageAvailableSemas[backend->frameIndex]);
         mfArrayAddElement(&backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
@@ -485,7 +485,7 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
     VK_CHECK(result);
     
     backend->frameIndex = (backend->frameIndex + 1) % FRAMES_IN_FLIGHT;
-    backend->renderPassBegun = false;
+    backend->ctx.renderPassBegun = false;
     backend->renderTarget = mfnull;
 }
 
@@ -513,14 +513,14 @@ void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u3
 }
 
 void VulkanBackendSetCurrentImagePixels(VulkanBackend* backend, u8* pixels) {
-    if(backend->renderPassBegun)
+    if(backend->ctx.renderPassBegun)
         return;
 
     VulkanImageSetPixels(&backend->ctx.swapchainImages[backend->swapchainImageIndex], pixels);
 }
 
 u8* VulkanBackendGetCurrentImagePixels(VulkanBackend* backend, u32* width, u32* height) {
-    if(backend->renderPassBegun)
+    if(backend->ctx.renderPassBegun)
         return mfnull;
     
     return VulkanImageGetPixels(&backend->ctx.swapchainImages[backend->swapchainImageIndex], 0, 0, width, height);

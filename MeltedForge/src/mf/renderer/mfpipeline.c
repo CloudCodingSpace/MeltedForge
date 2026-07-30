@@ -152,7 +152,7 @@ void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline) {
         return;
     }
 
-    if(pipeline->backend->dispatchBegun) {
+    if(pipeline->backend->ctx.dispatchBegun) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't start dispatch when one is already going on!");
         return;
     }
@@ -163,7 +163,7 @@ void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline) {
 
     vkCmdBindPipeline(buff, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->pipeline.pipeline);
 
-    pipeline->backend->dispatchBegun = true;
+    pipeline->backend->ctx.dispatchBegun = true;
 }
 
 void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 workgroupSizeY) {
@@ -175,7 +175,7 @@ void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 wor
         return;
     }
 
-    if(!pipeline->backend->dispatchBegun) {
+    if(!pipeline->backend->ctx.dispatchBegun) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_WARN, "Can't dispatch pipeline when one hasn't begun yet!");
         return;
     }
@@ -204,7 +204,7 @@ void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 wor
         mfArrayAddElement(&pipeline->backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
-    pipeline->backend->dispatchBegun = false;
+    pipeline->backend->ctx.dispatchBegun = false;
 }
 
 void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32 offset, u32 size, void* data) {
@@ -212,7 +212,7 @@ void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
 
     VkCommandBuffer commandBuffer = pipeline->backend->commandBuffers[pipeline->backend->frameIndex];
-    if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->dispatchBegun) {
+    if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->ctx.dispatchBegun) {
         commandBuffer = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
     }
     else if(pipeline->backend->renderTarget != mfnull) {
@@ -244,7 +244,7 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     };
     
     VkCommandBuffer commandBuffer = pipeline->backend->commandBuffers[pipeline->backend->frameIndex];
-    if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->dispatchBegun) {
+    if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->ctx.dispatchBegun) {
         commandBuffer = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
     }
     else if(pipeline->backend->renderTarget != mfnull) {

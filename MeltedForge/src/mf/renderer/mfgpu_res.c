@@ -205,7 +205,7 @@ void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, s
     VulkanPipeline* pipelineBackend = (VulkanPipeline*)mfPipelineGetBackend(pipeline);
 
     VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
-    if(pipelineBackend->info.type == VULKAN_PIPELINE_TYPE_COMPUTE && backend->dispatchBegun) {
+    if(pipelineBackend->info.type == VULKAN_PIPELINE_TYPE_COMPUTE && backend->ctx.dispatchBegun) {
         buff = backend->computeCmdBuffers[backend->frameIndex];
     }
     else if(backend->renderTarget != mfnull) {

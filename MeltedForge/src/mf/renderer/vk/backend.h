@@ -37,7 +37,6 @@ typedef struct VulkanBackend_s {
 
     VulkanImage* msaaImages;
     VulkanRenderPass pass;
-    bool renderPassBegun, dispatchBegun;
     u32 frameBufferCount;
     VulkanFramebuffer* frameBuffers;
 
@@ -48,7 +47,6 @@ typedef struct VulkanBackend_s {
     const char* pipelineCacheFilePath;
     VkPipelineCache pipelineCache;
     struct MFRenderTarget_s* renderTarget;
-    bool hadRenderTargetUsage;
     MFArray waitStages;
     MFArray waitSemas;
     MFArray descSetBindingPool;

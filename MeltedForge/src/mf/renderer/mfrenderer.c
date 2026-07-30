@@ -188,7 +188,7 @@ void mfRendererSetCurrentImagePixels(MFRenderer* renderer, u8* pixels) {
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
     MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The pixels provided shouldn't be null!");
 
-    if(renderer->backend.renderPassBegun) {
+    if(renderer->backend.ctx.renderPassBegun) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't get the set of renderer's image since the frame has already begun!");
         return;
     }
@@ -202,7 +202,7 @@ u8* mfRendererGetCurrentImagePixels(MFRenderer* renderer, u32* width, u32* heigh
     MF_PANIC_IF(width == mfnull, mfGetLogger(), "The width pointer provided shouldn't be null!");
     MF_PANIC_IF(height == mfnull, mfGetLogger(), "The height pointer provided shouldn't be null!");
 
-    if(renderer->backend.renderPassBegun) {
+    if(renderer->backend.ctx.renderPassBegun) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't get the pixels of renderer's image since the frame has already begun!");
         return mfnull;
     }

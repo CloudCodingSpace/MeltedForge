@@ -435,7 +435,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     }
 
     renderTarget->backend->renderTarget = renderTarget;
-    renderTarget->backend->hadRenderTargetUsage = true;
+    renderTarget->backend->ctx.hadRenderTargetUsage = true;
     renderTarget->begun = true;
 }
 
