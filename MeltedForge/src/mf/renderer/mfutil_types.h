@@ -473,6 +473,16 @@ typedef enum MFCompareOp_e {
     MF_COMPARE_OP_MAX_ENUM = 0x7FFFFFFF
 } MFCompareOp;
 
+typedef enum MFOptionalRenderFeatures_e {
+    MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT = 1 << 1,
+    MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING = 1 << 2,
+    MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS = 1 << 3,
+    MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS = 1 << 4,
+    MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS = 1 << 5,
+    MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY = 1 << 6,
+    MF_OPTIONAL_RENDER_FEATURE_MAX_ENUM = 0xffffffff
+} MFOptionalRenderFeatures;
+
 typedef struct MFResourceDescription_s {
     MFResourceDescriptionType descriptorType;
     u32 descriptorCount;
