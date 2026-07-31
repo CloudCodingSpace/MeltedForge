@@ -233,6 +233,13 @@ u8 mfRendererGetBufferingCount(void) {
     return FRAMES_IN_FLIGHT;
 }
 
+MFOptionalRenderFeatures mfRendererGetSupportedOptionalRenderFeatures(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");    
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+
+    return renderer->backend.ctx.featureFlags;
+}
+
 const MFRendererConfig* mfRendererGetConfig(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");    
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
