@@ -98,8 +98,23 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 static MFOptionalRenderFeatures GetPhysicalDeviceRenderFeatures(VkPhysicalDevice device) {
     MFOptionalRenderFeatures featureFlags = MF_OPTIONAL_RENDER_FEATURE_MAX_ENUM;
 
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptorFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES
+    };
+
+    VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+        .pNext = &descriptorFeatures
+    };
+
+    VkPhysicalDeviceVulkan12Features vk12Features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = &bdaFeatures
+    };
+
     VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES,
+        .pNext = &vk12Features
     };
 
     VkPhysicalDeviceFeatures2 features = {
@@ -110,9 +125,16 @@ static MFOptionalRenderFeatures GetPhysicalDeviceRenderFeatures(VkPhysicalDevice
 
     if(scalarFeatures.scalarBlockLayout)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT;
-    
     if(features.features.samplerAnisotropy)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY;
+    if(vk12Features.descriptorIndexing)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING;
+    if(vk12Features.runtimeDescriptorArray)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS;
+    if(descriptorFeatures.shaderSampledImageArrayNonUniformIndexing && descriptorFeatures.shaderStorageImageArrayNonUniformIndexing && descriptorFeatures.shaderStorageBufferArrayNonUniformIndexing && descriptorFeatures.shaderUniformBufferArrayNonUniformIndexing)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS;
+    if(bdaFeatures.bufferDeviceAddress)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS;
 
     return featureFlags;
 }
@@ -168,6 +190,8 @@ static u64 RatePhysicalDevice(VkPhysicalDevice device) {
     if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING) == MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING)
         score += 800;
     if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS) == MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS)
+        score += 800;
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS) == MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS)
         score += 800;
 
     if(features.geometryShader)
