@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include "window/mfwindow.h"
+#include "renderer/mfutil_types.h"
 
 #include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
@@ -36,6 +37,7 @@ typedef struct VulkanBackendCtx_s {
     u32 uniqueQueueCount;
     u32 uniqueQueues[4];
     VulkanBackendQueueData queueData;
+    MFOptionalRenderFeatures featureFlags;
     VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physicalDevice;
     VkDevice device;

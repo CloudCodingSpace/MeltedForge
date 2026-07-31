@@ -92,6 +92,12 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
             MF_FREEMEM(props);
     }
 
+    return IsQueueDataComplete(data) && extSupport;
+}
+
+static MFOptionalRenderFeatures GetPhysicalDeviceRenderFeatures(VkPhysicalDevice device) {
+    MFOptionalRenderFeatures featureFlags = MF_OPTIONAL_RENDER_FEATURE_MAX_ENUM;
+
     VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES
     };
@@ -102,7 +108,13 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
     };
     vkGetPhysicalDeviceFeatures2(device, &features);
 
-    return IsQueueDataComplete(data) && extSupport && scalarFeatures.scalarBlockLayout;
+    if(scalarFeatures.scalarBlockLayout)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT;
+    
+    if(features.features.samplerAnisotropy)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY;
+
+    return featureFlags;
 }
 
 static u64 RatePhysicalDevice(VkPhysicalDevice device) {
@@ -113,6 +125,8 @@ static u64 RatePhysicalDevice(VkPhysicalDevice device) {
     vkGetPhysicalDeviceProperties(device, &props);
     vkGetPhysicalDeviceFeatures(device, &features);
     vkGetPhysicalDeviceMemoryProperties(device, &memory);
+
+    MFOptionalRenderFeatures featureFlags = GetPhysicalDeviceRenderFeatures(device);
 
     u64 score = 0;
     switch(props.deviceType) {
@@ -144,6 +158,17 @@ static u64 RatePhysicalDevice(VkPhysicalDevice device) {
         score += 200;
     if(features.shaderStorageImageExtendedFormats)
         score += 200;
+
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY) == MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY)
+        score += 800;
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT) == MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT)
+        score += 800;
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS) == MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS)
+        score += 800;
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING) == MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING)
+        score += 800;
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS) == MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS)
+        score += 800;
 
     if(features.geometryShader)
         score += 600;
@@ -487,6 +512,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         ctx->queueData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
         ctx->maxSupportedSamples = GetMaxSupportedSampleCount(ctx->physicalDevice);
         ctx->samples = (ctx->maxSupportedSamples >= samples) ? samples : ctx->maxSupportedSamples;
+        ctx->featureFlags = GetPhysicalDeviceRenderFeatures(ctx->physicalDevice);
     }
     // Device 
     {
