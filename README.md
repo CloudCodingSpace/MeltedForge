@@ -54,6 +54,7 @@ The link to tests and apps made using MeltedForge is her :-
  - MSAA support for native window and render targets as well
  - Can get the image pixels from the native window, render targets and images as well.
  - Support for compute pipelines and compute dispatches too
+ - Can fetch and tell which optional GPU features are available, like Buffer Device Address, descriptor indexing, etc
 
 ---
 
