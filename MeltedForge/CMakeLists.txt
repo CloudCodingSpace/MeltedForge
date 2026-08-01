@@ -3,6 +3,8 @@ project(mf C CXX)
 
 cmake_policy(SET CMP0069 NEW)
 
+option(MF_ASSERTS "Add asserts and checks to MeltedForge" ON)
+
 set(SLOG_BUILD_TEST OFF CACHE BOOL "" FORCE)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -62,5 +64,10 @@ target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(mf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/mf")
 target_link_libraries(mf PUBLIC stb slog cimgui TracyClient cgltf)
 target_link_libraries(mf PRIVATE glfw Vulkan::Vulkan VMA)
+
+if(MF_ASSERTS)
+    target_compile_definitions(mf PUBLIC MF_ASSERTS)
+endif()
+
 set_property(TARGET mf PROPERTY C_STANDARD 23)
 EnableFlags(mf)
