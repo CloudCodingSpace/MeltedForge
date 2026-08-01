@@ -291,6 +291,14 @@ MF_INLINE void mfNormalizePath(char* path, SLogger* logger) {
 
 #pragma endregion
 
+#pragma region flag_utils
+
+MF_INLINE bool mfFlagContainsBits(u32 flags, u32 bits) {
+    return (flags & bits) == bits;
+}
+
+#pragma endregion
+
 #ifdef __cplusplus
 }
 #endif

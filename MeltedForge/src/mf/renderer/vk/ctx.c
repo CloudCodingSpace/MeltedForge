@@ -125,7 +125,7 @@ static MFOptionalRenderFeatures GetPhysicalDeviceRenderFeatures(VkPhysicalDevice
     if(vk12Features.scalarBlockLayout)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT;
     if(vk12Features.runtimeDescriptorArray)
-        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS;
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTOR_SIZES;
     if(vk12Features.shaderSampledImageArrayNonUniformIndexing && vk12Features.shaderStorageImageArrayNonUniformIndexing && vk12Features.shaderStorageBufferArrayNonUniformIndexing && vk12Features.shaderUniformBufferArrayNonUniformIndexing)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS;
     if(vk12Features.bufferDeviceAddress)
@@ -184,7 +184,7 @@ static u64 RatePhysicalDevice(VkPhysicalDevice device) {
         score += 800;
     if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING) == MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING)
         score += 800;
-    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS) == MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS)
+    if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTOR_SIZES) == MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTOR_SIZES)
         score += 800;
     if((featureFlags & MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS) == MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS)
         score += 800;

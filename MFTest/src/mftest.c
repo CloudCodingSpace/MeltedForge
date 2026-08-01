@@ -391,6 +391,23 @@ void MFTOnInit(void* pstate, void* pappState) {
     mfRendererSetClearColor(appState->renderer, mfVec3Create(0, 0, 0.01f));
     mfRendererSetResizeCallback(appState->renderer, state, &ResizeCallback);
 
+    // Printing available optional render features
+    {
+        MFOptionalRenderFeatures flags = mfRendererGetSupportedOptionalRenderFeatures(state->renderer);
+        if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT))
+            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Scalar layout feature supported!");
+        if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS))
+            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Buffer device addresses feature supported!");
+        if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING))
+            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Deascriptor indexing feature supported!");
+        if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY))
+            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Sampler anisotropy feature supported!");
+        if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS))
+            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Non uniform access feature supported!");
+        if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTOR_SIZES))
+            slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Variable descriptor sizes feature supported!");
+    }
+
     // Viewport and render target
     {
         state->renderTarget = mfRenderTargetCreate(appState->renderer, true);
