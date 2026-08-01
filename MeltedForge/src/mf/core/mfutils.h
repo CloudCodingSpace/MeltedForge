@@ -293,9 +293,9 @@ MF_INLINE void mfNormalizePath(char* path, SLogger* logger) {
 
 #pragma region flag_utils
 
-MF_INLINE bool mfFlagContainsBits(u32 flags, u32 bits) {
-    return (flags & bits) == bits;
-}
+#define mfFlagRemoveBits(flags, bits) (flags &= ~bits)
+#define mfFlagToggleBits(flags, bits) (flags ^= bits)
+#define mfFlagContainsBits(flags, bits) ((flags & bits) == bits)
 
 #pragma endregion
 
