@@ -98,42 +98,37 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 static MFOptionalRenderFeatures GetPhysicalDeviceRenderFeatures(VkPhysicalDevice device) {
     MFOptionalRenderFeatures featureFlags = MF_OPTIONAL_RENDER_FEATURE_MAX_ENUM;
 
-    VkPhysicalDeviceDescriptorIndexingFeatures descriptorFeatures = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES
-    };
+    // VkPhysicalDeviceDescriptorIndexingFeatures descriptorFeatures = {
+    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES
+    // };
 
-    VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeatures = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-        .pNext = &descriptorFeatures
-    };
+    // VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeatures = {
+    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+    //     .pNext = &descriptorFeatures
+    // };
 
     VkPhysicalDeviceVulkan12Features vk12Features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-        .pNext = &bdaFeatures
-    };
-
-    VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES,
-        .pNext = &vk12Features
+        // .pNext = &bdaFeatures
     };
 
     VkPhysicalDeviceFeatures2 features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &scalarFeatures
+        .pNext = &vk12Features
     };
     vkGetPhysicalDeviceFeatures2(device, &features);
 
-    if(scalarFeatures.scalarBlockLayout)
-        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT;
     if(features.features.samplerAnisotropy)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SAMPLER_ANISOTROPY;
     if(vk12Features.descriptorIndexing)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING;
+    if(vk12Features.scalarBlockLayout)
+        featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT;
     if(vk12Features.runtimeDescriptorArray)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_VARIABLE_DESCRIPTORS;
-    if(descriptorFeatures.shaderSampledImageArrayNonUniformIndexing && descriptorFeatures.shaderStorageImageArrayNonUniformIndexing && descriptorFeatures.shaderStorageBufferArrayNonUniformIndexing && descriptorFeatures.shaderUniformBufferArrayNonUniformIndexing)
+    if(vk12Features.shaderSampledImageArrayNonUniformIndexing && vk12Features.shaderStorageImageArrayNonUniformIndexing && vk12Features.shaderStorageBufferArrayNonUniformIndexing && vk12Features.shaderUniformBufferArrayNonUniformIndexing)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_SHADER_NON_UNIFORM_ACCESS;
-    if(bdaFeatures.bufferDeviceAddress)
+    if(vk12Features.bufferDeviceAddress)
         featureFlags |= MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS;
 
     return featureFlags;
@@ -584,22 +579,24 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
             };
         }
 
-        VkPhysicalDeviceFeatures features = {0};
-        vkGetPhysicalDeviceFeatures(ctx->physicalDevice, &features);
-
-        VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES,
-            .scalarBlockLayout = VK_TRUE
+        VkPhysicalDeviceVulkan12Features vk12Features = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
         };
+
+        VkPhysicalDeviceFeatures2 features2 = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+            .pNext = &vk12Features
+        };
+        vkGetPhysicalDeviceFeatures2(ctx->physicalDevice, &features2);
 
         VkDeviceCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
             .enabledExtensionCount = extCount,
             .ppEnabledExtensionNames = deviceExts,
-            .pEnabledFeatures = &features,
+            .pEnabledFeatures = &features2.features,
             .queueCreateInfoCount = ctx->uniqueQueueCount,
             .pQueueCreateInfos = qInfos,
-            .pNext = &scalarFeatures
+            .pNext = &vk12Features
         };
 
         VK_CHECK(vkCreateDevice(ctx->physicalDevice, &info, ctx->allocator, &ctx->device));
