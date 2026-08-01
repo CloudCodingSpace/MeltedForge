@@ -206,4 +206,46 @@ vec4 mfChromaticAberrate(sampler2D tex, vec2 uv, vec2 offset) {
     return color;
 }
 
+vec4 mfScreenSpaceMotionBlur(sampler2D tex, float depth, int samples, int chromaticAberrate, vec2 uv, mat4 viewProj, mat4 prevViewProj) {
+    mat4 invVP = inverse(viewProj);
+    
+    vec2 ndcXY = uv * 2.0 - 1.0;
+    vec4 ndc = vec4(ndcXY, depth, 1.0);
+    vec4 worldPos = invVP * ndc;
+    worldPos /= worldPos.w;
+
+    vec4 prevNDC = prevViewProj * worldPos;
+    prevNDC /= prevNDC.w;
+
+    vec2 prevNDCXY = prevNDC.xy;
+    
+    vec2 velocity = ndcXY - prevNDCXY;
+    
+    float speed = length(velocity);
+
+    float maxVelocity = 0.05;
+
+    if(speed > maxVelocity) {
+        velocity = normalize(velocity) * maxVelocity;
+    } else if(speed < 0.002) {
+        return texture(tex, uv);
+    }
+
+    vec3 color = vec3(0.0);
+    for(int i = 0; i < samples; i++) {
+        float t = float(i) / float(samples - 1);
+        vec2 offset = velocity * (t - 0.5);
+        vec2 sampleUv = clamp(uv + offset, vec2(0.001), vec2(0.999));
+
+        if(chromaticAberrate == 1) {
+            offset *= 0.5;
+            color += mfChromaticAberrate(tex, uv, offset).rgb;
+        } else {
+            color += texture(tex, uv + offset).rgb;
+        }
+    }
+    color /= float(samples);
+    return vec4(color, 1.0);
+}
+
 #endif
