@@ -53,7 +53,6 @@ MFWindow* mfWindowCreate(MFWindowConfig config) {
         MF_FATAL_ABORT(mfGetLogger(), "Failed to create the window!");
     }
     window->config.title = glfwGetWindowTitle(window->handle);
-    glfwMakeContextCurrent(window->handle);
     glfwSetWindowUserPointer(window->handle, window);
     glfwSetFramebufferSizeCallback(window->handle, size_callback);
     glfwSetCursorPosCallback(window->handle, pos_callback);
@@ -88,13 +87,31 @@ void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels) {
     MF_PANIC_IF(height == 0, mfGetLogger(), "The provided icon height shouldn't be 0!");
     MF_PANIC_IF(pixels == mfnull, mfGetLogger(), "The provided icon pixels shouldn't be 0!");
 
-    i32 channels;
     GLFWimage img[1];
     MF_SETMEM(img, 0, sizeof(GLFWimage));
     img->pixels = pixels;
     img->width = width;
     img->height = height;
     glfwSetWindowIcon(window->handle, 1, img);
+}
+
+void mfWindowSetMouseIcon(MFWindow* window, u32 width, u32 height, u8* pixels, u32 xhot, u32 yhot) {
+    MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
+    MF_PANIC_IF(!window->init, mfGetLogger(), "The window handle should be initialized!");
+
+    if(width == 0 && height == 0 && pixels == mfnull) {
+        glfwSetCursor(window->handle, mfnull);
+        return;
+    }
+
+    GLFWimage img[1];
+    MF_SETMEM(img, 0, sizeof(GLFWimage));
+    img->pixels = pixels;
+    img->width = width;
+    img->height = height;
+
+    GLFWcursor* cursor = glfwCreateCursor(img, xhot, yhot);
+    glfwSetCursor(window->handle, cursor);
 }
 
 void mfWindowUpdate(MFWindow* window) {

@@ -27,6 +27,10 @@ typedef struct MFContext_s {
 
 static MFContext s_Ctx = {0};
 
+static void err_callback(int error_code, const char* description) {
+    slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Error from GLFW: %s", description);
+}
+
 void mfInitialize(void) {
     if(s_Ctx.init) {
         slogLogMsg(&s_Ctx.logger, SLOG_SEVERITY_ERROR, "MeltedForge's core is already initialized!");
@@ -85,6 +89,7 @@ void mfInitialize(void) {
     }
 
     MF_PANIC_IF(!glfwInit(), mfGetLogger(), "Failed to initialize the system for creating the window!");
+    glfwSetErrorCallback(err_callback);
 }
 
 void mfShutdown(void) {

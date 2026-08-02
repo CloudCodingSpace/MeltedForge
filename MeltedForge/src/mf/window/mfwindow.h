@@ -35,6 +35,15 @@ void mfWindowDestroy(MFWindow* window);
 // @param pixels A valid u8* buffer which has the pixel data of the icon
 void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels);
 
+// @brief Sets the mouse icon of the window
+// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
+// @param width A non-zero u32 indicating the width of the icon
+// @param height A non-zero u32 indicating the height of the icon
+// @param pixels A valid u8* buffer which has the pixel data of the icon
+// @param xhot A u32 indicating the x-offset of contact point of the icon
+// @param yhot A u32 indicating the y-offset of contact point of the icon
+void mfWindowSetMouseIcon(MFWindow* window, u32 width, u32 height, u8* pixels, u32 xhot, u32 yhot);
+
 // @brief Updates the window for various things like polling events, callbacks, etc
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function
 void mfWindowUpdate(MFWindow* window);
