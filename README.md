@@ -19,6 +19,11 @@ The link to tests and apps made using MeltedForge is here :-
 
 ## Features
 
+ - Window & Input
+   - Basic window creation & handling
+   - Fullscreen windows
+   - Window icons
+   - Basic mouse and keyboard input
  - A Basic ECS
    - Multiple entities support
    - Can add/remove components to/from a scene
