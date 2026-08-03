@@ -60,6 +60,7 @@ The link to tests and apps made using MeltedForge is here :-
  - Can get the image pixels from the native window, render targets and images as well.
  - Support for compute pipelines and compute dispatches too
  - Can fetch and tell which optional GPU features are available, like Buffer Device Address, descriptor indexing, etc
+ - Support for headless rendering, meaning the engine can render to an image even if a window isn't provided
 
 ---
 
