@@ -18,7 +18,9 @@ typedef struct VulkanBackendConfig_s {
     bool enableUI;
     bool enableDepth;
     bool vsync;
+    bool headless;
     const char* appName;
+    MFRect2D renderExtent;
     MFWindow* window;
     VkSampleCountFlagBits msaaSamples;
 } VulkanBackendConfig;

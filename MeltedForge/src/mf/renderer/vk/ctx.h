@@ -50,14 +50,15 @@ typedef struct VulkanBackendCtx_s {
     u32 swapchainImageCount;
     VulkanImage* swapchainImages;
     
-    bool hadRenderTargetUsage, renderPassBegun, dispatchBegun, vsync;
+    bool hadRenderTargetUsage, renderPassBegun, dispatchBegun, vsync, headless;
     VkSampleCountFlagBits maxSupportedSamples, samples;
+    MFRect2D renderExtent;
 
     VkDescriptorPool uiDescriptorPool;
     VkCommandPool commandPool, computeCommandPool;
 } VulkanBackendCtx;
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, MFWindow* window);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFRect2D extent, MFWindow* window);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);

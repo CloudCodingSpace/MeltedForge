@@ -17,9 +17,10 @@ extern "C" {
 typedef struct MFRenderer_s MFRenderer;
 
 typedef struct MFRendererConfig_s {
-    bool enableDepth, vsync, enableUI;
+    bool enableDepth, vsync, enableUI, headless;
     const char* appName;
     MFSamples msaaSamples;
+    MFRect2D renderExtent;
 } MFRendererConfig;
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window);

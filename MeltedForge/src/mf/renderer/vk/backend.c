@@ -129,7 +129,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
             attachments[len++] = &backend->msaaImages[i];
 
-        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent); 
+        VulkanFramebufferCreate(&backend->frameBuffers[i], &backend->ctx, backend->pass.handle, len, attachments, backend->ctx.swapchainExtent);
     }
 
     if(backend->resizeCallback) {
@@ -143,7 +143,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     backend->waitStages = mfArrayCreate(5, sizeof(VkPipelineStageFlags));
     backend->descSetBindingPool = mfArrayCreate(5, sizeof(VkDescriptorSet));
 
-    VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->window);
+    VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->headless, config->renderExtent, config->window);
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         backend->commandBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true);
@@ -208,6 +208,9 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
             .hasDepth = config->enableDepth,
             .hasMsaa = backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT
         };
+
+        if(backend->config.headless)
+            info.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VulkanRenderPassCreate(&backend->pass, backend, info);
     }
@@ -286,14 +289,16 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
 
         ImGuiIO* io = igGetIO_Nil();
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        if(!backend->config.headless)
+            io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         
         ImGuiStyle* style = igGetStyle();
         style->WindowPadding = (ImVec2){0, 0};
 
         ImFontAtlas_AddFontFromFileTTF(io->Fonts, "mfassets/fonts/consolas.ttf", 18.0f, mfnull, mfnull);
 
-        ImGui_ImplGlfw_InitForVulkan(mfWindowGetHandle(config->window), true);
+        if(!backend->config.headless)
+            ImGui_ImplGlfw_InitForVulkan(mfWindowGetHandle(config->window), true);
 
         ImGui_ImplVulkan_InitInfo info = {
             .Allocator = backend->ctx.allocator,
@@ -319,7 +324,8 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
 void VulkanBackendShutdown(VulkanBackend* backend) {
     if(backend->config.enableUI) {
         ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
+        if(!backend->config.headless)
+            ImGui_ImplGlfw_Shutdown();
         igDestroyContext(igGetCurrentContext());
     }
 
@@ -386,13 +392,17 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
         backend->ctx.hadRenderTargetUsage = false;
     }
 
-    VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        return false;
-    }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        VK_CHECK(result);
+    if(backend->config.headless) {
+        backend->swapchainImageIndex = (backend->swapchainImageIndex + 1) % backend->ctx.swapchainImageCount;
+    } else {
+        VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
+            return false;
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            VK_CHECK(result);
+        }
     }
 
     VK_CHECK(vkResetCommandBuffer(backend->commandBuffers[backend->frameIndex], 0));
@@ -423,8 +433,16 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     if(!backend->config.enableUI)
         return true;
 
-    ImGui_ImplVulkan_NewFrame();    
-    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplVulkan_NewFrame();
+    
+    if(backend->config.headless) {
+        ImGuiIO* io = igGetIO_Nil();
+        io->DisplaySize = (ImVec2){ backend->config.renderExtent.extentX, backend->config.renderExtent.extentY };
+        io->DisplayFramebufferScale = (ImVec2){ 1, 1 };
+        io->DeltaTime = 1.0f/60.0f;
+    } else {
+        ImGui_ImplGlfw_NewFrame();
+    }
     igNewFrame();
 
     return true;
@@ -439,14 +457,16 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
         igRender();
         ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), backend->commandBuffers[backend->frameIndex], mfnull);
 
-        igUpdatePlatformWindows();
-        igRenderPlatformWindowsDefault(mfnull, mfnull);
+        if(!backend->config.headless) {
+            igUpdatePlatformWindows();
+            igRenderPlatformWindowsDefault(mfnull, mfnull);
+        }
     }
 
     VulkanRenderPassEnd(&backend->pass, backend->commandBuffers[backend->frameIndex], &backend->frameBuffers[backend->swapchainImageIndex]);
     VulkanCommandBufferEnd(backend->commandBuffers[backend->frameIndex]);
 
-    if(!backend->ctx.hadRenderTargetUsage) {
+    if(!backend->ctx.hadRenderTargetUsage && !backend->config.headless) {
         mfArrayAddElement(&backend->waitSemas, VkSemaphore, backend->imageAvailableSemas[backend->frameIndex]);
         mfArrayAddElement(&backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
@@ -468,21 +488,23 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 
     VK_CHECK(vkQueueSubmit(backend->ctx.queueData.graphicsQueue, 1, &submitInfo, backend->inFlightFences[backend->frameIndex]));
 
-    VkPresentInfoKHR presentInfo = {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pImageIndices = &backend->swapchainImageIndex,
-        .swapchainCount = 1,
-        .pSwapchains = &backend->ctx.swapchain,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = signalSemas
-    };
+    if(!backend->config.headless) {
+        VkPresentInfoKHR presentInfo = {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .pImageIndices = &backend->swapchainImageIndex,
+            .swapchainCount = 1,
+            .pSwapchains = &backend->ctx.swapchain,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = signalSemas
+        };
 
-    VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
-        return;
+        VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+            OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
+            return;
+        }
+        VK_CHECK(result);
     }
-    VK_CHECK(result);
     
     backend->frameIndex = (backend->frameIndex + 1) % FRAMES_IN_FLIGHT;
     backend->ctx.renderPassBegun = false;
@@ -523,6 +545,7 @@ u8* VulkanBackendGetCurrentImagePixels(VulkanBackend* backend, u32* width, u32* 
     if(backend->ctx.renderPassBegun)
         return mfnull;
     
+    slogLogMsg(mfGetLogger(), SLOG_SEVERITY_INFO, "Sc idx on ss :- %d", backend->swapchainImageIndex);
     return VulkanImageGetPixels(&backend->ctx.swapchainImages[backend->swapchainImageIndex], 0, 0, width, height);
 }
 

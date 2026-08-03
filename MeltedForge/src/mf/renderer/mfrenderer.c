@@ -22,6 +22,8 @@ struct MFRenderer_s {
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
+    MF_PANIC_IF(config.headless && (!config.renderExtent.extentX || !config.renderExtent.extentY), mfGetLogger(), 
+                    "If headless option is enabled, the renderExtent's extentX or extentY shouldn't be 0!");
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
     renderer->config = config;
@@ -32,6 +34,8 @@ MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
         .vsync = config.vsync,
         .enableDepth = config.enableDepth,
         .enableUI = config.enableUI,
+        .headless = config.headless,
+        .renderExtent = config.renderExtent,
         .window = window,
         .msaaSamples = (VkSampleCountFlagBits)(u32)verifySamples(config.msaaSamples)
     };

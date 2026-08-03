@@ -30,7 +30,7 @@ static VkBool32 debugCallback(
     return VK_FALSE;
 }
 
-static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysicalDevice device) {
+static VulkanBackendQueueData GetDeviceQueueData(VulkanBackendCtx* ctx, VkSurfaceKHR surface, VkPhysicalDevice device) {
     VulkanBackendQueueData data = {-1};
 
     u32 count = 0;
@@ -45,12 +45,16 @@ static VulkanBackendQueueData GetDeviceQueueData(VkSurfaceKHR surface, VkPhysica
             data.transferQueueIdx = i;
         if(props[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
             data.computeQueueIdx = i;
-            
+
+        if(ctx->headless) {
+            data.presentQueueIdx = 0; // HACK: To bypass the IsQueueDataComplete
+            continue;
+        }
         VkBool32 presentSupport = VK_FALSE;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
         if(presentSupport)
-                data.presentQueueIdx = i;
+            data.presentQueueIdx = i;
     }
 
     MF_FREEMEM(props);
@@ -61,11 +65,11 @@ static bool IsQueueDataComplete(VulkanBackendQueueData data) {
     return data.computeQueueIdx != -1 && data.graphicsQueueIdx != -1 && data.presentQueueIdx != -1 && data.transferQueueIdx != -1;
 }
 
-static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
-    VulkanBackendQueueData data = GetDeviceQueueData(surface, device);
+static bool IsDeviceUsable(VulkanBackendCtx* ctx, VkSurfaceKHR surface, VkPhysicalDevice device) {
+    VulkanBackendQueueData data = GetDeviceQueueData(ctx, surface, device);
 
     bool extSupport = false;
-    {
+    if(!ctx->headless) {
         const char* deviceExts[] = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
@@ -90,6 +94,8 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
         }
         if(props != mfnull)
             MF_FREEMEM(props);
+    } else {
+        return IsQueueDataComplete(data);
     }
 
     return IsQueueDataComplete(data) && extSupport;
@@ -98,18 +104,8 @@ static bool IsDeviceUsable(VkSurfaceKHR surface, VkPhysicalDevice device) {
 static MFOptionalRenderFeatures GetPhysicalDeviceRenderFeatures(VkPhysicalDevice device) {
     MFOptionalRenderFeatures featureFlags = MF_OPTIONAL_RENDER_FEATURE_MAX_ENUM;
 
-    // VkPhysicalDeviceDescriptorIndexingFeatures descriptorFeatures = {
-    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES
-    // };
-
-    // VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeatures = {
-    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-    //     .pNext = &descriptorFeatures
-    // };
-
     VkPhysicalDeviceVulkan12Features vk12Features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-        // .pNext = &bdaFeatures
     };
 
     VkPhysicalDeviceFeatures2 features = {
@@ -270,106 +266,136 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 }
 
 static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
-    VulkanScCaps caps = GetScCaps(ctx);
-
-    SelectScCaps(ctx, caps, window);
-    // Creating the swapchain
-    {
-        VkSurfaceCapabilitiesKHR surfaceCaps = caps.caps;
-
-        uint32_t imgCount = surfaceCaps.minImageCount + 1;
-		if (surfaceCaps.maxImageCount > 0 && imgCount > surfaceCaps.maxImageCount) {
-			imgCount = surfaceCaps.maxImageCount;
-		}
-
-		VkSwapchainCreateInfoKHR info = {
-            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-    		.surface = ctx->surface,
-    		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-    		.minImageCount = imgCount,
-    		.imageFormat = ctx->swapchainFormat.format,
-    		.imageColorSpace = ctx->swapchainFormat.colorSpace,
-    		.preTransform = surfaceCaps.currentTransform,
-    		.presentMode = ctx->swapchainMode,
-    		.imageArrayLayers = 1,
-    		.imageExtent = ctx->swapchainExtent,
-    		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-    		.clipped = VK_TRUE,
-    		.oldSwapchain = mfnull
-        };
-
-		if (ctx->uniqueQueueCount > 1) {
-			info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			info.queueFamilyIndexCount = ctx->uniqueQueueCount;
-			info.pQueueFamilyIndices = ctx->uniqueQueues;
-		} else {
-			info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		}
-
-		VK_CHECK(vkCreateSwapchainKHR(ctx->device, &info, ctx->allocator, &ctx->swapchain));
-    }
-    // Getting the swapchain images and creating image views
-    {
-        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->swapchainImageCount, mfnull));
-        VkImage* swapchainImages = MF_ALLOCMEM(VkImage, sizeof(VkImage) * ctx->swapchainImageCount);
+    if(ctx->headless) {
+        ctx->swapchainImageCount = FRAMES_IN_FLIGHT;
         ctx->swapchainImages = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * ctx->swapchainImageCount);
-        VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->swapchainImageCount, swapchainImages));
-
+        ctx->swapchainFormat.format = VK_FORMAT_R8G8B8A8_UNORM;
+        ctx->swapchainExtent.width = ctx->renderExtent.extentX;
+        ctx->swapchainExtent.height = ctx->renderExtent.extentY;
+    
         for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
-            ctx->swapchainImages[i] = (VulkanImage) {
-                .info = {
-                    .ctx = ctx,
-                    .arrayLayers = 1,
-                    .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .format = ctx->swapchainFormat.format,
-                    .generateMipmaps = false,
-                    .gpuResource = false,
-                    .width = ctx->swapchainExtent.width,
-                    .height = ctx->swapchainExtent.height,
-                    .samples = VK_SAMPLE_COUNT_1_BIT,
-                    .mipLevels = 1,
-                    .tiling = VK_IMAGE_TILING_OPTIMAL,
-                    .type = VK_IMAGE_TYPE_2D,
-                    .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                    .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                    .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-                },
-                .access = 0,
-                .stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                .layout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .image = swapchainImages[i],
-                .cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true)
-            };
-            {
-                VkFenceCreateInfo info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-                VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &ctx->swapchainImages[i].fence));
-            }
-            
-            VkImageViewCreateInfo info = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            VulkanImageInfo info = {
+                .gpuResource = false,
+                .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                .arrayLayers = 1,
+                .mipLevels = 1,
+                .generateMipmaps = false,
+                .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+                .width = ctx->swapchainExtent.width,
+                .height = ctx->swapchainExtent.height,
                 .format = ctx->swapchainFormat.format,
+                .ctx = ctx,
+                .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                .type = VK_IMAGE_TYPE_2D,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .components.a = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseArrayLayer = 0,
-                    .baseMipLevel = 0,
-                    .layerCount = 1,
-                    .levelCount = 1
-                },
-                .image = ctx->swapchainImages[i].image
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .samples = VK_SAMPLE_COUNT_1_BIT
             };
 
-            VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &ctx->swapchainImages[i].view));
+            VulkanImageCreate(&ctx->swapchainImages[i], info);
         }
-        MF_FREEMEM(swapchainImages);
-    }
+    } else {
+        VulkanScCaps caps = GetScCaps(ctx);
 
-    MF_FREEMEM(caps.formats);
-    MF_FREEMEM(caps.modes);
+        SelectScCaps(ctx, caps, window);
+        // Creating the swapchain
+        {
+            VkSurfaceCapabilitiesKHR surfaceCaps = caps.caps;
+
+            uint32_t imgCount = surfaceCaps.minImageCount + 1;
+            if (surfaceCaps.maxImageCount > 0 && imgCount > surfaceCaps.maxImageCount) {
+                imgCount = surfaceCaps.maxImageCount;
+            }
+
+            VkSwapchainCreateInfoKHR info = {
+                .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+                .surface = ctx->surface,
+                .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+                .minImageCount = imgCount,
+                .imageFormat = ctx->swapchainFormat.format,
+                .imageColorSpace = ctx->swapchainFormat.colorSpace,
+                .preTransform = surfaceCaps.currentTransform,
+                .presentMode = ctx->swapchainMode,
+                .imageArrayLayers = 1,
+                .imageExtent = ctx->swapchainExtent,
+                .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                .clipped = VK_TRUE,
+                .oldSwapchain = mfnull
+            };
+
+            if (ctx->uniqueQueueCount > 1) {
+                info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+                info.queueFamilyIndexCount = ctx->uniqueQueueCount;
+                info.pQueueFamilyIndices = ctx->uniqueQueues;
+            } else {
+                info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            }
+
+            VK_CHECK(vkCreateSwapchainKHR(ctx->device, &info, ctx->allocator, &ctx->swapchain));
+        }
+        // Getting the swapchain images and creating image views
+        {
+            VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->swapchainImageCount, mfnull));
+            VkImage* swapchainImages = MF_ALLOCMEM(VkImage, sizeof(VkImage) * ctx->swapchainImageCount);
+            ctx->swapchainImages = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * ctx->swapchainImageCount);
+            VK_CHECK(vkGetSwapchainImagesKHR(ctx->device, ctx->swapchain, &ctx->swapchainImageCount, swapchainImages));
+
+            for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
+                ctx->swapchainImages[i] = (VulkanImage) {
+                    .info = {
+                        .ctx = ctx,
+                        .arrayLayers = 1,
+                        .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .format = ctx->swapchainFormat.format,
+                        .generateMipmaps = false,
+                        .gpuResource = false,
+                        .width = ctx->swapchainExtent.width,
+                        .height = ctx->swapchainExtent.height,
+                        .samples = VK_SAMPLE_COUNT_1_BIT,
+                        .mipLevels = 1,
+                        .tiling = VK_IMAGE_TILING_OPTIMAL,
+                        .type = VK_IMAGE_TYPE_2D,
+                        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                        .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                    },
+                    .access = 0,
+                    .stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                    .layout = VK_IMAGE_LAYOUT_UNDEFINED,
+                    .image = swapchainImages[i],
+                    .cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true)
+                };
+                {
+                    VkFenceCreateInfo info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+                    VK_CHECK(vkCreateFence(ctx->device, &info, ctx->allocator, &ctx->swapchainImages[i].fence));
+                }
+                
+                VkImageViewCreateInfo info = {
+                    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                    .format = ctx->swapchainFormat.format,
+                    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                    .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                    .components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                    .components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                    .components.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+                    .subresourceRange = {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .baseArrayLayer = 0,
+                        .baseMipLevel = 0,
+                        .layerCount = 1,
+                        .levelCount = 1
+                    },
+                    .image = ctx->swapchainImages[i].image
+                };
+
+                VK_CHECK(vkCreateImageView(ctx->device, &info, ctx->allocator, &ctx->swapchainImages[i].view));
+            }
+            MF_FREEMEM(swapchainImages);
+        }
+
+        MF_FREEMEM(caps.formats);
+        MF_FREEMEM(caps.modes);
+    }
 }
 
 static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device) {
@@ -387,9 +413,11 @@ static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFRect2D extent, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->vsync = vsync;
+    ctx->headless = headless;
+    ctx->renderExtent = extent;
 
     // Checking supported vulkan version
     {
@@ -485,7 +513,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 #endif
     }
     // Surface
-    {
+    if(!ctx->headless) {
         VK_CHECK(glfwCreateWindowSurface(ctx->instance, mfWindowGetHandle(window), ctx->allocator, &ctx->surface));
     }
     // Physical Device 
@@ -506,7 +534,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         MFArray usableDevices = mfArrayCreate(1, sizeof(VkPhysicalDevice));
         MFArray usableScores = mfArrayCreate(1, sizeof(u64));
         for(u32 i = 0; i < deviceCount; i++) {
-            if(IsDeviceUsable(ctx->surface, devices[i])) {
+            if(IsDeviceUsable(ctx, ctx->surface, devices[i])) {
                 mfArrayAddElement(&usableDevices, VkPhysicalDevice, devices[i]);
                 mfArrayAddElement(&usableScores, u64, RatePhysicalDevice(devices[i]));
             }
@@ -528,7 +556,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         mfArrayDestroy(&usableScores);
         MF_FREEMEM(devices);
 
-        ctx->queueData = GetDeviceQueueData(ctx->surface, ctx->physicalDevice);
+        ctx->queueData = GetDeviceQueueData(ctx, ctx->surface, ctx->physicalDevice);
         ctx->maxSupportedSamples = GetMaxSupportedSampleCount(ctx->physicalDevice);
         ctx->samples = (ctx->maxSupportedSamples >= samples) ? samples : ctx->maxSupportedSamples;
         ctx->featureFlags = GetPhysicalDeviceRenderFeatures(ctx->physicalDevice);
@@ -599,6 +627,9 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
             .pNext = &vk12Features
         };
 
+        if(ctx->headless)
+            info.enabledExtensionCount = 0;
+
         VK_CHECK(vkCreateDevice(ctx->physicalDevice, &info, ctx->allocator, &ctx->device));
         MF_FREEMEM(qInfos);
     }
@@ -614,8 +645,6 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         ctx->commandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.graphicsQueueIdx);
         ctx->computeCommandPool = VulkanCommandPoolCreate(ctx, ctx->queueData.computeQueueIdx);
     }
-    // Swapchain
-    CreateSwapchain(ctx, mfWindowGetHandle(window));
     // Vma Allocator
     {
         VmaAllocatorCreateInfo info = {
@@ -629,6 +658,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         };
         VK_CHECK(vmaCreateAllocator(&info, &ctx->vmaAllocator));
     }
+    // Swapchain
+    CreateSwapchain(ctx, mfWindowGetHandle(window));
     // Global descriptor pool for shader resources
     {
         VkDescriptorPoolSize poolSizes[] = {
@@ -658,16 +689,22 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
+    for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
+        if(!ctx->headless)
+            vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
+        else
+            VulkanImageDestroy(&ctx->swapchainImages[i]);
+        vkDestroyFence(ctx->device, ctx->swapchainImages[i].fence, ctx->allocator);
+    }
+    
     VulkanCommandPoolDestroy(ctx, ctx->commandPool);
     VulkanCommandPoolDestroy(ctx, ctx->computeCommandPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);
 
-    for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
-        vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
-        vkDestroyFence(ctx->device, ctx->swapchainImages[i].fence, ctx->allocator);
-    }
-
-    vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
+    if(!ctx->headless)
+        vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
+    else
+        MF_FREEMEM(ctx->swapchainImages);
 
     vmaDestroyAllocator(ctx->vmaAllocator);
     vkDestroyDevice(ctx->device, ctx->allocator);
@@ -676,7 +713,8 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     ctx->vkDestroyDebugUtilsMessengerEXT(ctx->instance, ctx->debugMessenger, ctx->allocator);
 #endif
 
-    vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
+    if(!ctx->headless)
+        vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
 
     MF_FREEMEM(ctx->swapchainImages);
@@ -687,13 +725,20 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
    
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
-        vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
+        if(!ctx->headless)
+            vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
+        else
+            VulkanImageDestroy(&ctx->swapchainImages[i]);
         VulkanCommandBufferFree(ctx, ctx->swapchainImages[i].cmdBuff, ctx->commandPool);
         vkDestroyFence(ctx->device, ctx->swapchainImages[i].fence, ctx->allocator);
     }
     MF_FREEMEM(ctx->swapchainImages);
-    vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
-
+    
+    if(!ctx->headless) {
+        vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
+    } else {
+        MF_FREEMEM(ctx->swapchainImages);
+    }
     CreateSwapchain(ctx, mfWindowGetHandle(window));
 }
 
