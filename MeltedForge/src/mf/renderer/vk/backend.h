@@ -20,7 +20,7 @@ typedef struct VulkanBackendConfig_s {
     bool vsync;
     bool headless;
     const char* appName;
-    MFRect2D renderExtent;
+    MFVec2 renderExtent;
     MFWindow* window;
     VkSampleCountFlagBits msaaSamples;
 } VulkanBackendConfig;

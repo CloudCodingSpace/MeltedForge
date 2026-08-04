@@ -22,8 +22,7 @@ MFAppConfig mfClientCreateAppConfig() {
     config.winConfig.resizable = true;
     config.rendererConfig.vsync = false;
     config.rendererConfig.headless = true;
-    config.rendererConfig.renderExtent.extentX = 800;
-    config.rendererConfig.renderExtent.extentY = 600;
+    config.rendererConfig.renderExtent = mfVec2Create(800, 600);
     config.rendererConfig.enableUI = true;
     config.rendererConfig.enableDepth = true;
     config.rendererConfig.msaaSamples = MF_SAMPLE_COUNT_1;

@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+#include "core/mfmaths.h"
 #include "window/mfwindow.h"
 #include "renderer/mfutil_types.h"
 
@@ -52,13 +53,13 @@ typedef struct VulkanBackendCtx_s {
     
     bool hadRenderTargetUsage, renderPassBegun, dispatchBegun, vsync, headless;
     VkSampleCountFlagBits maxSupportedSamples, samples;
-    MFRect2D renderExtent;
+    MFVec2 renderExtent;
 
     VkDescriptorPool uiDescriptorPool;
     VkCommandPool commandPool, computeCommandPool;
 } VulkanBackendCtx;
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFRect2D extent, MFWindow* window);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFVec2 extent, MFWindow* window);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
 void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);

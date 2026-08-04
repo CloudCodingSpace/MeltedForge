@@ -414,7 +414,8 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     };
     if(backend->config.enableDepth) {
         values[clearCount].depthStencil.depth = 1.0f;
-        values[clearCount++].depthStencil.stencil = 0;
+        values[clearCount].depthStencil.stencil = 0;
+        clearCount++;
     }
     if(backend->ctx.samples != VK_SAMPLE_COUNT_1_BIT)
         values[clearCount++] = backend->clearColor;
@@ -437,7 +438,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     
     if(backend->config.headless) {
         ImGuiIO* io = igGetIO_Nil();
-        io->DisplaySize = (ImVec2){ backend->config.renderExtent.extentX, backend->config.renderExtent.extentY };
+        io->DisplaySize = (ImVec2){ backend->config.renderExtent.x, backend->config.renderExtent.y };
         io->DisplayFramebufferScale = (ImVec2){ 1, 1 };
         io->DeltaTime = 1.0f/60.0f;
     } else {

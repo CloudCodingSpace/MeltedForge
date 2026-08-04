@@ -270,8 +270,8 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
         ctx->swapchainImageCount = FRAMES_IN_FLIGHT;
         ctx->swapchainImages = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * ctx->swapchainImageCount);
         ctx->swapchainFormat.format = VK_FORMAT_R8G8B8A8_UNORM;
-        ctx->swapchainExtent.width = ctx->renderExtent.extentX;
-        ctx->swapchainExtent.height = ctx->renderExtent.extentY;
+        ctx->swapchainExtent.width = ctx->renderExtent.x;
+        ctx->swapchainExtent.height = ctx->renderExtent.y;
     
         for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
             VulkanImageInfo info = {
@@ -413,7 +413,7 @@ static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFRect2D extent, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFVec2 extent, MFWindow* window) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->vsync = vsync;
     ctx->headless = headless;

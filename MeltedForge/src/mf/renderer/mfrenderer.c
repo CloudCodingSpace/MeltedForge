@@ -22,7 +22,7 @@ struct MFRenderer_s {
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     MF_PANIC_IF(window == mfnull && !config.headless, mfGetLogger(), "The window handle provided shouldn't be null!");
-    MF_PANIC_IF(config.headless && (!config.renderExtent.extentX || !config.renderExtent.extentY), mfGetLogger(), 
+    MF_PANIC_IF(config.headless && (!config.renderExtent.x || !config.renderExtent.y), mfGetLogger(), 
                     "If headless option is enabled, the renderExtent's extentX or extentY shouldn't be 0!");
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
