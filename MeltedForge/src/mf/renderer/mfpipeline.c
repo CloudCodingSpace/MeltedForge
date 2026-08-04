@@ -225,9 +225,6 @@ void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32
 void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
-
-    vp.y = vp.height;
-    vp.height *= -1.0f;
     
     VkViewport v = {
         .x = vp.x,

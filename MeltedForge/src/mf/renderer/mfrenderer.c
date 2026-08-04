@@ -132,16 +132,17 @@ MFViewport mfRendererGetViewport(MFRenderer* renderer) {
     
     MFViewport vp = {
         .x = 0,
-        .y = 0,
+        .y = (f32)renderer->backend.ctx.swapchainExtent.height,
         .width = renderer->backend.ctx.swapchainExtent.width,
-        .height = renderer->backend.ctx.swapchainExtent.height,
+        .height = -(f32)renderer->backend.ctx.swapchainExtent.height,
         .maxDepth = 1.0f,
         .minDepth = 0.0f
     };
 
     if(renderer->backend.renderTarget != mfnull) {
         vp.width = renderer->backend.renderTarget->images[0].info.width;
-        vp.height = renderer->backend.renderTarget->images[0].info.height;
+        vp.y = (f32)renderer->backend.renderTarget->images[0].info.height;
+        vp.height = -vp.y;
     }
     
     return vp;
