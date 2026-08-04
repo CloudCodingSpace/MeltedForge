@@ -545,7 +545,6 @@ u8* VulkanBackendGetCurrentImagePixels(VulkanBackend* backend, u32* width, u32* 
     if(backend->ctx.renderPassBegun)
         return mfnull;
     
-    slogLogMsg(mfGetLogger(), SLOG_SEVERITY_INFO, "Sc idx on ss :- %d", backend->swapchainImageIndex);
     return VulkanImageGetPixels(&backend->ctx.swapchainImages[backend->swapchainImageIndex], 0, 0, width, height);
 }
 

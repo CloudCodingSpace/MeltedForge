@@ -468,8 +468,15 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
         .pWaitDstStageMask = waitDstFlags
     };
 
-    if(renderTarget->backend->config.headless)
-        waitSemas[0] = renderTarget->backend->renderFinishedSemas[renderTarget->backend->swapchainImageIndex];
+    if(renderTarget->backend->config.headless) {
+        static u8 count = 1;
+        if(count > renderTarget->backend->ctx.swapchainImageCount)
+            waitSemas[0] = renderTarget->backend->renderFinishedSemas[renderTarget->backend->swapchainImageIndex];
+        else {
+            info.waitSemaphoreCount = 0;
+            count++;
+        }
+    }
 
     VkFence fence = renderTarget->fences[renderTarget->backend->frameIndex];
     VK_CHECK(vkQueueSubmit(renderTarget->backend->ctx.queueData.graphicsQueue, 1, &info, waitOnCpu ? fence : VK_NULL_HANDLE));
