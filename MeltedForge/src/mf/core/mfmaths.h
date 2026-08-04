@@ -664,9 +664,9 @@ MF_INLINE MFMat4 mfMat4Perspective(f32 fovYRadians, f32 aspect, f32 nearZ, f32 f
     MF_SETMEM(&mat, 0, sizeof(MFMat4));
     mat.data[0] = f / aspect;
     mat.data[5] = f;
-    mat.data[10] = (farZ + nearZ) * nf;
+    mat.data[10] = farZ * nf; // For OpenGL: (farZ + nearZ) * nf
     mat.data[11] = -1.0f;
-    mat.data[14] = (2.0f * farZ * nearZ) * nf;
+    mat.data[14] = farZ * nearZ * nf; // For OpenGL: Multiply by 2.0 to this expr
     return mat;
 }
 

@@ -95,6 +95,7 @@ void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels) {
     glfwSetWindowIcon(window->handle, 1, img);
 }
 
+// TODO: This isn't working as of now, get back to it later and fix this function!!
 void mfWindowSetMouseIcon(MFWindow* window, u32 width, u32 height, u8* pixels, u32 xhot, u32 yhot) {
     MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
     MF_PANIC_IF(!window->init, mfGetLogger(), "The window handle should be initialized!");

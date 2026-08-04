@@ -21,7 +21,7 @@ MFAppConfig mfClientCreateAppConfig() {
     config.layers = layers;
     config.winConfig.resizable = true;
     config.rendererConfig.vsync = false;
-    config.rendererConfig.headless = true;
+    config.rendererConfig.headless = false;
     config.rendererConfig.renderExtent = mfVec2Create(800, 600);
     config.rendererConfig.enableUI = true;
     config.rendererConfig.enableDepth = true;
