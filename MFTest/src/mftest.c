@@ -44,7 +44,6 @@ static void CreatePipeline(MFTState* state) {
             .transparent = true,
             .vertPath = "mftshaders/fs.vert.spv",
             .fragPath = "mftshaders/fs.frag.spv",
-            // .cullMode = MF_CULL_MODE_BACK_BIT
             .cullMode = MF_CULL_MODE_BACK_BIT
         },
         .type = MF_PIPELINE_TYPE_GRAPHICS,
@@ -380,8 +379,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     state->renderer = appState->renderer;
     state->window = appState->window;
     state->fsPcData = (FSPushConstantData) {
-        .motionBlurSamples = 10,
-        .enableMotionBlur = 0,
         .zNear = 0.01f,
         .zFar = 1000.0f
     };
@@ -555,19 +552,13 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         if(igCollapsingHeader_BoolPtr("Camera effects", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             bool showDepthAttachment = state->fsPcData.showDepthAttachment;
             bool showChromaticAberration = state->fsPcData.showChromaticAberration;
-            bool enableMotionBlur = state->fsPcData.enableMotionBlur;
-            float motionBlurSamples = state->fsPcData.motionBlurSamples;
 
             igCheckbox("Show depth attachment", &showDepthAttachment);
             igCheckbox("Enable fustrum culling", &state->enableFustrumCulling);
-            igCheckbox("Enable motion blur", &enableMotionBlur);
             igCheckbox("Enable chromatic aberration", &showChromaticAberration);
-            igDragFloat("Motion Blur Samples", &motionBlurSamples, 1.0f, 2.0f, 80.0f, mfnull, ImGuiSliderFlags_ClampOnInput);
         
-            state->fsPcData.motionBlurSamples = (int)motionBlurSamples;
             state->fsPcData.showDepthAttachment = showDepthAttachment;
             state->fsPcData.showChromaticAberration = showChromaticAberration;
-            state->fsPcData.enableMotionBlur = enableMotionBlur;
         }
 
         if(igCollapsingHeader_BoolPtr("Light settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {

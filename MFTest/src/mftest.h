@@ -17,8 +17,6 @@ typedef struct PushConstantData_s {
 typedef struct FSPushConstantData_s {
     int showDepthAttachment;
     int showChromaticAberration;
-    int enableMotionBlur;
-    int motionBlurSamples;
     float zNear;
     float zFar;
 } FSPushConstantData;
