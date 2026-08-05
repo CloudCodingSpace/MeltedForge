@@ -544,7 +544,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         
         u64 highestRate = 0;
         for(u64 i = 0; i < usableDevices.len; i++) {
-            if(highestRate <= mfArrayGetElement(usableScores, u64, i)) {
+            if(highestRate < mfArrayGetElement(usableScores, u64, i)) {
                 highestRate = mfArrayGetElement(usableScores, u64, i);
                 ctx->physicalDevice = mfArrayGetElement(usableDevices, VkPhysicalDevice, i);
             }
@@ -560,6 +560,22 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         ctx->maxSupportedSamples = GetMaxSupportedSampleCount(ctx->physicalDevice);
         ctx->samples = (ctx->maxSupportedSamples >= samples) ? samples : ctx->maxSupportedSamples;
         ctx->featureFlags = GetPhysicalDeviceRenderFeatures(ctx->physicalDevice);
+        
+        {
+            ctx->features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+            VkPhysicalDeviceFeatures2 features = {
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+                .pNext = &ctx->features
+            };
+            vkGetPhysicalDeviceFeatures2(ctx->physicalDevice, &features);
+        
+            ctx->props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
+            VkPhysicalDeviceProperties2 props = {
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+                .pNext = &ctx->props
+            };
+            vkGetPhysicalDeviceProperties2(ctx->physicalDevice, &props);
+        }
     }
     // Device 
     {

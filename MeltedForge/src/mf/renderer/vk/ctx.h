@@ -39,7 +39,8 @@ typedef struct VulkanBackendCtx_s {
     u32 uniqueQueues[4];
     VulkanBackendQueueData queueData;
     MFOptionalRenderFeatures featureFlags;
-    VkPhysicalDeviceFeatures features;
+    VkPhysicalDeviceVulkan12Features features;
+    VkPhysicalDeviceVulkan12Properties props;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
     VmaAllocator vmaAllocator;
