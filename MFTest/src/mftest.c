@@ -308,11 +308,9 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     state->fsPcData.zFar = camera.farPlane;
 
     mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
-    if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
-        state->entityCount = 2;
+    //if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
+        state->entityCount = 1000;
         state->entities = MF_ALLOCMEM(u64, sizeof(u64) * state->entityCount);
-        state->entities[0] = mfSceneCreateEntity(&state->scene);
-        state->entities[1] = mfSceneCreateEntity(&state->scene);
 
         MFMeshComponent mComp = {
             // .path = "mftmeshes/DeccerCubes/SM_Deccer_Cubes_Textured_Complex.gltf",
@@ -324,33 +322,21 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
             .perVertSize = sizeof(Vertex)
         };
 
-        MFTransformComponent tComp = {
-            .position = (MFVec3){0, 0, 0},
-            .rotationXYZ = (MFVec3){0, 0, 0},
-            .scale = (MFVec3){1, 1, 1}
-        };
-
         mfSceneAddMeshComponent(&state->scene, &mComp);
-        mfSceneAddTransformComponent(&state->scene, &tComp);
 
-        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[0], &mComp);
-        mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[0], &tComp);
-
-        tComp.position = (MFVec3){5, 0, 0};
-        mfSceneAddTransformComponent(&state->scene, &tComp);
+        for(u32 i = 0; i < state->entityCount; i++) {
+            MFTransformComponent tComp = {
+                .position = (MFVec3){mfRandomFloatMinMax(-100, 100), mfRandomFloatMinMax(-100, 100), mfRandomFloatMinMax(-100, 100)},
+                .rotationXYZ = (MFVec3){mfRandomFloatMinMax(-100, 100), mfRandomFloatMinMax(-100, 100), mfRandomFloatMinMax(-100, 100)},
+                .scale = (MFVec3){2, 2, 2}
+            };
+            mfSceneAddTransformComponent(&state->scene, &tComp);
         
-        MFMeshComponent mComp2 = {
-            // .path = "mftmeshes/Damaged Helmet/DamagedHelmet.gltf",
-            // .path = "mftmeshes/Sponza/glTF/Sponza.gltf",
-            // .path = "mftmeshes/pistol/service_pistol.gltf",
-            .path = "mftmeshes/sofa/sofa_1k.gltf",
-            .perVertSize = sizeof(Vertex)
-        };
-        mfSceneAddMeshComponent(&state->scene, &mComp2);
-
-        mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[1], &mComp2);
-        mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[1], &tComp);
-    } else {
+            state->entities[i] = mfSceneCreateEntity(&state->scene);
+            mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[i], &mComp);
+            mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[i], &tComp);
+        }
+    /*} else {
         u64 entityCount = 0;
         mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
         MFEntity* entities = MF_ALLOCMEM(MFEntity, sizeof(MFEntity) * entityCount);
@@ -363,7 +349,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entityCount = entityCount;
 
         MF_FREEMEM(entities);
-    }
+    }*/
 }
 
 #pragma endregion
@@ -575,6 +561,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
         igDummy((ImVec2){ 0.0f, 50.0f });
 
+        /*
         if(igCollapsingHeader_BoolPtr("Model transform settings", mfnull, ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen)) {
             for(u64 i = 0; i < state->entityCount; i++) {
                 igPushID_Int((int)i);
@@ -601,6 +588,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
                 igPopID();
             }
         }
+        */
 
         igEnd();
     }
