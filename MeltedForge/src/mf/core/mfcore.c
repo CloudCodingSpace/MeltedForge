@@ -11,6 +11,7 @@ extern "C" {
 #include <slog/slog.h>
 #include <GLFW/glfw3.h>
 
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -87,6 +88,8 @@ void mfInitialize(void) {
             }
         }
     }
+
+    srand(time(mfnull));
 
     MF_PANIC_IF(!glfwInit(), mfGetLogger(), "Failed to initialize the system for creating the window!");
     glfwSetErrorCallback(err_callback);

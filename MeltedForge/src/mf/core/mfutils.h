@@ -10,6 +10,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <limits.h>
+#include <float.h>
 
 #include <slog/slog.h>
 
@@ -293,6 +295,18 @@ MF_INLINE void mfNormalizePath(char* path, SLogger* logger) {
     size_t len = mfStringLen(path);
     if (len > 1 && path[len - 1] == '/')
         path[len - 1] = '\0';
+}
+
+#pragma endregion
+
+#pragma region random
+
+MF_INLINE f32 mfRandomUnitFloat(void) {
+    return ((f32)rand()) / (f32)RAND_MAX;
+}
+
+MF_INLINE f32 mfRandomFloatMinMax(f32 min, f32 max) {
+    return mfRandomUnitFloat() * (max - min) + min;
 }
 
 #pragma endregion

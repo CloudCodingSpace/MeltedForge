@@ -1,4 +1,5 @@
 #include "mftest.h"
+#include "core/mfutils.h"
 #include "util.h"
 
 #include <stb/stb_image_write.h>

@@ -6,3 +6,4 @@ out
 .vs
 vkconfig.txt
 build-tracy
+env
