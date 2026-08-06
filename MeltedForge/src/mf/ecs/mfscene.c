@@ -91,9 +91,9 @@ void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
         for(u64 meshIdx = 0; meshIdx < meshComp->model.meshCount; meshIdx++) {
             MFMesh* mesh = &meshComp->model.meshes[meshIdx];
             MFMat4 meshModelMat = mfMat4Mul(modelMatrix, mesh->transform);
-            bool visible = true;
 
             if(config->enableFustrumCulling) {
+                bool visible = true;
                 MFVec3 aabb[2] = {0};
                 mfTransformAABB(mesh->localAABB, meshModelMat, aabb);
 
@@ -117,13 +117,13 @@ void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
                     if(mfDistancePlanePoint(planes[j], p) < 0) {
                         visible = false;
                         break;
-                    }
+                    }    
+                }
 
-                    if(visible) {
-                        if(config->perMeshDrawCallback)
-                            config->perMeshDrawCallback(config->state, meshModelMat, meshComp, meshIdx, config->entityPipeline);
-                        mfMeshRender(mesh);
-                    }
+                if(visible) {
+                    if(config->perMeshDrawCallback)
+                        config->perMeshDrawCallback(config->state, meshModelMat, meshComp, meshIdx, config->entityPipeline);
+                    mfMeshRender(mesh);
                 }
             } else {
                 if(config->perMeshDrawCallback)
