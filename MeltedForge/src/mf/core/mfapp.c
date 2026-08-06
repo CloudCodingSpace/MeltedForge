@@ -15,7 +15,7 @@ static void initApp(void* st, MFAppConfig* config) {
 
     // Setting icon
     {
-        u32 width, height, channels;
+        i32 width, height, channels;
         u8* data = stbi_load(MF_WINDOW_DEFAULT_ICON_PATH, &width, &height, &channels, 4);
         mfWindowSetIcon(state->window, width, height, data);
         stbi_image_free(data);
