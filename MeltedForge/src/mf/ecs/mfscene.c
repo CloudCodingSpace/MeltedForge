@@ -13,9 +13,6 @@ extern "C" {
 
 #include "objects/mfmodel.h"
 
-#include "serializer/mfserializer.h"
-#include "serializer/mfserializerutils.h"
-
 #include <slog/slog.h>
 
 void mfSceneCreate(MFScene* scene, MFCamera camera, MFModelVertexBuilder vertBuilder, MFRenderer* renderer) {
@@ -42,6 +39,12 @@ void mfSceneDestroy(MFScene* scene) {
         MFMeshComponent* c = &mfArrayGetElement(scene->meshCompPool, MFMeshComponent, i);
         if(!c->valid)
             continue;
+
+        for(u32 j = 0; j < c->model.meshCount; j++) {
+            MFResourceSet* set = c->model.meshes[j].mat.set;
+            if(set)
+                mfResourceSetDestroy(set);
+        }
 
         mfModelDestroy(&c->model);
     }
@@ -382,8 +385,8 @@ void mfSceneGetValidEntities(MFScene* scene, u64* validEntityCount, MFEntity* en
         MFEntity* e = &mfArrayGetElement(scene->entities, MFEntity, i);
         if(e->valid) {
             if(entities)
-            memcpy(&entities[*validEntityCount], e, sizeof(MFEntity));
-            *validEntityCount = *validEntityCount + 1;
+                memcpy(&entities[*validEntityCount], e, sizeof(MFEntity));
+            (*validEntityCount)++;
         }
     }
 }

@@ -27,13 +27,13 @@ static void CreatePipeline(MFTState* state) {
 
     MFResourceSetLayout* fsLayouts[] = {
         mfRenderTargetGetResourceSetLayout(state->renderTarget),
-        state->cameraLayout
+        state->camLightLayout
     };
 
     MFResourceSetLayout* layouts[] = {
-        state->cameraLayout,
+        state->camLightLayout,
         state->skyboxLayout,
-        state->layout
+        state->matLayout
     };
 
     MFPipelineConfig info = {
@@ -156,7 +156,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuImageGetDescription(aoImage), 4 }, // NOTE: Description for one image is enough since they have the same bindings
             };
             
-            state->layout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, totalMeshCount, appState->renderer);
+            state->matLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, totalMeshCount, appState->renderer);
         }
     
         // Skybox layout
@@ -176,7 +176,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuBufferGetDescription(state->cameraUbo), 0 },
                 { mfGpuBufferGetDescription(state->lightUbo),  1 }
             };
-            state->cameraLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, 1, state->renderer);
+            state->camLightLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, 1, state->renderer);
         }
     }
     // Resource sets
@@ -185,7 +185,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         for(u64 k = 0; k < state->scene.meshCompPool.len; k++) {
             MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, k);
             for(u64 i = 0; i < component->model.meshCount; i++) {
-                MFResourceSet* set = mfResourceSetCreate(state->layout, appState->renderer);
+                MFResourceSet* set = mfResourceSetCreate(state->matLayout, appState->renderer);
 
                 MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[k], &component->model, i, appState->renderer);
                 MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[k], &component->model, i, appState->renderer);
@@ -213,7 +213,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
             mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
             mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
             
-            state->cameraSet = mfResourceSetCreate(state->cameraLayout, appState->renderer);
+            state->cameraSet = mfResourceSetCreate(state->camLightLayout, appState->renderer);
             mfResourceSetUpdate(state->cameraSet, mfnull, &buffers);
             
             mfArrayDestroy(&buffers);
@@ -440,29 +440,12 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     
     slogLoggerDestroy(&state->logger);
 
-    // Deleting resource sets
-    {
-        u64 count = 0;
-        mfSceneGetValidMeshComponents(&state->scene, &count, mfnull);
-        MFMeshComponent* components = MF_ALLOCMEM(MFMeshComponent, sizeof(MFMeshComponent) * count);
-        mfSceneGetValidMeshComponents(&state->scene, &count, components);
-
-        for(u32 i = 0; i < count; i++) {
-            for(u32 j = 0; j < components[i].model.meshCount; j++) {
-                MFMesh* mesh = &components[i].model.meshes[j];
-                mfResourceSetDestroy(mesh->mat.set);
-            }
-        }
-
-        MF_FREEMEM(components);
-    }
-
     mfResourceSetDestroy(state->cameraSet);
     mfResourceSetDestroy(state->skyboxSet);
 
-    mfResourceSetLayoutDestroy(state->layout);
+    mfResourceSetLayoutDestroy(state->matLayout);
     mfResourceSetLayoutDestroy(state->skyboxLayout);
-    mfResourceSetLayoutDestroy(state->cameraLayout);
+    mfResourceSetLayoutDestroy(state->camLightLayout);
     
     mfGpuBufferFree(state->cameraUbo);
     mfGpuBufferFree(state->lightUbo);

@@ -285,7 +285,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
                 .height = ctx->swapchainExtent.height,
                 .format = ctx->swapchainFormat.format,
                 .ctx = ctx,
-                .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
                 .type = VK_IMAGE_TYPE_2D,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
                 .tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -357,7 +357,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
                         .type = VK_IMAGE_TYPE_2D,
                         .viewType = VK_IMAGE_VIEW_TYPE_2D,
                         .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                        .memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                        .memFlags = VMA_MEMORY_USAGE_GPU_ONLY
                     },
                     .access = 0,
                     .stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -571,7 +571,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         
             ctx->props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
             VkPhysicalDeviceProperties2 props = {
-                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
                 .pNext = &ctx->props
             };
             vkGetPhysicalDeviceProperties2(ctx->physicalDevice, &props);
