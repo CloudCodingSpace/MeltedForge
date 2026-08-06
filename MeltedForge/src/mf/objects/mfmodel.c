@@ -333,6 +333,17 @@ void mfModelLoadAndCreate(MFModel* model, const char* filePath, MFRenderer* rend
         processNode(model, scene, scene->nodes[i]);
     }
 
+    for(u32 i = 0; i < model->meshCount; i++) {
+        MFMesh* mesh = &model->meshes[i];
+        model->localAabb[0].x = model->localAabb[0].x < mesh->localAABB[0].x ? model->localAabb[0].x : mesh->localAABB[0].x;
+        model->localAabb[0].y = model->localAabb[0].y < mesh->localAABB[0].y ? model->localAabb[0].y : mesh->localAABB[0].y;
+        model->localAabb[0].z = model->localAabb[0].z < mesh->localAABB[0].z ? model->localAabb[0].z : mesh->localAABB[0].z;
+        
+        model->localAabb[1].x = model->localAabb[1].x > mesh->localAABB[1].x ? model->localAabb[1].x : mesh->localAABB[1].x;
+        model->localAabb[1].y = model->localAabb[1].y > mesh->localAABB[1].y ? model->localAabb[1].y : mesh->localAABB[1].y;
+        model->localAabb[1].z = model->localAabb[1].z > mesh->localAABB[1].z ? model->localAabb[1].z : mesh->localAABB[1].z;
+    }
+
     cgltf_free(data);
     model->init = true;
 }

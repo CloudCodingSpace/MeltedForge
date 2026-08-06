@@ -88,6 +88,38 @@ void mfSceneRender(MFScene* scene, MFSceneRenderConfig* config) {
         if(config->computeModelMatrix)
             modelMatrix = config->computeModelMatrix(transformComp);
 
+        if(config->enableFustrumCulling) {
+            MFModel* model = &meshComp->model;
+            bool visible = true;
+            MFVec3 aabb[2] = {0};
+            mfTransformAABB(model->localAabb, modelMatrix, aabb);
+
+            for(u32 j = 0; j < 6; j++) {
+                MFVec3 p = {0};
+                if(planes[j].x >= 0)
+                    p.x = aabb[1].x;
+                else
+                    p.x = aabb[0].x;
+
+                if(planes[j].y >= 0)
+                    p.y = aabb[1].y;
+                else
+                    p.y = aabb[0].y;
+                
+                if(planes[j].z >= 0)
+                    p.z = aabb[1].z;
+                else
+                    p.z = aabb[0].z;
+            
+                if(mfDistancePlanePoint(planes[j], p) < 0) {
+                    visible = false;
+                    break;
+                }    
+            }
+            if(!visible)
+                continue;
+        }
+
         for(u64 meshIdx = 0; meshIdx < meshComp->model.meshCount; meshIdx++) {
             MFMesh* mesh = &meshComp->model.meshes[meshIdx];
             MFMat4 meshModelMat = mfMat4Mul(modelMatrix, mesh->transform);

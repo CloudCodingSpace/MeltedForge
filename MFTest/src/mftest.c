@@ -308,7 +308,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     state->fsPcData.zFar = camera.farPlane;
 
     mfSceneCreate(&state->scene, camera, &vertBuilder, appState->renderer);
-    //if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
+    if(!mfSceneDeserialize(&state->scene, "./mftscene.bin")) {
         state->entityCount = 1000;
         state->entities = MF_ALLOCMEM(u64, sizeof(u64) * state->entityCount);
 
@@ -336,7 +336,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
             mfSceneEntityAttachMeshComponent(&state->scene, &state->entities[i], &mComp);
             mfSceneEntityAttachTransformComponent(&state->scene, &state->entities[i], &tComp);
         }
-    /*} else {
+    } else {
         u64 entityCount = 0;
         mfSceneGetValidEntities(&state->scene, &entityCount, mfnull);
         MFEntity* entities = MF_ALLOCMEM(MFEntity, sizeof(MFEntity) * entityCount);
@@ -349,7 +349,7 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
         state->entityCount = entityCount;
 
         MF_FREEMEM(entities);
-    }*/
+    }
 }
 
 #pragma endregion

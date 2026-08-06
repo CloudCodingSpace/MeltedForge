@@ -23,6 +23,7 @@ typedef struct MFModel_s {
     u64 meshCount, perVertexSize, _meshIdx;
     MFMesh* meshes;
 
+    MFVec3 localAabb[2];
     MFModelVertexBuilder builder;
     MFRenderer* renderer;
     
