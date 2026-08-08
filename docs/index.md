@@ -42,7 +42,11 @@ games and applications.
 
 Features of the engine as of now:
 
-
+ - Window & Input
+   - Basic window creation & handling
+   - Fullscreen windows
+   - Window icons
+   - Basic mouse and keyboard input
  - A Basic ECS
    - Multiple entities support
    - Can add/remove components to/from a scene
@@ -50,7 +54,7 @@ Features of the engine as of now:
    - Basic scene management
    - Scene load/save
    - Material system
-   - Support for fustrum culling (Only on CPU as of now)
+   - Support for fustrum culling (On the CPU as of now)
  - GLTF 2.0 model loading along with the material data
     - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
@@ -67,7 +71,7 @@ Features of the engine as of now:
     - SSBOs
     - Storage images
     - Image samplers (`sampler2D` and `samplerCube` in glsl)
-    - ResourceSets and ResourceSetLayouts (Custom engine type)
+    - Resource set and layout management (MFResourcSet and MFResourceSetLayout)
  - Skybox support
     - Only 2D equirectangular images as input
     - HDR format supported as well
@@ -76,7 +80,8 @@ Features of the engine as of now:
     - Diffuse IBL support
     - Specular IBL support
  - MSAA support for native window and render targets as well
- - Compute shader support
+ - Can get the image pixels from the native window, render targets and images as well.
+ - Support for compute pipelines and compute dispatches too
  - Can fetch and tell which optional GPU features are available, like Buffer Device Address, descriptor indexing, etc
  - Support for headless rendering, meaning the engine can render to an image even if a window isn't provided
 
