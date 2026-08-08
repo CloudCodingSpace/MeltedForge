@@ -519,6 +519,11 @@ engine like Unity, Godot, Unreal Engine, Cry engine, etc. but it is in the path 
 games and applications.</p>
 <p>Features of the engine as of now:</p>
 <ul>
+<li>Window &amp; Input</li>
+<li>Basic window creation &amp; handling</li>
+<li>Fullscreen windows</li>
+<li>Window icons</li>
+<li>Basic mouse and keyboard input</li>
 <li>A Basic ECS</li>
 <li>Multiple entities support</li>
 <li>Can add/remove components to/from a scene</li>
@@ -526,7 +531,7 @@ games and applications.</p>
 <li>Basic scene management</li>
 <li>Scene load/save</li>
 <li>Material system</li>
-<li>Support for fustrum culling (Only on CPU as of now)</li>
+<li>Support for fustrum culling (On the CPU as of now)</li>
 <li>GLTF 2.0 model loading along with the material data<ul>
 <li>Can load complex models (Tested with Sponza &amp; Bistro Internal)</li>
 </ul>
@@ -549,7 +554,7 @@ games and applications.</p>
 <li>SSBOs</li>
 <li>Storage images</li>
 <li>Image samplers (<code>sampler2D</code> and <code>samplerCube</code> in glsl)</li>
-<li>ResourceSets and ResourceSetLayouts (Custom engine type)</li>
+<li>Resource set and layout management (MFResourcSet and MFResourceSetLayout)</li>
 </ul>
 </li>
 <li>Skybox support<ul>
@@ -564,7 +569,8 @@ games and applications.</p>
 </ul>
 </li>
 <li>MSAA support for native window and render targets as well</li>
-<li>Compute shader support</li>
+<li>Can get the image pixels from the native window, render targets and images as well.</li>
+<li>Support for compute pipelines and compute dispatches too</li>
 <li>Can fetch and tell which optional GPU features are available, like Buffer Device Address, descriptor indexing, etc</li>
 <li>Support for headless rendering, meaning the engine can render to an image even if a window isn't provided</li>
 </ul>
