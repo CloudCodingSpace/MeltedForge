@@ -77,8 +77,10 @@ Features of the engine as of now:
     - Specular IBL support
  - MSAA support for native window and render targets as well
  - Compute shader support
+ - Can fetch and tell which optional GPU features are available, like Buffer Device Address, descriptor indexing, etc
+ - Support for headless rendering, meaning the engine can render to an image even if a window isn't provided
 
- - MFTest's latest status (A test application included in the main repo to stress test the engine's core)
+### MFTest's latest status (A test application included in the main repo to stress test the engine's core)
    ![img](https://raw.githubusercontent.com/CloudCodingSpace/MeltedForge/refs/heads/main/MFTest/screenshots/sponza_pbr.png)
 
 !!! Info
