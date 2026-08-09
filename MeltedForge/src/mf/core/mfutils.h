@@ -50,13 +50,7 @@ extern "C" {
     #define MF_DO_IF(expr, work) expr
 #endif
 
-//#if defined(__clang__) || defined(__gcc__)
-//    #define MF_INLINE __attribute__((always_inline)) inline
-//#elif defined(_MSC_VER)
-//    #define MF_INLINE __forceinline
-//#else
-    #define MF_INLINE static inline
-//#endif
+#define MF_INLINE static inline
 
 // @brief Find the size of an array
 // @param arr The stack allocated array

@@ -31,6 +31,8 @@ struct MFResourceSet_s {
 VkDescriptorPool VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets);
 void VulkanGpuResDestroyPool(VulkanBackendCtx* ctx, VkDescriptorPool pool);
 
+void VulkanGpuResSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers);
+
 void VulkanGpuResGetPoolSizesFromBindings(u64* poolSizes, u64 bindingCount, MFResourceSetBindings* bindings);
 
 #ifdef __cplusplus
