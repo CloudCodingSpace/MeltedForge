@@ -161,13 +161,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     }
     
     SkyboxConvertEnvMapToSkybox(skybox, config, renderer);
-    // Updating sets
-    {
-        MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
-        mfArrayAddElement(&array, MFGpuImage*, skybox->image);
-        mfResourceSetUpdate(skybox->set, &array, mfnull);
-        mfArrayDestroy(&array);
-    }
+    mfResourceSetUpdate(skybox->set, 1, &skybox->image, 0, mfnull);
     
     if(config.generatePbrMaps) {
         SkyboxGenerateIrradiance(skybox, config, renderer);
@@ -175,14 +169,8 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
         SkyboxGenerateBrdfLUT(skybox, config, renderer);
     
         // Updating sets
-        MFArray array = mfArrayCreate(1, sizeof(MFGpuImage*));
-        mfArrayAddElement(&array, MFGpuImage*, skybox->irradiance);
-        mfResourceSetUpdate(skybox->irradianceSet, &array, mfnull);
-        
-        mfArraySetElement(array, MFGpuImage*, 0, skybox->prefilteredMap);
-        mfResourceSetUpdate(skybox->prefilteredSet, &array, mfnull);
-
-        mfArrayDestroy(&array);
+        mfResourceSetUpdate(skybox->irradianceSet, 1, &skybox->irradiance, 0, mfnull);
+        mfResourceSetUpdate(skybox->prefilteredSet, 1, &skybox->prefilteredMap, 0, mfnull);
     }
 
     skybox->init = true;

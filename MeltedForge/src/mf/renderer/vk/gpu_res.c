@@ -28,21 +28,16 @@ void VulkanGpuResDestroyPool(VulkanBackendCtx* ctx, VkDescriptorPool pool) {
     vkDestroyDescriptorPool(ctx->device, pool, ctx->allocator);
 }
 
-void VulkanGpuResSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {
+void VulkanGpuResSetUpdate(MFResourceSet* set, u32 imageCount, MFGpuImage** images, u32 bufferCount, MFGpuBuffer** buffers) {
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
-    u64 imgCount = 0, buffCount = 0;
-    if(images != mfnull)
-        imgCount = images->len;
-    if(buffers != mfnull)
-        buffCount = buffers->len;
-    u64 count = imgCount + buffCount;
+    u64 count = imageCount + bufferCount;
     VkWriteDescriptorSet* writes = MF_ALLOCMEM(VkWriteDescriptorSet, sizeof(VkWriteDescriptorSet) * count);
-    VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * imgCount);
-    VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * buffCount);
-    u32* imgBindings = MF_ALLOCMEM(u32, sizeof(u32) * imgCount);
-    u32* buffBindings = MF_ALLOCMEM(u32, sizeof(u32) * buffCount);
+    VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * imageCount);
+    VkDescriptorBufferInfo* buffInfos = MF_ALLOCMEM(VkDescriptorBufferInfo, sizeof(VkDescriptorBufferInfo) * bufferCount);
+    u32* imgBindings = MF_ALLOCMEM(u32, sizeof(u32) * imageCount);
+    u32* buffBindings = MF_ALLOCMEM(u32, sizeof(u32) * bufferCount);
 
     // Getting bindings
     {
@@ -64,8 +59,8 @@ void VulkanGpuResSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers
         u32 writeIdx = 0;
 
         // Images
-        for (u64 i = 0; i < imgCount; i++) {
-            MFGpuImage* image = mfArrayGetElement(*images, MFGpuImage*, i);
+        for (u64 i = 0; i < imageCount; i++) {
+            MFGpuImage* image = images[i];
             u32 idx = mfGpuImageGetConfig(image)->frameSynced ? frame : 0;
             VulkanImage* imageBackends = (VulkanImage*)mfGpuImageGetBackend(image);
             VulkanImage* imageBackend = &imageBackends[idx];
@@ -89,8 +84,8 @@ void VulkanGpuResSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers
         }
 
         // Buffers
-        for (u64 i = 0; i < buffCount; i++) {
-            MFGpuBuffer* buffer = mfArrayGetElement(*buffers, MFGpuBuffer*, i);
+        for (u64 i = 0; i < bufferCount; i++) {
+            MFGpuBuffer* buffer = buffers[i];
             VulkanBuffer* bufferBackends = (VulkanBuffer*)mfGpuBufferGetBackend(buffer);
             MF_PANIC_IF(bufferBackends->info.type != VULKAN_BUFFER_TYPE_UBO && bufferBackends->info.type != VULKAN_BUFFER_TYPE_SSBO, mfGetLogger(), 
                                         "The given buffer for resource set isn't an uniform/shader storage buffer!");

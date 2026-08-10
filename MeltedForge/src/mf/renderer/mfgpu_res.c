@@ -4,10 +4,9 @@ extern "C" {
 #endif
 
 #include "mfgpu_res.h"
-
-#include <vulkan/vulkan.h>
-
 #include "mfpipeline.h"
+#include "mfgpubuffer.h"
+#include "mfgpuimage.h"
 
 #include "vk/render_target.h"
 #include "vk/pipeline.h"
@@ -195,17 +194,11 @@ void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, s
     mfArrayReset(&backend->descSetBindingPool);
 }
 
-void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) {
+void mfResourceSetUpdate(MFResourceSet* set, u32 imageCount, MFGpuImage** images, u32 bufferCount, MFGpuBuffer** buffers) {
     MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
     MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
-
-    u64 imgCount = 0, buffCount = 0;
-    if(images != mfnull) {
-        imgCount = images->len;
-    }
-    if(buffers != mfnull) {
-        buffCount = buffers->len;
-    }
+    MF_PANIC_IF(imageCount && (images == mfnull), mfGetLogger(), "The image count for set update is more than 0 then the image array shouldn't be null!");
+    MF_PANIC_IF(bufferCount && (buffers == mfnull), mfGetLogger(), "The buffer count for set update is more than 0 then the buffer array shouldn't be null!");
 
     u64 bindingImgCount = 0, bindingBuffCount = 0;
     {
@@ -230,10 +223,10 @@ void mfResourceSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers) 
         }
     }
 
-    MF_PANIC_IF(imgCount != bindingImgCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
-    MF_PANIC_IF(buffCount != bindingBuffCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
+    MF_PANIC_IF(imageCount != bindingImgCount, mfGetLogger(), "The image array doesn't follow the resource set layout!");
+    MF_PANIC_IF(bufferCount != bindingBuffCount, mfGetLogger(), "The buffer array doesn't follow the resource set layout!");
 
-    VulkanGpuResSetUpdate(set, images, buffers);
+    VulkanGpuResSetUpdate(set, imageCount, images, bufferCount, buffers);
 }
 
 void* mfResourceSetLayoutGetBackend(MFResourceSetLayout* layout) {

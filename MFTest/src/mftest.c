@@ -194,43 +194,43 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 MFGpuImage* emissiveImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_EMISSIVE, &state->materialImages[k], &component->model, i, appState->renderer);
                 MFGpuImage* aoImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_AO, &state->materialImages[k], &component->model, i, appState->renderer);
 
-                MFArray images = mfArrayCreate(2, sizeof(MFGpuImage*));
-                mfArrayAddElement(&images, MFGpuImage*, diffuseImage);
-                mfArrayAddElement(&images, MFGpuImage*, normalImage);
-                mfArrayAddElement(&images, MFGpuImage*, metallicRoughnessImage);
-                mfArrayAddElement(&images, MFGpuImage*, emissiveImage);
-                mfArrayAddElement(&images, MFGpuImage*, aoImage);
+                MFGpuImage* images[] = {
+                    diffuseImage,
+                    normalImage,
+                    metallicRoughnessImage,
+                    emissiveImage,
+                    aoImage
+                };
 
-                mfResourceSetUpdate(set, &images, mfnull);
+                mfResourceSetUpdate(set, MF_ARRAYLEN(images), images, 0, mfnull);
 
-                mfArrayDestroy(&images);
                 component->model.meshes[i].mat.set = set;
             }
         }
         
         // Camera set
         {
-            MFArray buffers = mfArrayCreate(2, sizeof(MFGpuBuffer*));
-            mfArrayAddElement(&buffers, MFGpuBuffer*, state->cameraUbo);
-            mfArrayAddElement(&buffers, MFGpuBuffer*, state->lightUbo);
-            
+            MFGpuBuffer* buffers[] = {
+                state->cameraUbo,
+                state->lightUbo
+            };
+
             state->cameraSet = mfResourceSetCreate(state->camLightLayout, appState->renderer);
-            mfResourceSetUpdate(state->cameraSet, mfnull, &buffers);
-            
-            mfArrayDestroy(&buffers);
+            mfResourceSetUpdate(state->cameraSet, 0, mfnull, MF_ARRAYLEN(buffers), buffers);            
         }
 
         // Skybox set
         {
             state->skyboxSet = mfResourceSetCreate(state->skyboxLayout, state->renderer);
 
-            MFArray images = mfArrayCreate(1, sizeof(MFGpuImage*));
-            mfArrayAddElement(&images, MFGpuImage*, skyboxImage);
-            mfArrayAddElement(&images, MFGpuImage*, irradianceMap);
-            mfArrayAddElement(&images, MFGpuImage*, prefilteredMap);
-            mfArrayAddElement(&images, MFGpuImage*, brdfLut);
-            mfResourceSetUpdate(state->skyboxSet, &images, mfnull);
-            mfArrayDestroy(&images);
+            MFGpuImage* images[] = {
+                skyboxImage,
+                irradianceMap,
+                prefilteredMap,
+                brdfLut
+            };
+
+            mfResourceSetUpdate(state->skyboxSet, MF_ARRAYLEN(images), images, 0, mfnull);
         }
     }
     for(u64 i = 0; i < state->entityCount; i++)

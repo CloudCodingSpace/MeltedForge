@@ -7,6 +7,8 @@ extern "C" {
 #include "core/mfutils.h"
 #include "core/mfarray.h"
 #include "renderer/mfrenderer.h"
+#include "renderer/mfgpubuffer.h"
+#include "renderer/mfgpuimage.h"
 
 #include "common.h"
 #include "ctx.h"
@@ -31,7 +33,7 @@ struct MFResourceSet_s {
 VkDescriptorPool VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets);
 void VulkanGpuResDestroyPool(VulkanBackendCtx* ctx, VkDescriptorPool pool);
 
-void VulkanGpuResSetUpdate(MFResourceSet* set, MFArray* images, MFArray* buffers);
+void VulkanGpuResSetUpdate(MFResourceSet* set, u32 imageCount, MFGpuImage** images, u32 bufferCount, MFGpuBuffer** buffers);
 
 void VulkanGpuResGetPoolSizesFromBindings(u64* poolSizes, u64 bindingCount, MFResourceSetBindings* bindings);
 
