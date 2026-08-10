@@ -5,10 +5,10 @@ extern "C" {
 #endif
 
 #include "core/mfmaths.h"
-#include "window/mfwindow.h"
 #include "renderer/mfutil_types.h"
 
 #include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 #include <vma/vk_mem_alloc.h>
 
 #include "image.h"
@@ -25,7 +25,17 @@ typedef struct VulkanScCaps_s {
 	VkSurfaceFormatKHR* formats;
 } VulkanScCaps;
 
+typedef struct VulkanBackendCtxConfig_s {
+    VkSampleCountFlagBits samples;
+    const char* appName;
+    bool vsync, headless;
+    MFVec2 headlessExtent;
+    GLFWwindow* window;
+} VulkanBackendCtxConfig;
+
 typedef struct VulkanBackendCtx_s {
+    VulkanBackendCtxConfig config;
+
     VkAllocationCallbacks* allocator;
     VkInstance instance;
     VkSurfaceKHR surface;
@@ -52,18 +62,17 @@ typedef struct VulkanBackendCtx_s {
     u32 swapchainImageCount;
     VulkanImage* swapchainImages;
     
-    bool hadRenderTargetUsage, renderPassBegun, dispatchBegun, vsync, headless;
+    bool hadRenderTargetUsage, renderPassBegun, dispatchBegun;
     VkSampleCountFlagBits maxSupportedSamples, samples;
-    MFVec2 renderExtent;
 
     VkDescriptorPool uiDescriptorPool;
     VkCommandPool commandPool, computeCommandPool;
 } VulkanBackendCtx;
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFVec2 extent, MFWindow* window);
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VulkanBackendCtxConfig config);
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx);
 
-void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window);
+void VulkanBackendCtxResize(VulkanBackendCtx* ctx);
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,7 @@ struct MFRenderer_s {
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     MF_PANIC_IF(window == mfnull && !config.headless, mfGetLogger(), "The window handle provided shouldn't be null!");
-    MF_PANIC_IF(config.headless && (!config.renderExtent.x || !config.renderExtent.y), mfGetLogger(), 
+    MF_PANIC_IF(config.headless && (!config.headlessExtent.x || !config.headlessExtent.y), mfGetLogger(), 
                     "If headless option is enabled, the renderExtent's extentX or extentY shouldn't be 0!");
 
     MFRenderer* renderer = MF_ALLOCMEM(MFRenderer, sizeof(MFRenderer));    
@@ -35,8 +35,8 @@ MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
         .enableDepth = config.enableDepth,
         .enableUI = config.enableUI,
         .headless = config.headless,
-        .renderExtent = config.renderExtent,
-        .window = window,
+        .headlessExtent = config.headlessExtent,
+        .window = mfWindowGetHandle(window),
         .msaaSamples = (VkSampleCountFlagBits)(u32)verifySamples(config.msaaSamples)
     };
 
@@ -65,14 +65,14 @@ bool mfRendererBeginframe(MFRenderer* renderer) {
     renderer->lastTime = currentTime;
     renderer->currentDtIndex = (renderer->currentDtIndex + 1) % DT_SAMPLES;
 
-    return VulkanBackendBeginframe(&renderer->backend, renderer->window);
+    return VulkanBackendBeginframe(&renderer->backend);
 }
 
 void mfRendererEndframe(MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
 
-    VulkanBackendEndframe(&renderer->backend, renderer->window);
+    VulkanBackendEndframe(&renderer->backend);
 }
 
 void mfRendererWaitForFrame(MFRenderer* renderer) {

@@ -20,7 +20,7 @@ typedef struct MFRendererConfig_s {
     bool enableDepth, vsync, enableUI, headless;
     const char* appName;
     MFSamples msaaSamples;
-    MFVec2 renderExtent;
+    MFVec2 headlessExtent;
 } MFRendererConfig;
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window);

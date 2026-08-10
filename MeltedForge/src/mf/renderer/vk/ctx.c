@@ -46,7 +46,7 @@ static VulkanBackendQueueData GetDeviceQueueData(VulkanBackendCtx* ctx, VkSurfac
         if(props[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
             data.computeQueueIdx = i;
 
-        if(ctx->headless) {
+        if(ctx->config.headless) {
             data.presentQueueIdx = 0; // HACK: To bypass the IsQueueDataComplete
             continue;
         }
@@ -69,7 +69,7 @@ static bool IsDeviceUsable(VulkanBackendCtx* ctx, VkSurfaceKHR surface, VkPhysic
     VulkanBackendQueueData data = GetDeviceQueueData(ctx, surface, device);
 
     bool extSupport = false;
-    if(!ctx->headless) {
+    if(!ctx->config.headless) {
         const char* deviceExts[] = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
@@ -212,7 +212,7 @@ static VulkanScCaps GetScCaps(VulkanBackendCtx* ctx) {
     return caps;
 }
 
-static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* window) {
+static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps) {
     // Selecting the present mode
 	{
 		bool set = false;
@@ -225,7 +225,7 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 		}
 
 		if (!set) {
-            if(ctx->vsync) {
+            if(ctx->config.vsync) {
 			    ctx->swapchainMode = VK_PRESENT_MODE_FIFO_KHR;
             }
             else {
@@ -252,7 +252,7 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 			ctx->swapchainExtent = caps.caps.currentExtent;
 		else {
 			int width, height;
-			glfwGetFramebufferSize(window, &width, &height);
+			glfwGetFramebufferSize(ctx->config.window, &width, &height);
 
 			ctx->swapchainExtent = (VkExtent2D) {
 				(u32)width,
@@ -265,13 +265,13 @@ static void SelectScCaps(VulkanBackendCtx* ctx, VulkanScCaps caps, GLFWwindow* w
 	}
 }
 
-static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
-    if(ctx->headless) {
+static void CreateSwapchain(VulkanBackendCtx* ctx) {
+    if(ctx->config.headless) {
         ctx->swapchainImageCount = FRAMES_IN_FLIGHT;
         ctx->swapchainImages = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * ctx->swapchainImageCount);
         ctx->swapchainFormat.format = VK_FORMAT_R8G8B8A8_UNORM;
-        ctx->swapchainExtent.width = ctx->renderExtent.x;
-        ctx->swapchainExtent.height = ctx->renderExtent.y;
+        ctx->swapchainExtent.width = ctx->config.headlessExtent.x;
+        ctx->swapchainExtent.height = ctx->config.headlessExtent.y;
     
         for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
             VulkanImageInfo info = {
@@ -297,7 +297,7 @@ static void CreateSwapchain(VulkanBackendCtx* ctx, GLFWwindow* window) {
     } else {
         VulkanScCaps caps = GetScCaps(ctx);
 
-        SelectScCaps(ctx, caps, window);
+        SelectScCaps(ctx, caps);
         // Creating the swapchain
         {
             VkSurfaceCapabilitiesKHR surfaceCaps = caps.caps;
@@ -413,11 +413,9 @@ static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, const char* appName, bool vsync, bool headless, MFVec2 extent, MFWindow* window) {
+void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VulkanBackendCtxConfig config) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
-    ctx->vsync = vsync;
-    ctx->headless = headless;
-    ctx->renderExtent = extent;
+    ctx->config = config;
 
     // Checking supported vulkan version
     {
@@ -433,7 +431,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         VkApplicationInfo appInfo = {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
             .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-            .pApplicationName = appName,
+            .pApplicationName = ctx->config.appName,
             .engineVersion = VK_MAKE_VERSION(1, 0, 0),
             .pEngineName = "MeltedForge",
             .apiVersion = VK_API_VERSION_1_2
@@ -513,8 +511,8 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 #endif
     }
     // Surface
-    if(!ctx->headless) {
-        VK_CHECK(glfwCreateWindowSurface(ctx->instance, mfWindowGetHandle(window), ctx->allocator, &ctx->surface));
+    if(!ctx->config.headless) {
+        VK_CHECK(glfwCreateWindowSurface(ctx->instance, config.window, ctx->allocator, &ctx->surface));
     }
     // Physical Device 
     {
@@ -558,7 +556,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 
         ctx->queueData = GetDeviceQueueData(ctx, ctx->surface, ctx->physicalDevice);
         ctx->maxSupportedSamples = GetMaxSupportedSampleCount(ctx->physicalDevice);
-        ctx->samples = (ctx->maxSupportedSamples >= samples) ? samples : ctx->maxSupportedSamples;
+        ctx->samples = (ctx->maxSupportedSamples >= config.samples) ? config.samples : ctx->maxSupportedSamples;
         ctx->featureFlags = GetPhysicalDeviceRenderFeatures(ctx->physicalDevice);
         
         {
@@ -643,7 +641,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
             .pNext = &vk12Features
         };
 
-        if(ctx->headless)
+        if(ctx->config.headless)
             info.enabledExtensionCount = 0;
 
         VK_CHECK(vkCreateDevice(ctx->physicalDevice, &info, ctx->allocator, &ctx->device));
@@ -675,7 +673,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
         VK_CHECK(vmaCreateAllocator(&info, &ctx->vmaAllocator));
     }
     // Swapchain
-    CreateSwapchain(ctx, mfWindowGetHandle(window));
+    CreateSwapchain(ctx);
     // Global descriptor pool for shader resources
     {
         VkDescriptorPoolSize poolSizes[] = {
@@ -706,7 +704,7 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VkSampleCountFlagBits samples, 
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
-        if(!ctx->headless)
+        if(!ctx->config.headless)
             vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
         else
             VulkanImageDestroy(&ctx->swapchainImages[i]);
@@ -717,7 +715,7 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     VulkanCommandPoolDestroy(ctx, ctx->computeCommandPool);
     vkDestroyDescriptorPool(ctx->device, ctx->uiDescriptorPool, ctx->allocator);
 
-    if(!ctx->headless)
+    if(!ctx->config.headless)
         vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
     else
         MF_FREEMEM(ctx->swapchainImages);
@@ -729,7 +727,7 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     ctx->vkDestroyDebugUtilsMessengerEXT(ctx->instance, ctx->debugMessenger, ctx->allocator);
 #endif
 
-    if(!ctx->headless)
+    if(!ctx->config.headless)
         vkDestroySurfaceKHR(ctx->instance, ctx->surface, ctx->allocator);
     vkDestroyInstance(ctx->instance, ctx->allocator);
 
@@ -737,11 +735,11 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     MF_SETMEM(ctx, 0, sizeof(VulkanBackendCtx));
 }
 
-void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
+void VulkanBackendCtxResize(VulkanBackendCtx* ctx) {
     VK_CHECK(vkDeviceWaitIdle(ctx->device));
    
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
-        if(!ctx->headless)
+        if(!ctx->config.headless)
             vkDestroyImageView(ctx->device, ctx->swapchainImages[i].view, ctx->allocator);
         else
             VulkanImageDestroy(&ctx->swapchainImages[i]);
@@ -750,12 +748,12 @@ void VulkanBackendCtxResize(VulkanBackendCtx* ctx, MFWindow* window) {
     }
     MF_FREEMEM(ctx->swapchainImages);
     
-    if(!ctx->headless) {
+    if(!ctx->config.headless) {
         vkDestroySwapchainKHR(ctx->device, ctx->swapchain, ctx->allocator);
     } else {
         MF_FREEMEM(ctx->swapchainImages);
     }
-    CreateSwapchain(ctx, mfWindowGetHandle(window));
+    CreateSwapchain(ctx);
 }
 
 #ifdef __cplusplus

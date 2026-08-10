@@ -47,16 +47,15 @@ static void GetDepthFormat(VulkanBackend* backend) {
     MF_FATAL_ABORT(mfGetLogger(), "(From the vulkan backend) Failed to find suitable depth format!");
 }
 
-void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
+void OnResize(VulkanBackend* backend, u32 width, u32 height) {
     if(backend->ctx.swapchainExtent.width == width && backend->ctx.swapchainExtent.height == height)
         return;
     
     // Waiting until window res is more than 0
     {
-        GLFWwindow* handle = mfWindowGetHandle(window);
         int width, height;
         while(width == 0 || height == 0) {
-            glfwGetWindowSize(handle, &width, &height);
+            glfwGetWindowSize(backend->config.window, &width, &height);
             glfwWaitEvents();
         }
     }
@@ -73,7 +72,7 @@ void OnResize(VulkanBackend* backend, u32 width, u32 height, MFWindow* window) {
         VulkanFramebufferDestroy(&backend->frameBuffers[i]);
     }
 
-    VulkanBackendCtxResize(&backend->ctx, window);
+    VulkanBackendCtxResize(&backend->ctx);
 
     // Depth image
     if(backend->config.enableDepth) {
@@ -143,7 +142,19 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     backend->waitStages = mfArrayCreate(5, sizeof(VkPipelineStageFlags));
     backend->descSetBindingPool = mfArrayCreate(5, sizeof(VkDescriptorSet));
 
-    VulkanBackendCtxInit(&backend->ctx, config->msaaSamples, config->appName, config->vsync, config->headless, config->renderExtent, config->window);
+    // Backend Ctx
+    {
+        VulkanBackendCtxConfig ctxConfig = {
+            .appName = config->appName,
+            .headlessExtent = config->headlessExtent,
+            .headless = config->headless,
+            .samples = config->msaaSamples,
+            .vsync = config->vsync,
+            .window = config->window
+        };
+
+        VulkanBackendCtxInit(&backend->ctx, ctxConfig);
+    }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         backend->commandBuffers[i] = VulkanCommandBufferAllocate(&backend->ctx, backend->ctx.commandPool, true);
@@ -298,7 +309,7 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
         ImFontAtlas_AddFontFromFileTTF(io->Fonts, "mfassets/fonts/consolas.ttf", 18.0f, mfnull, mfnull);
 
         if(!backend->config.headless)
-            ImGui_ImplGlfw_InitForVulkan(mfWindowGetHandle(config->window), true);
+            ImGui_ImplGlfw_InitForVulkan(config->window, true);
 
         ImGui_ImplVulkan_InitInfo info = {
             .Allocator = backend->ctx.allocator,
@@ -384,7 +395,7 @@ void VulkanBackendShutdown(VulkanBackend* backend) {
     MF_SETMEM(backend, 0, sizeof(VulkanBackend));
 }
 
-bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
+bool VulkanBackendBeginframe(VulkanBackend* backend) {
     // Clearing per frame data
     {
         mfArrayReset(&backend->waitSemas);
@@ -397,7 +408,9 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     } else {
         VkResult result = vkAcquireNextImageKHR(backend->ctx.device, backend->ctx.swapchain, UINT64_MAX, backend->imageAvailableSemas[backend->frameIndex], VK_NULL_HANDLE, &backend->swapchainImageIndex);
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
+            i32 width, height;
+            glfwGetFramebufferSize(backend->config.window, &width, &height);
+            OnResize(backend, width, height);
             return false;
         }
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -438,7 +451,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     
     if(backend->config.headless) {
         ImGuiIO* io = igGetIO_Nil();
-        io->DisplaySize = (ImVec2){ backend->config.renderExtent.x, backend->config.renderExtent.y };
+        io->DisplaySize = (ImVec2){ backend->config.headlessExtent.x, backend->config.headlessExtent.y };
         io->DisplayFramebufferScale = (ImVec2){ 1, 1 };
         io->DeltaTime = 1.0f/60.0f;
     } else {
@@ -449,7 +462,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window) {
     return true;
 }
 
-void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
+void VulkanBackendEndframe(VulkanBackend* backend) {
     if(!backend->ctx.renderPassBegun)
         return;
 
@@ -501,7 +514,10 @@ void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window) {
 
         VkResult result = vkQueuePresentKHR(backend->ctx.queueData.presentQueue, &presentInfo);
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-            OnResize(backend, (u32)mfWindowGetConfig(window)->width, (u32)mfWindowGetConfig(window)->height, window);
+            i32 width, height;
+            glfwGetFramebufferSize(backend->config.window, &width, &height);
+
+            OnResize(backend, width, height);
             return;
         }
         VK_CHECK(result);

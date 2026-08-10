@@ -20,8 +20,8 @@ typedef struct VulkanBackendConfig_s {
     bool vsync;
     bool headless;
     const char* appName;
-    MFVec2 renderExtent;
-    MFWindow* window;
+    MFVec2 headlessExtent;
+    GLFWwindow* window;
     VkSampleCountFlagBits msaaSamples;
 } VulkanBackendConfig;
 
@@ -60,8 +60,8 @@ typedef struct VulkanBackend_s {
 void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config);
 void VulkanBackendShutdown(VulkanBackend* backend);
 
-bool VulkanBackendBeginframe(VulkanBackend* backend, MFWindow* window);
-void VulkanBackendEndframe(VulkanBackend* backend, MFWindow* window);
+bool VulkanBackendBeginframe(VulkanBackend* backend);
+void VulkanBackendEndframe(VulkanBackend* backend);
 void VulkanBackendWaitForFrame(VulkanBackend* backend);
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance);
