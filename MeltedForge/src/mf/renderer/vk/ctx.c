@@ -417,6 +417,7 @@ static VkSampleCountFlagBits GetMaxSupportedSampleCount(VkPhysicalDevice device)
 void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VulkanBackendCtxConfig config) {
     ctx->allocator = mfnull; // TODO: Create a custom allocator
     ctx->config = config;
+    ctx->descriptorPools = mfArrayCreate(10, sizeof(VulkanGpuResDescriptorPool));
 
     // Checking supported vulkan version
     {
@@ -701,10 +702,6 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VulkanBackendCtxConfig config) 
 
         VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->uiDescriptorPool));
     }
-    // Descriptor pool management
-    {
-        ctx->descriptorPools = mfArrayCreate(10, sizeof(VulkanGpuResDescriptorPool));
-    }
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
@@ -717,7 +714,7 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
     }
 
     for(u64 i = 0; i < ctx->descriptorPools.len; i++) {
-        vkDestroyDescriptorPool(ctx->device, mfArrayGetElement(ctx->descriptorPools, VkDescriptorPool, i), ctx->allocator);
+        vkDestroyDescriptorPool(ctx->device, mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, i).pool, ctx->allocator);
     }
     mfArrayDestroy(&ctx->descriptorPools);
     

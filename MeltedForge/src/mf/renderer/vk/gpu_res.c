@@ -18,10 +18,10 @@ u64 VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescripto
         if(descPool->isFull)
             continue;
 
-        bool supported = descPool->allocatedSets + maxSets > VULKAN_GPU_RES_MAX_DESCRIPTORS;
+        bool supported = (descPool->allocatedSets + maxSets) <= VULKAN_GPU_RES_MAX_DESCRIPTORS;
         for(u64 j = 0; j < poolSizeCount; j++) {
             VkDescriptorPoolSize sj = sizes[j];
-            supported = supported && ((sj.descriptorCount + descPool->sizes[sj.type].descriptorCount) > VULKAN_GPU_RES_MAX_DESCRIPTORS);
+            supported = supported && ((sj.descriptorCount + descPool->sizes[sj.type].descriptorCount) <= VULKAN_GPU_RES_MAX_DESCRIPTORS);
         }
 
         if(supported) {
@@ -31,6 +31,7 @@ u64 VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescripto
             for(u64 j = 0; j < poolSizeCount; j++) {
                 descPool->sizes[sizes[j].type].descriptorCount += sizes[j].descriptorCount;
             }
+            return idx;
         }
     }
 
