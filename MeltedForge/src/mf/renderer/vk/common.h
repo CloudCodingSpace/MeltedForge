@@ -232,6 +232,7 @@ MF_INLINE MFSamples verifySamples(MFSamples samples) {
 
 #define VK_CHECK(result) check_vk_result(result, __LINE__, __func__, __FILE__)
 #define FRAMES_IN_FLIGHT 2
+#define VULKAN_GPU_RES_MAX_DESCRIPTORS 1000
 
 #ifdef __cplusplus
 }

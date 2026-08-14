@@ -433,6 +433,11 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     
     slogLoggerDestroy(&state->logger);
 
+    mfSceneSerialize(&state->scene, "./mftscene.bin");
+    for(u64 i = 0; i < state->entityCount; i++)
+        mfSceneDeleteEntity(&state->scene, &state->entities[i]);
+    mfSceneDestroy(&state->scene);
+
     mfResourceSetDestroy(state->cameraSet);
     mfResourceSetDestroy(state->skyboxSet);
 
@@ -442,11 +447,6 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     
     mfGpuBufferFree(state->cameraUbo);
     mfGpuBufferFree(state->lightUbo);
-
-    mfSceneSerialize(&state->scene, "./mftscene.bin");
-    for(u64 i = 0; i < state->entityCount; i++)
-        mfSceneDeleteEntity(&state->scene, &state->entities[i]);
-    mfSceneDestroy(&state->scene);
 
     mfSkyboxDestroy(state->skybox);
 

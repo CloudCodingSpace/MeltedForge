@@ -10,22 +10,69 @@ extern "C" {
 #include "renderer/mfgpubuffer.h"
 #include "renderer/mfgpuimage.h"
 
-VkDescriptorPool VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets) {
-    VkDescriptorPoolCreateInfo info = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = poolSizeCount,
-        .pPoolSizes = sizes,
-        .maxSets = maxSets,
-        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
-    };
+u64 VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets) {
+    u64 idx = UINT64_MAX;
 
-    VkDescriptorPool pool = mfnull;
-    VK_CHECK(vkCreateDescriptorPool(ctx->device, &info, ctx->allocator, &pool));
-    return pool;
-}
+    for(u64 i = 0; i < ctx->descriptorPools.len; i++) {
+        VulkanGpuResDescriptorPool* descPool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, i);
+        if(descPool->isFull)
+            continue;
 
-void VulkanGpuResDestroyPool(VulkanBackendCtx* ctx, VkDescriptorPool pool) {
-    vkDestroyDescriptorPool(ctx->device, pool, ctx->allocator);
+        bool supported = descPool->allocatedSets + maxSets > VULKAN_GPU_RES_MAX_DESCRIPTORS;
+        for(u64 j = 0; j < poolSizeCount; j++) {
+            VkDescriptorPoolSize sj = sizes[j];
+            supported = supported && ((sj.descriptorCount + descPool->sizes[sj.type].descriptorCount) > VULKAN_GPU_RES_MAX_DESCRIPTORS);
+        }
+
+        if(supported) {
+            idx = i;
+            descPool->allocatedSets += maxSets;
+            
+            for(u64 j = 0; j < poolSizeCount; j++) {
+                descPool->sizes[sizes[j].type].descriptorCount += sizes[j].descriptorCount;
+            }
+        }
+    }
+
+    if(idx == UINT64_MAX) {
+        VkDescriptorPoolSize poolSizes[] = {
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, VULKAN_GPU_RES_MAX_DESCRIPTORS },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VULKAN_GPU_RES_MAX_DESCRIPTORS } 
+		};
+
+        VkDescriptorPoolCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .poolSizeCount = MF_ARRAYLEN(poolSizes),
+            .pPoolSizes = poolSizes,
+            .maxSets = VULKAN_GPU_RES_MAX_DESCRIPTORS,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
+        };
+    
+        VkDescriptorPool p = mfnull;
+        VK_CHECK(vkCreateDescriptorPool(ctx->device, &info, ctx->allocator, &p));
+
+        VulkanGpuResDescriptorPool pool = {
+            .pool = p
+        };
+        for(u32 i = 0; i < 11; i++)
+            pool.sizes[i].type = (VkDescriptorType)i;
+        for(u32 i = 0; i < poolSizeCount; i++) {
+            pool.sizes[sizes[i].type] = sizes[i];
+        }
+        idx = ctx->descriptorPools.len;
+        mfArrayAddElement(&ctx->descriptorPools, VulkanGpuResDescriptorPool, pool);
+    }
+
+    return idx;
 }
 
 void VulkanGpuResSetUpdate(MFResourceSet* set, u32 imageCount, MFGpuImage** images, u32 bufferCount, MFGpuBuffer** buffers) {

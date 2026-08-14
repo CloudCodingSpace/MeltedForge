@@ -1,4 +1,3 @@
-#include "renderer/mfutil_types.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,7 +53,7 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
             sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, indices[MF_RES_DESCRIPTION_TYPE_STORAGE_IMAGE] * FRAMES_IN_FLIGHT * ((u32)maxSets) };
         }
 
-        layout->pool = VulkanGpuResCreatePool(ctx, count, sizes, maxSets * FRAMES_IN_FLIGHT);
+        layout->poolIdx = VulkanGpuResCreatePool(ctx, count, sizes, maxSets * FRAMES_IN_FLIGHT);
     }
 
     // Descriptor layout
@@ -105,7 +104,6 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(layout->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
-    VulkanGpuResDestroyPool(ctx, layout->pool);
     vkDestroyDescriptorSetLayout(ctx->device, layout->layout, ctx->allocator);
 
     mfArrayDestroy(&layout->bindings);
@@ -126,10 +124,11 @@ MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* rend
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
+    VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, layout->poolIdx);
 
     VkDescriptorSetAllocateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = layout->pool,
+        .descriptorPool = pool->pool,
         .descriptorSetCount = 1,
         .pSetLayouts = &layout->layout
     };
@@ -137,6 +136,10 @@ MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* rend
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
         VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, &set->sets[i]));
     
+    pool->allocatedSets += FRAMES_IN_FLIGHT;
+    if(pool->allocatedSets == VULKAN_GPU_RES_MAX_DESCRIPTORS)
+        pool->isFull = true;
+
     set->init = true;
     return set;
 }
@@ -153,8 +156,12 @@ void mfResourceSetDestroy(MFResourceSet* set) {
     
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
+    VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, set->layout->poolIdx);
 
-    VK_CHECK(vkFreeDescriptorSets(ctx->device, set->layout->pool, FRAMES_IN_FLIGHT, set->sets));
+    VK_CHECK(vkFreeDescriptorSets(ctx->device, pool->pool, FRAMES_IN_FLIGHT, set->sets));
+
+    pool->allocatedSets -= FRAMES_IN_FLIGHT;
+    pool->isFull = false;
 
     MF_SETMEM(set, 0, sizeof(MFResourceSet));
     MF_FREEMEM(set);

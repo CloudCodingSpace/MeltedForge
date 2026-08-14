@@ -6,13 +6,10 @@ extern "C" {
 
 typedef struct MFPipeline_s MFPipeline;
 
-#include "core/mfcore.h"
 #include "core/mfutils.h"
 
 #include "mfutil_types.h"
 #include "mfrender_target.h"
-#include "mfgpuimage.h"
-#include "mfgpubuffer.h"
 #include "mfgpu_res.h"
 
 #include "mfrenderer.h"

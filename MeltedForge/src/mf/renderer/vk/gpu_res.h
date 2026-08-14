@@ -15,9 +15,16 @@ extern "C" {
 #include "backend.h"
 #include <vulkan/vulkan.h>
 
+typedef struct VulkanGpuResDescriptorPool_s {
+    VkDescriptorPoolSize sizes[11];
+    VkDescriptorPool pool;
+    u64 allocatedSets;
+    bool isFull;
+} VulkanGpuResDescriptorPool;
+
 struct MFResourceSetLayout_s {
     VkDescriptorSetLayout layout;
-    VkDescriptorPool pool;
+    u64 poolIdx;
     MFRenderer* renderer;
     MFArray bindings;
     bool init;
@@ -30,8 +37,7 @@ struct MFResourceSet_s {
     bool init;
 };
 
-VkDescriptorPool VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets);
-void VulkanGpuResDestroyPool(VulkanBackendCtx* ctx, VkDescriptorPool pool);
+u64 VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets);
 
 void VulkanGpuResSetUpdate(MFResourceSet* set, u32 imageCount, MFGpuImage** images, u32 bufferCount, MFGpuBuffer** buffers);
 

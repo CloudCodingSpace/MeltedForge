@@ -7,6 +7,9 @@ extern "C" {
 #include "core/mfcore.h"
 
 #include "mfrenderer.h"
+
+#include "vk/common.h"
+#include "vk/gpu_res.h"
 #include "vk/backend.h"
 #include "vk/image.h"
 #include "vk/fb.h"
@@ -89,16 +92,20 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         bindings[1].binding = 1;
 
         renderTarget->layout = mfResourceSetLayoutCreate(renderTarget->hasDepth ? 2 : 1, bindings, 2, renderer);
+        VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(renderTarget->backend->ctx.descriptorPools, VulkanGpuResDescriptorPool, renderTarget->layout->poolIdx);
 
         VkDescriptorSetAllocateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
             .descriptorSetCount = 1,
             .pSetLayouts = &renderTarget->layout->layout,
-            .descriptorPool = renderTarget->layout->pool
+            .descriptorPool = pool->pool
         };
         for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
             VK_CHECK(vkAllocateDescriptorSets(renderTarget->backend->ctx.device, &info, &renderTarget->sets[i]));
         }
+
+        if(pool->allocatedSets == VULKAN_GPU_RES_MAX_DESCRIPTORS)
+            pool->isFull = true;
     }
 
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {

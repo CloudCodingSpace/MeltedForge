@@ -4,9 +4,6 @@
 extern "C" {
 #endif
 
-#include "core/mfcore.h"
-#include "core/mfarray.h"
-
 #include "mfutil_types.h"
 
 struct MFGpuImage_s;

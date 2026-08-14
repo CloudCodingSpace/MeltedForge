@@ -12,6 +12,7 @@ extern "C" {
 #include "core/mfarray.h"
 
 #include "common.h"
+#include "gpu_res.h"
 #include "command_buffer.h"
 
 static VkBool32 debugCallback(
@@ -700,6 +701,10 @@ void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VulkanBackendCtxConfig config) 
 
         VK_CHECK(vkCreateDescriptorPool(ctx->device, &poolInfo, ctx->allocator, &ctx->uiDescriptorPool));
     }
+    // Descriptor pool management
+    {
+        ctx->descriptorPools = mfArrayCreate(10, sizeof(VulkanGpuResDescriptorPool));
+    }
 }
 
 void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
@@ -710,6 +715,11 @@ void VulkanBackendCtxDestroy(VulkanBackendCtx* ctx) {
             VulkanImageDestroy(&ctx->swapchainImages[i]);
         vkDestroyFence(ctx->device, ctx->swapchainImages[i].fence, ctx->allocator);
     }
+
+    for(u64 i = 0; i < ctx->descriptorPools.len; i++) {
+        vkDestroyDescriptorPool(ctx->device, mfArrayGetElement(ctx->descriptorPools, VkDescriptorPool, i), ctx->allocator);
+    }
+    mfArrayDestroy(&ctx->descriptorPools);
     
     VulkanCommandPoolDestroy(ctx, ctx->commandPool);
     VulkanCommandPoolDestroy(ctx, ctx->computeCommandPool);

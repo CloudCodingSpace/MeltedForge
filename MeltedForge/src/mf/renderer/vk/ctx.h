@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include "core/mfmaths.h"
+#include "core/mfarray.h"
 #include "renderer/mfutil_types.h"
 
 #include <vulkan/vulkan.h>
@@ -67,6 +68,9 @@ typedef struct VulkanBackendCtx_s {
 
     VkDescriptorPool uiDescriptorPool;
     VkCommandPool commandPool, computeCommandPool;
+
+    // Descriptor pool management
+    MFArray descriptorPools;
 } VulkanBackendCtx;
 
 void VulkanBackendCtxInit(VulkanBackendCtx* ctx, VulkanBackendCtxConfig config);
