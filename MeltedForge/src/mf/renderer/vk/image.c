@@ -266,9 +266,14 @@ void VulkanImageSetPixels(VulkanImage* image, u8* pixels) {
 }
 
 u8* VulkanImageGetPixels(VulkanImage* image, u32 mipLevel, u32 faceIndex, u32* width, u32* height) {
+    // TODO: Add support for getting pixels of an image with more than one samples!
+    if(image->info.samples > VK_SAMPLE_COUNT_1_BIT) {
+        return mfnull;
+    }
+
     VulkanBackendCtx* ctx = image->info.ctx;
     
-    u32 w  = MAX(1, image->info.width  >> mipLevel);
+    u32 w = MAX(1, image->info.width  >> mipLevel);
     u32 h = MAX(1, image->info.height >> mipLevel);
     *width = w;
     *height = h;

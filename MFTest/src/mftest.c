@@ -365,6 +365,7 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     state->renderer = appState->renderer;
     state->window = appState->window;
+    state->enableFustrumCulling = true;
     state->fsPcData = (FSPushConstantData) {
         .zNear = 0.01f,
         .zFar = 1000.0f
@@ -381,6 +382,11 @@ void MFTOnInit(void* pstate, void* pappState) {
         MFOptionalRenderFeatures flags = mfRendererGetSupportedOptionalRenderFeatures(state->renderer);
         if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_SCALAR_LAYOUT))
             slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Scalar layout feature supported!");
+        else {
+            slogLogMsg(&state->logger, SLOG_SEVERITY_FATAL, "Scalar layout feature is necessary to run MFTest but it isn't available!");
+            exit(-1);
+        }
+
         if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_BUFFER_DEVICE_ADDRESS))
             slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Buffer device addresses feature supported!");
         if(mfFlagContainsBits(flags, MF_OPTIONAL_RENDER_FEATURE_DESCRIPTOR_INDEXING))
