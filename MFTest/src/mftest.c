@@ -232,9 +232,11 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
 
             mfResourceSetUpdate(state->skyboxSet, MF_ARRAYLEN(images), images, 0, mfnull);
         }
+
+        for(u64 i = 0; i < state->scene.meshCompPool.len; i++) {
+            mfMaterialSystemDestroyModelMatImages(&state->materialImages[i]);
+        }
     }
-    for(u64 i = 0; i < state->entityCount; i++)
-        mfMaterialSystemDestroyModelMatImages(&state->materialImages[i]);
 }
 
 static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
@@ -271,9 +273,9 @@ static void CreateUBOs(MFTState* state, MFDefaultAppState* appState) {
 }
 
 static void ConfigModelImages(MFTState* state, MFDefaultAppState* appState) {
-    state->materialImages = MF_ALLOCMEM(MFArray, sizeof(MFArray) * state->entityCount);
-    for(u64 i = 0; i < state->entityCount; i++) {
-        MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[i]);
+    state->materialImages = MF_ALLOCMEM(MFArray, sizeof(MFArray) * state->scene.meshCompPool.len);
+    for(u64 i = 0; i < state->scene.meshCompPool.len; i++) {
+        MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, i);
         char* basePath = mfnull;
         bool noBasePath = false;
         {
