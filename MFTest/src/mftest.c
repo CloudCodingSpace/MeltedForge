@@ -138,8 +138,8 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
         // Mesh set layout
         {
             u32 totalMeshCount = 0;
-            for(u32 i = 0; i < state->entityCount; i++) {
-                MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[i]);
+            for(u32 i = 0; i < state->scene.meshCompPool.len; i++) {
+                MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, i);
                 totalMeshCount += component->model.meshCount;
             }
             MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);

@@ -30,6 +30,7 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
+    // TODO: Have each set point to different descriptor pools if required because then the user won't need to specify the 'maxSets'
     // Descriptor pool
     {
         u32 count = 0;
