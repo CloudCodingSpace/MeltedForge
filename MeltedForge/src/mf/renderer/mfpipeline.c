@@ -107,7 +107,8 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
         };
 
         if(info.graphicsConfig.renderTarget != mfnull) {
-            binfo.ginfo.renderpass = info.graphicsConfig.renderTarget->renderPass.handle;
+            VulkanRenderTarget* renderTarget = mfRenderTargetGetBackend(info.graphicsConfig.renderTarget);
+            binfo.ginfo.renderpass = renderTarget->renderPass.handle;
         }
     }
     else if(info.type == MF_PIPELINE_TYPE_COMPUTE) {

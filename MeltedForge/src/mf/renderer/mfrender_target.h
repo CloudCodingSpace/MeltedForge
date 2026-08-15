@@ -37,6 +37,8 @@ u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget);
 MFResourceSetLayout* mfRenderTargetGetResourceSetLayout(MFRenderTarget* renderTarget);
 void mfRenderTargetBindAttachmentResourceSets(MFRenderTarget* renderTarget, u64 setIndex, struct MFPipeline_s* pipeline);
 ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget);
+void* mfRenderTargetGetBackend(MFRenderTarget* renderTarget);
+
 size_t mfRenderTargetGetSizeInBytes(void);
 
 #ifdef __cplusplus

@@ -12,7 +12,7 @@ extern "C" {
 #include "fb.h"
 #include "renderpass.h"
 
-struct MFRenderTarget_s;
+struct VulkanRenderTarget_s;
 
 typedef struct VulkanBackendConfig_s {
     bool enableUI;
@@ -48,7 +48,7 @@ typedef struct VulkanBackend_s {
 
     const char* pipelineCacheFilePath;
     VkPipelineCache pipelineCache;
-    struct MFRenderTarget_s* renderTarget;
+    struct VulkanRenderTarget_s* renderTarget;
     MFArray waitStages;
     MFArray waitSemas;
     MFArray descSetBindingPool;

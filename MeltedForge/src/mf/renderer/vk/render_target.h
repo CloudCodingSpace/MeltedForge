@@ -9,9 +9,11 @@ extern "C" {
 #include "fb.h"
 #include "renderpass.h"
 
+#include <cimgui_impl.h>
+
 struct VulkanBackend_s;
 
-struct MFRenderTarget_s {
+typedef struct VulkanRenderTarget_s {
     void* renderer;
     struct VulkanBackend_s* backend;
 
@@ -33,8 +35,16 @@ struct MFRenderTarget_s {
     
     VkClearValue clearValue;
 
-    bool hasDepth, init, begun, hasMsaa;
-};
+    bool hasDepth,hasMsaa;
+} VulkanRenderTarget;
+
+void VulkanRenderTargetCreate(VulkanRenderTarget* renderTarget, MFRenderer* renderer, bool hasDepth);
+void VulkanRenderTargetDestroy(VulkanRenderTarget* renderTarget);
+
+void VulkanRenderTargetResize(VulkanRenderTarget* renderTarget, MFVec2 extent);
+
+void VulkanRenderTargetBegin(VulkanRenderTarget* renderTarget);
+void VulkanRenderTargetEnd(VulkanRenderTarget* renderTarget, bool waitOnCpu);
 
 #ifdef __cplusplus
 }
