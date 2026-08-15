@@ -24,7 +24,6 @@ typedef struct VulkanGpuResDescriptorPool_s {
 
 struct MFResourceSetLayout_s {
     VkDescriptorSetLayout layout;
-    u64 poolIdx;
     MFRenderer* renderer;
     MFArray bindings;
     bool init;
@@ -34,6 +33,7 @@ struct MFResourceSet_s {
     VkDescriptorSet sets[FRAMES_IN_FLIGHT];
     MFResourceSetLayout* layout;
     MFRenderer* renderer;
+    u64 poolIdx;
     bool init;
 };
 

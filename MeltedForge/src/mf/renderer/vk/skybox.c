@@ -108,7 +108,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             .description = description,
             .binding = 0
         };
-        layout = mfResourceSetLayoutCreate(1, &binding, 1, renderer);
+        layout = mfResourceSetLayoutCreate(1, &binding, renderer);
 
         set = mfResourceSetCreate(layout, renderer);
 

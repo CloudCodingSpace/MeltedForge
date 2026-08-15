@@ -137,11 +137,6 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
     {
         // Mesh set layout
         {
-            u32 totalMeshCount = 0;
-            for(u32 i = 0; i < state->scene.meshCompPool.len; i++) {
-                MFMeshComponent* component = &mfArrayGetElement(state->scene.meshCompPool, MFMeshComponent, i);
-                totalMeshCount += component->model.meshCount;
-            }
             MFMeshComponent* component = mfSceneEntityGetMeshComponent(&state->scene, &state->entities[0]);
             MFGpuImage* diffuseImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_DIFFUSE, &state->materialImages[0], &component->model, 0, appState->renderer);
             MFGpuImage* normalImage = mfMaterialSystemGetImageFromArray(MF_MODEL_MAT_TEXTURE_NORMAL, &state->materialImages[0], &component->model, 0, appState->renderer);
@@ -157,7 +152,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuImageGetDescription(aoImage), 4 }, // NOTE: Description for one image is enough since they have the same bindings
             };
             
-            state->matLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, totalMeshCount, appState->renderer);
+            state->matLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, appState->renderer);
         }
     
         // Skybox layout
@@ -168,7 +163,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuImageGetDescription(prefilteredMap), 2 },
                 { mfGpuImageGetDescription(brdfLut),        3 }
             };
-            state->skyboxLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, 1, state->renderer);
+            state->skyboxLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, state->renderer);
         }
         
         // Camera layout
@@ -177,7 +172,7 @@ static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) 
                 { mfGpuBufferGetDescription(state->cameraUbo), 0 },
                 { mfGpuBufferGetDescription(state->lightUbo),  1 }
             };
-            state->camLightLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, 1, state->renderer);
+            state->camLightLayout = mfResourceSetLayoutCreate(MF_ARRAYLEN(bindings), bindings, state->renderer);
         }
     }
     // Resource sets

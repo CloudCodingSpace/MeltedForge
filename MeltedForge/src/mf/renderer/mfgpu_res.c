@@ -11,8 +11,7 @@ extern "C" {
 #include "vk/pipeline.h"
 #include "vk/gpu_res.h"
 
-MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBindings* bindings, u64 maxSets, MFRenderer* renderer) {
-    MF_PANIC_IF(maxSets == 0, mfGetLogger(), "The provided maxSet count shouldn't be 0!");
+MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBindings* bindings, MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The provided renderer handle shouldn't be null!");
     MF_PANIC_IF(bindingLen == 0, mfGetLogger(), "The provided resource binding count shouldn't be 0!");
     MF_PANIC_IF(bindings == mfnull, mfGetLogger(), "The provided resource bindings shouldn't be null!");
@@ -29,33 +28,6 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
-
-    // TODO: Have each set point to different descriptor pools if required because then the user won't need to specify the 'maxSets'
-    // Descriptor pool
-    {
-        u32 count = 0;
-        VkDescriptorPoolSize sizes[4] = {0};
-
-        // TODO: Support more shader res type!
-        u64 indices[MF_RES_DESCRIPTION_TYPE_COUNT];
-        MF_SETMEM(indices, 0, sizeof(indices));
-        VulkanGpuResGetPoolSizesFromBindings(indices, bindingLen, bindings);
-
-        if(indices[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, indices[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] * FRAMES_IN_FLIGHT * ((u32)maxSets) };
-        }
-        if(indices[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, indices[MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER] * FRAMES_IN_FLIGHT * ((u32)maxSets) };
-        }
-        if(indices[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, indices[MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER] * FRAMES_IN_FLIGHT * ((u32)maxSets) };
-        }
-        if(indices[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] != 0) {
-            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, indices[MF_RES_DESCRIPTION_TYPE_STORAGE_IMAGE] * FRAMES_IN_FLIGHT * ((u32)maxSets) };
-        }
-
-        layout->poolIdx = VulkanGpuResCreatePool(ctx, count, sizes, maxSets * FRAMES_IN_FLIGHT);
-    }
 
     // Descriptor layout
     {
@@ -125,7 +97,34 @@ MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* rend
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
-    VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, layout->poolIdx);
+
+    // Descriptor pool
+    {
+        u32 count = 0;
+        VkDescriptorPoolSize sizes[4] = {0};
+
+        // TODO: Support more shader res type!
+        u64 indices[MF_RES_DESCRIPTION_TYPE_COUNT];
+        MF_SETMEM(indices, 0, sizeof(indices));
+        VulkanGpuResGetPoolSizesFromBindings(indices, layout->bindings.len, layout->bindings.data);
+
+        if(indices[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, indices[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] * FRAMES_IN_FLIGHT };
+        }
+        if(indices[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, indices[MF_RES_DESCRIPTION_TYPE_UNIFORM_BUFFER] * FRAMES_IN_FLIGHT };
+        }
+        if(indices[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, indices[MF_RES_DESCRIPTION_TYPE_STORAGE_BUFFER] * FRAMES_IN_FLIGHT };
+        }
+        if(indices[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] != 0) {
+            sizes[count++] = (VkDescriptorPoolSize){ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, indices[MF_RES_DESCRIPTION_TYPE_STORAGE_IMAGE] * FRAMES_IN_FLIGHT };
+        }
+
+        set->poolIdx = VulkanGpuResCreatePool(ctx, count, sizes, FRAMES_IN_FLIGHT);
+    }
+
+    VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, set->poolIdx);
 
     VkDescriptorSetAllocateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -157,7 +156,7 @@ void mfResourceSetDestroy(MFResourceSet* set) {
     
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(set->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
-    VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, set->layout->poolIdx);
+    VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, set->poolIdx);
 
     VK_CHECK(vkFreeDescriptorSets(ctx->device, pool->pool, FRAMES_IN_FLIGHT, set->sets));
 

@@ -91,8 +91,17 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
         bindings[1].description = desc;
         bindings[1].binding = 1;
 
-        renderTarget->layout = mfResourceSetLayoutCreate(renderTarget->hasDepth ? 2 : 1, bindings, 2, renderer);
-        VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(renderTarget->backend->ctx.descriptorPools, VulkanGpuResDescriptorPool, renderTarget->layout->poolIdx);
+        renderTarget->layout = mfResourceSetLayoutCreate(renderTarget->hasDepth ? 2 : 1, bindings, renderer);
+        VulkanGpuResDescriptorPool* pool = mfnull;
+        // Descriptor pool
+        {
+            VkDescriptorPoolSize sizes[1] = {
+                { MF_RES_DESCRIPTION_TYPE_COMBINED_IMAGE_SAMPLER, FRAMES_IN_FLIGHT * 2 }
+            };
+
+            u64 poolIdx = VulkanGpuResCreatePool(&renderTarget->backend->ctx, MF_ARRAYLEN(sizes), sizes, FRAMES_IN_FLIGHT);
+            pool = &mfArrayGetElement(renderTarget->backend->ctx.descriptorPools, VulkanGpuResDescriptorPool, poolIdx);
+        }
 
         VkDescriptorSetAllocateInfo info = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,

@@ -105,7 +105,7 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
             .description = description,
             .binding = 0
         };
-        skybox->layout = mfResourceSetLayoutCreate(1, &binding, 3, renderer);
+        skybox->layout = mfResourceSetLayoutCreate(1, &binding, renderer);
 
         skybox->set = mfResourceSetCreate(skybox->layout, renderer);
         
