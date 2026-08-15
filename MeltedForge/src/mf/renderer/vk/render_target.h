@@ -35,7 +35,7 @@ typedef struct VulkanRenderTarget_s {
     
     VkClearValue clearValue;
 
-    bool hasDepth,hasMsaa;
+    bool hasDepth, hasMsaa;
 } VulkanRenderTarget;
 
 void VulkanRenderTargetCreate(VulkanRenderTarget* renderTarget, MFRenderer* renderer, bool hasDepth);

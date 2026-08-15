@@ -5,6 +5,8 @@ extern "C" {
 #include "skybox.h"
 
 #include "core/mfmaths.h"
+#include "core/mfutils.h"
+
 #include "pipeline.h"
 #include "image.h"
 #include "buffer.h"
@@ -27,7 +29,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     VulkanImage depthImage, tempImage;
     VulkanPipeline pipeline;
     VulkanRenderPass pass = {};
-    VkFramebuffer fb = mfnull;
+    VulkanFramebuffer fb = {};
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
     VulkanImage* cubemapImage = (VulkanImage*)mfGpuImageGetBackend(skybox->image);
@@ -165,20 +167,11 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
     cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
     // Image views and framebuffers
     {
-        VkImageView attachments[2] = {
-            tempImage.view,
-            depthImage.view
+        VulkanImage* attachments[2] = {
+            &tempImage,
+            &depthImage
         };
-        VkFramebufferCreateInfo fbInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .attachmentCount = 2,
-            .pAttachments = attachments,
-            .width = config.faceSize,
-            .height = config.faceSize,
-            .layers = 1,
-            .renderPass = pass.handle
-        };
-        VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
+        VulkanFramebufferCreate(&fb, ctx, pass.handle, MF_ARRAYLEN(attachments), attachments, (VkExtent2D){ config.faceSize, config.faceSize });
     }
     // Fence
     {
@@ -218,19 +211,19 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         clearValue[1].depthStencil.stencil = 0.0f;
 
         for(u32 i = 0; i < 6; i++) {
-            VkRenderPassBeginInfo begin = {
-                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            VulkanRenderPassBeginInfo begin = {
                 .clearValueCount = 2,
-                .pClearValues = clearValue,
-                .framebuffer = fb,
-                .renderArea = {
+                .clearValues = clearValue,
+                .fb = &fb,
+                .cmdBuff = cmdBuff,
+                .extent = {
                     .extent = { .width = config.faceSize, .height = config.faceSize },
                     .offset = {0, 0}
-                },
-                .renderPass = pass.handle
+                }
             };
-            vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
-            
+
+            VulkanRenderPassBegin(&pass, begin);
+
             VkViewport vp = {
                 .x = 0,
                 .y = 0,
@@ -263,12 +256,9 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
             vkCmdBindIndexBuffer(cmdBuff, indexBuffer[0].handle, 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(cmdBuff, skybox->mesh.vertCount, 1, 0, 0, 0);
 
-            vkCmdEndRenderPass(cmdBuff);
+            VulkanRenderPassEnd(&pass, cmdBuff, &fb);
 
             // Transition temp image to transfer src
-            tempImage.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            tempImage.stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            tempImage.access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             VulkanImageTransitionLayout(&tempImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .baseArrayLayer = 0,
@@ -304,9 +294,6 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         }
 
         // Transition cubemap layer to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        cubemapImage->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        cubemapImage->access = VK_ACCESS_TRANSFER_WRITE_BIT;
-        cubemapImage->stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
@@ -331,7 +318,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         VulkanImageGenerateMipmaps(cubemapImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         vkDestroyFence(ctx->device, fence, ctx->allocator);
-        vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
+        VulkanFramebufferDestroy(&fb);
 
         VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
         VulkanImageDestroy(&tempImage);
@@ -349,7 +336,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     VulkanImage depthImage, tempImage;
     VulkanPipeline pipeline;
     VulkanRenderPass pass = {};
-    VkFramebuffer fb = mfnull;
+    VulkanFramebuffer fb = {};
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
     VulkanImage* cubemapImage = (VulkanImage*)mfGpuImageGetBackend(skybox->irradiance);
@@ -445,20 +432,12 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
     cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
     // Image views and framebuffers
     {
-        VkImageView attachments[2] = {
-            tempImage.view,
-            depthImage.view
+        VulkanImage* attachments[2] = {
+            &tempImage,
+            &depthImage
         };
-        VkFramebufferCreateInfo fbInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .attachmentCount = 2,
-            .pAttachments = attachments,
-            .width = cubemapImage->info.width,
-            .height = cubemapImage->info.height,
-            .layers = 1,
-            .renderPass = pass.handle
-        };
-        VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
+        
+        VulkanFramebufferCreate(&fb, ctx, pass.handle, MF_ARRAYLEN(attachments), attachments, (VkExtent2D){ cubemapImage->info.width, cubemapImage->info.height });
     }
     // Fence
     {
@@ -499,19 +478,19 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         clearValue[1].depthStencil.stencil = 0.0f;
 
         for(u32 i = 0; i < 6; i++) {
-            VkRenderPassBeginInfo begin = {
-                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            VulkanRenderPassBeginInfo begin = {
                 .clearValueCount = 2,
-                .pClearValues = clearValue,
-                .framebuffer = fb,
-                .renderArea = {
+                .clearValues = clearValue,
+                .fb = &fb,
+                .cmdBuff = cmdBuff,
+                .extent = {
                     .extent = { .width = cubemapImage->info.width, .height = cubemapImage->info.height },
                     .offset = {0, 0}
-                },
-                .renderPass = pass.handle
+                }
             };
-            vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
-            
+
+            VulkanRenderPassBegin(&pass, begin);
+
             VkViewport vp = {
                 .x = 0,
                 .y = 0,
@@ -543,12 +522,9 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
             vkCmdBindIndexBuffer(cmdBuff, indexBuffer[0].handle, 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(cmdBuff, skybox->mesh.vertCount, 1, 0, 0, 0);
 
-            vkCmdEndRenderPass(cmdBuff);
+            VulkanRenderPassEnd(&pass, cmdBuff, &fb);
 
             // Transition temp image to transfer src
-            tempImage.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            tempImage.stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            tempImage.access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             VulkanImageTransitionLayout(&tempImage, cmdBuff, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkImageSubresourceRange){
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .baseArrayLayer = 0,
@@ -584,9 +560,6 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         }
 
         // Transition cubemap layer to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        cubemapImage->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        cubemapImage->access = VK_ACCESS_TRANSFER_WRITE_BIT;
-        cubemapImage->stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
@@ -610,7 +583,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
         
         vkDestroyFence(ctx->device, fence, ctx->allocator);
-        vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
+        VulkanFramebufferDestroy(&fb);
 
         VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
         VulkanImageDestroy(&tempImage);
@@ -628,7 +601,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
     VkFence fence = mfnull;
     VulkanImage* cubemapImage = (VulkanImage*)mfGpuImageGetBackend(skybox->prefilteredMap);
     const u32 maxMipLevels = 5; // Hardcoding it since prefiltered map is always 128
-    VkFramebuffer fb[5] = { 0 }; // 1 fb for each mip level
+    VulkanFramebuffer fb[5] = { 0 }; // 1 fb for each mip level
     VulkanImage depthImage[5] = {0}; // 1 image for each mip level
     VulkanImage tempImage[5] = {0}; // 1 image for each mip level
 
@@ -723,20 +696,12 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
     cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
     // Image views and framebuffers
     for(u32 i = 0; i < maxMipLevels; i++) {
-        VkImageView attachments[2] = {
-            tempImage[i].view,
-            depthImage[i].view
+        VulkanImage* attachments[2] = {
+            &tempImage[i],
+            &depthImage[i]
         };
-        VkFramebufferCreateInfo fbInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .attachmentCount = 2,
-            .pAttachments = attachments,
-            .width = cubemapImage->info.width * pow(0.5, i),
-            .height = cubemapImage->info.height * pow(0.5, i),
-            .layers = 1,
-            .renderPass = pass.handle
-        };
-        VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb[i]));
+
+        VulkanFramebufferCreate(&fb[i], ctx, pass.handle, MF_ARRAYLEN(attachments), attachments, (VkExtent2D){ cubemapImage->info.width * pow(0.5, i), cubemapImage->info.height * pow(0.5, i) });
     }
     // Fence
     {
@@ -781,19 +746,19 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
             f32 roughness = (f32)mip / (f32)(maxMipLevels - 1);
 
             for(u32 i = 0; i < 6; i++) {
-                VkRenderPassBeginInfo begin = {
-                    .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                VulkanRenderPassBeginInfo begin = {
                     .clearValueCount = 2,
-                    .pClearValues = clearValue,
-                    .framebuffer = fb[mip],
-                    .renderArea = {
+                    .clearValues = clearValue,
+                    .fb = &fb[mip],
+                    .cmdBuff = cmdBuff,
+                    .extent = {
                         .extent = { .width = mipSize, .height = mipSize },
                         .offset = {0, 0}
-                    },
-                    .renderPass = pass.handle
+                    }
                 };
-                vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                
+
+                VulkanRenderPassBegin(&pass, begin);
+
                 VkViewport vp = {
                     .x = 0,
                     .y = 0,
@@ -825,7 +790,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                 vkCmdBindIndexBuffer(cmdBuff, indexBuffer[0].handle, 0, VK_INDEX_TYPE_UINT32);
                 vkCmdDrawIndexed(cmdBuff, skybox->mesh.vertCount, 1, 0, 0, 0);
 
-                vkCmdEndRenderPass(cmdBuff);
+                VulkanRenderPassEnd(&pass, cmdBuff, &fb[mip]);
 
                 // Transition temp image to transfer src
                 tempImage[mip].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -866,9 +831,6 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         }
 
         // Transition cubemap layer to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        cubemapImage->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        cubemapImage->access = VK_ACCESS_TRANSFER_WRITE_BIT;
-        cubemapImage->stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         VulkanImageTransitionLayout(cubemapImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange){
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
@@ -893,7 +855,7 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
         
         vkDestroyFence(ctx->device, fence, ctx->allocator);
         for(u32 i = 0; i < maxMipLevels; i++) {
-            vkDestroyFramebuffer(ctx->device, fb[i], ctx->allocator);
+            VulkanFramebufferDestroy(&fb[i]);
             VulkanImageDestroy(&tempImage[i]);
             VulkanImageDestroy(&depthImage[i]);
         }
@@ -908,7 +870,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
     VulkanBackendCtx* ctx = &skybox->backend->ctx;
     VulkanPipeline pipeline;
     VulkanRenderPass pass = {};
-    VkFramebuffer fb = mfnull;
+    VulkanFramebuffer fb = {};
     VkCommandBuffer cmdBuff = mfnull;
     VkFence fence = mfnull;
     VulkanImage* outImage = (VulkanImage*)mfGpuImageGetBackend(skybox->brdfLut);
@@ -993,19 +955,11 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
     cmdBuff = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
     // Image views and framebuffers
     {
-        VkImageView attachments[2] = {
-            outImage->view,
+        VulkanImage* attachments[] = {
+            outImage
         };
-        VkFramebufferCreateInfo fbInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .attachmentCount = 1,
-            .pAttachments = attachments,
-            .width = outImage->info.width,
-            .height = outImage->info.height,
-            .layers = 1,
-            .renderPass = pass.handle
-        };
-        VK_CHECK(vkCreateFramebuffer(ctx->device, &fbInfo, ctx->allocator, &fb));
+
+        VulkanFramebufferCreate(&fb, ctx, pass.handle, MF_ARRAYLEN(attachments), attachments, (VkExtent2D){ outImage->info.width, outImage->info.height });
     }
     // Fence
     {
@@ -1023,19 +977,19 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
             skybox->backend->clearColor
         };
 
-        VkRenderPassBeginInfo begin = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .clearValueCount = 1,
-            .pClearValues = clearValue,
-            .framebuffer = fb,
-            .renderArea = {
+        VulkanRenderPassBeginInfo begin = {
+            .clearValueCount = 2,
+            .clearValues = clearValue,
+            .fb = &fb,
+            .cmdBuff = cmdBuff,
+            .extent = {
                 .extent = { .width = outImage->info.width, .height = outImage->info.height },
                 .offset = {0, 0}
-            },
-            .renderPass = pass.handle
+            }
         };
-        vkCmdBeginRenderPass(cmdBuff, &begin, VK_SUBPASS_CONTENTS_INLINE);
-        
+
+        VulkanRenderPassBegin(&pass, begin);
+
         VkViewport vp = {
             .x = 0,
             .y = 0,
@@ -1056,12 +1010,9 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         vkCmdBindVertexBuffers(cmdBuff, 0, 1, &vertexBuffer.handle, offsets);
         vkCmdDraw(cmdBuff, 6, 1, 0, 0);
 
-        vkCmdEndRenderPass(cmdBuff);
+        VulkanRenderPassEnd(&pass, cmdBuff, &fb);
 
         // Transition outImage to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        outImage->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        outImage->access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        outImage->stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         VulkanImageTransitionLayout(outImage, cmdBuff, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkImageSubresourceRange) {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
@@ -1085,7 +1036,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
         VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
         
         vkDestroyFence(ctx->device, fence, ctx->allocator);
-        vkDestroyFramebuffer(ctx->device, fb, ctx->allocator);
+        VulkanFramebufferDestroy(&fb);
 
         VulkanBufferFree(&vertexBuffer);
         VulkanCommandBufferFree(ctx, cmdBuff, ctx->commandPool);
