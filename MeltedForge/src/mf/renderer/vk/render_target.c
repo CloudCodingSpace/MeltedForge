@@ -12,8 +12,6 @@ extern "C" {
 #include "image.h"
 #include "command_buffer.h"
 
-#include <cimgui_impl.h>
-
 void VulkanRenderTargetCreate(VulkanRenderTarget* renderTarget, MFRenderer* renderer, bool hasDepth) {
     renderTarget->backend = (VulkanBackend*)mfRendererGetBackend(renderer);
     renderTarget->clearValue = renderTarget->backend->clearColor;
