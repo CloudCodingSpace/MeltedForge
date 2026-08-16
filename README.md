@@ -82,8 +82,9 @@ The link to tests and apps made using MeltedForge is here :-
 
  - Beginner-friendly setup and usage
  - Low-end device friendly
- - Cross-platform (Only on desktop platforms)
- - Advance real time rendering techniques
+ - Cross-OS (Only on desktop platforms)
+ - Advanced and essential systems like rendergraphs
+ - Advanced real time rendering techniques
    - Bloom
    - Deferred rendering
  - Text rendering
