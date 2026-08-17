@@ -28,7 +28,7 @@ typedef struct MFRenderGraphPassDesc_s {
     const char* name;
     u32* inputAttachments;
     u32* depthStencilAttachment;
-    u32* outputColorAttachmentCount;
+    u32* outputColorAttachments;
     u32 inputAttachmentCount;
     u32 outputColorAttachmentCount;
 
@@ -45,7 +45,10 @@ typedef struct MFRenderGraphConfig_s {
 
 typedef struct MFRenderGraph_s MFRenderGraph;
 
-// TODO: Write the functions next
+MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig* config);
+void mfRenderGraphDestroy(MFRenderGraph* renderGraph);
+
+void mfRenderGraphInvoke(MFRenderGraph* renderGraph);
 
 #ifdef __cplusplus
 }
