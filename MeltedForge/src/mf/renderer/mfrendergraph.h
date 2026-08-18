@@ -49,7 +49,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
 void mfRenderGraphDestroy(MFRenderGraph* renderGraph);
 
 void mfRenderGraphInvoke(MFRenderGraph* renderGraph);
-const MFRenderGraph* mfRenderGraphGetConfig(MFRenderGraph* renderGraph);
+const MFRenderGraphConfig* mfRenderGraphGetConfig(MFRenderGraph* renderGraph);
 
 #ifdef __cplusplus
 }

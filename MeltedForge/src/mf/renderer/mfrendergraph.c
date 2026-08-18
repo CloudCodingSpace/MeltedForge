@@ -107,7 +107,7 @@ void mfRenderGraphInvoke(MFRenderGraph* renderGraph) {
     // TODO: Fill this thing out
 }
 
-const MFRenderGraph* mfRenderGraphGetConfig(MFRenderGraph* renderGraph) {
+const MFRenderGraphConfig* mfRenderGraphGetConfig(MFRenderGraph* renderGraph) {
     MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
 

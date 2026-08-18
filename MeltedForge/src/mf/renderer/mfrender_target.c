@@ -51,7 +51,7 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
 
 void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     VulkanRenderTargetDestroy(&renderTarget->renderTarget);
     
@@ -61,7 +61,7 @@ void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     if(renderTarget->begun) {
         slogLogMsg(mfGetLogger(), SLOG_SEVERITY_ERROR, "Can't resize the render target when the render target has already begun!");
@@ -81,14 +81,14 @@ void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {
 
 void mfRenderTargetSetClearColor(MFRenderTarget* renderTarget, MFVec3 color) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     renderTarget->renderTarget.clearValue = (VkClearValue){.color = {color.r, color.g, color.b, 1.0f}};
 }
 
 MFVec3 mfRenderTargetGetClearColor(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     float* color = renderTarget->renderTarget.clearValue.color.float32;
 
@@ -97,7 +97,7 @@ MFVec3 mfRenderTargetGetClearColor(MFRenderTarget* renderTarget) {
 
 void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     MF_PANIC_IF(renderTarget->begun, mfGetLogger(), "The render target has already begun!");
 
     VulkanRenderTargetBegin(&renderTarget->renderTarget);
@@ -107,7 +107,7 @@ void mfRenderTargetBegin(MFRenderTarget* renderTarget) {
 
 void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     MF_PANIC_IF(!renderTarget->begun, mfGetLogger(), "The render target hasn't begun yet!");
 
     VulkanRenderTargetEnd(&renderTarget->renderTarget, waitOnCpu);
@@ -117,7 +117,7 @@ void mfRenderTargetEnd(MFRenderTarget* renderTarget, bool waitOnCpu) {
 
 void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callback)(void* userData), void* userData) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     MF_PANIC_IF(userData == mfnull, mfGetLogger(), "The user data provided shouldn't be null!");
     MF_PANIC_IF(callback == mfnull, mfGetLogger(), "The resize callback func ptr provided shouldn't be null!");
 
@@ -127,14 +127,14 @@ void mfRenderTargetSetResizeCallback(MFRenderTarget* renderTarget, void (*callba
 
 void* mfRenderTargetGetPass(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     return (void*)renderTarget->renderTarget.renderPass.handle;
 }
 
 u8* mfRenderTargetGetCurrentImagePixels(MFRenderTarget* renderTarget, u32* width, u32* height) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     MF_PANIC_IF(width == mfnull, mfGetLogger(), "The width pointer provided shouldn't be null!");
     MF_PANIC_IF(height == mfnull, mfGetLogger(), "The height pointer provided shouldn't be null!");
 
@@ -148,28 +148,28 @@ u8* mfRenderTargetGetCurrentImagePixels(MFRenderTarget* renderTarget, u32* width
 
 u32 mfRenderTargetGetWidth(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     return renderTarget->renderTarget.images[0].info.width;
 }
 
 u32 mfRenderTargetGetHeight(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     
     return renderTarget->renderTarget.images[0].info.height;
 }
 
 MFResourceSetLayout* mfRenderTargetGetResourceSetLayout(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     
     return renderTarget->renderTarget.layout;
 }
 
 void mfRenderTargetBindAttachmentResourceSets(MFRenderTarget* renderTarget, u64 setIndex, struct MFPipeline_s* pipeline) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     VulkanBackend* backend = renderTarget->renderTarget.backend;
     VulkanBackendCtx* ctx = &renderTarget->renderTarget.backend->ctx;
@@ -188,7 +188,7 @@ void mfRenderTargetBindAttachmentResourceSets(MFRenderTarget* renderTarget, u64 
 
 ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
     
     if(!renderTarget->renderTarget.backend->config.enableUI)
         return mfnull;
@@ -197,7 +197,7 @@ ImTextureID mfRenderTargetGetColorAttachmentImTexID(MFRenderTarget* renderTarget
 
 void* mfRenderTargetGetBackend(MFRenderTarget* renderTarget) {
     MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
-    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target isn't provided!");
+    MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     return &renderTarget->renderTarget;
 }
