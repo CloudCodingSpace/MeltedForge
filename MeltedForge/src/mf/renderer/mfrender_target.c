@@ -24,7 +24,7 @@ extern "C" {
 #include <cimgui_impl.h>
 
 struct MFRenderTarget_s {
-    void* renderer;
+    MFRenderer* renderer;
     VulkanRenderTarget renderTarget;
 
     void* userData;

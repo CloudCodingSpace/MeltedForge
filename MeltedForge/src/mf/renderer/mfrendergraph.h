@@ -20,7 +20,6 @@ typedef enum MFRenderGraphAttachmentType_e {
 typedef struct MFRenderGraphAttachmentDesc_s {
     MFRenderGraphAttachmentType type;
     MFFormat format;
-    u32 widh, height;
     MFVec4 clearColor;
 } MFRenderGraphAttachmentDesc;
 
@@ -39,16 +38,18 @@ typedef struct MFRenderGraphPassDesc_s {
 typedef struct MFRenderGraphConfig_s {
     u32 attachmentCount;
     u32 passCount;
+    u32 width, height;
     MFRenderGraphAttachmentDesc* attachments;
     MFRenderGraphPassDesc* passes;
 } MFRenderGraphConfig;
 
 typedef struct MFRenderGraph_s MFRenderGraph;
 
-MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig* config);
+MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig config);
 void mfRenderGraphDestroy(MFRenderGraph* renderGraph);
 
 void mfRenderGraphInvoke(MFRenderGraph* renderGraph);
+const MFRenderGraph* mfRenderGraphGetConfig(MFRenderGraph* renderGraph);
 
 #ifdef __cplusplus
 }
