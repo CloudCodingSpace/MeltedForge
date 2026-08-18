@@ -46,14 +46,18 @@ MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window) {
     return renderer;
 }
 
-void mfRendererDestroy(MFRenderer* renderer) {
-    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+void mfRendererDestroy(MFRenderer** _renderer) {
+    MF_PANIC_IF(_renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
+    
+    MFRenderer* renderer = _renderer[0];
+    
     MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
     
     VulkanBackendShutdown(&renderer->backend);
 
     MF_SETMEM(renderer, 0, sizeof(MFRenderer));
     MF_FREEMEM(renderer);
+    MF_SETMEM(_renderer, 0, sizeof(MFRenderer*));
 }
 
 bool mfRendererBeginframe(MFRenderer* renderer) {

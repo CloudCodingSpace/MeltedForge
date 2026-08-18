@@ -49,14 +49,18 @@ MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDept
     return renderTarget;
 }
 
-void mfRenderTargetDestroy(MFRenderTarget* renderTarget) {
-    MF_PANIC_IF(renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+void mfRenderTargetDestroy(MFRenderTarget** _renderTarget) {
+    MF_PANIC_IF(_renderTarget == mfnull, mfGetLogger(), "The render target handle provided shouldn't be null!");
+    
+    MFRenderTarget* renderTarget = _renderTarget[0];
+    
     MF_PANIC_IF(!renderTarget->init, mfGetLogger(), "The render target provided isn't initialised!");
 
     VulkanRenderTargetDestroy(&renderTarget->renderTarget);
     
     MF_SETMEM(renderTarget, 0, sizeof(MFRenderTarget));
     MF_FREEMEM(renderTarget);
+    MF_SETMEM(_renderTarget, 0, sizeof(MFRenderTarget*));
 }
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent) {

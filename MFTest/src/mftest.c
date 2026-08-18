@@ -435,22 +435,22 @@ void MFTOnDeinit(void* pstate, void* pappState) {
         mfSceneDeleteEntity(&state->scene, &state->entities[i]);
     mfSceneDestroy(&state->scene);
 
-    mfResourceSetDestroy(state->cameraSet);
-    mfResourceSetDestroy(state->skyboxSet);
+    mfResourceSetDestroy(&state->cameraSet);
+    mfResourceSetDestroy(&state->skyboxSet);
 
-    mfResourceSetLayoutDestroy(state->matLayout);
-    mfResourceSetLayoutDestroy(state->skyboxLayout);
-    mfResourceSetLayoutDestroy(state->camLightLayout);
+    mfResourceSetLayoutDestroy(&state->matLayout);
+    mfResourceSetLayoutDestroy(&state->skyboxLayout);
+    mfResourceSetLayoutDestroy(&state->camLightLayout);
     
-    mfGpuBufferFree(state->cameraUbo);
-    mfGpuBufferFree(state->lightUbo);
+    mfGpuBufferFree(&state->cameraUbo);
+    mfGpuBufferFree(&state->lightUbo);
 
-    mfSkyboxDestroy(state->skybox);
+    mfSkyboxDestroy(&state->skybox);
 
-    mfRenderTargetDestroy(state->renderTarget);
+    mfRenderTargetDestroy(&state->renderTarget);
 
-    mfPipelineDestroy(state->fsPipeline);
-    mfPipelineDestroy(state->rtPipeline);
+    mfPipelineDestroy(&state->fsPipeline);
+    mfPipelineDestroy(&state->rtPipeline);
 
     MF_FREEMEM(state->entities);
     MF_FREEMEM(state->materialImages);

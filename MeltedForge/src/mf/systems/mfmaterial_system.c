@@ -52,7 +52,7 @@ void mfMaterialSystemShutdown(void) {
         if(entry->path)
             MF_FREEMEM(entry->path);
         if(entry->image)
-            mfGpuImageDestroy(entry->image);
+            mfGpuImageDestroy(&entry->image);
         MF_SETMEM(entry, 0, sizeof(Entry));
     }
 

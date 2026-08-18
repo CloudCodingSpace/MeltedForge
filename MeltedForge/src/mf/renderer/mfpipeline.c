@@ -130,8 +130,11 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
     return pipeline;
 }
 
-void mfPipelineDestroy(MFPipeline* pipeline) {
-    MF_PANIC_IF(pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+void mfPipelineDestroy(MFPipeline** _pipeline) {
+    MF_PANIC_IF(_pipeline == mfnull, mfGetLogger(), "The pipeline handle provided shouldn't be null!");
+    
+    MFPipeline* pipeline = _pipeline[0];
+    
     MF_PANIC_IF(!pipeline->init, mfGetLogger(), "The pipeline isn't initialised!");
     
     for(u32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -142,6 +145,7 @@ void mfPipelineDestroy(MFPipeline* pipeline) {
     
     MF_SETMEM(pipeline, 0, sizeof(MFPipeline));
     MF_FREEMEM(pipeline);
+    MF_SETMEM(_pipeline, 0, sizeof(MFPipeline*));
 }
 
 void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline) {

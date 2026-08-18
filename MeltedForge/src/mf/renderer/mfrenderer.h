@@ -24,7 +24,7 @@ typedef struct MFRendererConfig_s {
 } MFRendererConfig;
 
 MFRenderer* mfRendererCreate(MFRendererConfig config, MFWindow* window);
-void mfRendererDestroy(MFRenderer* renderer);
+void mfRendererDestroy(MFRenderer** renderer);
 
 bool mfRendererBeginframe(MFRenderer* renderer);
 void mfRendererEndframe(MFRenderer* renderer);

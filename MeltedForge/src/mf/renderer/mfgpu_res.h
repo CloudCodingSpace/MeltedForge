@@ -15,10 +15,10 @@ typedef struct MFResourceSet_s MFResourceSet;
 struct MFPipeline_s;
 
 MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBindings* bindings, MFRenderer* renderer);
-void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout);
+void mfResourceSetLayoutDestroy(MFResourceSetLayout** layout);
 
 MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* renderer);
-void mfResourceSetDestroy(MFResourceSet* set);
+void mfResourceSetDestroy(MFResourceSet** set);
 
 void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, struct MFPipeline_s* pipeline);
 void mfResourceSetUpdate(MFResourceSet* set, u32 imageCount, struct MFGpuImage_s** images, u32 bufferCount, struct MFGpuBuffer_s** buffers);

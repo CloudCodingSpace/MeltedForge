@@ -70,8 +70,11 @@ MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBind
     return layout;
 }
 
-void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
-    MF_PANIC_IF(layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
+void mfResourceSetLayoutDestroy(MFResourceSetLayout** _layout) {
+    MF_PANIC_IF(_layout == mfnull, mfGetLogger(), "The provided resource set layout shouldn't be null!");
+    
+    MFResourceSetLayout* layout = _layout[0];
+
     MF_PANIC_IF(!layout->init, mfGetLogger(), "The resource set layout isn't initialised!");
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(layout->renderer);
@@ -83,6 +86,7 @@ void mfResourceSetLayoutDestroy(MFResourceSetLayout* layout) {
 
     MF_SETMEM(layout, 0, sizeof(MFResourceSetLayout));
     MF_FREEMEM(layout);
+    MF_SETMEM(_layout, 0, sizeof(MFResourceSetLayout*));
 }
 
 MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* renderer) {
@@ -144,8 +148,11 @@ MFResourceSet* mfResourceSetCreate(MFResourceSetLayout* layout, MFRenderer* rend
     return set;
 }
 
-void mfResourceSetDestroy(MFResourceSet* set) {
-    MF_PANIC_IF(set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+void mfResourceSetDestroy(MFResourceSet** _set) {
+    MF_PANIC_IF(_set == mfnull, mfGetLogger(), "The resource set handle provided shouldn't be null!");
+    
+    MFResourceSet* set = _set[0];
+
     MF_PANIC_IF(!set->init, mfGetLogger(), "The resource set isn't initialised!");
 
     if(set->layout == mfnull) {
@@ -165,6 +172,7 @@ void mfResourceSetDestroy(MFResourceSet* set) {
 
     MF_SETMEM(set, 0, sizeof(MFResourceSet));
     MF_FREEMEM(set);
+    MF_SETMEM(_set, 0, sizeof(MFResourceSet*));
 }
 
 void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, struct MFPipeline_s* pipeline) {

@@ -214,7 +214,7 @@ void VulkanRenderTargetDestroy(VulkanRenderTarget* renderTarget) {
             VulkanImageDestroy(&renderTarget->depthImages[i]);
     }
 
-    mfResourceSetLayoutDestroy(renderTarget->layout);
+    mfResourceSetLayoutDestroy(&renderTarget->layout);
     VulkanRenderPassDestroy(&renderTarget->renderPass);
 
     MF_FREEMEM(renderTarget->renderFinishedSemas);

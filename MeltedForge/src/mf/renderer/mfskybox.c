@@ -177,27 +177,31 @@ MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer) {
     return skybox;
 }
 
-void mfSkyboxDestroy(MFSkybox* skybox) {
-    MF_PANIC_IF(skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
+void mfSkyboxDestroy(MFSkybox** _skybox) {
+    MF_PANIC_IF(_skybox == mfnull, mfGetLogger(), "The skybox handle provided shouldn't be null!");
+    
+    MFSkybox* skybox = _skybox[0];
+    
     MF_PANIC_IF(!skybox->init, mfGetLogger(), "The skybox handle provided should be initialised!");
     
     if(skybox->config.generatePbrMaps) {
-        mfResourceSetDestroy(skybox->irradianceSet);
-        mfResourceSetDestroy(skybox->prefilteredSet);
-        mfGpuImageDestroy(skybox->irradiance);
-        mfGpuImageDestroy(skybox->prefilteredMap);
-        mfGpuImageDestroy(skybox->brdfLut);
+        mfResourceSetDestroy(&skybox->irradianceSet);
+        mfResourceSetDestroy(&skybox->prefilteredSet);
+        mfGpuImageDestroy(&skybox->irradiance);
+        mfGpuImageDestroy(&skybox->prefilteredMap);
+        mfGpuImageDestroy(&skybox->brdfLut);
     }
 
     mfMeshDestroy(&skybox->mesh);
-    mfPipelineDestroy(skybox->pipeline);
-    mfResourceSetDestroy(skybox->set);
-    mfResourceSetLayoutDestroy(skybox->layout);
-    mfGpuImageDestroy(skybox->image);
+    mfPipelineDestroy(&skybox->pipeline);
+    mfResourceSetDestroy(&skybox->set);
+    mfResourceSetLayoutDestroy(&skybox->layout);
+    mfGpuImageDestroy(&skybox->image);
     
     MF_FREEMEM(skybox->config.environmentPath);
     MF_SETMEM(skybox, 0, sizeof(MFSkybox));
     MF_FREEMEM(skybox);
+    MF_SETMEM(_skybox, 0, sizeof(MFSkybox*));
 }
 
 void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, MFSkyboxType type) {

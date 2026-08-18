@@ -29,7 +29,7 @@ typedef struct MFGpuImageConfig_s {
 } MFGpuImageConfig;
 
 MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config);
-void mfGpuImageDestroy(MFGpuImage* image);
+void mfGpuImageDestroy(MFGpuImage** image);
 
 ImTextureID mfGpuImageGetImGuiTextureID(MFGpuImage* image);
 void mfGpuImageSetPixels(MFGpuImage* image, u8* pixels);

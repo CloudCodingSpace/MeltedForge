@@ -36,8 +36,8 @@ void mfMeshDestroy(MFMesh* mesh) {
     MF_PANIC_IF(mesh == mfnull, mfGetLogger(), "The mesh handle provided shouldn't be null!");
     MF_PANIC_IF(!mesh->init, mfGetLogger(), "The mesh handle provided isn't initialised!");
     
-    mfGpuBufferFree(mesh->indBuffer);
-    mfGpuBufferFree(mesh->vertBuffer);
+    mfGpuBufferFree(&mesh->indBuffer);
+    mfGpuBufferFree(&mesh->vertBuffer);
     
     MF_FREEMEM(mesh->mat.normal_texpath);
     MF_FREEMEM(mesh->mat.diffuse_texpath);

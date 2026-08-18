@@ -43,7 +43,7 @@ void mfSceneDestroy(MFScene* scene) {
         for(u32 j = 0; j < c->model.meshCount; j++) {
             MFResourceSet* set = c->model.meshes[j].mat.set;
             if(set)
-                mfResourceSetDestroy(set);
+                mfResourceSetDestroy(&set);
         }
 
         mfModelDestroy(&c->model);

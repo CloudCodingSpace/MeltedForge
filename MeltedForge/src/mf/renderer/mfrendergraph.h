@@ -46,7 +46,7 @@ typedef struct MFRenderGraphConfig_s {
 typedef struct MFRenderGraph_s MFRenderGraph;
 
 MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig config);
-void mfRenderGraphDestroy(MFRenderGraph* renderGraph);
+void mfRenderGraphDestroy(MFRenderGraph** renderGraph);
 
 void mfRenderGraphInvoke(MFRenderGraph* renderGraph);
 const MFRenderGraphConfig* mfRenderGraphGetConfig(MFRenderGraph* renderGraph);

@@ -27,7 +27,7 @@ typedef struct MFSkyboxConfig_s {
 } MFSkyboxConfig;
 
 MFSkybox* mfSkyboxCreate(MFSkyboxConfig config, MFRenderer* renderer);
-void mfSkyboxDestroy(MFSkybox* skybox);
+void mfSkyboxDestroy(MFSkybox** skybox);
 
 void mfSkyboxRender(MFSkybox* skybox, MFMat4 projection, MFMat4 view, MFMat4 model, MFSkyboxType type);
 

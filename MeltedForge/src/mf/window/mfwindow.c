@@ -69,15 +69,17 @@ MFWindow* mfWindowCreate(MFWindowConfig config) {
     return window;
 }
 
-void mfWindowDestroy(MFWindow* window) {
-    MF_PANIC_IF(window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
-    if(!window->init) {
-        MF_FATAL_ABORT(mfGetLogger(), "The window handle can't be destroyed because it is not initialized!");
-    }
+void mfWindowDestroy(MFWindow** _window) {
+    MF_PANIC_IF(_window == mfnull, mfGetLogger(), "The window handle provided shouldn't be null!");
+    
+    MFWindow* window = _window[0];
+
+    MF_PANIC_IF(!window->init, mfGetLogger(), "The window handle can't be destroyed because it is not initialized!");
 
     glfwDestroyWindow(window->handle);
     MF_SETMEM(window, 0, sizeof(MFWindow));
     MF_FREEMEM(window);
+    MF_SETMEM(_window, 0, sizeof(MFWindow*));
 }
 
 void mfWindowSetIcon(MFWindow* window, u32 width, u32 height, u8* pixels) {

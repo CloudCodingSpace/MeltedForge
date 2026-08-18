@@ -89,8 +89,11 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     return renderGraph;
 }
 
-void mfRenderGraphDestroy(MFRenderGraph* renderGraph) {
-    MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
+void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
+    MF_PANIC_IF(_renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
+    
+    MFRenderGraph* renderGraph = _renderGraph[0];
+    
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
 
     MF_FREEMEM(renderGraph->config.attachments);
@@ -98,6 +101,7 @@ void mfRenderGraphDestroy(MFRenderGraph* renderGraph) {
 
     MF_SETMEM(renderGraph, 0, sizeof(MFRenderGraph));
     MF_FREEMEM(renderGraph);
+    MF_SETMEM(_renderGraph, 0, sizeof(MFRenderGraph*));
 }
 
 void mfRenderGraphInvoke(MFRenderGraph* renderGraph) {

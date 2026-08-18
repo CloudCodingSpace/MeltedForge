@@ -25,8 +25,8 @@ typedef struct MFWindow_s MFWindow;
 MFWindow* mfWindowCreate(MFWindowConfig config);
 
 // @breif Destroys a MFWindow
-// @param window A valid MFWindow* which is returned by `mfWindowCreate` function
-void mfWindowDestroy(MFWindow* window);
+// @param window A valid MFWindow** which is a pointer of the handle returned by `mfWindowCreate` function
+void mfWindowDestroy(MFWindow** window);
 
 // @brief Sets the icon of the window
 // @param window A valid MFWindow* which is returned by `mfWindowCreate` function

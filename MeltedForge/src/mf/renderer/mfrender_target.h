@@ -17,7 +17,7 @@ struct MFPipeline_s;
 typedef struct MFRenderTarget_s MFRenderTarget;
 
 MFRenderTarget* mfRenderTargetCreate(struct MFRenderer_s* renderer, bool hasDepth);
-void mfRenderTargetDestroy(MFRenderTarget* renderTarget);
+void mfRenderTargetDestroy(MFRenderTarget** renderTarget);
 
 void mfRenderTargetResize(MFRenderTarget* renderTarget, MFVec2 extent);
 

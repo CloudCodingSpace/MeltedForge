@@ -325,9 +325,9 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
         VulkanImageDestroy(&depthImage);
         VulkanPipelineDestroy(ctx, &pipeline);
         VulkanRenderPassDestroy(&pass);
-        mfResourceSetDestroy(set);
-        mfResourceSetLayoutDestroy(layout);
-        mfGpuImageDestroy(image);
+        mfResourceSetDestroy(&set);
+        mfResourceSetLayoutDestroy(&layout);
+        mfGpuImageDestroy(&image);
     }
 }
 

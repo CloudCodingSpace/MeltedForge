@@ -48,7 +48,7 @@ typedef struct MFPipelineConfig_s {
 } MFPipelineConfig;
 
 MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig config);
-void mfPipelineDestroy(MFPipeline* pipeline);
+void mfPipelineDestroy(MFPipeline** pipeline);
 
 void mfPipelinePrepareComputeDispatch(MFPipeline* pipeline);
 void mfPipelineComputeDispatch(MFPipeline* pipeline, u32 workgroupSizeX, u32 workgroupSizeY);

@@ -45,8 +45,11 @@ MFGpuBuffer* mfGpuBufferAllocate(MFGpuBufferConfig config, MFRenderer* renderer)
     return buffer;
 }
 
-void mfGpuBufferFree(MFGpuBuffer* buffer) {
-    MF_PANIC_IF(buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+void mfGpuBufferFree(MFGpuBuffer** _buffer) {
+    MF_PANIC_IF(_buffer == mfnull, mfGetLogger(), "The buffer handle provided shouldn't be null!");
+    
+    MFGpuBuffer* buffer = _buffer[0];
+    
     MF_PANIC_IF(!buffer->init, mfGetLogger(), "The gpu buffer isn't initialised!");
     
     for(i32 i = 0; i < (buffer->config.frameSynced ? FRAMES_IN_FLIGHT : 1); i++)
@@ -54,6 +57,7 @@ void mfGpuBufferFree(MFGpuBuffer* buffer) {
 
     MF_SETMEM(buffer, 0, sizeof(MFGpuBuffer));
     MF_FREEMEM(buffer);
+    MF_SETMEM(_buffer, 0, sizeof(MFGpuBuffer*));
 }
 
 void mfGpuBufferUploadData(MFGpuBuffer* buffer, void* data) {

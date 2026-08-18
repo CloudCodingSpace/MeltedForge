@@ -86,8 +86,11 @@ MFGpuImage* mfGpuImageCreate(MFRenderer* renderer, MFGpuImageConfig config) {
     return image;
 }
 
-void mfGpuImageDestroy(MFGpuImage* image) {
-    MF_PANIC_IF(image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+void mfGpuImageDestroy(MFGpuImage** _image) {
+    MF_PANIC_IF(_image == mfnull, mfGetLogger(), "The image handle provided shouldn't be null!");
+    
+    MFGpuImage* image = _image[0];
+
     MF_PANIC_IF(!image->init, mfGetLogger(), "The gpu image isn't initialised!");
     
     if(image->config.forImguiTexture && image->backend->config.enableUI) {
@@ -103,6 +106,7 @@ void mfGpuImageDestroy(MFGpuImage* image) {
 
     MF_SETMEM(image, 0, sizeof(MFGpuImage));
     MF_FREEMEM(image);
+    MF_SETMEM(_image, 0, sizeof(MFGpuImage*));
 }
 
 ImTextureID mfGpuImageGetImGuiTextureID(MFGpuImage* image) {
