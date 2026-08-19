@@ -49,6 +49,10 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
 void mfRenderGraphDestroy(MFRenderGraph** renderGraph);
 
 void mfRenderGraphInvoke(MFRenderGraph* renderGraph);
+void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height);
+
+const MFRenderGraphAttachmentDesc* mfRenderGraphGetAttachment(MFRenderGraph* renderGraph, u32 attachmentIdx);
+const MFRenderGraphPassDesc* mfRenderGraphGetPass(MFRenderGraph* renderGraph, u32 passIdx);
 const MFRenderGraphConfig* mfRenderGraphGetConfig(MFRenderGraph* renderGraph);
 
 #ifdef __cplusplus
