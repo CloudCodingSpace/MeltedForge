@@ -83,15 +83,20 @@ The link to tests and apps made using MeltedForge is here :-
  - Beginner-friendly setup and usage
  - Low-end device friendly
  - Cross-OS (Only on desktop platforms)
- - Advanced and essential systems like rendergraphs
- - Advanced real time rendering techniques
+ - Advanced real time rendering techniques support such as
    - Bloom
    - Deferred rendering
+   - Motion blur
+   - Clustered rendering
+   - Forward+ rendering
+   - Mesh shaders and the meshlet pipeline (Only if mesh shaders are supported in wide GPUs in the future)
  - Text rendering
  - Sound system support
  - Animation system
  - Multithreading
  - Async resource handling
+ - Dynamic texture streaming
+ - Support for shader languages like HLSL & Slang.
 
  ---
 
