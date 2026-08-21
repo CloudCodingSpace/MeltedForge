@@ -7,7 +7,7 @@ extern "C" {
 #include "mfgpubuffer.h"
 #include "mfgpuimage.h"
 
-#include "vk/render_target.h"
+#include "vk/rendertarget.h"
 #include "vk/pipeline.h"
 #include "vk/gpu_res.h"
 

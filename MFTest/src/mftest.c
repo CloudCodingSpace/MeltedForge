@@ -349,6 +349,50 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     }
 }
 
+static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
+    const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
+    
+    MFRenderGraphAttachmentDesc attachments[2] = {};
+    // Color attachment
+    attachments[0].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[0].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
+    attachments[0].format = MF_FORMAT_R8G8B8A8_UNORM;
+
+    // Depth attachment
+    attachments[1].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[1].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
+    attachments[1].format = mfRendererGetStandardDepthFormat(appState->renderer);
+
+    u32 outputAttachments[] = {
+        0
+    };
+
+    u32 depthAttachment[] = {
+        1
+    };
+
+    MFRenderGraphPassDesc passes[1] = {};
+    // Pass 1
+    passes[0].name = "Pass #1 - Main pass";
+    passes[0].depthStencilAttachment = depthAttachment;
+    passes[0].inputAttachmentCount = 0;
+    passes[0].outputColorAttachmentCount = 1;
+    passes[0].outputColorAttachments = outputAttachments;
+    passes[0].passDrawCallback = mfnull; // Gotta fill this up later
+    passes[0].userData = mfnull; // Gotta fill this up later
+
+    MFRenderGraphConfig config = {
+        .attachmentCount = MF_ARRAYLEN(attachments),
+        .attachments = attachments,
+        .passCount = MF_ARRAYLEN(passes),
+        .passes = passes,
+        .width = winConfig->width,
+        .height = winConfig->height
+    };
+
+    state->renderGraph = mfRenderGraphCreate(appState->renderer, config);
+}
+
 #pragma endregion
 
 #pragma region MFTest
@@ -418,6 +462,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     ConfigModelImages(state, appState);
     CreateUBOs(state, appState);
     CreateResourceHandles(state, appState);
+    CreateRenderGraph(state, appState);
     CreatePipeline(state);
 
     SetUiStyle();
@@ -447,6 +492,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
 
     mfSkyboxDestroy(&state->skybox);
 
+    mfRenderGraphDestroy(&state->renderGraph);
     mfRenderTargetDestroy(&state->renderTarget);
 
     mfPipelineDestroy(&state->fsPipeline);

@@ -32,6 +32,13 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
 
     // Verification of data
     {
+        for(u32 i = 0; i < config.attachmentCount; i++) {
+            MFRenderGraphAttachmentDesc* attachment = &config.attachments[i];
+
+            MF_PANIC_IF(mfFlagContainsBits(attachment->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT) && mfFlagContainsBits(attachment->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT), mfGetLogger(),
+                "A attachment of a rendergraph can't be both used as a color attachment and a depth stencil attachment at the same time!");
+        }
+
         for(u32 i = 0; i < config.passCount; i++) {
             MFRenderGraphPassDesc* pass = &config.passes[i];
 
@@ -42,6 +49,8 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
                 u32 idx = pass->inputAttachments[i];
 
                 MF_PANIC_IF(idx >= config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
+                // Just in case if not added, adding the input attachment flag
+                config.attachments[idx].type |= MF_RENDER_GRAPH_ATTACHMENT_TYPE_INPUT_ATTACHMENT;
             }
 
             for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
@@ -70,12 +79,53 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         
         renderGraph->config.passes = MF_ALLOCMEM(MFRenderGraphPassDesc, sizeof(MFRenderGraphPassDesc) * config.passCount);
         memcpy(renderGraph->config.passes, config.passes, sizeof(MFRenderGraphPassDesc) * config.passCount);
+
+        for(u32 i = 0; i < config.passCount; i++) {
+            renderGraph->config.passes[i].name = mfStringDuplicate(config.passes[i].name);
+        }
     }
 
-    // TODO: Create the attachments, framebuffer, renderpass, etc
+    // TODO: Add MSAA support for rendergraph attachments!
+    // TODO: Create the framebuffers, renderpass, etc
+
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
     // Attachments
     {
+        renderGraph->attachments = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * config.attachmentCount);
+        
+        for(u32 i = 0; i < config.attachmentCount; i++) {
+            MFRenderGraphAttachmentDesc* desc = &config.attachments[i];
+            bool isDepth = mfFlagContainsBits(desc->type ,MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT);
 
+            VulkanImageInfo info = {
+                .arrayLayers = 1,
+                .aspectFlags = isDepth ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT,
+                .ctx = ctx,
+                .format = (VkFormat)(u32)desc->format,
+                .gpuResource = true,
+                .width = config.width,
+                .height = config.height,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .type = VK_IMAGE_TYPE_2D,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .usage = VK_IMAGE_USAGE_SAMPLED_BIT
+            };
+
+            if(mfFlagContainsBits(desc->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT))
+                info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            if(mfFlagContainsBits(desc->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT))
+                info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+            if(mfFlagContainsBits(desc->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_INPUT_ATTACHMENT))
+                info.usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+            
+            VulkanImageCreate(&renderGraph->attachments[i], info);
+        }
     }
     // RenderPass
     {
@@ -97,6 +147,15 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
 
+    for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
+        VulkanImageDestroy(&renderGraph->attachments[i]);
+    }
+
+    for(u32 i = 0; i < renderGraph->config.passCount; i++) {
+        MF_FREEMEM(renderGraph->config.passes[i].name);
+    }
+    
+    MF_FREEMEM(renderGraph->attachments);
     MF_FREEMEM(renderGraph->config.attachments);
     MF_FREEMEM(renderGraph->config.passes);
 

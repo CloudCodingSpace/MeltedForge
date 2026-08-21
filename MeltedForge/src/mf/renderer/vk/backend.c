@@ -15,8 +15,8 @@ extern "C" {
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-#include "../mfrender_target.h"
-#include "render_target.h"
+#include "../mfrendertarget.h"
+#include "rendertarget.h"
 #include "buffer.h"
 
 static void GetDepthFormat(VulkanBackend* backend) {
@@ -186,8 +186,8 @@ void VulkanBackendInit(VulkanBackend* backend, VulkanBackendConfig* config) {
     }
 
     // Depth image
+    GetDepthFormat(backend);
     if(backend->config.enableDepth) {
-        GetDepthFormat(backend);
 
         VulkanImageInfo info = {
             .ctx = &backend->ctx,

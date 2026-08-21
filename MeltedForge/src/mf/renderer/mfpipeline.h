@@ -9,7 +9,7 @@ typedef struct MFPipeline_s MFPipeline;
 #include "core/mfutils.h"
 
 #include "mfutil_types.h"
-#include "mfrender_target.h"
+#include "mfrendertarget.h"
 #include "mfgpu_res.h"
 
 #include "mfrenderer.h"

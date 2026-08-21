@@ -9,7 +9,7 @@ extern "C" {
 #include "vk/common.h"
 #include "vk/image.h"
 #include "vk/buffer.h"
-#include "vk/render_target.h"
+#include "vk/rendertarget.h"
 #include "vk/command_buffer.h"
 
 #include <vulkan/vk_enum_string_helper.h>

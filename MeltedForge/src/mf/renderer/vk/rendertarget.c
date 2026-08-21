@@ -2,7 +2,7 @@
 extern "C" {
 #endif
 
-#include "render_target.h"
+#include "rendertarget.h"
 
 #include "core/mfutils.h"
 

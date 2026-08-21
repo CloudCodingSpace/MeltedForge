@@ -20,7 +20,7 @@ typedef enum MFRenderGraphAttachmentType_e {
 typedef struct MFRenderGraphAttachmentDesc_s {
     MFRenderGraphAttachmentType type;
     MFFormat format;
-    MFVec4 clearColor;
+    MFVec3 clearColor;
 } MFRenderGraphAttachmentDesc;
 
 typedef struct MFRenderGraphPassDesc_s {

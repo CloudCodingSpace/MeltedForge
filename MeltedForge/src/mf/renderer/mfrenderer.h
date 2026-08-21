@@ -8,7 +8,7 @@ extern "C" {
 #include "core/mfutils.h"
 #include "core/mfmaths.h"
 
-#include "mfrender_target.h"
+#include "mfrendertarget.h"
 
 #include "window/mfwindow.h"
 
@@ -51,6 +51,7 @@ u32 mfRendererGetImageBytesPerPixel(MFRenderer* renderer);
 
 u8 mfRendererGetCurrentFrameIdx(MFRenderer* renderer);
 f64 mfRendererGetDeltaTime(MFRenderer* renderer);
+MFFormat mfRendererGetStandardDepthFormat(MFRenderer* renderer);
 u8 mfRendererGetBufferingCount(void);
 MFOptionalRenderFeatures mfRendererGetSupportedOptionalRenderFeatures(MFRenderer* renderer);
 const MFRendererConfig* mfRendererGetConfig(MFRenderer* renderer);

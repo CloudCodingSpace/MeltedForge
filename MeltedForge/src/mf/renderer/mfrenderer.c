@@ -6,7 +6,7 @@ extern "C" {
 #include "core/mftime.h"
 
 #include "vk/backend.h"
-#include "vk/render_target.h"
+#include "vk/rendertarget.h"
 
 #define DT_SAMPLES 10
 
@@ -238,7 +238,14 @@ f64 mfRendererGetDeltaTime(MFRenderer* renderer) {
     return avg;
 }
 
-u8 mfRendererGetBufferingCount(void) {
+MFFormat mfRendererGetStandardDepthFormat(MFRenderer* renderer) {
+    MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");    
+    MF_PANIC_IF(!renderer->init, mfGetLogger(), "The renderer isn't initialised!");
+    
+    return (MFFormat)(u32)renderer->backend.depthFormat;
+}
+
+u8 mfRendererGetBufferingCoun(void) {
     return FRAMES_IN_FLIGHT;
 }
 

@@ -2,7 +2,7 @@
 extern "C" {
 #endif
 
-#include "mfrender_target.h"
+#include "mfrendertarget.h"
 
 #include "core/mfcore.h"
 
@@ -15,7 +15,7 @@ extern "C" {
 #include "vk/fb.h"
 #include "vk/renderpass.h"
 #include "vk/command_buffer.h"
-#include "vk/render_target.h"
+#include "vk/rendertarget.h"
 #include "vk/pipeline.h"
 
 #include "mfpipeline.h"
