@@ -22,7 +22,7 @@ struct MFRenderGraph_s {
     MFRenderer* renderer;
     VulkanImage* attachments;
     VulkanFramebuffer fb;
-    VulkanRenderPass pass;
+    VkRenderPass pass;
 
     VkSemaphore* renderFinishedSemas;
     VkFence fences[FRAMES_IN_FLIGHT];
@@ -64,8 +64,11 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
                 MF_PANIC_IF(idx >= config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
             }
 
-            if(pass->depthStencilAttachment != mfnull)
+            if(pass->depthStencilAttachment != mfnull) {
                 MF_PANIC_IF(pass->depthStencilAttachment[0] >= config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
+                MF_PANIC_IF(!mfFlagContainsBits(config.attachments[pass->depthStencilAttachment[0]].type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT), mfGetLogger(),
+                        "The given depth stencil attachment of a pass of a rendergraph must be a index reference to a attachment which is actually a depth stencil attachment instead of some other type of attachment!");
+            }
         }
     }
 
@@ -134,7 +137,67 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     }
     // RenderPass
     {
+        VkAttachmentDescription* attachments = MF_ALLOCMEM(VkAttachmentDescription, sizeof(VkAttachmentDescription) * config.attachmentCount);
+        VkSubpassDependency* dependencies = MF_ALLOCMEM(VkSubpassDependency, sizeof(VkSubpassDependency) * (config.passCount + 1));
+        VkSubpassDescription* passes = MF_ALLOCMEM(VkSubpassDescription, sizeof(VkSubpassDescription) * config.passCount);
 
+        for(u32 i = 0; i < config.attachmentCount; i++) {
+            attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            attachments[i].format = (VkFormat)(u32)config.attachments[i].format;
+            attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
+            attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+        }
+
+        // TODO: Translate the passes
+        for(u32 i = 0; i < config.passCount; i++) {
+            
+        }
+
+        // TODO: Later find out and use the most accurate dependency masks for each inter pass dependency
+        VkSubpassDependency dependency = {0};
+        {
+            dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            dependency.srcAccessMask = 0;
+            dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        }
+
+        dependencies[0] = dependency;
+        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+        dependencies[0].dstSubpass = 0;
+        for(u32 i = 1; i < config.passCount; i++) {
+            dependencies[i].srcSubpass = i - 1;
+            dependencies[i].dstSubpass = i;
+            dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+            MFRenderGraphPassDesc* srcPass = &config.passes[i - 1];
+            MFRenderGraphPassDesc* dstPass = &config.passes[i];
+            if((dstPass->inputAttachmentCount > 0) && (dstPass->inputAttachments != mfnull)) {
+                dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                dependencies[i].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                dependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+            }
+        }
+
+        VkRenderPassCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+            .attachmentCount = config.attachmentCount,
+            .pAttachments = attachments,
+            .dependencyCount = config.passCount + 1,
+            .pDependencies = dependencies,
+            .subpassCount = config.passCount,
+            .pSubpasses = passes
+        };
+
+        // VK_CHECK(vkCreateRenderPass(ctx->device, &info, ctx->allocator, &renderGraph->pass));
+    
+        MF_FREEMEM(attachments);
+        MF_FREEMEM(dependencies);
+        MF_FREEMEM(passes);
     }
     // Framebuffer
     {
@@ -172,6 +235,8 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
+
+    // vkDestroyRenderPass(ctx->device, renderGraph->pass, ctx->allocator);
 
     for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
         VulkanImageDestroy(&renderGraph->attachments[i]);
