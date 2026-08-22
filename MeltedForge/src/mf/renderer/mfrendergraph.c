@@ -8,6 +8,7 @@ extern "C" {
 #include "vk/ctx.h"
 #include "vk/image.h"
 #include "vk/fb.h"
+#include "vk/command_buffer.h"
 
 /* 
  * TODO: Plan for a pass object, attachment object, and figure out how to return each attachment's imgui set if required 
@@ -22,6 +23,10 @@ struct MFRenderGraph_s {
     VulkanImage* attachments;
     VulkanFramebuffer fb;
     VulkanRenderPass pass;
+
+    VkSemaphore* renderFinishedSemas;
+    VkFence fences[FRAMES_IN_FLIGHT];
+    VkCommandBuffer commandBuffers[FRAMES_IN_FLIGHT];
 };
 
 MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig config) {
@@ -135,6 +140,24 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     {
 
     }
+    // Sync Objects and command buffer
+    {
+        renderGraph->renderFinishedSemas = MF_ALLOCMEM(VkSemaphore, sizeof(VkSemaphore) * ctx->swapchainImageCount);
+
+        VkSemaphoreCreateInfo semaInfo = { .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        VkFenceCreateInfo fenceInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+
+
+        for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
+            VK_CHECK(vkCreateSemaphore(ctx->device, &semaInfo, ctx->allocator, &renderGraph->renderFinishedSemas[i]));
+        }
+
+        for(u8 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            renderGraph->commandBuffers[i] = VulkanCommandBufferAllocate(ctx, ctx->commandPool, true);
+            VK_CHECK(vkCreateFence(ctx->device, &fenceInfo, ctx->allocator, &renderGraph->fences[i]));
+        }
+        VK_CHECK(vkResetFences(ctx->device, FRAMES_IN_FLIGHT, renderGraph->fences));
+    }
 
     renderGraph->init = true;
     return renderGraph;
@@ -147,6 +170,9 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
 
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
     for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
         VulkanImageDestroy(&renderGraph->attachments[i]);
     }
@@ -154,7 +180,17 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     for(u32 i = 0; i < renderGraph->config.passCount; i++) {
         MF_FREEMEM(renderGraph->config.passes[i].name);
     }
+
+    for(u8 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VulkanCommandBufferFree(ctx, renderGraph->commandBuffers[i], ctx->commandPool);
+        vkDestroyFence(ctx->device, renderGraph->fences[i], ctx->allocator);
+    }
+
+    for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
+        vkDestroySemaphore(ctx->device, renderGraph->renderFinishedSemas[i], ctx->allocator);
+    }
     
+    MF_FREEMEM(renderGraph->renderFinishedSemas);
     MF_FREEMEM(renderGraph->attachments);
     MF_FREEMEM(renderGraph->config.attachments);
     MF_FREEMEM(renderGraph->config.passes);
@@ -164,7 +200,7 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     MF_SETMEM(_renderGraph, 0, sizeof(MFRenderGraph*));
 }
 
-void mfRenderGraphInvoke(MFRenderGraph* renderGraph) {
+void mfRenderGraphInvoke(MFRenderGraph* renderGraph, bool waitOnCpu) {
     MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
     
