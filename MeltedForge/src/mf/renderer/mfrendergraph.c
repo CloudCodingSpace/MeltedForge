@@ -35,6 +35,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     MF_PANIC_IF(config.width == 0 || config.height == 0, mfGetLogger(), "The width & height of the rendergraph musn't be null!");
     MF_PANIC_IF(config.passes == 0 || !config.passes, mfGetLogger(), "The no. of passes in a rendergraph musn't be zero and the passes array pointer musn't be null!");
 
+    // TODO: Later also verify for memory hazards for passes!
     // Verification of data
     {
         for(u32 i = 0; i < config.attachmentCount; i++) {
@@ -88,8 +89,34 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         renderGraph->config.passes = MF_ALLOCMEM(MFRenderGraphPassDesc, sizeof(MFRenderGraphPassDesc) * config.passCount);
         memcpy(renderGraph->config.passes, config.passes, sizeof(MFRenderGraphPassDesc) * config.passCount);
 
+        // NOTE: I hate allocating these arrays but I still need to for book-keeping T-T
         for(u32 i = 0; i < config.passCount; i++) {
-            renderGraph->config.passes[i].name = mfStringDuplicate(config.passes[i].name);
+            MFRenderGraphPassDesc* pass = &renderGraph->config.passes[i];
+            pass->name = mfStringDuplicate(config.passes[i].name);
+
+            if(pass->outputColorAttachmentCount > 0) {
+                u32* outputAttachments = MF_ALLOCMEM(u32, sizeof(u32) * pass->outputColorAttachmentCount);
+                
+                for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
+                    outputAttachments[j] = pass->outputColorAttachments[j];
+                }
+                pass->outputColorAttachments = outputAttachments;
+            }
+
+            if(pass->inputAttachmentCount > 0) {
+                u32* inputAttachments = MF_ALLOCMEM(u32, sizeof(u32) * pass->inputAttachmentCount);
+                
+                for(u32 j = 0; j < pass->inputAttachmentCount; j++) {
+                    inputAttachments[j] = pass->inputAttachments[j];
+                }
+                pass->inputAttachments = inputAttachments;
+            }
+
+            if(pass->depthStencilAttachment != mfnull) {
+                u32 id = pass->depthStencilAttachment[0];
+                pass->depthStencilAttachment = MF_ALLOCMEM(u32, sizeof(u32));
+                pass->depthStencilAttachment[0] = id;
+            }
         }
     }
 
@@ -141,6 +168,21 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         VkSubpassDependency* dependencies = MF_ALLOCMEM(VkSubpassDependency, sizeof(VkSubpassDependency) * (config.passCount + 1));
         VkSubpassDescription* passes = MF_ALLOCMEM(VkSubpassDescription, sizeof(VkSubpassDescription) * config.passCount);
 
+        u32 attachmentRefCount = 0;
+        for(u32 i = 0; i < config.passCount; i++) {
+            MFRenderGraphPassDesc* pass = &config.passes[i];
+
+            if(pass->inputAttachmentCount > 0)
+                attachmentRefCount++;
+            if(pass->outputColorAttachmentCount > 0)
+                attachmentRefCount++;
+            if(pass->depthStencilAttachment != mfnull)
+                attachmentRefCount++;
+        }
+
+        // NOTE: I genuinely fucking hate this ** array thing right here, moreover since it is heap allocated but atm due to my lack of expertise, I can't find a better solution T-T
+        VkAttachmentReference** attachmentRefs = MF_ALLOCMEM(VkAttachmentReference*, sizeof(VkAttachmentReference*) * attachmentRefCount);
+
         for(u32 i = 0; i < config.attachmentCount; i++) {
             attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -153,11 +195,52 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         }
 
         // TODO: Translate the passes
+        u64 attachmentRefIdx = 0;
         for(u32 i = 0; i < config.passCount; i++) {
+            MFRenderGraphPassDesc* passDesc = &config.passes[i];
             
+            passes[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // TODO: Make it configurable if required
+
+            if(passDesc->inputAttachmentCount > 0) {
+                VkAttachmentReference* inputRefs = MF_ALLOCMEM(VkAttachmentReference, sizeof(VkAttachmentReference) * passDesc->inputAttachmentCount);
+    
+                for(u32 j = 0; j < passDesc->inputAttachmentCount; j++) {
+                    inputRefs[j].attachment = passDesc->inputAttachments[j];
+                    inputRefs[j].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                }
+    
+                passes[i].inputAttachmentCount = passDesc->inputAttachmentCount;
+                passes[i].pInputAttachments = inputRefs;
+                attachmentRefs[attachmentRefIdx++] = inputRefs;
+
+            }
+
+            if(passDesc->depthStencilAttachment != mfnull) {
+                VkAttachmentReference* ref = MF_ALLOCMEM(VkAttachmentReference, sizeof(VkAttachmentReference));
+
+                ref->attachment = passDesc->depthStencilAttachment[0];
+                ref->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+                passes[i].pDepthStencilAttachment = ref;
+                attachmentRefs[attachmentRefIdx++] = ref;
+            }
+            
+            if(passDesc->outputColorAttachmentCount > 0) {
+                VkAttachmentReference* colorRefs = MF_ALLOCMEM(VkAttachmentReference, sizeof(VkAttachmentReference) * passDesc->outputColorAttachmentCount);
+
+                for(u32 j = 0; j < passDesc->outputColorAttachmentCount; j++) {
+                    colorRefs[j].attachment = passDesc->outputColorAttachments[j];
+                    colorRefs[j].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                }
+
+                passes[i].colorAttachmentCount = passDesc->outputColorAttachmentCount;
+                passes[i].pColorAttachments = colorRefs;
+                attachmentRefs[attachmentRefIdx++] = colorRefs;
+            }
         }
 
         // TODO: Later find out and use the most accurate dependency masks for each inter pass dependency
+        u32 dependencyCount = 1; // Because we have one intra pass dependency
         VkSubpassDependency dependency = {0};
         {
             dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
@@ -169,6 +252,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         dependencies[0] = dependency;
         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
         dependencies[0].dstSubpass = 0;
+
         for(u32 i = 1; i < config.passCount; i++) {
             dependencies[i].srcSubpass = i - 1;
             dependencies[i].dstSubpass = i;
@@ -181,20 +265,25 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
                 dependencies[i].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 dependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
             }
+            dependencyCount++;
         }
 
         VkRenderPassCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
             .attachmentCount = config.attachmentCount,
             .pAttachments = attachments,
-            .dependencyCount = config.passCount + 1,
+            .dependencyCount = dependencyCount,
             .pDependencies = dependencies,
             .subpassCount = config.passCount,
             .pSubpasses = passes
         };
 
-        // VK_CHECK(vkCreateRenderPass(ctx->device, &info, ctx->allocator, &renderGraph->pass));
+        VK_CHECK(vkCreateRenderPass(ctx->device, &info, ctx->allocator, &renderGraph->pass));
+
+        for(u32 i = 0; i < attachmentRefCount; i++)
+            MF_FREEMEM(attachmentRefs[i]);
     
+        MF_FREEMEM(attachmentRefs);
         MF_FREEMEM(attachments);
         MF_FREEMEM(dependencies);
         MF_FREEMEM(passes);
@@ -236,7 +325,7 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
 
-    // vkDestroyRenderPass(ctx->device, renderGraph->pass, ctx->allocator);
+    vkDestroyRenderPass(ctx->device, renderGraph->pass, ctx->allocator);
 
     for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
         VulkanImageDestroy(&renderGraph->attachments[i]);
@@ -244,6 +333,9 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
 
     for(u32 i = 0; i < renderGraph->config.passCount; i++) {
         MF_FREEMEM(renderGraph->config.passes[i].name);
+        MF_FREEMEM(renderGraph->config.passes[i].outputColorAttachments);
+        MF_FREEMEM(renderGraph->config.passes[i].depthStencilAttachment);
+        MF_FREEMEM(renderGraph->config.passes[i].inputAttachments);
     }
 
     for(u8 i = 0; i < FRAMES_IN_FLIGHT; i++) {
