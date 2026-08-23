@@ -52,7 +52,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
                 MF_PANIC_IF(pass->outputColorAttachmentCount == 0 || !pass->outputColorAttachments, mfGetLogger(), "Each rendergraph's pass must have atleast one output attachment & so the output attachment's array mustn't be null!");
 
             for(u32 j = 0; j < pass->inputAttachmentCount; j++) {
-                u32 idx = pass->inputAttachments[i];
+                u32 idx = pass->inputAttachments[j];
 
                 MF_PANIC_IF(idx >= config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
                 // Just in case if not added, adding the input attachment flag
@@ -60,7 +60,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             }
 
             for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
-                u32 idx = pass->outputColorAttachments[i];
+                u32 idx = pass->outputColorAttachments[j];
 
                 MF_PANIC_IF(idx >= config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
             }
