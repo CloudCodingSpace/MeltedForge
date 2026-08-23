@@ -165,8 +165,8 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     // RenderPass
     {
         VkAttachmentDescription* attachments = MF_ALLOCMEM(VkAttachmentDescription, sizeof(VkAttachmentDescription) * config.attachmentCount);
-        VkSubpassDependency* dependencies = MF_ALLOCMEM(VkSubpassDependency, sizeof(VkSubpassDependency) * (config.passCount + 1));
         VkSubpassDescription* passes = MF_ALLOCMEM(VkSubpassDescription, sizeof(VkSubpassDescription) * config.passCount);
+        VkSubpassDependency* dependencies = MF_ALLOCMEM(VkSubpassDependency, sizeof(VkSubpassDependency) * config.passCount);
 
         u32 attachmentRefCount = 0;
         for(u32 i = 0; i < config.passCount; i++) {
@@ -240,7 +240,6 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         }
 
         // TODO: Later find out and use the most accurate dependency masks for each inter pass dependency
-        u32 dependencyCount = 1; // Because we have one intra pass dependency
         VkSubpassDependency dependency = {0};
         {
             dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
@@ -258,21 +257,19 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             dependencies[i].dstSubpass = i;
             dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-            MFRenderGraphPassDesc* srcPass = &config.passes[i - 1];
-            MFRenderGraphPassDesc* dstPass = &config.passes[i];
-            if((dstPass->inputAttachmentCount > 0) && (dstPass->inputAttachments != mfnull)) {
+            MFRenderGraphPassDesc* pass = &config.passes[i];
+            if((pass->inputAttachmentCount > 0) && (pass->inputAttachments != mfnull)) {
                 dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                 dependencies[i].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 dependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
             }
-            dependencyCount++;
         }
 
         VkRenderPassCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
             .attachmentCount = config.attachmentCount,
             .pAttachments = attachments,
-            .dependencyCount = dependencyCount,
+            .dependencyCount = config.passCount,
             .pDependencies = dependencies,
             .subpassCount = config.passCount,
             .pSubpasses = passes
