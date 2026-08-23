@@ -21,7 +21,7 @@ struct MFRenderGraph_s {
     bool init, began;
     MFRenderer* renderer;
     VulkanImage* attachments;
-    VulkanFramebuffer fb;
+    VulkanFramebuffer fbs[FRAMES_IN_FLIGHT];
     VkRenderPass pass;
 
     VkSemaphore* renderFinishedSemas;
@@ -290,7 +290,16 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     }
     // Framebuffer
     {
+        VulkanImage** attachments = MF_ALLOCMEM(VulkanImage*, sizeof(VulkanImage*) * config.attachmentCount);
+        for(u32 i = 0; i < config.attachmentCount; i++) {
+            attachments[i] = &renderGraph->attachments[i];
+        }
 
+        for(u8 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            VulkanFramebufferCreate(&renderGraph->fbs[i], ctx, renderGraph->pass, config.attachmentCount, attachments, (VkExtent2D){ config.width, config.height });
+        }
+
+        MF_FREEMEM(attachments);
     }
     // Sync Objects and command buffer
     {
@@ -324,6 +333,10 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
 
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
     VulkanBackendCtx* ctx = &backend->ctx;
+
+    for(u8 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VulkanFramebufferDestroy(&renderGraph->fbs[i]);
+    }
 
     vkDestroyRenderPass(ctx->device, renderGraph->pass, ctx->allocator);
 
