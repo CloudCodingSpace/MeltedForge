@@ -10,6 +10,8 @@ extern "C" {
 #include "vk/fb.h"
 #include "vk/command_buffer.h"
 
+#include <cimgui_impl.h>
+
 /* 
  * TODO: Plan for a pass object, attachment object, and figure out how to return each attachment's imgui set if required 
  *       Also handle how to return each attachment's resource set or its image handle in case the client needs to get 
@@ -23,6 +25,8 @@ struct MFRenderGraph_s {
     VulkanImage* attachments;
     VulkanFramebuffer fbs[FRAMES_IN_FLIGHT];
     VkRenderPass pass;
+
+    VkDescriptorSet* igAttachmentSets;
 
     VkSemaphore* renderFinishedSemas;
     VkFence fences[FRAMES_IN_FLIGHT];
@@ -88,6 +92,8 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         
         renderGraph->config.passes = MF_ALLOCMEM(MFRenderGraphPassDesc, sizeof(MFRenderGraphPassDesc) * config.passCount);
         memcpy(renderGraph->config.passes, config.passes, sizeof(MFRenderGraphPassDesc) * config.passCount);
+
+        renderGraph->igAttachmentSets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * config.attachmentCount * FRAMES_IN_FLIGHT);
 
         // NOTE: I hate allocating these arrays but I still need to for book-keeping T-T
         for(u32 i = 0; i < config.passCount; i++) {
@@ -160,6 +166,10 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
                 info.usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
             
             VulkanImageCreate(&renderGraph->attachments[i], info);
+
+            for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i].sampler, renderGraph->attachments[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
         }
     }
     // RenderPass
@@ -356,7 +366,14 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     for(u32 i = 0; i < ctx->swapchainImageCount; i++) {
         vkDestroySemaphore(ctx->device, renderGraph->renderFinishedSemas[i], ctx->allocator);
     }
+
+    for(u32 i = 0; i < renderGraph->config.passCount; i++) {
+        for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+            ImGui_ImplVulkan_RemoveTexture(renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j]);
+        }
+    }
     
+    MF_FREEMEM(renderGraph->igAttachmentSets);
     MF_FREEMEM(renderGraph->renderFinishedSemas);
     MF_FREEMEM(renderGraph->attachments);
     MF_FREEMEM(renderGraph->config.attachments);
