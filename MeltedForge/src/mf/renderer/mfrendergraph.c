@@ -415,6 +415,19 @@ const MFRenderGraphAttachmentDesc* mfRenderGraphGetAttachment(MFRenderGraph* ren
     return &renderGraph->config.attachments[attachmentIdx];
 }
 
+ImTextureID mfRenderGraphGetAttachmentImTextureID(MFRenderGraph* renderGraph, u32 attachmentIdx) {
+    MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
+    MF_PANIC_IF(attachmentIdx >= renderGraph->config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
+    
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
+
+    if(!backend->config.enableUI)
+        return mfnull;
+    
+    return renderGraph->igAttachmentSets[attachmentIdx * FRAMES_IN_FLIGHT + backend->frameIndex];
+}
+
 const MFRenderGraphPassDesc* mfRenderGraphGetPass(MFRenderGraph* renderGraph, u32 passIdx) {
     MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");

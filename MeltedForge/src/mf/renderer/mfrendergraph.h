@@ -52,6 +52,7 @@ void mfRenderGraphInvoke(MFRenderGraph* renderGraph, bool waitOnCpu);
 void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height);
 
 const MFRenderGraphAttachmentDesc* mfRenderGraphGetAttachment(MFRenderGraph* renderGraph, u32 attachmentIdx);
+ImTextureID mfRenderGraphGetAttachmentImTextureID(MFRenderGraph* renderGraph, u32 attachmentIdx);
 const MFRenderGraphPassDesc* mfRenderGraphGetPass(MFRenderGraph* renderGraph, u32 passIdx);
 const MFRenderGraphConfig* mfRenderGraphGetConfig(MFRenderGraph* renderGraph);
 
