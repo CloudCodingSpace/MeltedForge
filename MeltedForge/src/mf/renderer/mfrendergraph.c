@@ -39,6 +39,9 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     MF_PANIC_IF(config.width == 0 || config.height == 0, mfGetLogger(), "The width & height of the rendergraph musn't be null!");
     MF_PANIC_IF(config.passes == 0 || !config.passes, mfGetLogger(), "The no. of passes in a rendergraph musn't be zero and the passes array pointer musn't be null!");
 
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
     // TODO: Later also verify for memory hazards for passes!
     // Verification of data
     {
@@ -67,6 +70,11 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
                 u32 idx = pass->outputColorAttachments[j];
 
                 MF_PANIC_IF(idx >= config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
+            }
+
+            if(!backend->config.enableDepth) {
+                pass->depthStencilAttachment = mfnull;
+                continue;
             }
 
             if(pass->depthStencilAttachment != mfnull) {
@@ -127,11 +135,6 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     }
 
     // TODO: Add MSAA support for rendergraph attachments!
-    // TODO: Create the framebuffers, renderpass, etc
-
-    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderer);
-    VulkanBackendCtx* ctx = &backend->ctx;
-
     // Attachments
     {
         renderGraph->attachments = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * config.attachmentCount);
@@ -167,8 +170,10 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             
             VulkanImageCreate(&renderGraph->attachments[i], info);
 
-            for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
-                renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i].sampler, renderGraph->attachments[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            if(backend->config.enableUI) {
+                for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                    renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i].sampler, renderGraph->attachments[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                }
             }
         }
     }
@@ -367,9 +372,11 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
         vkDestroySemaphore(ctx->device, renderGraph->renderFinishedSemas[i], ctx->allocator);
     }
 
-    for(u32 i = 0; i < renderGraph->config.passCount; i++) {
-        for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
-            ImGui_ImplVulkan_RemoveTexture(renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j]);
+    if(backend->config.enableUI) {
+        for(u32 i = 0; i < renderGraph->config.passCount; i++) {
+            for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                ImGui_ImplVulkan_RemoveTexture(renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j]);
+            }
         }
     }
     
