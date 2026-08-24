@@ -4,11 +4,14 @@ extern "C" {
 
 #include "mfrendergraph.h"
 
+#include "mfgpu_res.h"
+
 #include "vk/backend.h"
 #include "vk/ctx.h"
 #include "vk/image.h"
 #include "vk/fb.h"
 #include "vk/command_buffer.h"
+#include "vk/gpu_res.h"
 
 #include <cimgui_impl.h>
 
@@ -20,13 +23,17 @@ extern "C" {
 
 struct MFRenderGraph_s {
     MFRenderGraphConfig config;
-    bool init, began;
+    bool init;
     MFRenderer* renderer;
     VulkanImage* attachments;
     VulkanFramebuffer fbs[FRAMES_IN_FLIGHT];
     VkRenderPass pass;
 
+    u64 inputAttachmentPassesCount;
     VkDescriptorSet* igAttachmentSets;
+    MFResourceSetLayout** inputSetLayouts;
+    VkDescriptorSet* inputSets;
+    u64* inputSetPools;
 
     VkSemaphore* renderFinishedSemas;
     VkFence fences[FRAMES_IN_FLIGHT];
@@ -268,13 +275,14 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         dependencies[0].dstSubpass = 0;
 
         for(u32 i = 1; i < config.passCount; i++) {
+            dependencies[i] = dependency;
             dependencies[i].srcSubpass = i - 1;
             dependencies[i].dstSubpass = i;
             dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
             MFRenderGraphPassDesc* pass = &config.passes[i];
             if((pass->inputAttachmentCount > 0) && (pass->inputAttachments != mfnull)) {
-                dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 dependencies[i].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 dependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
             }
@@ -331,6 +339,95 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         }
         VK_CHECK(vkResetFences(ctx->device, FRAMES_IN_FLIGHT, renderGraph->fences));
     }
+    // Descriptor sets, layouts, etc
+    // TODO: Later refactor and optimize these stuff to find out duplicated binding styles and layouts to reduce descriptor pool usage
+    {
+        u64 inputAttachmentPasses = 0, idx = 0;
+        for(u32 i = 0; i < config.passCount; i++) {
+            if(config.passes[i].inputAttachmentCount > 0)
+                inputAttachmentPasses++;
+        }
+
+        renderGraph->inputAttachmentPassesCount = inputAttachmentPasses;
+
+        renderGraph->inputSetLayouts = MF_ALLOCMEM(MFResourceSetLayout*, sizeof(MFResourceSetLayout*) * inputAttachmentPasses);
+        renderGraph->inputSetPools = MF_ALLOCMEM(u64, sizeof(u64) * inputAttachmentPasses);
+        renderGraph->inputSets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * inputAttachmentPasses * FRAMES_IN_FLIGHT);
+
+        for(u32 i = 0; i < config.passCount; i++) {
+            MFRenderGraphPassDesc* pass = &config.passes[i];
+
+            if(pass->inputAttachmentCount == 0)
+                continue;
+
+            MFResourceSetBindings* bindings = MF_ALLOCMEM(MFResourceSetBindings, sizeof(MFResourceSetBindings) * pass->inputAttachmentCount);
+            // Creating bindings
+            for(u32 j = 0; j < pass->inputAttachmentCount; j++) {
+                bindings[j].binding = j;
+                bindings[j].description.descriptorCount = 1;
+                bindings[j].description.descriptorType = MF_RES_DESCRIPTION_TYPE_INPUT_ATTACHMENT;
+                bindings[j].description.stageFlags = MF_SHADER_STAGE_FRAGMENT; // TODO: Make it configurable if required
+            }
+
+            // Create layout
+            renderGraph->inputSetLayouts[idx] = mfResourceSetLayoutCreate(pass->inputAttachmentCount, bindings, renderer);
+
+            // Create sets
+            {
+                VkDescriptorPoolSize sizes[1] = {
+                    { MF_RES_DESCRIPTION_TYPE_INPUT_ATTACHMENT, FRAMES_IN_FLIGHT * pass->inputAttachmentCount }
+                };
+
+                renderGraph->inputSetPools[idx] = VulkanGpuResCreatePool(ctx, MF_ARRAYLEN(sizes), sizes, FRAMES_IN_FLIGHT);
+                VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, renderGraph->inputSetPools[idx]);
+            
+                VkDescriptorSetAllocateInfo info = {
+                    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                    .descriptorSetCount = 1,
+                    .pSetLayouts = &renderGraph->inputSetLayouts[idx]->layout,
+                    .descriptorPool = pool->pool
+                };
+
+                for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                    VK_CHECK(vkAllocateDescriptorSets(ctx->device, &info, &renderGraph->inputSets[idx * FRAMES_IN_FLIGHT + j]));
+                }
+
+                if(pool->allocatedSets == VULKAN_GPU_RES_MAX_DESCRIPTORS)
+                    pool->isFull = true;
+            }
+
+            // Update sets
+            {
+                VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * pass->inputAttachmentCount);
+
+                for(u32 j = 0; j < pass->inputAttachmentCount; j++) {
+                    imgInfos[j].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    imgInfos[j].imageView = renderGraph->attachments[pass->inputAttachments[j]].view;
+                    imgInfos[j].sampler = renderGraph->attachments[pass->inputAttachments[j]].sampler;
+                }
+
+                VkWriteDescriptorSet write = {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+                };
+
+                for(u32 j = 0; j < pass->inputAttachmentCount; j++) {
+                    write.dstBinding = j;
+                    write.pImageInfo = &imgInfos[j];
+                    for(u8 frameIdx = 0; frameIdx < FRAMES_IN_FLIGHT; frameIdx++) {
+                        write.dstSet = renderGraph->inputSets[idx * FRAMES_IN_FLIGHT + frameIdx];
+                        vkUpdateDescriptorSets(ctx->device, 1, &write, 0, mfnull);
+                    }
+                }
+
+                MF_FREEMEM(imgInfos);
+            }
+        
+            MF_FREEMEM(bindings);
+            idx++;
+        }
+    }
 
     renderGraph->init = true;
     return renderGraph;
@@ -379,8 +476,19 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
             }
         }
     }
-    
-    MF_FREEMEM(renderGraph->igAttachmentSets);
+
+    for(u32 i = 0; i < renderGraph->inputAttachmentPassesCount; i++) {
+        VulkanGpuResDescriptorPool* pool = &mfArrayGetElement(ctx->descriptorPools, VulkanGpuResDescriptorPool, renderGraph->inputSetPools[i]);
+        
+        for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++)
+            vkFreeDescriptorSets(ctx->device, pool->pool, 1, &renderGraph->inputSets[i * FRAMES_IN_FLIGHT + j]);
+        mfResourceSetLayoutDestroy(&renderGraph->inputSetLayouts[i]);
+    }
+
+    MF_FREEMEM(renderGraph->inputSetLayouts);
+    MF_FREEMEM(renderGraph->inputSetPools);
+    MF_FREEMEM(renderGraph->inputSets);
+
     MF_FREEMEM(renderGraph->renderFinishedSemas);
     MF_FREEMEM(renderGraph->attachments);
     MF_FREEMEM(renderGraph->config.attachments);
@@ -398,12 +506,11 @@ void mfRenderGraphInvoke(MFRenderGraph* renderGraph, bool waitOnCpu) {
     // TODO: Fill this thing out
 }
 
-
 void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height) {
     MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
     MF_PANIC_IF(width == 0 || height == 0, mfGetLogger(), "The width & height of the rendergraph extent musn't be null!");
-    
+
     // TODO: Fill this thing out
 }
 
@@ -425,7 +532,7 @@ ImTextureID mfRenderGraphGetAttachmentImTextureID(MFRenderGraph* renderGraph, u3
     if(!backend->config.enableUI)
         return mfnull;
     
-    return renderGraph->igAttachmentSets[attachmentIdx * FRAMES_IN_FLIGHT + backend->frameIndex];
+    return (ImTextureID)renderGraph->igAttachmentSets[attachmentIdx * FRAMES_IN_FLIGHT + backend->frameIndex];
 }
 
 const MFRenderGraphPassDesc* mfRenderGraphGetPass(MFRenderGraph* renderGraph, u32 passIdx) {

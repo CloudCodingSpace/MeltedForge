@@ -352,34 +352,51 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
 static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     
-    MFRenderGraphAttachmentDesc attachments[2] = {};
-    // Color attachment
+    MFRenderGraphAttachmentDesc attachments[3] = {};
+    // Color attachments
     attachments[0].clearColor = mfRendererGetClearColor(appState->renderer);
     attachments[0].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
     attachments[0].format = MF_FORMAT_R8G8B8A8_UNORM;
+    
+    attachments[1].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[1].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
+    attachments[1].format = MF_FORMAT_R8G8B8A8_UNORM;
 
     // Depth attachment
-    attachments[1].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[1].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
-    attachments[1].format = mfRendererGetStandardDepthFormat(appState->renderer);
+    attachments[2].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[2].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
+    attachments[2].format = mfRendererGetStandardDepthFormat(appState->renderer);
 
-    u32 outputAttachments[] = {
+    u32 outputAttachmentPass1[] = {
         0
     };
 
-    u32 depthAttachment[] = {
+    u32 outputAttachmentPass2[] = {
         1
     };
 
-    MFRenderGraphPassDesc passes[1] = {};
+    u32 depthAttachment[] = {
+        2
+    };
+
+    MFRenderGraphPassDesc passes[2] = {};
     // Pass 1
     passes[0].name = "Pass #1 - Main pass";
     passes[0].depthStencilAttachment = depthAttachment;
     passes[0].inputAttachmentCount = 0;
     passes[0].outputColorAttachmentCount = 1;
-    passes[0].outputColorAttachments = outputAttachments;
+    passes[0].outputColorAttachments = outputAttachmentPass1;
     passes[0].passDrawCallback = mfnull; // Gotta fill this up later
     passes[0].userData = mfnull; // Gotta fill this up later
+    // Pass 2
+    passes[1].name = "Pass #1 - Main pass";
+    passes[1].depthStencilAttachment = depthAttachment;
+    passes[1].inputAttachmentCount = 1;
+    passes[1].inputAttachments = outputAttachmentPass1;
+    passes[1].outputColorAttachmentCount = 1;
+    passes[1].outputColorAttachments = outputAttachmentPass2;
+    passes[1].passDrawCallback = mfnull; // Gotta fill this up later
+    passes[1].userData = mfnull; // Gotta fill this up later
 
     MFRenderGraphConfig config = {
         .attachmentCount = MF_ARRAYLEN(attachments),
