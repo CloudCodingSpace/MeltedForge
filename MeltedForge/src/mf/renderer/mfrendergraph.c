@@ -25,6 +25,7 @@ struct MFRenderGraph_s {
     MFRenderGraphConfig config;
     bool init;
     MFRenderer* renderer;
+    VkClearValue* clearValues;
     VulkanImage* attachments;
     VulkanFramebuffer fbs[FRAMES_IN_FLIGHT];
     VkRenderPass pass;
@@ -142,6 +143,24 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     }
 
     // TODO: Add MSAA support for rendergraph attachments!
+    // Clear values
+    {
+        renderGraph->clearValues = MF_ALLOCMEM(VkClearValue, sizeof(VkClearValue) * config.attachmentCount);
+
+        for(u32 i = 0; i < config.attachmentCount; i++) {
+            MFRenderGraphAttachmentDesc* desc = &config.attachments[i];
+            bool isDepth = mfFlagContainsBits(desc->type ,MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT);
+
+            if(isDepth)
+                renderGraph->clearValues->depthStencil.depth = 1.0f;
+            else {
+                renderGraph->clearValues[i].color.float32[0] = config.attachments[i].clearColor.r;
+                renderGraph->clearValues[i].color.float32[1] = config.attachments[i].clearColor.g;
+                renderGraph->clearValues[i].color.float32[2] = config.attachments[i].clearColor.b;
+                renderGraph->clearValues[i].color.float32[3] = 1.0f;
+            }
+        }
+    }
     // Attachments
     {
         renderGraph->attachments = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * config.attachmentCount);
@@ -490,6 +509,7 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     MF_FREEMEM(renderGraph->inputSets);
 
     MF_FREEMEM(renderGraph->renderFinishedSemas);
+    MF_FREEMEM(renderGraph->clearValues);
     MF_FREEMEM(renderGraph->attachments);
     MF_FREEMEM(renderGraph->config.attachments);
     MF_FREEMEM(renderGraph->config.passes);
