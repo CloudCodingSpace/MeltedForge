@@ -3,14 +3,15 @@ extern "C" {
 #endif
 
 #include "mfpipeline.h"
+#include "mfrendergraph.h"
 
 #include "vk/backend.h"
 #include "vk/pipeline.h"
 #include "vk/common.h"
 #include "vk/image.h"
 #include "vk/buffer.h"
-#include "vk/rendertarget.h"
 #include "vk/command_buffer.h"
+#include "vk/rendergraph.h"
 
 #include <vulkan/vk_enum_string_helper.h>
 
@@ -106,9 +107,9 @@ MFPipeline* mfPipelineCreate(MFRenderer* renderer, MFPipelineConfig info) {
             .samples = pipeline->ctx->samples
         };
 
-        if(info.graphicsConfig.renderTarget != mfnull) {
-            VulkanRenderTarget* renderTarget = mfRenderTargetGetBackend(info.graphicsConfig.renderTarget);
-            binfo.ginfo.renderpass = renderTarget->renderPass.handle;
+        if(info.graphicsConfig.renderGraph != mfnull) {
+            binfo.ginfo.colorOutputAttachmentCount = mfRenderGraphGetPass(info.graphicsConfig.renderGraph, info.graphicsConfig.renderGraphPassIdx)->outputColorAttachmentCount;
+            binfo.ginfo.renderpass = info.graphicsConfig.renderGraph->passes[info.graphicsConfig.renderGraphPassIdx];
         }
     }
     else if(info.type == MF_PIPELINE_TYPE_COMPUTE) {
@@ -220,8 +221,8 @@ void mfPipelinePushConstant(MFPipeline* pipeline, MFShaderStage shaderStage, u32
     if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->ctx.dispatchBegun) {
         commandBuffer = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
     }
-    else if(pipeline->backend->renderTarget != mfnull) {
-        commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
+    else if(pipeline->backend->renderGraph != mfnull) {
+        commandBuffer = pipeline->backend->renderGraph->commandBuffers[pipeline->backend->frameIndex];
     }
 
     vkCmdPushConstants(commandBuffer, pipeline->pipeline.layout, (VkShaderStageFlags)((int)shaderStage), offset, size, data);
@@ -249,8 +250,8 @@ void mfPipelineBind(MFPipeline* pipeline, MFViewport vp, MFRect2D scissor) {
     if(pipeline->config.type == MF_PIPELINE_TYPE_COMPUTE && pipeline->backend->ctx.dispatchBegun) {
         commandBuffer = pipeline->backend->computeCmdBuffers[pipeline->backend->frameIndex];
     }
-    else if(pipeline->backend->renderTarget != mfnull) {
-        commandBuffer = pipeline->backend->renderTarget->commandBuffers[pipeline->backend->frameIndex];
+    else if(pipeline->backend->renderGraph != mfnull) {
+        commandBuffer = pipeline->backend->renderGraph->commandBuffers[pipeline->backend->frameIndex];
     }
     
     VulkanPipelineBind(&pipeline->pipeline, v, s, commandBuffer);

@@ -15,8 +15,8 @@ extern "C" {
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-#include "../mfrendertarget.h"
-#include "rendertarget.h"
+#include "rendergraph.h"
+#include "../mfrendergraph.h"
 #include "buffer.h"
 
 static void GetDepthFormat(VulkanBackend* backend) {
@@ -525,7 +525,7 @@ void VulkanBackendEndframe(VulkanBackend* backend) {
     
     backend->frameIndex = (backend->frameIndex + 1) % FRAMES_IN_FLIGHT;
     backend->ctx.renderPassBegun = false;
-    backend->renderTarget = mfnull;
+    backend->renderGraph = mfnull;
 }
 
 void VulkanBackendWaitForFrame(VulkanBackend* backend) {
@@ -535,8 +535,8 @@ void VulkanBackendWaitForFrame(VulkanBackend* backend) {
 
 void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 instances, u32 firstVertex, u32 firstInstance) {
     VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
-    if(backend->renderTarget != mfnull) {
-        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
+    if(backend->renderGraph != mfnull) {
+        buff = backend->renderGraph->commandBuffers[backend->frameIndex];
     }
 
     vkCmdDraw(buff, vertexCount, instances, firstVertex, firstInstance);
@@ -544,8 +544,8 @@ void VulkanBackendDrawVertices(VulkanBackend* backend, u32 vertexCount, u32 inst
 
 void VulkanBackendDrawVerticesIndexed(VulkanBackend* backend, u32 indexCount, u32 instances, u32 firstIndex, u32 firstInstance) {
     VkCommandBuffer buff = backend->commandBuffers[backend->frameIndex];
-    if(backend->renderTarget != mfnull) {
-        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
+    if(backend->renderGraph != mfnull) {
+        buff = backend->renderGraph->commandBuffers[backend->frameIndex];
     }
 
     vkCmdDrawIndexed(buff, indexCount, instances, firstIndex, 0, firstInstance); // NOTE: Make the offset configurable if necessary

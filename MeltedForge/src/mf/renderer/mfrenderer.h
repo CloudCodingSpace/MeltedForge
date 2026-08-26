@@ -8,8 +8,6 @@ extern "C" {
 #include "core/mfutils.h"
 #include "core/mfmaths.h"
 
-#include "mfrendertarget.h"
-
 #include "window/mfwindow.h"
 
 #include "mfutil_types.h"

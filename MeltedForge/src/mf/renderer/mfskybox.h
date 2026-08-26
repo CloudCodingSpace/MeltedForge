@@ -8,6 +8,7 @@ extern "C" {
 #include "core/mfarray.h"
 
 #include "mfrenderer.h"
+#include "mfrendergraph.h"
 #include "mfgpuimage.h"
 #include "mfutil_types.h"
 
@@ -22,7 +23,8 @@ typedef enum MFSkyboxType_e {
 typedef struct MFSkyboxConfig_s {
     const char* environmentPath;
     u64 faceSize;
-    MFRenderTarget* renderTarget;
+    u32 renderGraphPassIdx;
+    MFRenderGraph* renderGraph;
     bool generatePbrMaps, generateMipmaps;
 } MFSkyboxConfig;
 

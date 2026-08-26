@@ -54,7 +54,6 @@ typedef struct MFTState_s {
     FSPushConstantData fsPcData;
     
     MFRenderGraph* renderGraph;
-    MFRenderTarget* renderTarget;
     bool takeScreenshot, enableFustrumCulling;
 
     MFWindow* window;

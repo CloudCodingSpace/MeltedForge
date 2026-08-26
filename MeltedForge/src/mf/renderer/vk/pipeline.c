@@ -5,6 +5,7 @@ extern "C" {
 #include "pipeline.h"
 
 #include "common.h"
+#include <math.h>
 
 void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, VulkanPipelineInfo* info) {
     pipeline->info = *info;
@@ -21,27 +22,31 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
     if(pipeline->info.type == VULKAN_PIPELINE_TYPE_GRAPHICS) {
         pipeline->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    
-        VkPipelineColorBlendAttachmentState blendState = {
-            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-            .blendEnable = VK_FALSE
-        };
 
-        if(info->ginfo.transparent) {
-            blendState.blendEnable = VK_TRUE,
-            blendState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-            blendState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-            blendState.colorBlendOp = VK_BLEND_OP_ADD,
-            blendState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-            blendState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-            blendState.alphaBlendOp = VK_BLEND_OP_ADD;
+        info->ginfo.colorOutputAttachmentCount = MF_MAX(info->ginfo.colorOutputAttachmentCount, 1);
+        pipeline->info.ginfo.colorOutputAttachmentCount = info->ginfo.colorOutputAttachmentCount;
+        VkPipelineColorBlendAttachmentState* blendStates = MF_ALLOCMEM(VkPipelineColorBlendAttachmentState, sizeof(VkPipelineColorBlendAttachmentState) * info->ginfo.colorOutputAttachmentCount);
+        
+        for(u32 i = 0; i < info->ginfo.colorOutputAttachmentCount; i++) {
+            blendStates[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+            blendStates[i].blendEnable = VK_FALSE;
+
+            if(info->ginfo.transparent) {
+                blendStates[i].blendEnable = VK_TRUE,
+                blendStates[i].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+                blendStates[i].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                blendStates[i].colorBlendOp = VK_BLEND_OP_ADD,
+                blendStates[i].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+                blendStates[i].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+                blendStates[i].alphaBlendOp = VK_BLEND_OP_ADD;
+            }
         }
 
         VkPipelineColorBlendStateCreateInfo blendInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
             .logicOpEnable = VK_FALSE,
-            .attachmentCount = 1,
-            .pAttachments = &blendState
+            .attachmentCount = info->ginfo.colorOutputAttachmentCount,
+            .pAttachments = blendStates
         };
 
         VkDynamicState dynamicStates[] = {
@@ -169,7 +174,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
             .basePipelineIndex = -1,
             .layout = pipeline->layout,
             .renderPass = info->ginfo.renderpass,
-            .subpass = 0,
+            .subpass = info->ginfo.subpassIdx,
             .pColorBlendState = &blendInfo,
             .pDynamicState = &dInfo,
             .pVertexInputState = &vertState,
@@ -186,6 +191,7 @@ void VulkanPipelineCreate(VulkanBackendCtx* ctx, VulkanPipeline* pipeline, Vulka
 
         VK_CHECK(vkCreateGraphicsPipelines(ctx->device, info->cache, 1, &ginfo, ctx->allocator, &pipeline->pipeline));    
 
+        MF_FREEMEM(blendStates);
         vkDestroyShaderModule(ctx->device, vertMod, ctx->allocator);
         vkDestroyShaderModule(ctx->device, fragMod, ctx->allocator);
     } else if(pipeline->info.type == VULKAN_PIPELINE_TYPE_COMPUTE) {

@@ -8,7 +8,7 @@ extern "C" {
 #include "vk/ctx.h"
 #include "vk/command_buffer.h"
 #include "vk/buffer.h"
-#include "vk/rendertarget.h"
+#include "vk/rendergraph.h"
 
 struct MFGpuBuffer_s {
     VulkanBackend* backend;
@@ -149,8 +149,8 @@ void mfGpuBufferBind(MFGpuBuffer* buffer) {
     u32 idx = buffer->config.frameSynced ? buffer->backend->frameIndex : 0;
 
     VkCommandBuffer buff = buffer->backend->commandBuffers[buffer->backend->frameIndex];
-    if(buffer->backend->renderTarget != mfnull) {
-        buff = buffer->backend->renderTarget->commandBuffers[buffer->backend->frameIndex];
+    if(buffer->backend->renderGraph != mfnull) {
+        buff = buffer->backend->renderGraph->commandBuffers[buffer->backend->frameIndex];
     }
 
     if(buffer->config.type == MF_GPU_BUFFER_TYPE_VERTEX) {

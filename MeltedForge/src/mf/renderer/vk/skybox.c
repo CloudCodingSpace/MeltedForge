@@ -153,6 +153,7 @@ void SkyboxConvertEnvMapToSkybox(MFSkybox* skybox, MFSkyboxConfig config, MFRend
                 .renderpass = pass.handle,
                 .extent = (VkExtent2D){ .width = config.faceSize, .height = config.faceSize },
                 .hasDepth = true,
+                .colorOutputAttachmentCount = 1
             },
             .pushConstRangesCount = 1,
             .pushConstRanges = &range,
@@ -421,6 +422,7 @@ void SkyboxGenerateIrradiance(MFSkybox* skybox, MFSkyboxConfig config, MFRendere
                 .samples = VK_SAMPLE_COUNT_1_BIT,
                 .hasDepth = true,
                 .cullMode = VK_CULL_MODE_NONE,
+                .colorOutputAttachmentCount = 1
             },
             .setLayoutCount = 1,
             .setLayouts = &lay,
@@ -682,13 +684,14 @@ void SkyboxGeneratePrefilteredMap(MFSkybox* skybox, MFSkyboxConfig config, MFRen
                 .hasDepth = true,
                 .cullMode = VK_CULL_MODE_NONE,
                 .samples = VK_SAMPLE_COUNT_1_BIT,
+                .colorOutputAttachmentCount = 1
             },
             .type = VULKAN_PIPELINE_TYPE_GRAPHICS,
             .pushConstRangesCount = 1,
             .pushConstRanges = &range,
             .cache = skybox->backend->pipelineCache,
             .setLayoutCount = 1,
-            .setLayouts = &lay,
+            .setLayouts = &lay
         };
         VulkanPipelineCreate(ctx, &pipeline, &info);
     }
@@ -945,6 +948,7 @@ void SkyboxGenerateBrdfLUT(MFSkybox* skybox, MFSkyboxConfig config, MFRenderer* 
                 .cullMode = VK_CULL_MODE_NONE,
                 .samples = VK_SAMPLE_COUNT_1_BIT,
                 .depthCompareOp = VK_COMPARE_OP_LESS,
+                .colorOutputAttachmentCount = 1
             },
             .type = VULKAN_PIPELINE_TYPE_GRAPHICS,
             .cache = skybox->backend->pipelineCache,

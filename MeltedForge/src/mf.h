@@ -4,7 +4,6 @@
 #include "mf/window/mfinput.h"
 
 #include "mf/renderer/mfrenderer.h"
-#include "mf/renderer/mfrendertarget.h"
 #include "mf/renderer/mfrendergraph.h"
 #include "mf/renderer/mfpipeline.h"
 #include "mf/renderer/mfgpubuffer.h"

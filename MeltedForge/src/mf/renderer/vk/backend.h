@@ -4,15 +4,15 @@
 extern "C" {
 #endif
 
-#include "window/mfwindow.h"
 #include "core/mfarray.h"
+#include "window/mfwindow.h"
 
 #include "ctx.h"
 #include "common.h"
 #include "fb.h"
 #include "renderpass.h"
 
-struct VulkanRenderTarget_s;
+struct MFRenderGraph_s;
 
 typedef struct VulkanBackendConfig_s {
     bool enableUI;
@@ -48,7 +48,7 @@ typedef struct VulkanBackend_s {
 
     const char* pipelineCacheFilePath;
     VkPipelineCache pipelineCache;
-    struct VulkanRenderTarget_s* renderTarget;
+    struct MFRenderGraph_s* renderGraph;
     MFArray waitStages;
     MFArray waitSemas;
     MFArray descSetBindingPool;

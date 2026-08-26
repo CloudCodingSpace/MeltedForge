@@ -9,10 +9,11 @@ typedef struct MFPipeline_s MFPipeline;
 #include "core/mfutils.h"
 
 #include "mfutil_types.h"
-#include "mfrendertarget.h"
 #include "mfgpu_res.h"
 
 #include "mfrenderer.h"
+
+struct MFRenderGraph_s;
 
 typedef enum MFPipelineType_e {
     MF_PIPELINE_TYPE_GRAPHICS,
@@ -21,12 +22,12 @@ typedef enum MFPipelineType_e {
 } MFPipelineType;
 
 typedef struct MFGraphicsPipelineConfig_s {
-    u32 bindingsCount, attributesCount;
+    u32 bindingsCount, attributesCount, renderGraphPassIdx;
     MFCompareOp depthCompareOp;
     bool hasDepth, transparent;
     const char* vertPath;
     const char* fragPath;
-    MFRenderTarget* renderTarget;
+    struct MFRenderGraph_s* renderGraph;
     MFVec2 extent;
     MFCullModeFlags cullMode;
     MFVertexInputBindingDescription* bindings;

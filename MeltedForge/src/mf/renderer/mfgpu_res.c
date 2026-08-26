@@ -7,9 +7,9 @@ extern "C" {
 #include "mfgpubuffer.h"
 #include "mfgpuimage.h"
 
-#include "vk/rendertarget.h"
 #include "vk/pipeline.h"
 #include "vk/gpu_res.h"
+#include "vk/rendergraph.h"
 
 MFResourceSetLayout* mfResourceSetLayoutCreate(u64 bindingLen, MFResourceSetBindings* bindings, MFRenderer* renderer) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The provided renderer handle shouldn't be null!");
@@ -194,8 +194,8 @@ void mfResourceSetsBind(u32 firstSetIndex, u64 setCount, MFResourceSet** sets, s
     if(pipelineBackend->info.type == VULKAN_PIPELINE_TYPE_COMPUTE && backend->ctx.dispatchBegun) {
         buff = backend->computeCmdBuffers[backend->frameIndex];
     }
-    else if(backend->renderTarget != mfnull) {
-        buff = backend->renderTarget->commandBuffers[backend->frameIndex];
+    else if(backend->renderGraph != mfnull) {
+        buff = backend->renderGraph->commandBuffers[backend->frameIndex];
     }
 
     for(u64 i = 0; i < setCount; i++) {

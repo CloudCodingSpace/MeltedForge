@@ -8,6 +8,64 @@
 
 #pragma region Helpers
 
+static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
+    const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
+    
+    MFRenderGraphAttachmentDesc attachments[3] = {};
+    // Color attachments
+    attachments[0].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[0].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
+    attachments[0].format = MF_FORMAT_R8G8B8A8_UNORM;
+    
+    attachments[1].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[1].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
+    attachments[1].format = MF_FORMAT_R8G8B8A8_UNORM;
+
+    // Depth attachment
+    attachments[2].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[2].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
+    attachments[2].format = mfRendererGetStandardDepthFormat(appState->renderer);
+
+    u32 outputAttachmentPass1[] = {
+        0
+    };
+
+    u32 outputAttachmentPass2[] = {
+        1
+    };
+
+    u32 depthAttachment[] = {
+        2
+    };
+
+    MFRenderGraphPassDesc passes[2] = {};
+    // Pass 1
+    passes[0].name = "Pass #1 - Main pass";
+    passes[0].depthStencilAttachment = depthAttachment;
+    passes[0].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass1);
+    passes[0].outputColorAttachments = outputAttachmentPass1;
+    passes[0].passDrawCallback = mfnull; // Gotta fill this up later
+    passes[0].userData = mfnull; // Gotta fill this up later
+    // Pass 2
+    passes[1].name = "Pass #2 - Fullscreen pass";
+    // passes[1].depthStencilAttachment = depthAttachment;
+    passes[1].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass2);
+    passes[1].outputColorAttachments = outputAttachmentPass2;
+    passes[1].passDrawCallback = mfnull; // Gotta fill this up later
+    passes[1].userData = mfnull; // Gotta fill this up later
+
+    MFRenderGraphConfig config = {
+        .attachmentCount = MF_ARRAYLEN(attachments),
+        .attachments = attachments,
+        .passCount = MF_ARRAYLEN(passes),
+        .passes = passes,
+        .width = winConfig->width,
+        .height = winConfig->height
+    };
+
+    state->renderGraph = mfRenderGraphCreate(appState->renderer, config);
+}
+
 static void CreatePipeline(MFTState* state) {
     u32 attributeCount = 0, bindingCount = 1;
     const MFWindowConfig* config = mfWindowGetConfig(state->window);
@@ -27,7 +85,7 @@ static void CreatePipeline(MFTState* state) {
     };
 
     MFResourceSetLayout* fsLayouts[] = {
-        mfRenderTargetGetResourceSetLayout(state->renderTarget),
+        mfRenderGraphGetAttachmentsSetLayout(state->renderGraph),
         state->camLightLayout
     };
 
@@ -45,7 +103,9 @@ static void CreatePipeline(MFTState* state) {
             .transparent = true,
             .vertPath = "mftshaders/fs.vert.spv",
             .fragPath = "mftshaders/fs.frag.spv",
-            .cullMode = MF_CULL_MODE_BACK_BIT
+            .cullMode = MF_CULL_MODE_BACK_BIT,
+            .renderGraph = state->renderGraph,
+            .renderGraphPassIdx = 0
         },
         .type = MF_PIPELINE_TYPE_GRAPHICS,
         .resourceLayoutCount = MF_ARRAYLEN(fsLayouts),
@@ -56,7 +116,7 @@ static void CreatePipeline(MFTState* state) {
 
     state->fsPipeline = mfPipelineCreate(state->renderer, info);
 
-    info.graphicsConfig.renderTarget = state->renderTarget;
+    info.graphicsConfig.renderGraphPassIdx = 1;
     info.graphicsConfig.vertPath = "mftshaders/default.vert.spv";
     info.graphicsConfig.fragPath = "mftshaders/default.frag.spv";
     info.graphicsConfig.attributesCount = attributeCount;
@@ -349,67 +409,6 @@ static void CreateScene(MFTState* state, MFDefaultAppState* appState) {
     }
 }
 
-static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
-    const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
-    
-    MFRenderGraphAttachmentDesc attachments[3] = {};
-    // Color attachments
-    attachments[0].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[0].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
-    attachments[0].format = MF_FORMAT_R8G8B8A8_UNORM;
-    
-    attachments[1].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[1].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
-    attachments[1].format = MF_FORMAT_R8G8B8A8_UNORM;
-
-    // Depth attachment
-    attachments[2].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[2].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
-    attachments[2].format = mfRendererGetStandardDepthFormat(appState->renderer);
-
-    u32 outputAttachmentPass1[] = {
-        0
-    };
-
-    u32 outputAttachmentPass2[] = {
-        1
-    };
-
-    u32 depthAttachment[] = {
-        2
-    };
-
-    MFRenderGraphPassDesc passes[2] = {};
-    // Pass 1
-    passes[0].name = "Pass #1 - Main pass";
-    passes[0].depthStencilAttachment = depthAttachment;
-    passes[0].inputAttachmentCount = 0;
-    passes[0].outputColorAttachmentCount = 1;
-    passes[0].outputColorAttachments = outputAttachmentPass1;
-    passes[0].passDrawCallback = mfnull; // Gotta fill this up later
-    passes[0].userData = mfnull; // Gotta fill this up later
-    // Pass 2
-    passes[1].name = "Pass #1 - Main pass";
-    passes[1].depthStencilAttachment = depthAttachment;
-    passes[1].inputAttachmentCount = 1;
-    passes[1].inputAttachments = outputAttachmentPass1;
-    passes[1].outputColorAttachmentCount = 1;
-    passes[1].outputColorAttachments = outputAttachmentPass2;
-    passes[1].passDrawCallback = mfnull; // Gotta fill this up later
-    passes[1].userData = mfnull; // Gotta fill this up later
-
-    MFRenderGraphConfig config = {
-        .attachmentCount = MF_ARRAYLEN(attachments),
-        .attachments = attachments,
-        .passCount = MF_ARRAYLEN(passes),
-        .passes = passes,
-        .width = winConfig->width,
-        .height = winConfig->height
-    };
-
-    state->renderGraph = mfRenderGraphCreate(appState->renderer, config);
-}
-
 #pragma endregion
 
 #pragma region MFTest
@@ -459,10 +458,12 @@ void MFTOnInit(void* pstate, void* pappState) {
 
     // Viewport and render target
     {
-        state->renderTarget = mfRenderTargetCreate(appState->renderer, true);
-        mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.01f));
-        mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
+        // state->renderTarget = mfRenderTargetCreate(appState->renderer, true);
+        // mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.01f));
+        // mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
     }
+
+    CreateRenderGraph(state, appState);
 
     // Skybox
     {
@@ -470,7 +471,9 @@ void MFTOnInit(void* pstate, void* pappState) {
             .faceSize = 512,
             .environmentPath = "mftskyboxes/3.hdr",
             .generatePbrMaps = true,
-            .renderTarget = state->renderTarget
+            .renderGraph = state->renderGraph,
+            .renderGraphPassIdx = 0
+            // .renderTarget = state->renderTarget
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
     }
@@ -479,7 +482,6 @@ void MFTOnInit(void* pstate, void* pappState) {
     ConfigModelImages(state, appState);
     CreateUBOs(state, appState);
     CreateResourceHandles(state, appState);
-    CreateRenderGraph(state, appState);
     CreatePipeline(state);
 
     SetUiStyle();
@@ -510,7 +512,7 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfSkyboxDestroy(&state->skybox);
 
     mfRenderGraphDestroy(&state->renderGraph);
-    mfRenderTargetDestroy(&state->renderTarget);
+    // mfRenderTargetDestroy(&state->renderTarget);
 
     mfPipelineDestroy(&state->fsPipeline);
     mfPipelineDestroy(&state->rtPipeline);
@@ -526,11 +528,11 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
 
-    if((mfRenderTargetGetWidth(state->renderTarget) != winConfig->width) || ((mfRenderTargetGetHeight(state->renderTarget) != winConfig->height))) {
-        mfRenderTargetResize(state->renderTarget, (MFVec2){ winConfig->width, winConfig->height });
-    }
+    // if((mfRenderTargetGetWidth(state->renderTarget) != winConfig->width) || ((mfRenderTargetGetHeight(state->renderTarget) != winConfig->height))) {
+    //     mfRenderTargetResize(state->renderTarget, (MFVec2){ winConfig->width, winConfig->height });
+    // }
 
-    mfRenderTargetBegin(state->renderTarget);
+    // mfRenderTargetBegin(state->renderTarget);
 
     MFSceneRenderConfig config = {
         .state = state,
@@ -543,17 +545,17 @@ void MFTOnRender(void* pstate, void* pappState) {
         .enableFustrumCulling = state->enableFustrumCulling
     };
 
-    mfSceneRender(&state->scene, &config);
-    mfSkyboxRender(state->skybox, state->scene.camera.proj, state->scene.camera.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
+    // mfSceneRender(&state->scene, &config);
+    // mfSkyboxRender(state->skybox, state->scene.camera.proj, state->scene.camera.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
     
-    mfRenderTargetEnd(state->renderTarget, false);
+    // mfRenderTargetEnd(state->renderTarget, false);
 
-    mfPipelineBind(state->fsPipeline, mfRendererGetViewport(appState->renderer), mfRendererGetScissor(appState->renderer));
-    mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
-    mfResourceSetsBind(1, 1, &state->cameraSet, state->fsPipeline);
+    // mfPipelineBind(state->fsPipeline, mfRendererGetViewport(appState->renderer), mfRendererGetScissor(appState->renderer));
+    // mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
+    // mfResourceSetsBind(1, 1, &state->cameraSet, state->fsPipeline);
 
-    mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &state->fsPcData);
-    mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
+    // mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &state->fsPcData);
+    // mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
 
     MF_PROFILE_ZONE_END(__temp);
 }
@@ -671,7 +673,7 @@ void MFTOnUpdate(void* pstate, void* pappState) {
 
     if(state->takeScreenshot) {
         u32 width, height;
-        u8* pixels = mfRenderTargetGetCurrentImagePixels(state->renderTarget, &width, &height);
+        u8* pixels = mfRendererGetCurrentImagePixels(appState->renderer, &width, &height);
         u32 bytesPerPixel =  mfRendererGetImageBytesPerPixel(appState->renderer);
 
         stbi_write_png("mftscreenshot.png", width, height, bytesPerPixel, pixels, width * bytesPerPixel * sizeof(u8));

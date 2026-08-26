@@ -6,7 +6,7 @@ extern "C" {
 #include "core/mftime.h"
 
 #include "vk/backend.h"
-#include "vk/rendertarget.h"
+#include "vk/rendergraph.h"
 
 #define DT_SAMPLES 10
 
@@ -143,9 +143,9 @@ MFViewport mfRendererGetViewport(MFRenderer* renderer) {
         .minDepth = 0.0f
     };
 
-    if(renderer->backend.renderTarget != mfnull) {
-        vp.width = renderer->backend.renderTarget->images[0].info.width;
-        vp.y = (f32)renderer->backend.renderTarget->images[0].info.height;
+    if(renderer->backend.renderGraph != mfnull) {
+        vp.width = renderer->backend.renderGraph->config.width;
+        vp.y = (f32)renderer->backend.renderGraph->config.height;
         vp.height = -vp.y;
     }
     
@@ -163,9 +163,9 @@ MFRect2D mfRendererGetScissor(MFRenderer* renderer) {
         .extentY = renderer->backend.ctx.swapchainExtent.height
     };
 
-    if(renderer->backend.renderTarget != mfnull) {
-        scissor.extentX = renderer->backend.renderTarget->images[0].info.width;
-        scissor.extentY = renderer->backend.renderTarget->images[0].info.height;
+    if(renderer->backend.renderGraph != mfnull) {
+        scissor.extentX = renderer->backend.renderGraph->config.width;
+        scissor.extentY = renderer->backend.renderGraph->config.height;
     }
 
     return scissor;

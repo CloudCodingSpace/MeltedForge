@@ -9,6 +9,7 @@ extern "C" {
 #include "renderer/mfrenderer.h"
 #include "renderer/mfgpubuffer.h"
 #include "renderer/mfgpuimage.h"
+#include "renderer/mfgpu_res.h"
 
 #include "common.h"
 #include "ctx.h"

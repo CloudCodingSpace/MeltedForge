@@ -16,7 +16,7 @@ typedef enum VulkanPipelineType_e {
 typedef struct VulkanGPipelineInfo_s {
     VkRenderPass renderpass;
     VkExtent2D extent;
-    u32 bindingsCount, attributesCount;
+    u32 bindingsCount, attributesCount, subpassIdx, colorOutputAttachmentCount;
     VkVertexInputBindingDescription* bindings;
     VkVertexInputAttributeDescription* attributes;
     VkCompareOp depthCompareOp;

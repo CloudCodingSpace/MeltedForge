@@ -9,6 +9,7 @@ extern "C" {
 #include "renderer/mfutil_types.h"
 #include "renderer/mfgpubuffer.h"
 #include "renderer/mfgpuimage.h"
+#include "renderer/mfgpu_res.h"
 
 u64 VulkanGpuResCreatePool(VulkanBackendCtx* ctx, u32 poolSizeCount, VkDescriptorPoolSize* sizes, u64 maxSets) {
     u64 idx = UINT64_MAX;
