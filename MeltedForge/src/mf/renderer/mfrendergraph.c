@@ -19,8 +19,6 @@ extern "C" {
  *        its pixel data etc
 */
 
-// TODO: HAVE MULTIPLE RENDERPASSES INSTEAD OF MULTIPLE SUBPASSES!!!!!!!!!!!!!!!!!
-
 MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig config) {
     MF_PANIC_IF(renderer == mfnull, mfGetLogger(), "The renderer handle provided shouldn't be null!");
     MF_PANIC_IF(config.attachmentCount == 0 || !config.attachments, mfGetLogger(), "The no. of attachments in a rendergraph musn't be zero and the attachment array pointer musn't be null!");
@@ -133,7 +131,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     // Attachments
     {
         renderGraph->igAttachmentSets = MF_ALLOCMEM(VkDescriptorSet, sizeof(VkDescriptorSet) * config.attachmentCount * FRAMES_IN_FLIGHT);
-        renderGraph->attachments = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * config.attachmentCount);
+        renderGraph->attachments = MF_ALLOCMEM(VulkanImage, sizeof(VulkanImage) * config.attachmentCount * FRAMES_IN_FLIGHT);
         
         for(u32 i = 0; i < config.attachmentCount; i++) {
             MFRenderGraphAttachmentDesc* desc = &config.attachments[i];
@@ -162,11 +160,12 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             if(mfFlagContainsBits(desc->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT))
                 info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
             
-            VulkanImageCreate(&renderGraph->attachments[i], info);
+            for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++)
+                VulkanImageCreate(&renderGraph->attachments[i * FRAMES_IN_FLIGHT + j], info);
 
             if(backend->config.enableUI) {
                 for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
-                    renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i].sampler, renderGraph->attachments[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i * FRAMES_IN_FLIGHT + j].sampler, renderGraph->attachments[i * FRAMES_IN_FLIGHT + j].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 }
             }
         }
@@ -255,12 +254,15 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             if(pass->depthStencilAttachment != mfnull)
                 totalAttachments++;
 
-            VkImageView* attachments = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * totalAttachments);
-            for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
-                attachments[j] = renderGraph->attachments[pass->outputColorAttachments[j]].view;
+            VkImageView* attachments = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * totalAttachments * FRAMES_IN_FLIGHT);
+            for(u8 k = 0; k < FRAMES_IN_FLIGHT; k++) {
+                for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
+                    attachments[k * totalAttachments + j] = renderGraph->attachments[pass->outputColorAttachments[j] * FRAMES_IN_FLIGHT + k].view;
+                }
+                
+                if(pass->depthStencilAttachment != mfnull)
+                    attachments[k * totalAttachments + totalAttachments - 1] = renderGraph->attachments[pass->depthStencilAttachment[0] * FRAMES_IN_FLIGHT + k].view;
             }
-            if(pass->depthStencilAttachment != mfnull)
-                attachments[totalAttachments - 1] = renderGraph->attachments[pass->depthStencilAttachment[0]].view;
 
             VkFramebufferCreateInfo info = {
                 .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
@@ -273,6 +275,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             };
 
             for(u32 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                info.pAttachments = &attachments[j * totalAttachments];
                 VK_CHECK(vkCreateFramebuffer(ctx->device, &info, ctx->allocator, &renderGraph->fbs[i * FRAMES_IN_FLIGHT + j]));
             }
 
@@ -340,14 +343,6 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
 
         // Update sets
         {
-            VkDescriptorImageInfo* imgInfos = MF_ALLOCMEM(VkDescriptorImageInfo, sizeof(VkDescriptorImageInfo) * config.attachmentCount);
-
-            for(u32 j = 0; j < config.attachmentCount; j++) {
-                imgInfos[j].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imgInfos[j].imageView = renderGraph->attachments[j].view;
-                imgInfos[j].sampler = renderGraph->attachments[j].sampler;
-            }
-
             VkWriteDescriptorSet write = {
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .descriptorCount = 1,
@@ -355,15 +350,19 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             };
 
             for(u32 j = 0; j < config.attachmentCount; j++) {
+                VkDescriptorImageInfo info = {
+                    .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                };
+
                 write.dstBinding = j;
-                write.pImageInfo = &imgInfos[j];
+                write.pImageInfo = &info;
                 for(u8 frameIdx = 0; frameIdx < FRAMES_IN_FLIGHT; frameIdx++) {
+                    info.imageView = renderGraph->attachments[j * FRAMES_IN_FLIGHT + frameIdx].view;
+                    info.sampler = renderGraph->attachments[j * FRAMES_IN_FLIGHT + frameIdx].sampler;
                     write.dstSet = renderGraph->attachmentSets[frameIdx];
                     vkUpdateDescriptorSets(ctx->device, 1, &write, 0, mfnull);
                 }
             }
-
-            MF_FREEMEM(imgInfos);
         }
     }
 
@@ -390,7 +389,8 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
     }
 
     for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
-        VulkanImageDestroy(&renderGraph->attachments[i]);
+        for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++)
+            VulkanImageDestroy(&renderGraph->attachments[i * FRAMES_IN_FLIGHT + j]);
     }
 
     for(u32 i = 0; i < renderGraph->config.passCount; i++) {
