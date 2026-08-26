@@ -19,7 +19,7 @@ struct MFRenderGraph_s {
     MFRenderGraphConfig config;
     bool init;
     MFRenderer* renderer;
-    VkClearValue* clearValues;
+    VkClearValue** clearValues;
     VulkanImage* attachments;
     VkFramebuffer* fbs;
     VkRenderPass* passes;

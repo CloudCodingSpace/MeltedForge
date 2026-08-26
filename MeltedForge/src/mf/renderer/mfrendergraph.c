@@ -105,19 +105,28 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     // TODO: Add MSAA support for rendergraph attachments!
     // Clear values
     {
-        renderGraph->clearValues = MF_ALLOCMEM(VkClearValue, sizeof(VkClearValue) * config.attachmentCount);
+        renderGraph->clearValues = MF_ALLOCMEM(VkClearValue*, sizeof(VkClearValue*) * config.passCount);
 
-        for(u32 i = 0; i < config.attachmentCount; i++) {
-            MFRenderGraphAttachmentDesc* desc = &config.attachments[i];
-            bool isDepth = mfFlagContainsBits(desc->type ,MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT);
+        for(u32 k = 0; k < config.passCount; k++) {
+            MFRenderGraphPassDesc* pass = &config.passes[k];
+            u32 totalAttachments = pass->outputColorAttachmentCount;
+            if(pass->depthStencilAttachment != mfnull)
+                totalAttachments++;
 
-            if(isDepth)
-                renderGraph->clearValues->depthStencil.depth = 1.0f;
-            else {
-                renderGraph->clearValues[i].color.float32[0] = config.attachments[i].clearColor.r;
-                renderGraph->clearValues[i].color.float32[1] = config.attachments[i].clearColor.g;
-                renderGraph->clearValues[i].color.float32[2] = config.attachments[i].clearColor.b;
-                renderGraph->clearValues[i].color.float32[3] = 1.0f;
+            renderGraph->clearValues[k] = MF_ALLOCMEM(VkClearValue, sizeof(VkClearValue) * totalAttachments);
+
+            for(u32 i = 0; i < pass->outputColorAttachmentCount; i++) {
+                MFRenderGraphAttachmentDesc* desc = &config.attachments[pass->outputColorAttachments[i]];
+
+                renderGraph->clearValues[k][i].color.float32[0] = config.attachments[i].clearColor.r;
+                renderGraph->clearValues[k][i].color.float32[1] = config.attachments[i].clearColor.g;
+                renderGraph->clearValues[k][i].color.float32[2] = config.attachments[i].clearColor.b;
+                renderGraph->clearValues[k][i].color.float32[3] = 1.0f;
+            }
+
+            if(pass->depthStencilAttachment != mfnull) {
+                renderGraph->clearValues[k][totalAttachments - 1].depthStencil.depth = 1.0f;
+                renderGraph->clearValues[k][totalAttachments - 1].depthStencil.stencil = 0.0f;
             }
         }
     }
@@ -412,11 +421,14 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
         vkFreeDescriptorSets(ctx->device, attachmentPool->pool, 1, &renderGraph->attachmentSets[j]);
     mfResourceSetLayoutDestroy(&renderGraph->attachmentSetLayout);
 
+    for(u32 i = 0; i < renderGraph->config.passCount; i++)
+        MF_FREEMEM(renderGraph->clearValues[i]);
+    MF_FREEMEM(renderGraph->clearValues);
+
     MF_FREEMEM(renderGraph->igAttachmentSets);
     MF_FREEMEM(renderGraph->passes);
     MF_FREEMEM(renderGraph->fbs);
     MF_FREEMEM(renderGraph->renderFinishedSemas);
-    MF_FREEMEM(renderGraph->clearValues);
     MF_FREEMEM(renderGraph->attachments);
     MF_FREEMEM(renderGraph->config.attachments);
     MF_FREEMEM(renderGraph->config.passes);
