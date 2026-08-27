@@ -6,8 +6,21 @@
 
 #define INFO(logger, msg, ...) slogLogMsg(logger, SLOG_SEVERITY_INFO, msg, ##__VA_ARGS__)
 
-#pragma region Helpers
+#pragma region callbacks
 
+static void ResizeCallback(void* pstate) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "Resize callback");
+
+    MFTState* state = (MFTState*)pstate;
+    const MFRenderGraphConfig* config = mfRenderGraphGetConfig(state->renderGraph);
+
+    state->scene.camera.width = config->width;
+    state->scene.camera.height = config->height;
+
+    state->scene.camera.constructMatrices(&state->scene.camera);
+
+    MF_PROFILE_ZONE_END(__temp);
+}
 
 static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
     MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest Mesh callback");
@@ -39,6 +52,8 @@ static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
 }
 
 static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest scene pipeline bind callback");
+
     MFTState* state = (MFTState*)_state;
 
     MFResourceSet* sets[] = {
@@ -47,9 +62,13 @@ static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
     };
 
     mfResourceSetsBind(0, MF_ARRAYLEN(sets), sets, pipeline);
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 static void ScenePass(void* pUserState) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest Scene Pass callback");
+
     MFTState* state = (MFTState*)pUserState;
 
     MFSceneRenderConfig config = {
@@ -65,9 +84,13 @@ static void ScenePass(void* pUserState) {
 
     mfSceneRender(&state->scene, &config);
     mfSkyboxRender(state->skybox, state->scene.camera.proj, state->scene.camera.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
+
+    MF_PROFILE_ZONE_END(__temp);
 }
 
 static void FSPass(void* pUserState) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest FS Pass callback");
+
     MFTState* state = (MFTState*)pUserState;
 
     mfPipelineBind(state->fsPipeline, mfRendererGetViewport(state->renderer), mfRendererGetScissor(state->renderer));
@@ -76,7 +99,13 @@ static void FSPass(void* pUserState) {
 
     mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &state->fsPcData);
     mfRendererDrawVertices(state->renderer, 3, 1, 0, 0);
+
+    MF_PROFILE_ZONE_END(__temp);
 }
+
+#pragma endregion
+
+#pragma region Helpers
 
 static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
@@ -129,7 +158,9 @@ static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
         .passCount = MF_ARRAYLEN(passes),
         .passes = passes,
         .width = state->sceneViewport.x,
-        .height = state->sceneViewport.y
+        .height = state->sceneViewport.y,
+        .resizeCallbackUserState = state,
+        .resizeCallback = &ResizeCallback
     };
 
     state->renderGraph = mfRenderGraphCreate(appState->renderer, config);
@@ -201,20 +232,6 @@ static void CreatePipeline(MFTState* state) {
     state->scenePipeline = mfPipelineCreate(state->renderer, info);
 
     MF_FREEMEM(attributes);
-}
-
-static void ResizeCallback(void* pstate) {
-    MF_PROFILE_ZONE_START_NAMED(__temp, "Resize callback");
-
-    MFTState* state = (MFTState*)pstate;
-    const MFWindowConfig* config = mfWindowGetConfig(state->window);
-
-    state->scene.camera.width = config->width;
-    state->scene.camera.height = config->height;
-
-    state->scene.camera.constructMatrices(&state->scene.camera);
-
-    MF_PROFILE_ZONE_END(__temp);
 }
 
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
@@ -680,6 +697,7 @@ void MFTOnUpdate(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*)pappState;
     MFTState* state = (MFTState*)pstate;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
+    const MFRenderGraphConfig* rgConfig = mfRenderGraphGetConfig(state->renderGraph);
 
     if(state->takeScreenshot) {
         u32 width, height;
@@ -692,8 +710,8 @@ void MFTOnUpdate(void* pstate, void* pappState) {
         state->takeScreenshot = false;
     }
 
-    state->scene.camera.width = winConfig->width;
-    state->scene.camera.height = winConfig->height;
+    state->scene.camera.width = rgConfig->width;
+    state->scene.camera.height = rgConfig->height;
 
     state->scene.camera.update(&state->scene.camera, mfRendererGetDeltaTime(appState->renderer), mfnull);
 

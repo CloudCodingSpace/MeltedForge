@@ -682,6 +682,10 @@ void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height) {
             }
         }
     }
+
+    if(renderGraph->config.resizeCallback != mfnull) {
+        renderGraph->config.resizeCallback(renderGraph->config.resizeCallbackUserState);
+    }
 }
 
 MFResourceSetLayout* mfRenderGraphGetAttachmentsSetLayout(MFRenderGraph* renderGraph) {

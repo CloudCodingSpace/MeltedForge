@@ -42,6 +42,8 @@ typedef struct MFRenderGraphConfig_s {
     u32 width, height;
     MFRenderGraphAttachmentDesc* attachments;
     MFRenderGraphPassDesc* passes;
+    void* resizeCallbackUserState;
+    void (*resizeCallback)(void* pUserState);
 } MFRenderGraphConfig;
 
 typedef struct MFRenderGraph_s MFRenderGraph;
