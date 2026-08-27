@@ -589,7 +589,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
         igBegin("Scene", mfnull, ImGuiWindowFlags_NoScrollbar);
         igGetContentRegionAvail(&state->sceneViewport);
-        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 0), (ImVec2){ config->width, config->height }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
+        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 1), (ImVec2){ config->width, config->height }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
         igEnd();
     }
 
