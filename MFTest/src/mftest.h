@@ -39,7 +39,7 @@ typedef struct MFTState_s {
     MFResourceSetLayout* matLayout, *skyboxLayout, *camLightLayout;
     MFResourceSet* skyboxSet, *cameraSet;
 
-    MFPipeline* fsPipeline, *rtPipeline;
+    MFPipeline* fsPipeline, *scenePipeline;
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
     MFSkybox* skybox;

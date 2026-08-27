@@ -8,6 +8,82 @@
 
 #pragma region Helpers
 
+
+static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest Mesh callback");
+    MFTState* state = (MFTState*)_state;
+
+    PushConstantData modelData = {
+        .model = transform
+    };
+
+    modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
+
+    MFResourceSet** set = &component->model.meshes[meshIdx].mat.set;
+    mfResourceSetsBind(2, 1, set, pipeline);
+    mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
+
+    MF_PROFILE_ZONE_END(__temp);
+}
+
+static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "Computing model matrix");
+    MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
+    MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
+    MFMat4 scale = mfMat4Scale(fmax(component->scale.x, 0.5f), fmax(component->scale.y, 0.5f), fmax(component->scale.z, 0.5f));
+
+    MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
+    
+    MF_PROFILE_ZONE_END(__temp);
+    return model;
+}
+
+static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
+    MFTState* state = (MFTState*)_state;
+
+    MFResourceSet* sets[] = {
+        state->cameraSet,
+        state->skyboxSet
+    };
+
+    mfResourceSetsBind(0, MF_ARRAYLEN(sets), sets, pipeline);
+}
+
+static void ScenePass(void* pUserState) {
+    MFTState* state = (MFTState*)pUserState;
+
+    // if((mfRenderTargetGetWidth(state->renderTarget) != winConfig->width) || ((mfRenderTargetGetHeight(state->renderTarget) != winConfig->height))) {
+    //     mfRenderTargetResize(state->renderTarget, (MFVec2){ winConfig->width, winConfig->height });
+    // }
+
+    // mfRenderTargetBegin(state->renderTarget);
+
+    MFSceneRenderConfig config = {
+        .state = state,
+        .entityPipeline = state->scenePipeline,
+        .scissor = mfRendererGetScissor(state->renderer),
+        .viewport = mfRendererGetViewport(state->renderer),
+        .perMeshDrawCallback = &MeshCallback,
+        .computeModelMatrix = &ComputeModelMatrix,
+        .pipelineBindCallback = &PipelineBindCallback,
+        .enableFustrumCulling = state->enableFustrumCulling
+    };
+
+    mfSceneRender(&state->scene, &config);
+    mfSkyboxRender(state->skybox, state->scene.camera.proj, state->scene.camera.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
+}
+
+static void FSPass(void* pUserState) {
+    MFTState* state = (MFTState*)pUserState;
+
+    mfPipelineBind(state->fsPipeline, mfRendererGetViewport(state->renderer), mfRendererGetScissor(state->renderer));
+    mfRenderGraphBindAttachmentsSet(state->renderGraph, 0, state->fsPipeline);
+    mfResourceSetsBind(1, 1, &state->cameraSet, state->fsPipeline);
+
+    mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &state->fsPcData);
+    mfRendererDrawVertices(state->renderer, 3, 1, 0, 0);
+}
+
 static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     
@@ -44,15 +120,15 @@ static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
     passes[0].depthStencilAttachment = depthAttachment;
     passes[0].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass1);
     passes[0].outputColorAttachments = outputAttachmentPass1;
-    passes[0].passDrawCallback = mfnull; // Gotta fill this up later
-    passes[0].userData = mfnull; // Gotta fill this up later
+    passes[0].passDrawCallback = &ScenePass;
+    passes[0].userData = state; // Gotta fill this up later
     // Pass 2
     passes[1].name = "Pass #2 - Fullscreen pass";
     // passes[1].depthStencilAttachment = depthAttachment;
     passes[1].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass2);
     passes[1].outputColorAttachments = outputAttachmentPass2;
-    passes[1].passDrawCallback = mfnull; // Gotta fill this up later
-    passes[1].userData = mfnull; // Gotta fill this up later
+    passes[1].passDrawCallback = &FSPass;
+    passes[1].userData = state;
 
     MFRenderGraphConfig config = {
         .attachmentCount = MF_ARRAYLEN(attachments),
@@ -105,7 +181,7 @@ static void CreatePipeline(MFTState* state) {
             .fragPath = "mftshaders/fs.frag.spv",
             .cullMode = MF_CULL_MODE_BACK_BIT,
             .renderGraph = state->renderGraph,
-            .renderGraphPassIdx = 0
+            .renderGraphPassIdx = 1
         },
         .type = MF_PIPELINE_TYPE_GRAPHICS,
         .resourceLayoutCount = MF_ARRAYLEN(fsLayouts),
@@ -116,7 +192,7 @@ static void CreatePipeline(MFTState* state) {
 
     state->fsPipeline = mfPipelineCreate(state->renderer, info);
 
-    info.graphicsConfig.renderGraphPassIdx = 1;
+    info.graphicsConfig.renderGraphPassIdx = 0;
     info.graphicsConfig.vertPath = "mftshaders/default.vert.spv";
     info.graphicsConfig.fragPath = "mftshaders/default.frag.spv";
     info.graphicsConfig.attributesCount = attributeCount;
@@ -129,7 +205,7 @@ static void CreatePipeline(MFTState* state) {
     info.resourceLayoutCount = MF_ARRAYLEN(layouts);
     info.resourceLayouts = layouts;
 
-    state->rtPipeline = mfPipelineCreate(state->renderer, info);
+    state->scenePipeline = mfPipelineCreate(state->renderer, info);
 
     MF_FREEMEM(attributes);
 }
@@ -146,46 +222,6 @@ static void ResizeCallback(void* pstate) {
     state->scene.camera.constructMatrices(&state->scene.camera);
 
     MF_PROFILE_ZONE_END(__temp);
-}
-
-static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
-    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest Mesh callback");
-    MFTState* state = (MFTState*)_state;
-
-    PushConstantData modelData = {
-        .model = transform
-    };
-
-    modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
-
-    MFResourceSet** set = &component->model.meshes[meshIdx].mat.set;
-    mfResourceSetsBind(2, 1, set, pipeline);
-    mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
-
-    MF_PROFILE_ZONE_END(__temp);
-}
-
-static MFMat4 ComputeModelMatrix(const MFTransformComponent* component) {
-    MF_PROFILE_ZONE_START_NAMED(__temp, "Computing model matrix");
-    MFMat4 transformMat = mfMat4Translate(component->position.x, component->position.y, component->position.z);
-    MFMat4 rotation = mfMat4RotateXYZ(component->rotationXYZ.x * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.y * MF_DEG2RAD_MULTIPLIER, component->rotationXYZ.z * MF_DEG2RAD_MULTIPLIER);
-    MFMat4 scale = mfMat4Scale(fmax(component->scale.x, 0.5f), fmax(component->scale.y, 0.5f), fmax(component->scale.z, 0.5f));
-
-    MFMat4 model = mfMat4Mul(transformMat, mfMat4Mul(rotation, scale));
-    
-    MF_PROFILE_ZONE_END(__temp);
-    return model;
-}
-
-static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
-    MFTState* state = (MFTState*)_state;
-
-    MFResourceSet* sets[] = {
-        state->cameraSet,
-        state->skyboxSet
-    };
-
-    mfResourceSetsBind(0, MF_ARRAYLEN(sets), sets, pipeline);
 }
 
 static void CreateResourceHandles(MFTState* state, MFDefaultAppState* appState) {
@@ -456,13 +492,6 @@ void MFTOnInit(void* pstate, void* pappState) {
             slogLogMsg(&state->logger, SLOG_SEVERITY_INFO, "Variable descriptor sizes feature supported!");
     }
 
-    // Viewport and render target
-    {
-        // state->renderTarget = mfRenderTargetCreate(appState->renderer, true);
-        // mfRenderTargetSetClearColor(state->renderTarget, mfVec3Create(0, 0, 0.01f));
-        // mfRenderTargetSetResizeCallback(state->renderTarget, &ResizeCallback, state);
-    }
-
     CreateRenderGraph(state, appState);
 
     // Skybox
@@ -473,7 +502,6 @@ void MFTOnInit(void* pstate, void* pappState) {
             .generatePbrMaps = true,
             .renderGraph = state->renderGraph,
             .renderGraphPassIdx = 0
-            // .renderTarget = state->renderTarget
         };
         state->skybox = mfSkyboxCreate(config, appState->renderer);
     }
@@ -512,10 +540,9 @@ void MFTOnDeinit(void* pstate, void* pappState) {
     mfSkyboxDestroy(&state->skybox);
 
     mfRenderGraphDestroy(&state->renderGraph);
-    // mfRenderTargetDestroy(&state->renderTarget);
 
     mfPipelineDestroy(&state->fsPipeline);
-    mfPipelineDestroy(&state->rtPipeline);
+    mfPipelineDestroy(&state->scenePipeline);
 
     MF_FREEMEM(state->entities);
     MF_FREEMEM(state->materialImages);
@@ -528,34 +555,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
 
-    // if((mfRenderTargetGetWidth(state->renderTarget) != winConfig->width) || ((mfRenderTargetGetHeight(state->renderTarget) != winConfig->height))) {
-    //     mfRenderTargetResize(state->renderTarget, (MFVec2){ winConfig->width, winConfig->height });
-    // }
-
-    // mfRenderTargetBegin(state->renderTarget);
-
-    MFSceneRenderConfig config = {
-        .state = state,
-        .entityPipeline = state->rtPipeline,
-        .scissor = mfRendererGetScissor(state->renderer),
-        .viewport = mfRendererGetViewport(state->renderer),
-        .perMeshDrawCallback = &MeshCallback,
-        .computeModelMatrix = &ComputeModelMatrix,
-        .pipelineBindCallback = &PipelineBindCallback,
-        .enableFustrumCulling = state->enableFustrumCulling
-    };
-
-    // mfSceneRender(&state->scene, &config);
-    // mfSkyboxRender(state->skybox, state->scene.camera.proj, state->scene.camera.view, mfMat4Identity(), MF_SKYBOX_TYPE_NORMAL);
-    
-    // mfRenderTargetEnd(state->renderTarget, false);
-
-    // mfPipelineBind(state->fsPipeline, mfRendererGetViewport(appState->renderer), mfRendererGetScissor(appState->renderer));
-    // mfRenderTargetBindAttachmentResourceSets(state->renderTarget, 0, state->fsPipeline);
-    // mfResourceSetsBind(1, 1, &state->cameraSet, state->fsPipeline);
-
-    // mfPipelinePushConstant(state->fsPipeline, MF_SHADER_STAGE_FRAGMENT, 0, sizeof(FSPushConstantData), &state->fsPcData);
-    // mfRendererDrawVertices(appState->renderer, 3, 1, 0, 0);
+    mfRenderGraphInvoke(state->renderGraph, true);
 
     MF_PROFILE_ZONE_END(__temp);
 }
@@ -565,6 +565,15 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
     MFTState* state = (MFTState*)pstate;
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
+
+    // Scene
+    {
+        igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
+
+        igBegin("Scene", mfnull, ImGuiWindowFlags_NoScrollbar);
+        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 0), (ImVec2){ 800, 600 }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
+        igEnd();
+    }
 
     // Perf window
     {

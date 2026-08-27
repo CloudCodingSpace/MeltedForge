@@ -163,7 +163,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++)
                 VulkanImageCreate(&renderGraph->attachments[i * FRAMES_IN_FLIGHT + j], info);
 
-            if(backend->config.enableUI) {
+            if(backend->config.enableUI && !backend->config.headless) {
                 for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
                     renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i * FRAMES_IN_FLIGHT + j].sampler, renderGraph->attachments[i * FRAMES_IN_FLIGHT + j].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 }
@@ -408,7 +408,7 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
         vkDestroySemaphore(ctx->device, renderGraph->renderFinishedSemas[i], ctx->allocator);
     }
 
-    if(backend->config.enableUI) {
+    if(backend->config.enableUI && !backend->config.headless) {
         for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
             for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
                 ImGui_ImplVulkan_RemoveTexture(renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j]);
@@ -441,8 +441,109 @@ void mfRenderGraphDestroy(MFRenderGraph** _renderGraph) {
 void mfRenderGraphInvoke(MFRenderGraph* renderGraph, bool waitOnCpu) {
     MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
+
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
+    MF_PANIC_IF(backend->renderGraph != mfnull, mfGetLogger(), "Another rendergaph musn't be invoked while another is already being invoked!");
     
-    // TODO: Fill this thing out
+    VkCommandBuffer buff = renderGraph->commandBuffers[backend->frameIndex];
+
+    VK_CHECK(vkResetCommandBuffer(buff, 0));
+    VulkanCommandBufferBegin(buff, true);
+
+    backend->renderGraph = renderGraph;
+    backend->ctx.hadRenderGraphUsage = true;
+    // TODO: Make this search faster if required
+    bool exists = false;
+    for(u64 i = 0; i < backend->waitSemas.len; i++) {
+        if(mfArrayGetElement(backend->waitStages, VkSemaphore, i) == renderGraph->renderFinishedSemas[backend->swapchainImageIndex])
+            exists = true;
+    }
+    if(!exists) {
+        mfArrayAddElement(&backend->waitSemas, VkSemaphore, renderGraph->renderFinishedSemas[backend->swapchainImageIndex]);
+        mfArrayAddElement(&backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    }
+
+    // Actual recording of commands
+    for(u32 i = 0; i < renderGraph->config.passCount; i++) {
+        MFRenderGraphPassDesc* passDesc = &renderGraph->config.passes[i];
+        u32 totalAttachment = passDesc->outputColorAttachmentCount;
+        if(passDesc->depthStencilAttachment != mfnull)
+            totalAttachment++;
+   
+        for(u32 k = 0; k < passDesc->outputColorAttachmentCount; k++) {
+            renderGraph->attachments[passDesc->outputColorAttachments[k]].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            renderGraph->attachments[passDesc->outputColorAttachments[k]].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            renderGraph->attachments[passDesc->outputColorAttachments[k]].access = 0;
+        }
+        if(passDesc->depthStencilAttachment != mfnull) {
+            renderGraph->attachments[passDesc->depthStencilAttachment[0]].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            renderGraph->attachments[passDesc->depthStencilAttachment[0]].stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            renderGraph->attachments[passDesc->depthStencilAttachment[0]].access = 0;
+        }
+
+        VkRenderPassBeginInfo beginInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .clearValueCount = totalAttachment,
+            .pClearValues = renderGraph->clearValues[i],
+            .framebuffer = renderGraph->fbs[i * FRAMES_IN_FLIGHT + backend->frameIndex],
+            .renderPass = renderGraph->passes[i],
+            .renderArea = (VkRect2D) { .extent = { renderGraph->config.width, renderGraph->config.height }, .offset = { 0, 0 } }
+        };
+
+        vkCmdBeginRenderPass(buff, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        if(passDesc->passDrawCallback != mfnull)
+            passDesc->passDrawCallback(passDesc->userData);
+
+        vkCmdEndRenderPass(buff);
+
+        for(u32 k = 0; k < passDesc->outputColorAttachmentCount; k++) {
+            renderGraph->attachments[passDesc->outputColorAttachments[k]].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            renderGraph->attachments[passDesc->outputColorAttachments[k]].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            renderGraph->attachments[passDesc->outputColorAttachments[k]].access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        }
+        if(passDesc->depthStencilAttachment != mfnull) {
+            renderGraph->attachments[passDesc->depthStencilAttachment[0]].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            renderGraph->attachments[passDesc->depthStencilAttachment[0]].stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            renderGraph->attachments[passDesc->depthStencilAttachment[0]].access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        }
+    }
+
+    VulkanCommandBufferEnd(buff);
+
+    VkPipelineStageFlagBits waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    VkSubmitInfo info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &buff,
+        .pWaitDstStageMask = &waitStage,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &backend->imageAvailableSemas[backend->frameIndex],
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &renderGraph->renderFinishedSemas[backend->swapchainImageIndex]
+    };
+
+    if(backend->config.headless) {
+        static u8 count = 1;
+        if(count > ctx->swapchainImageCount)
+            info.pWaitSemaphores = &backend->renderFinishedSemas[backend->swapchainImageIndex];
+        else {
+            info.waitSemaphoreCount = 0;
+            count++;
+        }
+    }
+
+    VkFence fence = renderGraph->fences[backend->frameIndex];
+    VK_CHECK(vkQueueSubmit(ctx->queueData.graphicsQueue, 1, &info, waitOnCpu ? fence : mfnull));
+    if(waitOnCpu) {
+        VK_CHECK(vkWaitForFences(ctx->device, 1, &fence, VK_TRUE, UINT64_MAX));
+        VK_CHECK(vkResetFences(ctx->device, 1, &fence));
+    }
+
+    backend->renderGraph = mfnull;
 }
 
 void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height) {
@@ -491,7 +592,7 @@ ImTextureID mfRenderGraphGetAttachmentImTextureID(MFRenderGraph* renderGraph, u3
     
     VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
 
-    if(!backend->config.enableUI)
+    if(!backend->config.enableUI || backend->config.headless)
         return mfnull;
     
     return (ImTextureID)renderGraph->igAttachmentSets[attachmentIdx * FRAMES_IN_FLIGHT + backend->frameIndex];

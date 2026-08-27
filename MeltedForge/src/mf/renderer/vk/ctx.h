@@ -63,7 +63,7 @@ typedef struct VulkanBackendCtx_s {
     u32 swapchainImageCount;
     VulkanImage* swapchainImages;
     
-    bool hadRenderTargetUsage, renderPassBegun, dispatchBegun;
+    bool hadRenderGraphUsage, renderPassBegun, dispatchBegun;
     VkSampleCountFlagBits maxSupportedSamples, samples;
 
     VkDescriptorPool uiDescriptorPool;

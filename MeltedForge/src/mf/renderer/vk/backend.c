@@ -400,7 +400,7 @@ bool VulkanBackendBeginframe(VulkanBackend* backend) {
     {
         mfArrayReset(&backend->waitSemas);
         mfArrayReset(&backend->waitStages);
-        backend->ctx.hadRenderTargetUsage = false;
+        backend->ctx.hadRenderGraphUsage = false;
     }
 
     if(backend->config.headless) {
@@ -480,7 +480,7 @@ void VulkanBackendEndframe(VulkanBackend* backend) {
     VulkanRenderPassEnd(&backend->pass, backend->commandBuffers[backend->frameIndex], &backend->frameBuffers[backend->swapchainImageIndex]);
     VulkanCommandBufferEnd(backend->commandBuffers[backend->frameIndex]);
 
-    if(!backend->ctx.hadRenderTargetUsage && !backend->config.headless) {
+    if(!backend->ctx.hadRenderGraphUsage && !backend->config.headless) {
         mfArrayAddElement(&backend->waitSemas, VkSemaphore, backend->imageAvailableSemas[backend->frameIndex]);
         mfArrayAddElement(&backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
