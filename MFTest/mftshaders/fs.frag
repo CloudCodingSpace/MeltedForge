@@ -8,8 +8,7 @@
 layout (location = 0) out vec4 FragColor;
 layout (location = 0) in vec2 st;
 
-layout (set = 0, binding = 0) uniform sampler2D u_ColorAttachment1;
-layout (set = 0, binding = 1) uniform sampler2D u_ColorAttachment2;
+layout (set = 0, binding = 0) uniform sampler2D u_ColorAttachment;
 layout (set = 0, binding = 2) uniform sampler2D u_DepthAttachment;
 
 layout (set = 1, binding = 0, scalar) uniform CameraUBO {
@@ -44,8 +43,8 @@ void main() {
         vec4 color = vec4(1.0);
         vec2 offset = vec2(2e-3);
 
-        FragColor = mfChromaticAberrate(u_ColorAttachment1, uv, offset);
+        FragColor = mfChromaticAberrate(u_ColorAttachment, uv, offset);
     } else {
-        FragColor = texture(u_ColorAttachment1, uv);
+        FragColor = texture(u_ColorAttachment, uv);
     }
 }

@@ -36,9 +36,9 @@ The link to tests and apps made using MeltedForge is here :-
     - Can load complex models (Tested with Sponza & Bistro Internal)
  - Engine & editor level UI
     - UI customization (Using Dear ImGui's styles)
- - Render targets
-    - Objects with functionality to set the render output to an image, which can be used to render the scene inside an UI panel like the scene viewport
-    - In other words, they are offscreen framebuffers on which we can render something onto
+ - RenderGraph
+    - A helper tool which manages attachments, passes, framebuffers for us and helps us to render and invoke several interlinked passes
+    - Currently support for getting attachment's pixel data on GPU and MSAA is not supported
  - A binary serialization/deserialization api
  - Explicit gpu resource management control for resources like:
     - Vertex buffers
@@ -56,8 +56,8 @@ The link to tests and apps made using MeltedForge is here :-
  - Basic PBR support
     - Diffuse IBL support
     - Specular IBL support
- - MSAA support for native window and render targets as well
- - Can get the image pixels from the native window, render targets and images as well.
+ - MSAA support for native window
+ - Can get the image pixels from the native window, and images as well.
  - Support for compute pipelines and compute dispatches too
  - Can fetch and tell which optional GPU features are available, like Buffer Device Address, descriptor indexing, etc
  - Support for headless rendering, meaning the engine can render to an image even if a window isn't provided
