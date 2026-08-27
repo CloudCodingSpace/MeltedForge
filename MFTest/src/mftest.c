@@ -52,12 +52,6 @@ static void PipelineBindCallback(void* _state, MFPipeline* pipeline) {
 static void ScenePass(void* pUserState) {
     MFTState* state = (MFTState*)pUserState;
 
-    // if((mfRenderTargetGetWidth(state->renderTarget) != winConfig->width) || ((mfRenderTargetGetHeight(state->renderTarget) != winConfig->height))) {
-    //     mfRenderTargetResize(state->renderTarget, (MFVec2){ winConfig->width, winConfig->height });
-    // }
-
-    // mfRenderTargetBegin(state->renderTarget);
-
     MFSceneRenderConfig config = {
         .state = state,
         .entityPipeline = state->scenePipeline,
@@ -134,8 +128,8 @@ static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
         .attachments = attachments,
         .passCount = MF_ARRAYLEN(passes),
         .passes = passes,
-        .width = winConfig->width,
-        .height = winConfig->height
+        .width = state->sceneViewport.x,
+        .height = state->sceneViewport.y
     };
 
     state->renderGraph = mfRenderGraphCreate(appState->renderer, config);
@@ -458,6 +452,7 @@ void MFTOnInit(void* pstate, void* pappState) {
     state->renderer = appState->renderer;
     state->window = appState->window;
     state->enableFustrumCulling = true;
+    state->sceneViewport = (ImVec2){ winConfig->width, winConfig->height };
     state->fsPcData = (FSPushConstantData) {
         .zNear = 0.01f,
         .zFar = 1000.0f
@@ -554,6 +549,11 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
 
+    const MFRenderGraphConfig* rgConfig = mfRenderGraphGetConfig(state->renderGraph);
+    if((rgConfig->width != state->sceneViewport.x) || (rgConfig->height != state->sceneViewport.y)) {
+        mfRenderGraphResize(state->renderGraph, state->sceneViewport.x, state->sceneViewport.y);
+    }
+
     mfRenderGraphInvoke(state->renderGraph, false);
 
     MF_PROFILE_ZONE_END(__temp);
@@ -571,6 +571,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
         const MFRenderGraphConfig* config = mfRenderGraphGetConfig(state->renderGraph);
 
         igBegin("Scene", mfnull, ImGuiWindowFlags_NoScrollbar);
+        igGetContentRegionAvail(&state->sceneViewport);
         igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 0), (ImVec2){ config->width, config->height }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
         igEnd();
     }

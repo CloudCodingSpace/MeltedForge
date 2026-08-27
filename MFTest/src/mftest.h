@@ -53,6 +53,7 @@ typedef struct MFTState_s {
     CameraUBOData cameraUboData;
     FSPushConstantData fsPcData;
     
+    ImVec2 sceneViewport;
     MFRenderGraph* renderGraph;
     bool takeScreenshot, enableFustrumCulling;
 

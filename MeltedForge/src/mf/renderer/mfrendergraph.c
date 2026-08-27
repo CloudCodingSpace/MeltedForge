@@ -552,7 +552,136 @@ void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height) {
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
     MF_PANIC_IF(width == 0 || height == 0, mfGetLogger(), "The width & height of the rendergraph extent musn't be null!");
 
-    // TODO: Fill this thing out
+    renderGraph->config.width = width;
+    renderGraph->config.height = height;
+
+    VulkanBackend* backend = (VulkanBackend*)mfRendererGetBackend(renderGraph->renderer);
+    VulkanBackendCtx* ctx = &backend->ctx;
+
+    MF_PANIC_IF(backend->renderGraph == renderGraph, mfGetLogger(), "The rendergraph musn't be resized while it is still being invoked!");
+
+    VK_CHECK(vkQueueWaitIdle(ctx->queueData.graphicsQueue));
+
+    // Deleting
+    {
+        for(u32 j = 0; j < renderGraph->config.passCount; j++) {
+            for(u8 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+                vkDestroyFramebuffer(ctx->device, renderGraph->fbs[j * FRAMES_IN_FLIGHT + i], ctx->allocator);
+            }
+        }
+
+        for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
+            for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++)
+                VulkanImageDestroy(&renderGraph->attachments[i * FRAMES_IN_FLIGHT + j]);
+        }
+
+        if(backend->config.enableUI && !backend->config.headless) {
+            for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
+                for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                    ImGui_ImplVulkan_RemoveTexture(renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j]);
+                }
+            }
+        }
+    }
+    // Recreating
+    {
+        
+        for(u32 i = 0; i < renderGraph->config.attachmentCount; i++) {
+            MFRenderGraphAttachmentDesc* desc = &renderGraph->config.attachments[i];
+            bool isDepth = mfFlagContainsBits(desc->type ,MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT);
+
+            VulkanImageInfo info = {
+                .arrayLayers = 1,
+                .aspectFlags = isDepth ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT,
+                .ctx = ctx,
+                .format = (VkFormat)(u32)desc->format,
+                .gpuResource = true,
+                .width = renderGraph->config.width,
+                .height = renderGraph->config.height,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST,
+                .memFlags = VMA_MEMORY_USAGE_GPU_ONLY,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .type = VK_IMAGE_TYPE_2D,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .usage = VK_IMAGE_USAGE_SAMPLED_BIT
+            };
+
+            if(mfFlagContainsBits(desc->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT))
+                info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            if(mfFlagContainsBits(desc->type, MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT))
+                info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+            
+            for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++)
+                VulkanImageCreate(&renderGraph->attachments[i * FRAMES_IN_FLIGHT + j], info);
+
+            if(backend->config.enableUI && !backend->config.headless) {
+                for(u8 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                    renderGraph->igAttachmentSets[i * FRAMES_IN_FLIGHT + j] = ImGui_ImplVulkan_AddTexture(renderGraph->attachments[i * FRAMES_IN_FLIGHT + j].sampler, renderGraph->attachments[i * FRAMES_IN_FLIGHT + j].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                }
+            }
+        }
+
+        // Framebuffer
+        for(u32 i = 0; i < renderGraph->config.passCount; i++) {
+            MFRenderGraphPassDesc* pass = &renderGraph->config.passes[i];
+            u32 totalAttachments = pass->outputColorAttachmentCount;
+            if(pass->depthStencilAttachment != mfnull)
+                totalAttachments++;
+
+            VkImageView* attachments = MF_ALLOCMEM(VkImageView, sizeof(VkImageView) * totalAttachments * FRAMES_IN_FLIGHT);
+            for(u8 k = 0; k < FRAMES_IN_FLIGHT; k++) {
+                for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
+                    attachments[k * totalAttachments + j] = renderGraph->attachments[pass->outputColorAttachments[j] * FRAMES_IN_FLIGHT + k].view;
+                }
+                
+                if(pass->depthStencilAttachment != mfnull)
+                    attachments[k * totalAttachments + totalAttachments - 1] = renderGraph->attachments[pass->depthStencilAttachment[0] * FRAMES_IN_FLIGHT + k].view;
+            }
+
+            VkFramebufferCreateInfo info = {
+                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+                .attachmentCount = totalAttachments,
+                .pAttachments = attachments,
+                .width = renderGraph->config.width,
+                .height = renderGraph->config.height,
+                .layers = 1,
+                .renderPass = renderGraph->passes[i]
+            };
+
+            for(u32 j = 0; j < FRAMES_IN_FLIGHT; j++) {
+                info.pAttachments = &attachments[j * totalAttachments];
+                VK_CHECK(vkCreateFramebuffer(ctx->device, &info, ctx->allocator, &renderGraph->fbs[i * FRAMES_IN_FLIGHT + j]));
+            }
+
+            MF_FREEMEM(attachments);
+        }
+
+        // Updating the descriptor sets
+        {
+            VkWriteDescriptorSet write = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+            };
+
+            for(u32 j = 0; j < renderGraph->config.attachmentCount; j++) {
+                VkDescriptorImageInfo info = {
+                    .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                };
+
+                write.dstBinding = j;
+                write.pImageInfo = &info;
+                for(u8 frameIdx = 0; frameIdx < FRAMES_IN_FLIGHT; frameIdx++) {
+                    info.imageView = renderGraph->attachments[j * FRAMES_IN_FLIGHT + frameIdx].view;
+                    info.sampler = renderGraph->attachments[j * FRAMES_IN_FLIGHT + frameIdx].sampler;
+                    write.dstSet = renderGraph->attachmentSets[frameIdx];
+                    vkUpdateDescriptorSets(ctx->device, 1, &write, 0, mfnull);
+                }
+            }
+        }
+    }
 }
 
 MFResourceSetLayout* mfRenderGraphGetAttachmentsSetLayout(MFRenderGraph* renderGraph) {
