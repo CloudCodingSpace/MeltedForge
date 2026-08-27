@@ -121,10 +121,9 @@ static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
     passes[0].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass1);
     passes[0].outputColorAttachments = outputAttachmentPass1;
     passes[0].passDrawCallback = &ScenePass;
-    passes[0].userData = state; // Gotta fill this up later
+    passes[0].userData = state;
     // Pass 2
     passes[1].name = "Pass #2 - Fullscreen pass";
-    // passes[1].depthStencilAttachment = depthAttachment;
     passes[1].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass2);
     passes[1].outputColorAttachments = outputAttachmentPass2;
     passes[1].passDrawCallback = &FSPass;
@@ -555,7 +554,7 @@ void MFTOnRender(void* pstate, void* pappState) {
     MFDefaultAppState* appState = (MFDefaultAppState*) pappState;
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
 
-    mfRenderGraphInvoke(state->renderGraph, true);
+    mfRenderGraphInvoke(state->renderGraph, false);
 
     MF_PROFILE_ZONE_END(__temp);
 }
@@ -569,9 +568,10 @@ void MFTOnUIRender(void* pstate, void* pappState) {
     // Scene
     {
         igDockSpaceOverViewport(igGetID_Str("Dockspace"), igGetMainViewport(), ImGuiDockNodeFlags_None, mfnull);
+        const MFRenderGraphConfig* config = mfRenderGraphGetConfig(state->renderGraph);
 
         igBegin("Scene", mfnull, ImGuiWindowFlags_NoScrollbar);
-        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 0), (ImVec2){ 800, 600 }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
+        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 0), (ImVec2){ config->width, config->height }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
         igEnd();
     }
 

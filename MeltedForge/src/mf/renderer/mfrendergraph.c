@@ -465,6 +465,7 @@ void mfRenderGraphInvoke(MFRenderGraph* renderGraph, bool waitOnCpu) {
         mfArrayAddElement(&backend->waitStages, VkPipelineStageFlags, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
+    // TODO: Add querypools to each pass to get gpu timings
     // Actual recording of commands
     for(u32 i = 0; i < renderGraph->config.passCount; i++) {
         MFRenderGraphPassDesc* passDesc = &renderGraph->config.passes[i];
