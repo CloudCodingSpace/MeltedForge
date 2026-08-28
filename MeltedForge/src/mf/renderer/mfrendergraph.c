@@ -174,6 +174,7 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
     // RenderPass
     {
         renderGraph->passes = MF_ALLOCMEM(VkRenderPass, sizeof(VkRenderPass) * config.passCount);
+        bool* attachmentUsedBefore = MF_ALLOCMEM(bool, sizeof(bool) * config.attachmentCount);
 
         for(u32 i = 0; i < config.passCount; i++) {
             MFRenderGraphPassDesc* pass = &config.passes[i];
@@ -184,10 +185,17 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             VkAttachmentDescription* attachments = MF_ALLOCMEM(VkAttachmentDescription, sizeof(VkAttachmentDescription) * totalAttachments);
             VkAttachmentReference* attachmentRefs = MF_ALLOCMEM(VkAttachmentReference, sizeof(VkAttachmentReference) * totalAttachments);
             for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
-                attachments[j].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                attachments[j].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                if(attachmentUsedBefore[pass->outputColorAttachments[j]]) {
+                    attachments[j].initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    attachments[j].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    attachments[j].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+                } else {
+                    attachments[j].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    attachments[j].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    attachments[j].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                    attachmentUsedBefore[pass->outputColorAttachments[j]] = true;
+                }
                 attachments[j].format = config.attachments[pass->outputColorAttachments[j]].format;
-                attachments[j].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
                 attachments[j].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
                 attachments[j].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
                 attachments[j].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -198,17 +206,26 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
             }
 
             if(pass->depthStencilAttachment != mfnull) {
-                attachments[totalAttachments - 1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                attachments[totalAttachments - 1].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                attachments[totalAttachments - 1].format = config.attachments[pass->depthStencilAttachment[0]].format;
-                attachments[totalAttachments - 1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-                attachments[totalAttachments - 1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                attachments[totalAttachments - 1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-                attachments[totalAttachments - 1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-                attachments[totalAttachments - 1].samples = VK_SAMPLE_COUNT_1_BIT;
+                u32 idx = totalAttachments - 1;
+
+                if(attachmentUsedBefore[pass->depthStencilAttachment[0]]) {
+                    attachments[idx].initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    attachments[idx].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    attachments[idx].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+                } else {
+                    attachments[idx].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    attachments[idx].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    attachments[idx].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                    attachmentUsedBefore[pass->depthStencilAttachment[0]] = true;
+                }
+                attachments[idx].format = config.attachments[pass->depthStencilAttachment[0]].format;
+                attachments[idx].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                attachments[idx].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                attachments[idx].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+                attachments[idx].samples = VK_SAMPLE_COUNT_1_BIT;
                 
-                attachmentRefs[totalAttachments - 1].attachment = totalAttachments - 1;
-                attachmentRefs[totalAttachments - 1].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+                attachmentRefs[idx].attachment = idx;
+                attachmentRefs[idx].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
             }
             
             VkSubpassDependency dependency = {
