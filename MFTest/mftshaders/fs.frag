@@ -8,8 +8,8 @@
 layout (location = 0) out vec4 FragColor;
 layout (location = 0) in vec2 st;
 
-layout (set = 0, binding = 1) uniform sampler2D u_ColorAttachment;
-layout (set = 0, binding = 3) uniform sampler2D u_DepthAttachment;
+layout (set = 0, binding = 0) uniform sampler2D u_ColorAttachment;
+layout (set = 0, binding = 2) uniform sampler2D u_DepthAttachment;
 
 layout (set = 1, binding = 0, scalar) uniform CameraUBO {
     mat4 prevViewProj;

@@ -12,7 +12,6 @@ typedef struct CameraUBOData_s {
 typedef struct PushConstantData_s {
     MFMat4 model;
     MFMat3 normalMat;
-    MFVec2 resolution;
 } PushConstantData;
 
 typedef struct FSPushConstantData_s {

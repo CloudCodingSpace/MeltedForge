@@ -27,16 +27,27 @@ static void MeshCallback(void* _state, MFMat4 transform, const MFMeshComponent* 
     MFTState* state = (MFTState*)_state;
 
     PushConstantData modelData = {
-        .model = transform,
-        .resolution = (MFVec2){ state->sceneViewport.x, state->sceneViewport.y }
+        .model = transform
     };
 
     modelData.normalMat = mfMat4ToMat3(mfMat4Transpose(mfMat4Inverse(modelData.model)));
 
     MFResourceSet** set = &component->model.meshes[meshIdx].mat.set;
     mfResourceSetsBind(2, 1, set, pipeline);
-    mfRenderGraphBindAttachmentsSet(state->renderGraph, 3, pipeline);
-    mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX, 0, sizeof(PushConstantData), &modelData);
+    mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX | MF_SHADER_STAGE_FRAGMENT, 0, sizeof(PushConstantData), &modelData);
+
+    MF_PROFILE_ZONE_END(__temp);
+}
+
+static void MeshCallbackDepthPrePass(void* _state, MFMat4 transform, const MFMeshComponent* component, u64 meshIdx, MFPipeline* pipeline) {
+    MF_PROFILE_ZONE_START_NAMED(__temp, "MFTest Mesh callback");
+    MFTState* state = (MFTState*)_state;
+
+    PushConstantData modelData = {
+        .model = transform
+    };
+
+    mfPipelinePushConstant(pipeline, MF_SHADER_STAGE_VERTEX | MF_SHADER_STAGE_FRAGMENT, 0, sizeof(PushConstantData), &modelData);
 
     MF_PROFILE_ZONE_END(__temp);
 }
@@ -92,6 +103,7 @@ static void DepthPrePass(void* pUserState) {
         .entityPipeline = state->depthPrePassPipeline,
         .scissor = mfRendererGetScissor(state->renderer),
         .viewport = mfRendererGetViewport(state->renderer),
+        .perMeshDrawCallback = &MeshCallbackDepthPrePass,
         .computeModelMatrix = &ComputeModelMatrix,
         .pipelineBindCallback = &PipelineBindCallbackDepthPrePass,
         .enableFustrumCulling = state->enableFustrumCulling
@@ -147,47 +159,38 @@ static void FSPass(void* pUserState) {
 static void CreateRenderGraph(MFTState* state, MFDefaultAppState* appState) {
     const MFWindowConfig* winConfig = mfWindowGetConfig(appState->window);
     
-    MFRenderGraphAttachmentDesc attachments[4] = {};
-    // Depth pre pass attachment
-    attachments[0].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[0].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
-    attachments[0].format = mfRendererGetStandardDepthFormat(appState->renderer);
-
+    MFRenderGraphAttachmentDesc attachments[3] = {};
     // Color attachments
+    attachments[0].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[0].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
+    attachments[0].format = MF_FORMAT_R8G8B8A8_UNORM;
+    
     attachments[1].clearColor = mfRendererGetClearColor(appState->renderer);
     attachments[1].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
     attachments[1].format = MF_FORMAT_R8G8B8A8_UNORM;
-    
-    attachments[2].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[2].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_COLOR_ATTACHMENT;
-    attachments[2].format = MF_FORMAT_R8G8B8A8_UNORM;
 
     // Final scene depth attachment
-    attachments[3].clearColor = mfRendererGetClearColor(appState->renderer);
-    attachments[3].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
-    attachments[3].format = mfRendererGetStandardDepthFormat(appState->renderer);
+    attachments[2].clearColor = mfRendererGetClearColor(appState->renderer);
+    attachments[2].type = MF_RENDER_GRAPH_ATTACHMENT_TYPE_DEPTH_STENCIL_ATTACHMENT;
+    attachments[2].format = mfRendererGetStandardDepthFormat(appState->renderer);
 
     u32 outputAttachmentPass2[] = {
-        1
-    };
-
-    u32 outputAttachmentPass3[] = {
-        2
-    };
-
-    u32 depthPrePassAttachment[] = {
         0
     };
 
+    u32 outputAttachmentPass3[] = {
+        1
+    };
+
     u32 depthAttachment[] = {
-        3
+        2
     };
 
     MFRenderGraphPassDesc passes[3] = {};
     passes[0].name = "Pass #1 - Depth pre pass";
     passes[0].outputColorAttachmentCount = MF_ARRAYLEN(outputAttachmentPass2);
     passes[0].outputColorAttachments = outputAttachmentPass2;
-    passes[0].depthStencilAttachment = depthPrePassAttachment;
+    passes[0].depthStencilAttachment = depthAttachment;
     passes[0].passDrawCallback = &DepthPrePass;
     passes[0].userData = state;
     
@@ -244,8 +247,7 @@ static void CreatePipeline(MFTState* state) {
     MFResourceSetLayout* layouts[] = {
         state->camLightLayout,
         state->skyboxLayout,
-        state->matLayout,
-        fsLayouts[0]
+        state->matLayout
     };
 
     MFResourceSetLayout* depthPrePassLayouts[] = {
@@ -275,6 +277,7 @@ static void CreatePipeline(MFTState* state) {
     state->fsPipeline = mfPipelineCreate(state->renderer, info);
 
     // Scene pipeline
+    info.graphicsConfig.depthCompareOp = MF_COMPARE_OP_LESS_OR_EQUAL;
     info.graphicsConfig.renderGraphPassIdx = 1;
     info.graphicsConfig.vertPath = "mftshaders/default.vert.spv";
     info.graphicsConfig.fragPath = "mftshaders/default.frag.spv";
@@ -291,6 +294,7 @@ static void CreatePipeline(MFTState* state) {
     state->scenePipeline = mfPipelineCreate(state->renderer, info);
 
     // Depth pre pass pipeline
+    info.graphicsConfig.depthCompareOp = MF_COMPARE_OP_DEFAULT;
     info.graphicsConfig.renderGraphPassIdx = 0;
     info.graphicsConfig.vertPath = "mftshaders/depthprepass.vert.spv";
     info.graphicsConfig.fragPath = "mftshaders/depthprepass.frag.spv";
@@ -665,7 +669,7 @@ void MFTOnUIRender(void* pstate, void* pappState) {
 
         igBegin("Scene", mfnull, ImGuiWindowFlags_NoScrollbar);
         igGetContentRegionAvail(&state->sceneViewport);
-        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 2), (ImVec2){ config->width, config->height }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
+        igImage(mfRenderGraphGetAttachmentImTextureID(state->renderGraph, 1), (ImVec2){ config->width, config->height }, (ImVec2){ 0, 0 }, (ImVec2){ 1, 1 });
         igEnd();
     }
 
