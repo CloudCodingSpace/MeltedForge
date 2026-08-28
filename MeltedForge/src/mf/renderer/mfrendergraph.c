@@ -41,7 +41,8 @@ MFRenderGraph* mfRenderGraphCreate(MFRenderer* renderer, MFRenderGraphConfig con
         for(u32 i = 0; i < config.passCount; i++) {
             MFRenderGraphPassDesc* pass = &config.passes[i];
 
-            MF_PANIC_IF(pass->outputColorAttachmentCount == 0 || !pass->outputColorAttachments, mfGetLogger(), "Each rendergraph's pass must have atleast one output attachment & so the output attachment's array mustn't be null!");
+            if(i == config.passCount - 1)
+                MF_PANIC_IF(pass->outputColorAttachmentCount == 0 || !pass->outputColorAttachments, mfGetLogger(), "Atleast the last pass of the rendergraph must have atleast one output attachment & so the output attachment's array mustn't be null!");
 
             for(u32 j = 0; j < pass->outputColorAttachmentCount; j++) {
                 u32 idx = pass->outputColorAttachments[j];
