@@ -39,7 +39,6 @@ The link to tests and apps made using MeltedForge is here :-
  - RenderGraph
     - A helper tool which manages attachments, passes, framebuffers for us and helps us to render and invoke several interlinked passes
     - Currently support for getting attachment's pixel data on GPU and MSAA is not supported
-    - In MFTest, currently using this feature for depth prepass and postFX stuff
  - A binary serialization/deserialization api
  - Explicit gpu resource management control for resources like:
     - Vertex buffers
