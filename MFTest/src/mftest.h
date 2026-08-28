@@ -12,6 +12,7 @@ typedef struct CameraUBOData_s {
 typedef struct PushConstantData_s {
     MFMat4 model;
     MFMat3 normalMat;
+    MFVec2 resolution;
 } PushConstantData;
 
 typedef struct FSPushConstantData_s {
@@ -39,7 +40,7 @@ typedef struct MFTState_s {
     MFResourceSetLayout* matLayout, *skyboxLayout, *camLightLayout;
     MFResourceSet* skyboxSet, *cameraSet;
 
-    MFPipeline* fsPipeline, *scenePipeline;
+    MFPipeline* fsPipeline, *scenePipeline, *depthPrePassPipeline;
     MFGpuBuffer* cameraUbo;
     MFGpuBuffer* lightUbo;
     MFSkybox* skybox;

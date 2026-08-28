@@ -23,6 +23,7 @@ layout (set = 0, binding = 0, scalar) uniform CameraUBO {
 layout (push_constant, scalar) uniform ModelData {
     mat4 model;
     mat3 normalMat;
+    vec2 resolution;
 } md;
 
 void main() {

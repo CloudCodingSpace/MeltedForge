@@ -27,22 +27,32 @@ layout (set = 0, binding = 1, scalar) uniform LightUBO {
     int useIBL;
 } ubo;
 
+layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
+layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
+layout (set = 1, binding = 2) uniform samplerCube u_PrefilteredMap;
+layout (set = 1, binding = 3) uniform sampler2D u_BrdfLUT;
+
 layout (set = 2, binding = 0) uniform sampler2D u_DiffuseTex;
 layout (set = 2, binding = 1) uniform sampler2D u_NormalTex;
 layout (set = 2, binding = 2) uniform sampler2D u_MetallicRoughness;
 layout (set = 2, binding = 3) uniform sampler2D u_EmissionTex;
 layout (set = 2, binding = 4) uniform sampler2D u_AoMap;
 
-layout (set = 1, binding = 0) uniform samplerCube u_Skybox;
-layout (set = 1, binding = 1) uniform samplerCube u_IrradianceMap;
-layout (set = 1, binding = 2) uniform samplerCube u_PrefilteredMap;
-layout (set = 1, binding = 3) uniform sampler2D u_BrdfLUT;
+layout (set = 3, binding = 0) uniform sampler2D u_DepthAttachment;
 
-float LinearizeDepth(float d,float zNear,float zFar) {
-    return zNear * zFar / (zFar + d * (zNear - zFar));
-}
+layout (push_constant, scalar) uniform ModelData {
+    mat4 model;
+    mat3 normalMat;
+    vec2 resolution;
+} md;
 
 void main() {
+    vec2 fragCoord = gl_FragCoord.xy / md.resolution;
+    if(texture(u_DepthAttachment, fragCoord).r > gl_FragDepth) {
+        outColor = vec4(1.0);
+        return;
+    }
+
     vec4 albedo = texture(u_DiffuseTex, vi.oUv);
     if(albedo.a < 0.5)
         discard;
