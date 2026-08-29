@@ -38,7 +38,10 @@ The link to tests and apps made using MeltedForge is here :-
     - UI customization (Using Dear ImGui's styles)
  - RenderGraph
     - A helper tool which manages attachments, passes, framebuffers for us and helps us to render and invoke several interlinked passes
-    - Currently support for getting attachment's pixel data on GPU and MSAA is not supported
+    - Can get each attachment's pixel data on the CPU
+    - Can get ImTextureID for each attachment in it for viewing it in ImGui (Provided ui is enabled in the renderer)
+    - Can get a dedicated resource set containing every attachment in order as given when creating the rendergraph
+    - Currently MSAA is not supported for rendergraph's attachments
  - A binary serialization/deserialization api
  - Explicit gpu resource management control for resources like:
     - Vertex buffers
