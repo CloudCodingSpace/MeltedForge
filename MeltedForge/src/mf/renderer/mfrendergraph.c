@@ -729,6 +729,24 @@ void mfRenderGraphBindAttachmentsSet(MFRenderGraph* renderGraph, u64 setIndex, M
     vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineBackend->layout, setIndex, 1, &renderGraph->attachmentSets[backend->frameIndex], 0, mfnull);
 }
 
+u32 mfRenderGraphGetAttachmentBytesPerPixel(MFRenderGraph* renderGraph, u32 attachmentIdx) {
+    MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
+    MF_PANIC_IF(attachmentIdx >= renderGraph->config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
+
+    return VulkanFormatBytesPerPixel(renderGraph->attachments[attachmentIdx].info.format);
+}
+
+u8* mfRenderGraphGetAttachmentPixels(MFRenderGraph* renderGraph, u32 attachmentIdx, u32* width, u32* height) {
+    MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
+    MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");
+    MF_PANIC_IF(attachmentIdx >= renderGraph->config.attachmentCount, mfGetLogger(), "The attachment's index reference is out of bounds of the total no. of attachments provided to the rendergraph!");
+    MF_PANIC_IF(width == mfnull, mfGetLogger(), "The output width ptr shouldn't be null!");
+    MF_PANIC_IF(height == mfnull, mfGetLogger(), "The output height ptr shouldn't be null!");
+
+    return VulkanImageGetPixels(&renderGraph->attachments[attachmentIdx], 0, 0, width, height);
+}
+
 const MFRenderGraphAttachmentDesc* mfRenderGraphGetAttachment(MFRenderGraph* renderGraph, u32 attachmentIdx) {
     MF_PANIC_IF(renderGraph == mfnull, mfGetLogger(), "The rendergraph handle provided shouldn't be null!");
     MF_PANIC_IF(!renderGraph->init, mfGetLogger(), "The rendergraph handle provided should have been initialised!");

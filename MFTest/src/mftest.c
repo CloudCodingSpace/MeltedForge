@@ -781,8 +781,8 @@ void MFTOnUpdate(void* pstate, void* pappState) {
 
     if(state->takeScreenshot) {
         u32 width, height;
-        u8* pixels = mfRendererGetCurrentImagePixels(appState->renderer, &width, &height);
-        u32 bytesPerPixel =  mfRendererGetImageBytesPerPixel(appState->renderer);
+        u8* pixels = mfRenderGraphGetAttachmentPixels(state->renderGraph, 1, &width, &height);
+        u32 bytesPerPixel =  mfRenderGraphGetAttachmentBytesPerPixel(state->renderGraph, 1);
 
         stbi_write_png("mftscreenshot.png", width, height, bytesPerPixel, pixels, width * bytesPerPixel * sizeof(u8));
 
@@ -804,8 +804,8 @@ void MFTOnUpdate(void* pstate, void* pappState) {
 
     if(mfInputIsKeyPressed(appState->window, MF_KEY_B)) {
         u32 width, height;
-        u8* pixels = mfRendererGetCurrentImagePixels(appState->renderer, &width, &height);
-        u32 bytesPerPixel =  mfRendererGetImageBytesPerPixel(appState->renderer);
+        u8* pixels = mfRenderGraphGetAttachmentPixels(state->renderGraph, 1, &width, &height);
+        u32 bytesPerPixel =  mfRenderGraphGetAttachmentBytesPerPixel(state->renderGraph, 1);
 
         stbi_write_png("mftscreenshot.png", width, height, bytesPerPixel, pixels, width * bytesPerPixel * sizeof(u8));
 

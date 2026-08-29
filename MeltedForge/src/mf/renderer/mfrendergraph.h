@@ -57,6 +57,8 @@ void mfRenderGraphResize(MFRenderGraph* renderGraph, u32 width, u32 height);
 MFResourceSetLayout* mfRenderGraphGetAttachmentsSetLayout(MFRenderGraph* renderGraph);
 void mfRenderGraphBindAttachmentsSet(MFRenderGraph* renderGraph, u64 setIndex, MFPipeline* pipeline);
 
+u32 mfRenderGraphGetAttachmentBytesPerPixel(MFRenderGraph* renderGraph, u32 attachment);
+u8* mfRenderGraphGetAttachmentPixels(MFRenderGraph* renderGraph, u32 attachmentIdx, u32* width, u32* height);
 const MFRenderGraphAttachmentDesc* mfRenderGraphGetAttachment(MFRenderGraph* renderGraph, u32 attachmentIdx);
 ImTextureID mfRenderGraphGetAttachmentImTextureID(MFRenderGraph* renderGraph, u32 attachmentIdx);
 
