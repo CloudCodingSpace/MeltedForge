@@ -74,7 +74,7 @@ The link to tests and apps made using MeltedForge is here :-
 
 ## Reasons for starting
 
- - Partly to satisfy my curiosity.
+ - To satisfy my curiosity.
  - To showcase what C can really do in game/game engine dev these days
  - To serve as a helpful learning resource for both me (@CloudCodingSpace) and other devs
  - To gain experience in this field
@@ -87,8 +87,6 @@ The link to tests and apps made using MeltedForge is here :-
  - Low-end device friendly
  - Cross-OS (Only on desktop platforms)
  - Advanced real time rendering techniques support such as
-   - Bloom
-   - Deferred rendering
    - Motion blur
    - Clustered rendering
    - Forward+ rendering
