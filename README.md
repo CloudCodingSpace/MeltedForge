@@ -13,7 +13,7 @@
 The link to tests and apps made using MeltedForge is here :-
    - [MFTest (**M**elted**F**orge **T**est)](./MFTest/README.md)
       - Latest preview: 
-         ![mftest_preview](./MFTest/screenshots/multiple_entities2.png)
+         ![mftest_preview](./MFTest/screenshots/1k_entities_fc_dpp.png)
 
 ---
 

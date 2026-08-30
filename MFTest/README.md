@@ -23,3 +23,6 @@ not be much readable or elegant, since its purpose is to just stress test the en
 
  - **Multiple Entities with different mesh components *(With 4X MSAA on Forward render)***
 ![4x_msaa_multiple_entities_ss](./screenshots/4x_msaa_multiple_entities.png)
+
+ - **1000 Entities with same mesh components at random positions and rotations *(With Depth pre-pass and Fustrum culling)***
+![1k_entities_fc_dpp](./screenshots/1k_entities_fc_dpp.png)
