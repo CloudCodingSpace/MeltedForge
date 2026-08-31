@@ -89,7 +89,7 @@ Features of the engine as of now:
  - Support for headless rendering, meaning the engine can render to an image even if a window isn't provided
 
 ### MFTest's latest status (A test application included in the main repo to stress test the engine's core)
-   ![img](https://raw.githubusercontent.com/CloudCodingSpace/MeltedForge/refs/heads/main/MFTest/screenshots/sponza_pbr.png)
+   ![img](https://raw.githubusercontent.com/CloudCodingSpace/MeltedForge/refs/heads/main/MFTest/screenshots/1k_entities_fc_dpp.png)
 
 !!! Info
    This above image is currently in development and is being run on an Intel UHD so the delta time is more than it should be ideally 😅
